@@ -26,6 +26,6 @@ in userspace and therefore requires no kernel modules to be installed.
 
 {{% notice info %}}
 Until recently, OVN code lived within the Open vSwitch codebase. OVN has
-recently been split into its own repo.
+recently [been split](https://github.com/openvswitch/ovs/commit/f3e24610ea18eb873dc860f1710432e9aacd27fd)
+into its [own repo](https://github.com/ovn-org/ovn).
 {{% /notice %}}
-
