@@ -1,2 +1,1 @@
-# ovn-website
-This is the OVN website source code (hugo based).
+src/content/contributing/website/_index.en.md

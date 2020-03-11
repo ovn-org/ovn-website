@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e -x
+
+OUTPUT=/tmp/ovn-org.github.io
+
+COMMIT_ID=$(git rev-parse --short HEAD)
+
+rm -rf $OUTPUT 
+
+git clone ssh://git@github.com/ovn-org/ovn-org.github.io $OUTPUT 
+
+# prune old stuff (remove files which may go out)
+rm -rf $OUTPUT/*
+
+# copy new content
+cp -rf output/* $OUTPUT
+
+cd $OUTPUT
+git add **
+git commit -a -m "Updated website from ovn-org/ovn-website ${COMMIT_ID}"
+git push
