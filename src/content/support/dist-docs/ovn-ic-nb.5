@@ -1,0 +1,390 @@
+'\" p
+.\" -*- nroff -*-
+.TH "ovn-ic-nb" 5 " DB Schema 1.0.0" "Open vSwitch 20.03.90" "Open vSwitch Manual"
+.fp 5 L CR              \\" Make fixed-width font available as \\fL.
+.de TQ
+.  br
+.  ns
+.  TP "\\$1"
+..
+.de ST
+.  PP
+.  RS -0.15in
+.  I "\\$1"
+.  RE
+..
+.SH NAME
+ovn-ic-nb \- OVN_IC_Northbound database schema
+.PP
+.PP
+.PP
+.PP
+This database is the interface for cloud management system (CMS), such as OpenStack, to configure OVN interconnection settings\[char46] The CMS produces almost all of the contents of the database\[char46] The \fBovn\-ic\fR program monitors the database contents, transforms it, and stores it into the \fBOVN_IC_Southbound\fR database\[char46]
+.PP
+.PP
+We generally speak of ``the\(cq\(cq CMS, but one can imagine scenarios in which multiple CMSes manage different parts of OVN interconnection\[char46]
+.SS "External IDs"
+.PP
+.PP
+Each of the tables in this database contains a special column, named \fBexternal_ids\fR\[char46] This column has the same form and purpose each place it appears\[char46]
+.RS
+.TP
+\fBexternal_ids\fR: map of string-string pairs
+Key-value pairs for use by the CMS\[char46] The CMS might use certain pairs, for example, to identify entities in its own configuration that correspond to those in this database\[char46]
+.RE
+.SH "TABLE SUMMARY"
+.PP
+The following list summarizes the purpose of each of the tables in the
+\fBOVN_IC_Northbound\fR database.  Each table is described in more detail on a later
+page.
+.IP "Table" 1in
+Purpose
+.TQ 1in
+\fBIC_NB_Global\fR
+IC Northbound configuration
+.TQ 1in
+\fBTransit_Switch\fR
+Transit logical switch
+.TQ 1in
+\fBSSL\fR
+SSL configuration\[char46]
+.TQ 1in
+\fBConnection\fR
+OVSDB client connections\[char46]
+.\" check if in troff mode (TTY)
+.if t \{
+.bp
+.SH "TABLE RELATIONSHIPS"
+.PP
+The following diagram shows the relationship among tables in the
+database.  Each node represents a table.  Tables that are part of the
+``root set'' are shown with double borders.  Each edge leads from the
+table that contains it and points to the table that its value
+represents.  Edges are labeled with their column names, followed by a
+constraint on the number of allowed values: \fB?\fR for zero or one,
+\fB*\fR for zero or more, \fB+\fR for one or more.  Thick lines
+represent strong references; thin lines represent weak references.
+.RS -1in
+.ps -3
+.PS
+linethick = 1;
+linethick = 0.500000;
+box at 0.694440,0.625000 wid 1.375000 height 0.500000 "IC_NB_Global"
+box at 0.694440,0.625000 wid 1.319444 height 0.444444
+linethick = 1.000000;
+box at 3.444400,1.000000 wid 1.097200 height 0.500000 "Connection"
+linethick = 1.000000;
+box at 3.444400,0.250000 wid 0.750000 height 0.500000 "SSL"
+linethick = 0.500000;
+box at 0.694440,1.375000 wid 1.361100 height 0.500000 "Transit_Switch"
+box at 0.694440,1.375000 wid 1.305544 height 0.444444
+linethick = 1.000000;
+spline -> from 1.384700,0.718180 to 1.384700,0.718180 to 1.850800,0.782390 to 2.461800,0.866550 to 2.894300,0.926130
+"connections*" at 2.138900,0.993060
+linethick = 1.000000;
+spline -> from 1.384100,0.522750 to 1.384100,0.522750 to 1.469800,0.510190 to 1.556400,0.497700 to 1.638900,0.486110 to 2.132900,0.416700 to 2.704400,0.342430 to 3.066600,0.296110
+"ssl?" at 2.138900,0.590280
+.ps +3
+.PE
+.RE\}
+.bp
+.SH "IC_NB_Global TABLE"
+.PP
+.PP
+.PP
+Northbound configuration for OVN interconnection\[char46] This table must have exactly one row\[char46]
+.SS "Summary:
+.TQ .25in
+\fICommon Columns:\fR
+.RS .25in
+.TQ 2.75in
+\fBexternal_ids\fR
+map of string-string pairs
+.RE
+.TQ .25in
+\fICommon options:\fR
+.RS .25in
+.TQ 2.75in
+\fBoptions\fR
+map of string-string pairs
+.RE
+.TQ .25in
+\fIConnection Options:\fR
+.RS .25in
+.TQ 2.75in
+\fBconnections\fR
+set of \fBConnection\fRs
+.TQ 2.75in
+\fBssl\fR
+optional \fBSSL\fR
+.RE
+.SS "Details:
+.ST "Common Columns:"
+.PP
+.IP "\fBexternal_ids\fR: map of string-string pairs"
+See \fBExternal IDs\fR at the beginning of this document\[char46]
+.ST "Common options:"
+.PP
+.IP "\fBoptions\fR: map of string-string pairs"
+This column provides general key/value settings\[char46] The supported options are described individually below\[char46]
+.ST "Connection Options:"
+.PP
+.IP "\fBconnections\fR: set of \fBConnection\fRs"
+Database clients to which the Open vSwitch database server should connect or on which it should listen, along with options for how these connections should be configured\[char46] See the \fBConnection\fR table for more information\[char46]
+.IP "\fBssl\fR: optional \fBSSL\fR"
+Global SSL configuration\[char46]
+.bp
+.SH "Transit_Switch TABLE"
+.PP
+.PP
+.PP
+Each row represents one transit logical switch for interconnection between different OVN deployments (availability zones)\[char46]
+.SS "Summary:
+.TQ .25in
+\fINaming:\fR
+.RS .25in
+.TQ 2.75in
+\fBname\fR
+string (must be unique within table)
+.RE
+.TQ .25in
+\fICommon Columns:\fR
+.RS .25in
+.TQ 2.75in
+\fBother_config\fR
+map of string-string pairs
+.TQ 2.75in
+\fBexternal_ids\fR
+map of string-string pairs
+.RE
+.SS "Details:
+.ST "Naming:"
+.PP
+.IP "\fBname\fR: string (must be unique within table)"
+A name that uniquely identifies the transit logical switch\[char46]
+.ST "Common Columns:"
+.PP
+.IP "\fBother_config\fR: map of string-string pairs"
+.IP "\fBexternal_ids\fR: map of string-string pairs"
+See \fBExternal IDs\fR at the beginning of this document\[char46]
+.bp
+.SH "SSL TABLE"
+.PP
+SSL configuration for ovn-nb database access\[char46]
+.SS "Summary:
+.TQ 3.00in
+\fBprivate_key\fR
+string
+.TQ 3.00in
+\fBcertificate\fR
+string
+.TQ 3.00in
+\fBca_cert\fR
+string
+.TQ 3.00in
+\fBbootstrap_ca_cert\fR
+boolean
+.TQ 3.00in
+\fBssl_protocols\fR
+string
+.TQ 3.00in
+\fBssl_ciphers\fR
+string
+.TQ .25in
+\fICommon Columns:\fR
+.RS .25in
+.TQ 2.75in
+\fBexternal_ids\fR
+map of string-string pairs
+.RE
+.SS "Details:
+.IP "\fBprivate_key\fR: string"
+Name of a PEM file containing the private key used as the switch\(cqs identity for SSL connections to the controller\[char46]
+.IP "\fBcertificate\fR: string"
+Name of a PEM file containing a certificate, signed by the certificate authority (CA) used by the controller and manager, that certifies the switch\(cqs private key, identifying a trustworthy switch\[char46]
+.IP "\fBca_cert\fR: string"
+Name of a PEM file containing the CA certificate used to verify that the switch is connected to a trustworthy controller\[char46]
+.IP "\fBbootstrap_ca_cert\fR: boolean"
+If set to \fBtrue\fR, then Open vSwitch will attempt to obtain the CA certificate from the controller on its first SSL connection and save it to the named PEM file\[char46] If it is successful, it will immediately drop the connection and reconnect, and from then on all SSL connections must be authenticated by a certificate signed by the CA certificate thus obtained\[char46] \fBThis option exposes the
+SSL connection to a man\-in\-the\-middle attack obtaining the initial
+CA certificate\[char46]\fR It may still be useful for bootstrapping\[char46]
+.IP "\fBssl_protocols\fR: string"
+List of SSL protocols to be enabled for SSL connections\[char46] The default when this option is omitted is \fBTLSv1,TLSv1\[char46]1,TLSv1\[char46]2\fR\[char46]
+.IP "\fBssl_ciphers\fR: string"
+List of ciphers (in OpenSSL cipher string format) to be supported for SSL connections\[char46] The default when this option is omitted is \fBHIGH:!aNULL:!MD5\fR\[char46]
+.ST "Common Columns:"
+.PP
+The overall purpose of these columns is described under \fBCommon
+Columns\fR at the beginning of this document\[char46]
+.IP "\fBexternal_ids\fR: map of string-string pairs"
+.bp
+.SH "Connection TABLE"
+.PP
+.PP
+.PP
+Configuration for a database connection to an Open vSwitch database (OVSDB) client\[char46]
+.PP
+.PP
+This table primarily configures the Open vSwitch database server (\fBovsdb\-server\fR)\[char46]
+.PP
+.PP
+The Open vSwitch database server can initiate and maintain active connections to remote clients\[char46] It can also listen for database connections\[char46]
+.SS "Summary:
+.TQ .25in
+\fICore Features:\fR
+.RS .25in
+.TQ 2.75in
+\fBtarget\fR
+string (must be unique within table)
+.RE
+.TQ .25in
+\fIClient Failure Detection and Handling:\fR
+.RS .25in
+.TQ 2.75in
+\fBmax_backoff\fR
+optional integer, at least 1,000
+.TQ 2.75in
+\fBinactivity_probe\fR
+optional integer
+.RE
+.TQ .25in
+\fIStatus:\fR
+.RS .25in
+.TQ 2.75in
+\fBis_connected\fR
+boolean
+.TQ 2.75in
+\fBstatus : last_error\fR
+optional string
+.TQ 2.75in
+\fBstatus : state\fR
+optional string, one of \fBACTIVE\fR, \fBBACKOFF\fR, \fBCONNECTING\fR, \fBIDLE\fR, or \fBVOID\fR
+.TQ 2.75in
+\fBstatus : sec_since_connect\fR
+optional string, containing an integer, at least 0
+.TQ 2.75in
+\fBstatus : sec_since_disconnect\fR
+optional string, containing an integer, at least 0
+.TQ 2.75in
+\fBstatus : locks_held\fR
+optional string
+.TQ 2.75in
+\fBstatus : locks_waiting\fR
+optional string
+.TQ 2.75in
+\fBstatus : locks_lost\fR
+optional string
+.TQ 2.75in
+\fBstatus : n_connections\fR
+optional string, containing an integer, at least 2
+.TQ 2.75in
+\fBstatus : bound_port\fR
+optional string, containing an integer
+.RE
+.TQ .25in
+\fICommon Columns:\fR
+.RS .25in
+.TQ 2.75in
+\fBexternal_ids\fR
+map of string-string pairs
+.TQ 2.75in
+\fBother_config\fR
+map of string-string pairs
+.RE
+.SS "Details:
+.ST "Core Features:"
+.PP
+.IP "\fBtarget\fR: string (must be unique within table)"
+Connection methods for clients\[char46]
+.IP
+The following connection methods are currently supported:
+.RS
+.TP
+\fBssl:\fIhost\fB\fR[\fB:\fIport\fB\fR]
+The specified SSL \fIport\fR on the host at the given \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address\[char46] A valid SSL configuration must be provided when this form is used, this configuration can be specified via command-line options or the \fBSSL\fR table\[char46]
+.IP
+If \fIport\fR is not specified, it defaults to 6640\[char46]
+.IP
+SSL support is an optional feature that is not always built as part of Open vSwitch\[char46]
+.TP
+\fBtcp:\fIhost\fB\fR[\fB:\fIport\fB\fR]
+The specified TCP \fIport\fR on the host at the given \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address\[char46] If \fIhost\fR is an IPv6 address, wrap it in square brackets, e\[char46]g\[char46] \fBtcp:[::1]:6640\fR\[char46]
+.IP
+If \fIport\fR is not specified, it defaults to 6640\[char46]
+.TP
+\fBpssl:\fR[\fIport\fR][\fB:\fIhost\fB\fR]
+Listens for SSL connections on the specified TCP \fIport\fR\[char46] Specify 0 for \fIport\fR to have the kernel automatically choose an available port\[char46] If \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address, is specified, then connections are restricted to the resolved or specified local IPaddress (either IPv4 or IPv6 address)\[char46] If \fIhost\fR is an IPv6 address, wrap in square brackets, e\[char46]g\[char46] \fBpssl:6640:[::1]\fR\[char46] If \fIhost\fR is not specified then it listens only on IPv4 (but not IPv6) addresses\[char46] A valid SSL configuration must be provided when this form is used, this can be specified either via command-line options or the \fBSSL\fR table\[char46]
+.IP
+If \fIport\fR is not specified, it defaults to 6640\[char46]
+.IP
+SSL support is an optional feature that is not always built as part of Open vSwitch\[char46]
+.TP
+\fBptcp:\fR[\fIport\fR][\fB:\fIhost\fB\fR]
+Listens for connections on the specified TCP \fIport\fR\[char46] Specify 0 for \fIport\fR to have the kernel automatically choose an available port\[char46] If \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address, is specified, then connections are restricted to the resolved or specified local IP address (either IPv4 or IPv6 address)\[char46] If \fIhost\fR is an IPv6 address, wrap it in square brackets, e\[char46]g\[char46] \fBptcp:6640:[::1]\fR\[char46] If \fIhost\fR is not specified then it listens only on IPv4 addresses\[char46]
+.IP
+If \fIport\fR is not specified, it defaults to 6640\[char46]
+.RE
+.IP
+When multiple clients are configured, the \fBtarget\fR values must be unique\[char46] Duplicate \fBtarget\fR values yield unspecified results\[char46]
+.ST "Client Failure Detection and Handling:"
+.PP
+.IP "\fBmax_backoff\fR: optional integer, at least 1,000"
+Maximum number of milliseconds to wait between connection attempts\[char46] Default is implementation-specific\[char46]
+.IP "\fBinactivity_probe\fR: optional integer"
+Maximum number of milliseconds of idle time on connection to the client before sending an inactivity probe message\[char46] If Open vSwitch does not communicate with the client for the specified number of seconds, it will send a probe\[char46] If a response is not received for the same additional amount of time, Open vSwitch assumes the connection has been broken and attempts to reconnect\[char46] Default is implementation-specific\[char46] A value of 0 disables inactivity probes\[char46]
+.ST "Status:"
+.PP
+.PP
+.PP
+Key-value pair of \fBis_connected\fR is always updated\[char46] Other key-value pairs in the status columns may be updated depends on the \fBtarget\fR type\[char46]
+.PP
+.PP
+When \fBtarget\fR specifies a connection method that listens for inbound connections (e\[char46]g\[char46] \fBptcp:\fR or \fBpunix:\fR), both \fBn_connections\fR and \fBis_connected\fR may also be updated while the remaining key-value pairs are omitted\[char46]
+.PP
+.PP
+On the other hand, when \fBtarget\fR specifies an outbound connection, all key-value pairs may be updated, except the above-mentioned two key-value pairs associated with inbound connection targets\[char46] They are omitted\[char46]
+.IP "\fBis_connected\fR: boolean"
+\fBtrue\fR if currently connected to this client, \fBfalse\fR otherwise\[char46]
+.IP "\fBstatus : last_error\fR: optional string"
+A human-readable description of the last error on the connection to the manager; i\[char46]e\[char46] \fBstrerror(errno)\fR\[char46] This key will exist only if an error has occurred\[char46]
+.IP "\fBstatus : state\fR: optional string, one of \fBACTIVE\fR, \fBBACKOFF\fR, \fBCONNECTING\fR, \fBIDLE\fR, or \fBVOID\fR"
+The state of the connection to the manager:
+.RS
+.TP
+\fBVOID\fR
+Connection is disabled\[char46]
+.TP
+\fBBACKOFF\fR
+Attempting to reconnect at an increasing period\[char46]
+.TP
+\fBCONNECTING\fR
+Attempting to connect\[char46]
+.TP
+\fBACTIVE\fR
+Connected, remote host responsive\[char46]
+.TP
+\fBIDLE\fR
+Connection is idle\[char46] Waiting for response to keep-alive\[char46]
+.RE
+.IP
+These values may change in the future\[char46] They are provided only for human consumption\[char46]
+.IP "\fBstatus : sec_since_connect\fR: optional string, containing an integer, at least 0"
+The amount of time since this client last successfully connected to the database (in seconds)\[char46] Value is empty if client has never successfully been connected\[char46]
+.IP "\fBstatus : sec_since_disconnect\fR: optional string, containing an integer, at least 0"
+The amount of time since this client last disconnected from the database (in seconds)\[char46] Value is empty if client has never disconnected\[char46]
+.IP "\fBstatus : locks_held\fR: optional string"
+Space-separated list of the names of OVSDB locks that the connection holds\[char46] Omitted if the connection does not hold any locks\[char46]
+.IP "\fBstatus : locks_waiting\fR: optional string"
+Space-separated list of the names of OVSDB locks that the connection is currently waiting to acquire\[char46] Omitted if the connection is not waiting for any locks\[char46]
+.IP "\fBstatus : locks_lost\fR: optional string"
+Space-separated list of the names of OVSDB locks that the connection has had stolen by another OVSDB client\[char46] Omitted if no locks have been stolen from this connection\[char46]
+.IP "\fBstatus : n_connections\fR: optional string, containing an integer, at least 2"
+When \fBtarget\fR specifies a connection method that listens for inbound connections (e\[char46]g\[char46] \fBptcp:\fR or \fBpssl:\fR) and more than one connection is actually active, the value is the number of active connections\[char46] Otherwise, this key-value pair is omitted\[char46]
+.IP "\fBstatus : bound_port\fR: optional string, containing an integer"
+When \fBtarget\fR is \fBptcp:\fR or \fBpssl:\fR, this is the TCP port on which the OVSDB server is listening\[char46] (This is particularly useful when \fBtarget\fR specifies a port of 0, allowing the kernel to choose any available port\[char46])
+.ST "Common Columns:"
+.PP
+The overall purpose of these columns is described under \fBCommon
+Columns\fR at the beginning of this document\[char46]
+.IP "\fBexternal_ids\fR: map of string-string pairs"
+.IP "\fBother_config\fR: map of string-string pairs"

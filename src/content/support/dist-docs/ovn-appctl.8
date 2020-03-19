@@ -1,0 +1,182 @@
+'\" p
+.\" -*- nroff -*-
+.TH "ovn-appctl" 8 "ovn-appctl" "Open vSwitch 20\[char46]03\[char46]90" "Open vSwitch Manual"
+.fp 5 L CR              \\" Make fixed-width font available as \\fL.
+.de TQ
+.  br
+.  ns
+.  TP "\\$1"
+..
+.de ST
+.  PP
+.  RS -0.15in
+.  I "\\$1"
+.  RE
+..
+.PP
+.SH "NAME"
+.PP
+.PP
+ovn-appctl \- utility for configuring running OVN daemons
+.SH "SYNOPSIS"
+.PP
+.PP
+\fB ovn\-appctl\fR [\-target=target | -t target] [-T secs | \-timeout=secs] \fIcommand\fR [\fIarg\fR\[char46]\[char46]\[char46]]
+.PP
+\fBovn\-appctl\fR \-help
+.PP
+\fBovn\-appctl\fR \-version
+.SH "DESCRIPTION"
+.PP
+.PP
+OVN daemons accept certain commands at runtime to control their behavior and query their settings\[char46] Every daemon accepts a common set of commands documented under COMMON COMMANDS below\[char46] Some daemons support additional commands documented in their own manpages\[char46]
+.PP
+.PP
+The \fBovn\-appctl\fR program provides a simple way to invoke these commands\[char46] The command to be sent is specified on \fBovn\-appctl\(cqs\fR command line as non-option arguments\[char46] \fBovn\-appctl\fR sends the command and prints the daemon\(cqs response on standard output\[char46]
+.PP
+.PP
+\fBovn\-ctl\fR is exactly similar to Open vSwitch \fBovs\-appctl\fR utility\[char46]
+.SH "COMMAND COMMANDS"
+.PP
+.PP
+Every OVN daemon supports a common set of commands, which are documented in this section\[char46]
+.SS "General Commands"
+.PP
+.PP
+These commands display daemon-specific commands and the running version\[char46] Note that these commands are different from the \-help and \-version options that return information about the \fBovn\-appctl\fR utility itself\[char46]
+.RS
+.TP
+\fBlist\-commands\fR
+Lists the commands supported by the target\[char46]
+.TP
+\fBversion\fR
+Displays the version and compilation date of the target\[char46]
+.RE
+.SS "Logging Commands"
+.PP
+.PP
+OVN has several log levels\[char46] The highest-severity log level is:
+.RS
+.TP
+\fBoff\fR
+No message is ever logged at this level, so setting a logging destination\(cqs log level to off disables logging to that destination\[char46]
+.RE
+.PP
+.PP
+The following log levels, in order of descending severity, are available:
+.RS
+.TP
+\fBemer\fR
+A major failure forced a process to abort\[char46]
+.TP
+\fBerr\fR
+A high-level operation or a subsystem failed\[char46] Attention is warranted\[char46]
+.TP
+\fBwarn\fR
+A low-level operation failed, but higher-level subsystems may be able to recover\[char46]
+.TP
+\fBinfo\fR
+Information that may be useful in retrospect when investigating a problem\[char46]
+.TP
+\fBdbg\fR
+Information useful only to someone with intricate knowledge of the system, or that would commonly cause too-voluminous log output\[char46] Log messages at this level are not logged by default\[char46]
+.RE
+.PP
+.PP
+Every OVN daemon supports the following commands for examining and adjusting log levels\[char46]
+.RS
+.TP
+\fBvlog/list\fR
+Lists the known logging modules and their current levels\[char46]
+.TP
+\fBvlog/list\-pattern\fR
+Lists logging pattern used for each destination\[char46]
+.TP
+\fBvlog/set \fI[spec]\fB\fR
+Sets logging levels\[char46] Without any spec, sets the log level for every module and destination to dbg\[char46] Otherwise, spec is a list of words separated by spaces or commas or colons, up to one from each category below:
+.RS
+.IP \(bu
+A valid module name, as displayed by the vlog/list command on ovn-appctl(8), limits the log level change to the specified module\[char46]
+.IP \(bu
+\fBsyslog\fR, \fBconsole\fR, or \fBfile\fR, to limit the log level change to only to the system log, to the console, or to a file, respectively\[char46]
+.IP
+On Windows platform, \fBsyslog\fR is accepted as a word and is only useful if the target was started with the \fB\-\-syslog\-target\fR option (the word has no effect otherwise)\[char46]
+.IP \(bu
+\fBoff\fR, \fBemer\fR, \fBerr\fR, \fBwarn\fR, \fBinfo\fR, or \fBdbg\fR, to control the log level\[char46] Messages of the given severity or higher will be logged, and messages of lower severity will be filtered out\[char46] \fBoff\fR filters out all messages\[char46]
+.RE
+.IP
+Case is not significant within \fIspec\fR\[char46]
+.TP
+\fBvlog/set PATTERN\fR:\fIdestination\fR: \fIpattern\fR
+Sets the log pattern for \fIdestination\fR to \fIpattern\fR\[char46] Each time a message is logged to destination, pattern determines the message\(cqs formatting\[char46] Most characters in pattern are copied literally to the log, but special escapes beginning with \fB%\fR are expanded as follows:
+.RS
+.IP \(bu
+\fB%A\fR : The name of the application logging the message, e\[char46]g\[char46] ovn-controller\[char46]
+.IP \(bu
+\fB%B\fR : The RFC5424 syslog PRI of the message\[char46]
+.IP \(bu
+\fB%c\fR : The name of the module (as shown by ovn-appctl \-list) logging the message\[char46]
+.IP \(bu
+\fB%d\fR : The current date and time in ISO 8601 format (YYYY-MM-DD HH:MM:SS)\[char46]
+.IP \(bu
+\fB%d\fI{format}\fB\fR : The current date and time in the specified format, which takes the same format as the template argument to strftime(3)\[char46] As an extension, any # characters in format will be replaced by fractional seconds, e\[char46]g\[char46] use \fB%H:%M:%S\[char46]###\fR for the time to the nearest millisecond\[char46] Sub-second times are only approximate and currently decimal places after the third will always be reported as zero\[char46]
+.IP \(bu
+\fB%D\fR : The current UTC date and time in ISO 8601 format \fB(YYYY\-MM\-DD HH:MM:SS)\fR\[char46]
+.IP \(bu
+\fB%D\fI{format}\fB\fR : The current UTC date and time in the specified format, which takes the same format as the template argument to strftime(3)\[char46] Supports the same extension for sub-second resolution as \fB%d{\[char46]\[char46]\[char46]}\fR\[char46]
+.IP \(bu
+\fB%E\fR : The hostname of the node running the application\[char46]
+.IP \(bu
+\fB%m\fR : The message being logged\[char46]
+.IP \(bu
+\fB%N\fR : A serial number for this message within this run of the program, as a decimal number\[char46] The first message a program logs has serial number 1, the second one has serial number 2, and so on\[char46]
+.IP \(bu
+\fB%n\fR : A new-line\[char46]
+.IP \(bu
+\fB%p\fR : The level at which the message is logged, e\[char46]g\[char46] \fBDBG\fR\[char46]
+.IP \(bu
+\fB%P\fR : The program\(cqs process ID (pid), as a decimal number\[char46]
+.IP \(bu
+\fB%r\fR : The number of milliseconds elapsed from the start of the application to the time the message was logged\[char46]
+.IP \(bu
+\fB%t\fR : The subprogram name, that is, an identifying name for the process or thread that emitted the log message, such as monitor for the process used for \-monitor or main for the primary process or thread in a program\[char46]
+.IP \(bu
+\fB%T\fR : The subprogram name enclosed in parentheses, e\[char46]g\[char46] (monitor), or the empty string for the primary process or thread in a program\[char46]
+.IP \(bu
+\fB%%\fR : A literal %\[char46]
+.RE
+.IP
+A few options may appear between the % and the format specifier character, in this order:
+.RS
+.IP \(bu
+\fB\-\fR : Left justify the escape\(cqs expansion within its field width\[char46] Right justification is the default\[char46]
+.IP \(bu
+\fB\-\fR : Pad the field to the field width with 0s\[char46] Padding with spaces is the default\[char46]
+.RE
+.IP
+\fIwidth\fR A number specifies the minimum field width\[char46] If the escape expands to fewer characters than width then it is padded to fill the field width\[char46] (A field wider than width is not truncated to fit\[char46])
+.IP
+The default pattern for console and file output is \fB%D{%Y\-%m\-%dT %H:%M:%SZ}|%05N|%c|%p|%m;\fR for syslog output, \fB%05N|%c|%p|%m\fR\[char46]
+.TP
+\fBvlog/set FACILITY:\fIfacility\fB\fR
+Sets the RFC5424 facility of the log message\[char46] facility can be one of \fBkern\fR, \fBuser\fR, \fBmail\fR, \fBdaemon\fR, \fBauth\fR, \fBsyslog\fR, \fBlpr\fR, \fBnews\fR, \fBuucp\fR, \fBclock\fR, \fBftp\fR, \fBntp\fR, \fBaudit\fR, \fBalert\fR, \fBclock2\fR, \fBlocal0\fR, \fBlocal1\fR, \fBlocal2\fR, \fBlocal3\fR, \fBlocal4\fR, \fBlocal5\fR, \fBlocal6\fR or \fBlocal7\fR\[char46]
+.TP
+\fBvlog/close\fR
+Causes the daemon to close its log file, if it is open\[char46] (Use \fBvlog/reopen\fR to reopen it later\[char46])
+.TP
+\fBvlog/reopen\fR
+Causes the daemon to close its log file, if it is open, and then reopen it\[char46] (This is useful after rotating log files, to cause a new log file to be used\[char46])
+.IP
+This has no effect if the target application was not invoked with the \fB\-\-log\-file\fR option\[char46]
+.RE
+.SH "OPTIONS"
+.TP
+\fB\-h\fR
+.TQ .5in
+\fB\-\-help\fR
+Prints a brief help message to the console\[char46]
+.TP
+\fB\-V\fR
+.TQ .5in
+\fB\-\-version\fR
+Prints version information to the console\[char46]
