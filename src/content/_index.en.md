@@ -24,6 +24,15 @@ include
 Like Open vSwitch, OVN is written in platform-independent C. OVN runs entirely
 in userspace and therefore requires no kernel modules to be installed.
 
+#### IRC meetings
+
+We have weekly IRC meetings you can participate in:
+
+[OVN weekly](http://eavesdrop.openstack.org/meetings/ovn_community_development_discussion/2020/)
+IRC meeting every Thu 1715 UTC
+
+Freenode **#openvswitch**
+
 {{% notice info %}}
 Until recently, OVN code lived within the Open vSwitch codebase. OVN has
 recently [been split](https://github.com/openvswitch/ovs/commit/f3e24610ea18eb873dc860f1710432e9aacd27fd)
