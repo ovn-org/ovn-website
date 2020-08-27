@@ -9,7 +9,8 @@ release in the series instead.
 
 | Series | Release | Release Date |
 | ------ | ------- | ------------ |
-| OVN 20.06 | [OVN 20.06.0](https://github.com/ovn-org/ovn/releases/tag/v20.06.0) | 09 Jun 2020 |
+| OVN 20.06 | [OVN 20.06.1](https://github.com/ovn-org/ovn/releases/tag/v20.06.1) | 08 Jul 2020 |
+|           | [OVN 20.06.0](https://github.com/ovn-org/ovn/releases/tag/v20.06.0) | 09 Jun 2020 |
 | OVN 20.03 | [OVN 20.03.0](https://github.com/ovn-org/ovn/releases/tag/v20.03.0) | 02 Mar 2020 |
 
 Prior to the 20.03 series, OVN was included as part of the Open vSwitch project.
