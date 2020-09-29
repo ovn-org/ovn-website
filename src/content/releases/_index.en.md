@@ -11,5 +11,6 @@ located [here](https://github.com/ovn-org/ovn/blob/master/Documentation/internal
 
 | Series | Release | Release Date |
 | ------ | ------- | ------------ |
+| OVN 20.09 | [OVN 20.09.0](https://github.com/ovn-org/ovn/releases/tag/v20.09.0) | 29 Sep 2020 |
 | OVN 20.06 | [OVN 20.06.2](https://github.com/ovn-org/ovn/releases/tag/v20.06.2) | 21 Aug 2020 |
 | OVN 20.03 | [OVN 20.03.1](https://github.com/ovn-org/ovn/releases/tag/v20.03.1) | 11 Jun 2020 |
