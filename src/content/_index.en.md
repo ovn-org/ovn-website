@@ -27,7 +27,7 @@ in userspace and therefore requires no kernel modules to be installed.
 ## Latest Release
 
 Download the latest release of OVN on the [releases](releases) page on the left.
-For a summary of changes in the latest release, see [here](releases/release_20.09.0)
+For a summary of changes in the latest release, see [here](releases/release_20.12.0)
 
 #### IRC meetings
 
