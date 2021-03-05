@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nbctl" 8 "ovn-nbctl" "Open vSwitch 20\[char46]03\[char46]90" "Open vSwitch Manual"
+.TH "ovn-nbctl" 8 "ovn-nbctl" "OVN 21\[char46]03\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -13,7 +13,11 @@
 .  I "\\$1"
 .  RE
 ..
-.PP
+.de SU
+.  PP
+.  I "\\$1"
+..
+build/.PP
 .SH "NAME"
 .PP
 .PP
@@ -75,6 +79,8 @@ If \fB\-\-may\-exist\fR is specified, adding a duplicated QoS rule succeeds but 
 .TP
 \fBqos\-del\fR \fIswitch\fR [\fIdirection\fR [\fIpriority\fR \fImatch\fR]]
 Deletes QoS rules from \fIswitch\fR\[char46] If only \fIswitch\fR is supplied, all the QoS rules from the logical switch are deleted\[char46] If \fIdirection\fR is also specified, then all the flows in that direction will be deleted from the logical switch\[char46] If all the fields are supplied, then a single flow that matches the given fields will be deleted\[char46]
+.IP
+If \fIswitch\fR and \fIuuid\fR are supplied, then the QoS rule with sepcified uuid is deleted\[char46]
 .TP
 \fBqos\-list\fR \fIswitch\fR
 Lists the QoS rules on \fIswitch\fR\[char46]
@@ -264,12 +270,18 @@ Deletes gateway chassis from \fIport\fR\[char46] It is an error if gateway chass
 Lists all the gateway chassis with priority within \fIport\fR on standard output, one per line, ordered based on priority\[char46]
 .SH "LOGICAL ROUTER STATIC ROUTE COMMANDS"
 .TP
-[\fB\-\-may\-exist\fR] [\fB\-\-policy\fR=\fIPOLICY\fR] [\fB\-\-ecmp\fR] \fBlr\-route\-add\fR \fIrouter\fR \fIprefix\fR \fInexthop\fR [\fIport\fR]
+[\fB\-\-may\-exist\fR] [\fB\-\-policy\fR=\fIPOLICY\fR] [\fB\-\-ecmp\fR] [\fB\-\-ecmp\-symmetric\-reply\fR] [\fB\-\-bfd[=\fIUUID\fB\fR]] \fBlr\-route\-add\fR \fIrouter\fR \fIprefix\fR \fInexthop\fR [\fIport\fR]
 Adds the specified route to \fIrouter\fR\[char46] \fIprefix\fR describes an IPv4 or IPv6 prefix for this route, such as \fB192\[char46]168\[char46]100\[char46]0/24\fR\[char46] \fInexthop\fR specifies the gateway to use for this route, which should be the IP address of one of \fIrouter\fR logical router ports or the IP address of a logical port\[char46] If \fIport\fR is specified, packets that match this route will be sent out that port\[char46] When \fIport\fR is omitted, OVN infers the output port based on \fInexthop\fR\[char46]
 .IP
 \fB\-\-policy\fR describes the policy used to make routing decisions\[char46] This should be one of \(dqdst-ip\(dq or \(dqsrc-ip\(dq\[char46] If not specified, the default is \(dqdst-ip\(dq\[char46]
 .IP
-It is an error if a route with \fIprefix\fR and \fIPOLICY\fR already exists, unless \fB\-\-may\-exist\fR or \fB\-\-ecmp\fR is specified\[char46] If \fB\-\-may\-exist\fR is specified but not \fB\-\-ecmp\fR, the existed route will be updated with the new nexthop and port\[char46] If \fB\-\-ecmp\fR is specified, a new route will be added, regardless of the existed route, which is useful when adding ECMP routes, i\[char46]e\[char46] routes with same \fIPOLICY\fR and \fIprefix\fR but different \fInexthop\fR and \fIport\fR\[char46]
+The \fB\-\-ecmp\fR option allows for multiple routes with the same \fIprefix\fR \fIPOLICY\fR but different \fInexthop\fR and \fIport\fR to be added\[char46]
+.IP
+The \fB\-\-ecmp\-symmetric\-reply\fR option makes it so that traffic that arrives over an ECMP route will have its reply traffic sent out over that same route\[char46] Setting \fB\-\-ecmp\-symmetric\-reply\fR implies \fB\-\-ecmp\fR so it is not necessary to set both\[char46]
+.IP
+\fB\-\-bfd\fR option is used to link a BFD session to the OVN route\[char46] If the BFD session UUID is provided, it will be used for the OVN route otherwise the next-hop will be used to perform a lookup in the OVN BFD table\[char46] If the lookup fails and \fIport\fR is specified, a new entry in the BFD table will be created using the \fInexthop\fR as \fIdst_ip\fR and \fIport\fR as \fIlogical_port\fR\[char46]
+.IP
+It is an error if a route with \fIprefix\fR and \fIPOLICY\fR already exists, unless \fB\-\-may\-exist\fR, \fB\-\-ecmp\fR, or \fB\-\-ecmp\-symmetric\-reply\fR is specified\[char46] If \fB\-\-may\-exist\fR is specified but not \fB\-\-ecmp\fR or \fB\-\-ecmp\-symmetric\-reply\fR, the existed route will be updated with the new nexthop and port\[char46] If \fB\-\-ecmp\fR or \fB\-\-ecmp\-symmetric\-reply\fR is specified, a new route will be added, regardless of the existed route\[char46], which is useful when adding ECMP routes, i\[char46]e\[char46] routes with same \fIPOLICY\fR and \fIprefix\fR but different \fInexthop\fR and \fIport\fR\[char46]
 .TP
 [\fB\-\-if\-exists\fR] [\fB\-\-policy\fR=\fIPOLICY\fR] \fBlr\-route\-del\fR \fIrouter\fR [\fIprefix\fR [\fInexthop\fR [\fIport\fR]]]
 Deletes routes from \fIrouter\fR\[char46] If only \fIrouter\fR is supplied, all the routes from the logical router are deleted\[char46] If \fIPOLICY\fR, \fIprefix\fR, \fInexthop\fR and/or \fIport\fR are also specified, then all the routes that match the conditions will be deleted from the logical router\[char46]
@@ -278,6 +290,29 @@ It is an error if there is no matching route entry, unless \fB\-\-if\-exists\fR 
 .TP
 \fBlr\-route\-list\fR \fIrouter\fR
 Lists the routes on \fIrouter\fR\[char46]
+.SH "LOGICAL ROUTER POLICY COMMANDS"
+.TP
+[\fB\-\-may\-exist\fR]\fBlr\-policy\-add\fR \fIrouter\fR \fIpriority\fR \fImatch\fR \fIaction\fR [\fInexthop\fR[,\fInexthop\fR,\[char46]\[char46]\[char46]]] [\fIoptions key=value]\fR]
+Add Policy to \fIrouter\fR which provides a way to configure permit/deny and reroute policies on the router\[char46] Permit/deny policies are similar to OVN ACLs, but exist on the logical-router\[char46] Reroute policies are needed for service-insertion and service-chaining\[char46] \fInexthop\fR is an optional parameter\[char46] It needs to be provided only when \fIaction\fR is \fIreroute\fR\[char46] Multiple \fBnexthops\fR can be specified for ECMP routing\[char46] A policy is uniquely identified by \fIpriority\fR and \fImatch\fR\[char46] Multiple policies can have the same \fIpriority\fR\[char46] \fIoptions\fR sets the router policy options as key-value pair\[char46] The supported option is : \fBpkt_mark\fR\[char46]
+.IP
+If \fB\-\-may\-exist\fR is specified, adding a duplicated routing policy with the same priority and match string is not really created\[char46] Without \fB\-\-may\-exist\fR, adding a duplicated routing policy results in error\[char46]
+.IP
+The following example shows a policy to lr1, which will drop packets from\fB192\[char46]168\[char46]100\[char46]0/24\fR\[char46]
+.IP
+\fBlr\-policy\-add lr1 100 ip4\[char46]src == 192\[char46]168\[char46]100\[char46]0/24 drop\fR\[char46]
+.IP
+\fB
+lr\-policy\-add lr1 100 ip4\[char46]src == 192\[char46]168\[char46]100\[char46]0/24 allow
+pkt_mark=100
+\fR\[char46]
+.TP
+[\fB\-\-if\-exists\fR] \fBlr\-policy\-del\fR \fIrouter\fR [\fI{priority | uuid} [match]\fR]
+Deletes polices from \fIrouter\fR\[char46] If only \fIrouter\fR is supplied, all the polices from the logical router are deleted\[char46] If \fIpriority\fR and/or \fImatch\fR are also specified, then all the polices that match the conditions will be deleted from the logical router\[char46]
+.IP
+If \fIrouter\fR and \fIuuid\fR are supplied, then the policy with sepcified uuid is deleted\[char46] It is an error if \fIuuid\fR does not exist, unless \fB\-\-if\-exists\fR is specified\[char46]
+.TP
+\fBlr\-policy\-list\fR \fIrouter\fR
+Lists the polices on \fIrouter\fR\[char46]
 .SH "NAT COMMANDS"
 .TP
 [\fB\-\-may\-exist\fR] [\fB\-\-stateless\fR]\fBlr\-nat\-add\fR \fIrouter\fR \fItype\fR \fIexternal_ip\fR \fIlogical_ip\fR [\fIlogical_port\fR \fIexternal_mac\fR]
@@ -304,12 +339,16 @@ It is an error if \fIip\fR is specified and there is no matching NAT entry, unle
 Lists the NATs on \fIrouter\fR\[char46]
 .SH "LOAD BALANCER COMMANDS"
 .TP
-[\fB\-\-may\-exist\fR | \fB\-\-add\-duplicate\fR] \fBlb\-add\fR \fIlb\fR \fIvip\fR \fIips\fR [\fIprotocol\fR]
+[\fB\-\-may\-exist\fR | \fB\-\-add\-duplicate\fR | \fB\-\-reject\fR | \fB\-\-event\fR] \fBlb\-add\fR \fIlb\fR \fIvip\fR \fIips\fR [\fIprotocol\fR]
 Creates a new load balancer named \fIlb\fR with the provided \fIvip\fR and \fIips\fR or adds the \fIvip\fR to an existing \fIlb\fR\[char46] \fIvip\fR should be a virtual IP address (or an IP address and a port number with \fB:\fR as a separator)\[char46] Examples for \fIvip\fR are \fB192\[char46]168\[char46]1\[char46]4\fR, \fBfd0f::1\fR, and \fB192\[char46]168\[char46]1\[char46]5:8080\fR\[char46] \fIips\fR should be comma separated IP endpoints (or comma separated IP addresses and port numbers with \fB:\fR as a separator)\[char46] \fIips\fR must be the same address family as \fIvip\fR\[char46] Examples for \fIips\fR are \fB10\[char46]0\[char46]0\[char46]1,10\[char46]0\[char46]0\[char46]2\fRor \fB[fdef::1]:8800,[fdef::2]:8800\fR\[char46]
 .IP
 The optional argument \fIprotocol\fR must be either \fBtcp\fR or \fBudp\fR\[char46] This argument is useful when a port number is provided as part of the \fIvip\fR\[char46] If the \fIprotocol\fR is unspecified and a port number is provided as part of the \fIvip\fR, OVN assumes the \fIprotocol\fR to be \fBtcp\fR\[char46]
 .IP
 It is an error if the \fIvip\fR already exists in the load balancer named \fIlb\fR, unless \fB\-\-may\-exist\fR is specified\[char46] With \fB\-\-add\-duplicate\fR, the command really creates a new load balancer with a duplicate name\[char46]
+.IP
+If the load balancer is created with \fB\-\-reject\fR option and it has no active backends, a TCP reset segment (for tcp) or an ICMP port unreachable packet (for all other kind of traffic) will be sent whenever an incoming packet is received for this load-balancer\[char46] Please note using \fB\-\-reject\fR option will disable empty_lb SB controller event for this load balancer\[char46]
+.IP
+If the load balancer is created with \fB\-\-event\fR option and it has no active backends, whenever the lb receives traffic, the event is reported in the Controller_Event table in the SB db\[char46] Please note \fB\-\-event\fR option can\(cqt be specified with \fB\-\-reject\fR one\[char46]
 .IP
 The following example adds a load balancer\[char46]
 .IP
@@ -460,6 +499,16 @@ Selects records in which \fIcolumn\fR[\fB:\fR\fIkey\fR] is a proper subset of \f
 Same as \fB{<=}\fR and \fB{<}\fR, respectively, except that the relationship is reversed\[char46] For example, \fBflood\-vlans{>=}1,2\fR selects records in which the \fBflood\-vlans\fR column contains both 1 and 2\[char46]
 .RE
 .IP
+The following operators are available only in Open vSwitch 2\[char46]16 and later:
+.RS
+.TP
+\fB{in}\fR
+Selects records in which every element in \fIcolumn\fR[\fB:\fR\fIkey\fR] is also in \fIvalue\fR\[char46] (This is the same as \fB{<=}\fR\[char46])
+.TP
+\fB{not\-in}\fR
+Selects records in which every element in \fIcolumn\fR[\fB:\fR\fIkey\fR] is not in \fIvalue\fR\[char46]
+.RE
+.IP
 For arithmetic operators (\fB= != < > <= >=\fR), when \fIkey\fR is specified but a particular record\(cqs \fIcolumn\fR does not contain \fIkey\fR, the record is always omitted from the results\[char46] Thus, the condition \fBother\-config:mtu!=1500\fR matches records that have a \fBmtu\fR key whose value is not 1500, but not those that lack an \fBmtu\fR key\[char46]
 .IP
 For the set operators, when \fIkey\fR is specified but a particular record\(cqs \fIcolumn\fR does not contain \fIkey\fR, the comparison is done against an empty set\[char46] Thus, the condition \fBother\-config:mtu{!=}1500\fR matches records that have a \fBmtu\fR key whose value is not 1500 and those that lack an \fBmtu\fR key\[char46]
@@ -529,7 +578,7 @@ The \fBdestroy\fR command is only useful for records in the \fBQoS\fR or \fBQueu
 .RE
 .TP
 \fBwait\-until\fR \fItable record\fR [\fIcolumn\fR[\fB:\fR\fIkey\fR]\fB=\fR\fIvalue\fR]\[char46]\[char46]\[char46]
-Waits until \fItable\fR contains a record named \fIrecord\fR whose \fIcolumn\fR equals \fIvalue\fR or, if \fIkey\fR is specified, whose \fIcolumn\fR contains a \fIkey\fR with the specified \fIvalue\fR\[char46] Any of the operators \fB!=\fR, \fB<\fR, \fB>\fR, \fB<=\fR, or \fB>=\fR may be substituted for \fB=\fR to test for inequality, less than, greater than, less than or equal to, or greater than or equal to, respectively\[char46] (Don\(cqt forget to escape \fB<\fR or \fB>\fR from interpretation by the shell\[char46])
+Waits until \fItable\fR contains a record named \fIrecord\fR whose \fIcolumn\fR equals \fIvalue\fR or, if \fIkey\fR is specified, whose \fIcolumn\fR contains a \fIkey\fR with the specified \fIvalue\fR\[char46] This command supports the same operators and semantics described for the \fBfind\fR command above\[char46]
 .IP
 If no \fIcolumn\fR[\fB:\fR\fIkey\fR]\fB=\fR\fIvalue\fR arguments are given, this command waits only until \fIrecord\fR exists\[char46] If more than one such argument is given, the command waits until all of them are satisfied\[char46]
 .RS
@@ -655,7 +704,24 @@ With \fB\-\-wait=sb\fR, before \fBovn\-nbctl\fR exits, it waits for \fBovn\-nort
 With \fB\-\-wait=hv\fR, before \fBovn\-nbctl\fR exits, it additionally waits for all OVN chassis (hypervisors and gateways) to become up-to-date with the northbound database updates\[char46] (This can become an indefinite wait if any chassis is malfunctioning\[char46])
 .IP
 Ordinarily, \fB\-\-wait=sb\fR or \fB\-\-wait=hv\fR only waits for changes by the current \fBovn\-nbctl\fR invocation to take effect\[char46] This means that, if none of the commands supplied to \fBovn\-nbctl\fR change the database, then the command does not wait at all\[char46] Use the \fBsync\fR command to override this behavior\[char46]
-.IP
+.TP
+\fB\-\-print\-wait\-time\fR
+When \fB\-\-wait\fR is specified, the option \fB\-\-print\-wait\-time\fR can be used to print the time spent on waiting, depending on the value specified in \fB \-\-wait\fR option\[char46] If \fB\-\-wait=sb\fR is specified, it prints \(dqovn-northd delay before processing\(dq, which is the time between the Northbound DB update by the command and the moment when \fB ovn\-northd\fR starts processing the update, and \(dqovn-northd completion\(dq, which is the time between the Northbound DB update and the moment when \fBovn\-northd\fR completes the Southbound DB updating successfully\[char46] If \fB\-\-wait=hv\fR is specified, in addition to the above information, it also prints \(dqovn-controller(s) completion\(dq, which is the time between the Northbound DB update and the moment when the slowest hypervisor finishes processing the update\[char46]
+.TP
+\fB\-\-db\fR \fIdatabase\fR
+The OVSDB database remote to contact\[char46] If the \fBOVN_NB_DB\fR environment variable is set, its value is used as the default\[char46] Otherwise, the default is \fBunix:/ovnnb_db\[char46]sock\fR, but this default is unlikely to be useful outside of single-machine OVN test environments\[char46]
+.TP
+\fB\-\-leader\-only\fR
+.TQ .5in
+\fB\-\-no\-leader\-only\fR
+By default, or with \fB\-\-leader\-only\fR, when the database server is a clustered database, \fBovn\-nbctl\fR will avoid servers other than the cluster leader\[char46] This ensures that any data that \fBovn\-nbctl\fR reads and reports is up-to-date\[char46] With \fB\-\-no\-leader\-only\fR, \fBovn\-nbctl\fR will use any server in the cluster, which means that for read-only transactions it can report and act on stale data (transactions that modify the database are always serialized even with \fB\-\-no\-leader\-only\fR)\[char46] Refer to \fBUnderstanding Cluster Consistency\fR in \fBovsdb\fR(7) for more information\[char46]
+.TP
+\fB\-\-shuffle\-remotes\fR
+.TQ .5in
+\fB\-\-no\-shuffle\-remotes\fR
+By default, or with \fB\-\-shuffle\-remotes\fR, when there are multiple remotes specified in the OVSDB connection string specified by \fB\-\-db\fR or the \fBOVN_NB_DB\fR environment variable, the order of the remotes will be shuffled before the client tries to connect\[char46] The remotes will be shuffled only once to a new order before the first connection attempt\[char46] The following retries, if any, will follow the same new order\[char46] The default behavior is to make sure clients of a clustered database can distribute evenly to all memembers of the cluster\[char46] With \fB\-\-no\-shuffle\-remotes\fR, \fBovn\-nbctl\fR will use the original order specified in the connection string to connect\[char46] This allows user to specify the preferred order, which is particularly useful for testing\[char46]
+.TP
+\fBOVN_NBCTL_OPTIONS\fR
 User can set one or more \fBOVN_NBCTL_OPTIONS\fR options in environment variable\[char46] Under the Bourne shell this might be done like this:
 .IP
 .nf
@@ -677,19 +743,6 @@ When the environment variable is no longer needed, unset it, e\[char46]g\[char46
 .br
 \fL        \fR
 .fi
-.TP
-\fB\-\-db\fR \fIdatabase\fR
-The OVSDB database remote to contact\[char46] If the \fBOVN_NB_DB\fR environment variable is set, its value is used as the default\[char46] Otherwise, the default is \fBunix:/ovnnb_db\[char46]sock\fR, but this default is unlikely to be useful outside of single-machine OVN test environments\[char46]
-.TP
-\fB\-\-leader\-only\fR
-.TQ .5in
-\fB\-\-no\-leader\-only\fR
-By default, or with \fB\-\-leader\-only\fR, when the database server is a clustered database, \fBovn\-nbctl\fR will avoid servers other than the cluster leader\[char46] This ensures that any data that \fBovn\-nbctl\fR reads and reports is up-to-date\[char46] With \fB\-\-no\-leader\-only\fR, \fBovn\-nbctl\fR will use any server in the cluster, which means that for read-only transactions it can report and act on stale data (transactions that modify the database are always serialized even with \fB\-\-no\-leader\-only\fR)\[char46] Refer to \fBUnderstanding Cluster Consistency\fR in \fBovsdb\fR(7) for more information\[char46]
-.TP
-\fB\-\-shuffle\-remotes\fR
-.TQ .5in
-\fB\-\-no\-shuffle\-remotes\fR
-By default, or with \fB\-\-shuffle\-remotes\fR, when there are multiple remotes specified in the OVSDB connection string specified by \fB\-\-db\fR or the \fBOVN_NB_DB\fR environment variable, the order of the remotes will be shuffled before the client tries to connect\[char46] The remotes will be shuffled only once to a new order before the first connection attempt\[char46] The following retries, if any, will follow the same new order\[char46] The default behavior is to make sure clients of a clustered database can distribute evenly to all memembers of the cluster\[char46] With \fB\-\-no\-shuffle\-remotes\fR, \fBovn\-nbctl\fR will use the original order specified in the connection string to connect\[char46] This allows user to specify the preferred order, which is particularly useful for testing\[char46]
 .SS "Daemon Options"
 .TP
 \fB\-\-pidfile\fR[\fB=\fR\fIpidfile\fR]
@@ -718,7 +771,7 @@ Specifying \fB\-\-no\-chdir\fR suppresses this behavior, preventing the daemon f
 This option has no effect when \fB\-\-detach\fR is not specified\[char46]
 .TP
 \fB\-\-no\-self\-confinement\fR
-By default this daemon will try to self-confine itself to work with files under well-known directories whitelisted at build time\[char46] It is better to stick with this default behavior and not to use this flag unless some other Access Control is used to confine daemon\[char46] Note that in contrast to other access control implementations that are typically enforced from kernel-space (e\[char46]g\[char46] DAC or MAC), self-confinement is imposed from the user-space daemon itself and hence should not be considered as a full confinement strategy, but instead should be viewed as an additional layer of security\[char46]
+By default this daemon will try to self-confine itself to work with files under well-known directories determined at build time\[char46] It is better to stick with this default behavior and not to use this flag unless some other Access Control is used to confine daemon\[char46] Note that in contrast to other access control implementations that are typically enforced from kernel-space (e\[char46]g\[char46] DAC or MAC), self-confinement is imposed from the user-space daemon itself and hence should not be considered as a full confinement strategy, but instead should be viewed as an additional layer of security\[char46]
 .TP
 \fB\-\-user=\fR\fIuser\fR\fB:\fR\fIgroup\fR
 Causes this program to run as a different user specified in \fIuser\fR\fB:\fR\fIgroup\fR, thus dropping most of the root privileges\[char46] Short forms \fIuser\fR and \fB:\fR\fIgroup\fR are also allowed, with current user or group assumed, respectively\[char46] Only daemons started by the root user accepts this argument\[char46]
@@ -765,7 +818,7 @@ Sets the log pattern for \fIdestination\fR to \fIpattern\fR\[char46] Refer to \f
 Sets the RFC5424 facility of the log message\[char46] \fIfacility\fR can be one of \fBkern\fR, \fBuser\fR, \fBmail\fR, \fBdaemon\fR, \fBauth\fR, \fBsyslog\fR, \fBlpr\fR, \fBnews\fR, \fBuucp\fR, \fBclock\fR, \fBftp\fR, \fBntp\fR, \fBaudit\fR, \fBalert\fR, \fBclock2\fR, \fBlocal0\fR, \fBlocal1\fR, \fBlocal2\fR, \fBlocal3\fR, \fBlocal4\fR, \fBlocal5\fR, \fBlocal6\fR or \fBlocal7\fR\[char46] If this option is not specified, \fBdaemon\fR is used as the default for the local system syslog and \fBlocal0\fR is used while sending a message to the target provided via the \fB\-\-syslog\-target\fR option\[char46]
 .TP
 \fB\-\-log\-file\fR[\fB=\fR\fIfile\fR]
-Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/local/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
+Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
 .TP
 \fB\-\-syslog\-target=\fR\fIhost\fR\fB:\fR\fIport\fR
 Send syslog messages to UDP \fIport\fR on \fIhost\fR, in addition to the system syslog\[char46] The \fIhost\fR must be a numerical IP address, not a hostname\[char46]

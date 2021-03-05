@@ -27,13 +27,15 @@ in userspace and therefore requires no kernel modules to be installed.
 ## Latest Release
 
 Download the latest release of OVN on the [releases](releases) page on the left.
-For a summary of changes in the latest release, see [here](releases/release_20.12.0)
+For a summary of changes in the latest release, see [here](releases/release_20.12.0).
+
+Distribution documentation (aka man pages) is [available here](https://www.ovn.org/support/dist-docs/).
 
 #### IRC meetings
 
 We have weekly IRC meetings you can participate in:
 
-[OVN weekly](http://eavesdrop.openstack.org/meetings/ovn_community_development_discussion/2020/)
+[OVN weekly](http://eavesdrop.openstack.org/meetings/ovn_community_development_discussion/2021/)
 IRC meeting every Thu 1715 UTC
 
 Freenode **#openvswitch**

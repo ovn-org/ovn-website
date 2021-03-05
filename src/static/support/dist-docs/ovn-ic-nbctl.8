@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-ic-nbctl" 8 "ovn-ic-nbctl" "Open vSwitch 20\[char46]03\[char46]90" "Open vSwitch Manual"
+.TH "ovn-ic-nbctl" 8 "ovn-ic-nbctl" "OVN 21\[char46]03\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -13,7 +13,11 @@
 .  I "\\$1"
 .  RE
 ..
-.PP
+.de SU
+.  PP
+.  I "\\$1"
+..
+build/.PP
 .SH "NAME"
 .PP
 .PP
@@ -123,6 +127,16 @@ Selects records in which \fIcolumn\fR[\fB:\fR\fIkey\fR] is a proper subset of \f
 Same as \fB{<=}\fR and \fB{<}\fR, respectively, except that the relationship is reversed\[char46] For example, \fBflood\-vlans{>=}1,2\fR selects records in which the \fBflood\-vlans\fR column contains both 1 and 2\[char46]
 .RE
 .IP
+The following operators are available only in Open vSwitch 2\[char46]16 and later:
+.RS
+.TP
+\fB{in}\fR
+Selects records in which every element in \fIcolumn\fR[\fB:\fR\fIkey\fR] is also in \fIvalue\fR\[char46] (This is the same as \fB{<=}\fR\[char46])
+.TP
+\fB{not\-in}\fR
+Selects records in which every element in \fIcolumn\fR[\fB:\fR\fIkey\fR] is not in \fIvalue\fR\[char46]
+.RE
+.IP
 For arithmetic operators (\fB= != < > <= >=\fR), when \fIkey\fR is specified but a particular record\(cqs \fIcolumn\fR does not contain \fIkey\fR, the record is always omitted from the results\[char46] Thus, the condition \fBother\-config:mtu!=1500\fR matches records that have a \fBmtu\fR key whose value is not 1500, but not those that lack an \fBmtu\fR key\[char46]
 .IP
 For the set operators, when \fIkey\fR is specified but a particular record\(cqs \fIcolumn\fR does not contain \fIkey\fR, the comparison is done against an empty set\[char46] Thus, the condition \fBother\-config:mtu{!=}1500\fR matches records that have a \fBmtu\fR key whose value is not 1500 and those that lack an \fBmtu\fR key\[char46]
@@ -192,7 +206,7 @@ The \fBdestroy\fR command is only useful for records in the \fBQoS\fR or \fBQueu
 .RE
 .TP
 \fBwait\-until\fR \fItable record\fR [\fIcolumn\fR[\fB:\fR\fIkey\fR]\fB=\fR\fIvalue\fR]\[char46]\[char46]\[char46]
-Waits until \fItable\fR contains a record named \fIrecord\fR whose \fIcolumn\fR equals \fIvalue\fR or, if \fIkey\fR is specified, whose \fIcolumn\fR contains a \fIkey\fR with the specified \fIvalue\fR\[char46] Any of the operators \fB!=\fR, \fB<\fR, \fB>\fR, \fB<=\fR, or \fB>=\fR may be substituted for \fB=\fR to test for inequality, less than, greater than, less than or equal to, or greater than or equal to, respectively\[char46] (Don\(cqt forget to escape \fB<\fR or \fB>\fR from interpretation by the shell\[char46])
+Waits until \fItable\fR contains a record named \fIrecord\fR whose \fIcolumn\fR equals \fIvalue\fR or, if \fIkey\fR is specified, whose \fIcolumn\fR contains a \fIkey\fR with the specified \fIvalue\fR\[char46] This command supports the same operators and semantics described for the \fBfind\fR command above\[char46]
 .IP
 If no \fIcolumn\fR[\fB:\fR\fIkey\fR]\fB=\fR\fIvalue\fR arguments are given, this command waits only until \fIrecord\fR exists\[char46] If more than one such argument is given, the command waits until all of them are satisfied\[char46]
 .RS
@@ -275,7 +289,7 @@ Sets the log pattern for \fIdestination\fR to \fIpattern\fR\[char46] Refer to \f
 Sets the RFC5424 facility of the log message\[char46] \fIfacility\fR can be one of \fBkern\fR, \fBuser\fR, \fBmail\fR, \fBdaemon\fR, \fBauth\fR, \fBsyslog\fR, \fBlpr\fR, \fBnews\fR, \fBuucp\fR, \fBclock\fR, \fBftp\fR, \fBntp\fR, \fBaudit\fR, \fBalert\fR, \fBclock2\fR, \fBlocal0\fR, \fBlocal1\fR, \fBlocal2\fR, \fBlocal3\fR, \fBlocal4\fR, \fBlocal5\fR, \fBlocal6\fR or \fBlocal7\fR\[char46] If this option is not specified, \fBdaemon\fR is used as the default for the local system syslog and \fBlocal0\fR is used while sending a message to the target provided via the \fB\-\-syslog\-target\fR option\[char46]
 .TP
 \fB\-\-log\-file\fR[\fB=\fR\fIfile\fR]
-Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/local/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
+Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
 .TP
 \fB\-\-syslog\-target=\fR\fIhost\fR\fB:\fR\fIport\fR
 Send syslog messages to UDP \fIport\fR on \fIhost\fR, in addition to the system syslog\[char46] The \fIhost\fR must be a numerical IP address, not a hostname\[char46]
