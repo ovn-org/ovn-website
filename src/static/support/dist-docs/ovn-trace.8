@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-trace" 8 "ovn-trace" "Open vSwitch 20\[char46]03\[char46]90" "Open vSwitch Manual"
+.TH "ovn-trace" 8 "ovn-trace" "OVN 21\[char46]03\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -13,14 +13,18 @@
 .  I "\\$1"
 .  RE
 ..
-.PP
+.de SU
+.  PP
+.  I "\\$1"
+..
+build/.PP
 .SH "NAME"
 .PP
 .PP
 ovn-trace \- Open Virtual Network logical network tracing utility
 .SH "SYNOPSIS"
 .PP
-\fBovn\-trace\fR [\fIoptions\fR] \fIdatapath\fR \fImicroflow\fR
+\fBovn\-trace\fR [\fIoptions\fR] \fI[datapath]\fR \fImicroflow\fR
 .PP
 \fBovn\-trace\fR [\fIoptions\fR] \fB\-\-detach\fR
 .SH "DESCRIPTION"
@@ -35,10 +39,10 @@ This utility simulates packet forwarding within an OVN logical network\[char46] 
 \fBovn\-trace\fR simulates only the OVN logical network\[char46] It does not simulate the physical elements on which the logical network is layered\[char46] This means that, for example, it is unimportant how VMs are distributed among hypervisors, or whether their hypervisors are functioning and reachable, so \fBovn\-trace\fR will yield the same results regardless\[char46] There is one important exception: \fBovn\-northd\fR, the daemon that generates the logical flows that \fBovn\-trace\fR simulates, treats logical ports differently based on whether they are up or down\[char46] Thus, if you see surprising results, ensure that the ports involved in a simulation are up\[char46]
 .PP
 .PP
-The simplest way to use \fBovn\-trace\fR is to provide \fIdatapath\fR and \fImicroflow\fR arguments on the command line\[char46] In this case, it simulates the behavior of a single packet and exits\[char46] For an alternate usage model, see \fBDaemon Mode\fR below\[char46]
+The simplest way to use \fBovn\-trace\fR is to provide the \fImicroflow\fR (and optional \fIdatapath\fR) arguments on the command line\[char46] In this case, it simulates the behavior of a single packet and exits\[char46] For an alternate usage model, see \fBDaemon Mode\fR below\[char46]
 .PP
 .PP
-The \fIdatapath\fR argument specifies the name of a logical datapath\[char46] Acceptable names are the \fBname\fR from the northbound \fBLogical_Switch\fR or \fBLogical_Router\fR table, the UUID of a record from one of those tables, or the UUID of a record from the southbound \fBDatapath_Binding\fR table\[char46]
+The optional \fIdatapath\fR argument specifies the name of a logical datapath\[char46] Acceptable names are the \fBname\fR from the northbound \fBLogical_Switch\fR or \fBLogical_Router\fR table, the UUID of a record from one of those tables, or the UUID of a record from the southbound \fBDatapath_Binding\fR table\[char46] (The \fBdatapath\fR is optional because \fBovn\-trace\fR can figure it out from the \fIinport\fR that the \fImicroflow\fR matches\[char46])
 .PP
 .PP
 The \fImicroflow\fR argument describes the packet whose forwarding is to be simulated, in the syntax of an OVN logical expression, as described in \fBovn\-sb\fR(5), to express constraints\[char46] The parser understands prerequisites; for example, if the expression refers to \fBip4\[char46]src\fR, there is no need to explicitly state \fBip4\fR or \fBeth\[char46]type == 0x800\fR\[char46]
@@ -192,7 +196,7 @@ If \fBovn\-trace\fR is invoked with the \fB\-\-detach\fR option (see \fBDaemon O
 .PP
 .RS
 .TP
-\fBtrace\fR [\fIoptions\fR] \fIdatapath\fR \fImicroflow\fR
+\fBtrace\fR [\fIoptions\fR] [\fIdatapath\fR] \fImicroflow\fR
 Traces \fImicroflow\fR through \fIdatapath\fR and replies with the results of the trace\[char46] Accepts the \fIoptions\fR described under \fBTrace Options\fR below\[char46]
 .TP
 \fBexit\fR
@@ -304,7 +308,7 @@ Specifying \fB\-\-no\-chdir\fR suppresses this behavior, preventing the daemon f
 This option has no effect when \fB\-\-detach\fR is not specified\[char46]
 .TP
 \fB\-\-no\-self\-confinement\fR
-By default this daemon will try to self-confine itself to work with files under well-known directories whitelisted at build time\[char46] It is better to stick with this default behavior and not to use this flag unless some other Access Control is used to confine daemon\[char46] Note that in contrast to other access control implementations that are typically enforced from kernel-space (e\[char46]g\[char46] DAC or MAC), self-confinement is imposed from the user-space daemon itself and hence should not be considered as a full confinement strategy, but instead should be viewed as an additional layer of security\[char46]
+By default this daemon will try to self-confine itself to work with files under well-known directories determined at build time\[char46] It is better to stick with this default behavior and not to use this flag unless some other Access Control is used to confine daemon\[char46] Note that in contrast to other access control implementations that are typically enforced from kernel-space (e\[char46]g\[char46] DAC or MAC), self-confinement is imposed from the user-space daemon itself and hence should not be considered as a full confinement strategy, but instead should be viewed as an additional layer of security\[char46]
 .TP
 \fB\-\-user=\fR\fIuser\fR\fB:\fR\fIgroup\fR
 Causes this program to run as a different user specified in \fIuser\fR\fB:\fR\fIgroup\fR, thus dropping most of the root privileges\[char46] Short forms \fIuser\fR and \fB:\fR\fIgroup\fR are also allowed, with current user or group assumed, respectively\[char46] Only daemons started by the root user accepts this argument\[char46]
@@ -351,7 +355,7 @@ Sets the log pattern for \fIdestination\fR to \fIpattern\fR\[char46] Refer to \f
 Sets the RFC5424 facility of the log message\[char46] \fIfacility\fR can be one of \fBkern\fR, \fBuser\fR, \fBmail\fR, \fBdaemon\fR, \fBauth\fR, \fBsyslog\fR, \fBlpr\fR, \fBnews\fR, \fBuucp\fR, \fBclock\fR, \fBftp\fR, \fBntp\fR, \fBaudit\fR, \fBalert\fR, \fBclock2\fR, \fBlocal0\fR, \fBlocal1\fR, \fBlocal2\fR, \fBlocal3\fR, \fBlocal4\fR, \fBlocal5\fR, \fBlocal6\fR or \fBlocal7\fR\[char46] If this option is not specified, \fBdaemon\fR is used as the default for the local system syslog and \fBlocal0\fR is used while sending a message to the target provided via the \fB\-\-syslog\-target\fR option\[char46]
 .TP
 \fB\-\-log\-file\fR[\fB=\fR\fIfile\fR]
-Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/local/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
+Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
 .TP
 \fB\-\-syslog\-target=\fR\fIhost\fR\fB:\fR\fIport\fR
 Send syslog messages to UDP \fIport\fR on \fIhost\fR, in addition to the system syslog\[char46] The \fIhost\fR must be a numerical IP address, not a hostname\[char46]

@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-controller" 8 "ovn-controller" "Open vSwitch 20\[char46]03\[char46]90" "Open vSwitch Manual"
+.TH "ovn-controller" 8 "ovn-controller" "OVN 21\[char46]03\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -13,7 +13,11 @@
 .  I "\\$1"
 .  RE
 ..
-.PP
+.de SU
+.  PP
+.  I "\\$1"
+..
+build/.PP
 .SH "NAME"
 .PP
 .PP
@@ -58,7 +62,7 @@ Specifying \fB\-\-no\-chdir\fR suppresses this behavior, preventing the daemon f
 This option has no effect when \fB\-\-detach\fR is not specified\[char46]
 .TP
 \fB\-\-no\-self\-confinement\fR
-By default this daemon will try to self-confine itself to work with files under well-known directories whitelisted at build time\[char46] It is better to stick with this default behavior and not to use this flag unless some other Access Control is used to confine daemon\[char46] Note that in contrast to other access control implementations that are typically enforced from kernel-space (e\[char46]g\[char46] DAC or MAC), self-confinement is imposed from the user-space daemon itself and hence should not be considered as a full confinement strategy, but instead should be viewed as an additional layer of security\[char46]
+By default this daemon will try to self-confine itself to work with files under well-known directories determined at build time\[char46] It is better to stick with this default behavior and not to use this flag unless some other Access Control is used to confine daemon\[char46] Note that in contrast to other access control implementations that are typically enforced from kernel-space (e\[char46]g\[char46] DAC or MAC), self-confinement is imposed from the user-space daemon itself and hence should not be considered as a full confinement strategy, but instead should be viewed as an additional layer of security\[char46]
 .TP
 \fB\-\-user=\fR\fIuser\fR\fB:\fR\fIgroup\fR
 Causes this program to run as a different user specified in \fIuser\fR\fB:\fR\fIgroup\fR, thus dropping most of the root privileges\[char46] Short forms \fIuser\fR and \fB:\fR\fIgroup\fR are also allowed, with current user or group assumed, respectively\[char46] Only daemons started by the root user accepts this argument\[char46]
@@ -105,7 +109,7 @@ Sets the log pattern for \fIdestination\fR to \fIpattern\fR\[char46] Refer to \f
 Sets the RFC5424 facility of the log message\[char46] \fIfacility\fR can be one of \fBkern\fR, \fBuser\fR, \fBmail\fR, \fBdaemon\fR, \fBauth\fR, \fBsyslog\fR, \fBlpr\fR, \fBnews\fR, \fBuucp\fR, \fBclock\fR, \fBftp\fR, \fBntp\fR, \fBaudit\fR, \fBalert\fR, \fBclock2\fR, \fBlocal0\fR, \fBlocal1\fR, \fBlocal2\fR, \fBlocal3\fR, \fBlocal4\fR, \fBlocal5\fR, \fBlocal6\fR or \fBlocal7\fR\[char46] If this option is not specified, \fBdaemon\fR is used as the default for the local system syslog and \fBlocal0\fR is used while sending a message to the target provided via the \fB\-\-syslog\-target\fR option\[char46]
 .TP
 \fB\-\-log\-file\fR[\fB=\fR\fIfile\fR]
-Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/local/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
+Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
 .TP
 \fB\-\-syslog\-target=\fR\fIhost\fR\fB:\fR\fIport\fR
 Send syslog messages to UDP \fIport\fR on \fIhost\fR, in addition to the system syslog\[char46] The \fIhost\fR must be a numerical IP address, not a hostname\[char46]
@@ -189,7 +193,7 @@ Prints version information to the console\[char46]
 .RS
 .TP
 \fBexternal_ids:system\-id\fR
-The chassis name to use in the Chassis table\[char46]
+The chassis name to use in the Chassis table\[char46] Changing the \fBsystem\-id\fR while \fBovn\-controller\fR is running is not directly supported\[char46] Users have two options: either first gracefully stop \fBovn\-controller\fR or manually delete the stale \fBChassis\fR and \fBChassis_Private\fR records after changing the \fBsystem\-id\fR\[char46]
 .TP
 \fBexternal_ids:hostname\fR
 The hostname to use in the Chassis table\[char46]
@@ -249,6 +253,18 @@ A list of key-value pairs that map a chassis specific mac to a physical network 
 .TP
 \fBexternal_ids:ovn\-is\-interconn\fR
 The boolean flag indicates if the chassis is used as an interconnection gateway\[char46]
+.TP
+\fBexternal_ids:ovn\-match\-northd\-version\fR
+The boolean flag indicates if \fBovn\-controller\fR needs to check \fBovn\-northd\fR version\[char46] If this flag is set to true and the \fBovn\-northd\(cqs\fR version (reported in the Southbound database) doesn\(cqt match with the \fBovn\-controller\(cqs\fR internal version, then it will stop processing the southbound and local Open vSwitch database changes\[char46] The default value is considered false if this option is not defined\[char46]
+.TP
+\fBexternal_ids:ovn\-enable\-lflow\-cache\fR
+The boolean flag indicates if \fBovn\-controller\fR should enable/disable the logical flow in-memory cache it uses when processing Southbound database logical flow changes\[char46] By default caching is enabled\[char46]
+.TP
+\fBexternal_ids:ovn\-limit\-lflow\-cache\fR
+When used, this configuration value determines the maximum number of logical flow cache entries \fBovn\-controller\fR may create when the logical flow cache is enabled\[char46] By default the size of the cache is unlimited\[char46]
+.TP
+\fBexternal_ids:ovn\-memlimit\-lflow\-cache\-kb\fR
+When used, this configuration value determines the maximum size of the logical flow cache (in KB) \fBovn\-controller\fR may create when the logical flow cache is enabled\[char46] By default the size of the cache is unlimited\[char46]
 .RE
 .PP
 .PP
@@ -256,7 +272,7 @@ The boolean flag indicates if the chassis is used as an interconnection gateway\
 .RS
 .TP
 \fBdatapath\-type\fR from \fBBridge\fR table
-This value is read from local OVS integration bridge row of \fBBridge\fR table and populated in \fBexternal_ids:datapath-type\fR of the \fBChassis\fR table in the OVN_Southbound database\[char46]
+This value is read from local OVS integration bridge row of \fBBridge\fR table and populated in \fBother_config:datapath-type\fR of the \fBChassis\fR table in the OVN_Southbound database\[char46]
 .TP
 \fBiface\-types\fR from \fBOpen_vSwitch\fR table
 This value is populated in \fBexternal_ids:iface-types\fR of the \fBChassis\fR table in the OVN_Southbound database\[char46]
@@ -291,6 +307,9 @@ This key identifies a patch port as one created by \fBovn\-controller\fR to impl
 .TP
 \fBexternal\-ids:ovn\-logical\-patch\-port\fR in the \fBPort\fR table
 This key identifies a patch port as one created by \fBovn\-controller\fR to implement an OVN logical patch port within the integration bridge\[char46] Its value is the name of the OVN logical patch port that it implements\[char46]
+.TP
+\fBexternal\-ids:ovn\-nb\-cfg\fR in the \fBBridge\fR table
+This key represents the last known \fBOVN_Southbound\[char46]SB_Global\[char46]nb_cfg\fR value for which all flows have been successfully installed in OVS\[char46]
 .RE
 .SH "OVN SOUTHBOUND DATABASE USAGE"
 .PP
@@ -341,4 +360,18 @@ Show OVN SBDB connection status for the chassis\[char46]
 Trigger a full compute iteration in \fBovn\-controller\fR based on the contents of the Southbound database and local OVS database\[char46]
 .IP
 This command is intended to use only in the event of a bug in the incremental processing engine in \fBovn\-controller\fR to avoid inconsistent states\[char46] It should therefore be used with care as full recomputes are cpu intensive\[char46]
+.TP
+\fBsb\-cluster\-state\-reset\fR
+Reset southbound database cluster status when databases are destroyed and rebuilt\[char46]
+.IP
+If all databases in a clustered southbound database are removed from disk, then the stored index of all databases will be reset to zero\[char46] This will cause ovn-controller to be unable to read or write to the southbound database, because it will always detect the data as stale\[char46] In such a case, run this command so that ovn-controller will reset its local index so that it can interact with the southbound database again\[char46]
+.TP
+\fBdebug/delay\-nb\-cfg\-report\fR \fIseconds\fR
+This command is used to delay ovn-controller updating the \fBnb_cfg\fR back to \fBOVN_Southbound\fR database\[char46] This is useful when \fBovn\-nbctl \-\-wait=hv\fR is used to measure end-to-end latency in a large scale environment\[char46] See \fBovn\-nbctl\fR(8) for more details\[char46]
+.TP
+\fBlflow\-cache/flush\fR
+Flushes the \fBovn\-controller\fR logical flow cache\[char46]
+.TP
+\fBlflow\-cache/show\-stats\fR
+Displays logical flow cache statistics: enabled/disabled, per cache type entry counts\[char46]
 .RE

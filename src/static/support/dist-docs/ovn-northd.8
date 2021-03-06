@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-northd" 8 "ovn-northd" "Open vSwitch 20\[char46]03\[char46]90" "Open vSwitch Manual"
+.TH "ovn-northd" 8 "ovn-northd" "OVN 21\[char46]03\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -13,7 +13,11 @@
 .  I "\\$1"
 .  RE
 ..
-.PP
+.de SU
+.  PP
+.  I "\\$1"
+..
+build/.PP
 .SH "NAME"
 .PP
 .PP
@@ -63,7 +67,7 @@ Specifying \fB\-\-no\-chdir\fR suppresses this behavior, preventing the daemon f
 This option has no effect when \fB\-\-detach\fR is not specified\[char46]
 .TP
 \fB\-\-no\-self\-confinement\fR
-By default this daemon will try to self-confine itself to work with files under well-known directories whitelisted at build time\[char46] It is better to stick with this default behavior and not to use this flag unless some other Access Control is used to confine daemon\[char46] Note that in contrast to other access control implementations that are typically enforced from kernel-space (e\[char46]g\[char46] DAC or MAC), self-confinement is imposed from the user-space daemon itself and hence should not be considered as a full confinement strategy, but instead should be viewed as an additional layer of security\[char46]
+By default this daemon will try to self-confine itself to work with files under well-known directories determined at build time\[char46] It is better to stick with this default behavior and not to use this flag unless some other Access Control is used to confine daemon\[char46] Note that in contrast to other access control implementations that are typically enforced from kernel-space (e\[char46]g\[char46] DAC or MAC), self-confinement is imposed from the user-space daemon itself and hence should not be considered as a full confinement strategy, but instead should be viewed as an additional layer of security\[char46]
 .TP
 \fB\-\-user=\fR\fIuser\fR\fB:\fR\fIgroup\fR
 Causes this program to run as a different user specified in \fIuser\fR\fB:\fR\fIgroup\fR, thus dropping most of the root privileges\[char46] Short forms \fIuser\fR and \fB:\fR\fIgroup\fR are also allowed, with current user or group assumed, respectively\[char46] Only daemons started by the root user accepts this argument\[char46]
@@ -110,7 +114,7 @@ Sets the log pattern for \fIdestination\fR to \fIpattern\fR\[char46] Refer to \f
 Sets the RFC5424 facility of the log message\[char46] \fIfacility\fR can be one of \fBkern\fR, \fBuser\fR, \fBmail\fR, \fBdaemon\fR, \fBauth\fR, \fBsyslog\fR, \fBlpr\fR, \fBnews\fR, \fBuucp\fR, \fBclock\fR, \fBftp\fR, \fBntp\fR, \fBaudit\fR, \fBalert\fR, \fBclock2\fR, \fBlocal0\fR, \fBlocal1\fR, \fBlocal2\fR, \fBlocal3\fR, \fBlocal4\fR, \fBlocal5\fR, \fBlocal6\fR or \fBlocal7\fR\[char46] If this option is not specified, \fBdaemon\fR is used as the default for the local system syslog and \fBlocal0\fR is used while sending a message to the target provided via the \fB\-\-syslog\-target\fR option\[char46]
 .TP
 \fB\-\-log\-file\fR[\fB=\fR\fIfile\fR]
-Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/local/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
+Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
 .TP
 \fB\-\-syslog\-target=\fR\fIhost\fR\fB:\fR\fIport\fR
 Send syslog messages to UDP \fIport\fR on \fIhost\fR, in addition to the system syslog\[char46] The \fIhost\fR must be a numerical IP address, not a hostname\[char46]
@@ -194,6 +198,16 @@ Returns \(dqtrue\(dq if ovn-northd is currently paused, \(dqfalse\(dq otherwise\
 .TP
 \fBstatus\fR
 Prints this server\(cqs status\[char46] Status will be \(dqactive\(dq if ovn-northd has acquired OVSDB lock on SB DB, \(dqstandby\(dq if it has not or \(dqpaused\(dq if this instance is paused\[char46]
+.TP
+\fBsb\-cluster\-state\-reset\fR
+Reset southbound database cluster status when databases are destroyed and rebuilt\[char46]
+.IP
+If all databases in a clustered southbound database are removed from disk, then the stored index of all databases will be reset to zero\[char46] This will cause ovn-northd to be unable to read or write to the southbound database, because it will always detect the data as stale\[char46] In such a case, run this command so that ovn-northd will reset its local index so that it can interact with the southbound database again\[char46]
+.TP
+\fBnb\-cluster\-state\-reset\fR
+Reset northbound database cluster status when databases are destroyed and rebuilt\[char46]
+.IP
+This performs the same task as \fBsb\-cluster\-state\-reset\fR except for the northbound database client\[char46]
 .RE
 .SH "ACTIVE-STANDBY FOR HIGH AVAILABILITY"
 .PP
@@ -273,26 +287,97 @@ Priority 80 flow to drop ARP and IPv6 Neighbor Solicitation and Advertisement tr
 .IP \(bu
 One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
 .RE
-.ST "Ingress Table 3:\fBfrom\-lport\fIPre-ACLs"
+.ST "Ingress Table 3: Lookup MAC address learning table"
 .PP
 .PP
-This table prepares flows for possible stateful ACL processing in ingress table \fBACLs\fR\[char46] It contains a priority\-0 flow that simply moves traffic to the next table\[char46] If stateful ACLs are used in the logical datapath, a priority\-100 flow is added that sets a hint (with \fBreg0[0] = 1; next;\fR) for table \fBPre\-stateful\fR to send IP packets to the connection tracker before eventually advancing to ingress table \fBACLs\fR\[char46] If special ports such as route ports or localnet ports can\(cqt use ct(), a priority\-110 flow is added to skip over stateful ACLs\[char46]
+This table looks up the MAC learning table of the logical switch datapath to check if the \fBport\-mac\fR pair is present or not\[char46] MAC is learnt only for logical switch VIF ports whose port security is disabled and \(cqunknown\(cq address set\[char46]
+.RS
+.IP \(bu
+For each such logical port \fIp\fR whose port security is disabled and \(cqunknown\(cq address set following flow is added\[char46]
+.RS
+.IP \(bu
+Priority 100 flow with the match \fBinport == \fIp\fB\fR and action \fBreg0[11] = lookup_fdb(inport, eth\[char46]src); next;\fR
+.RE
+.IP \(bu
+One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
+.RE
+.ST "Ingress Table 4: Learn MAC of \(cqunknown\(cq ports\[char46]"
+.PP
+.PP
+This table learns the MAC addresses seen on the logical ports whose port security is disabled and \(cqunknown\(cq address set if the \fBlookup_fdb\fR action returned false in the previous table\[char46]
+.RS
+.IP \(bu
+For each such logical port \fIp\fR whose port security is disabled and \(cqunknown\(cq address set following flow is added\[char46]
+.RS
+.IP \(bu
+Priority 100 flow with the match \fBinport == \fIp\fB && reg0[11] == 0\fR and action \fBput_fdb(inport, eth\[char46]src); next;\fR which stores the \fBport\-mac\fR in the mac learning table of the logical switch datapath and advances the packet to the next table\[char46]
+.RE
+.IP \(bu
+One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
+.RE
+.ST "Ingress Table 5:\fBfrom\-lport\fIPre-ACLs"
+.PP
+.PP
+This table prepares flows for possible stateful ACL processing in ingress table \fBACLs\fR\[char46] It contains a priority\-0 flow that simply moves traffic to the next table\[char46] If stateful ACLs are used in the logical datapath, a priority\-100 flow is added that sets a hint (with \fBreg0[0] = 1; next;\fR) for table \fBPre\-stateful\fR to send IP packets to the connection tracker before eventually advancing to ingress table \fBACLs\fR\[char46] If special ports such as route ports or localnet ports can\(cqt use ct(), a priority\-110 flow is added to skip over stateful ACLs\[char46] IPv6 Neighbor Discovery and MLD traffic also skips stateful ACLs\[char46]
 .PP
 .PP
 This table also has a priority\-110 flow with the match \fBeth\[char46]dst == \fIE\fB\fR for all logical switch datapaths to move traffic to the next table\[char46] Where \fIE\fR is the service monitor mac defined in the \fBoptions:svc_monitor_mac\fR colum of \fBNB_Global\fR table\[char46]
-.ST "Ingress Table 4: Pre-LB"
+.ST "Ingress Table 6: Pre-LB"
 .PP
 .PP
-This table prepares flows for possible stateful load balancing processing in ingress table \fBLB\fR and \fBStateful\fR\[char46] It contains a priority\-0 flow that simply moves traffic to the next table\[char46] Moreover it contains a priority\-110 flow to move IPv6 Neighbor Discovery traffic to the next table\[char46] If load balancing rules with virtual IP addresses (and ports) are configured in \fBOVN_Northbound\fR database for a logical switch datapath, a priority\-100 flow is added for each configured virtual IP address \fIVIP\fR\[char46] For IPv4 \fIVIPs\fR, the match is \fBip && ip4\[char46]dst == \fIVIP\fB\fR\[char46] For IPv6 \fIVIPs\fR, the match is \fBip &&
-ip6\[char46]dst == \fIVIP\fB\fR\[char46] The flow sets an action \fBreg0[0] = 1; next;\fR to act as a hint for table \fBPre\-stateful\fR to send IP packets to the connection tracker for packet de-fragmentation before eventually advancing to ingress table \fBLB\fR\[char46] If controller_event has been enabled and load balancing rules with empty backends have been added in \fBOVN_Northbound\fR, a 130 flow is added to trigger ovn-controller events whenever the chassis receives a packet for that particular VIP\[char46] If \fBevent\-elb\fR meter has been previously created, it will be associated to the empty_lb logical flow
+This table prepares flows for possible stateful load balancing processing in ingress table \fBLB\fR and \fBStateful\fR\[char46] It contains a priority\-0 flow that simply moves traffic to the next table\[char46] Moreover it contains a priority\-110 flow to move IPv6 Neighbor Discovery and MLD traffic to the next table\[char46] If load balancing rules with virtual IP addresses (and ports) are configured in \fBOVN_Northbound\fR database for alogical switch datapath, a priority\-100 flow is added with the match \fBip\fR to match on IP packets and sets the action \fBreg0[0] = 1; next;\fR to act as a hint for table \fBPre\-stateful\fR to send IP packets to the connection tracker for packet de-fragmentation before eventually advancing to ingress table \fBLB\fR\[char46] If controller_event has been enabled and load balancing rules with empty backends have been added in \fBOVN_Northbound\fR, a 130 flow is added to trigger ovn-controller events whenever the chassis receives a packet for that particular VIP\[char46] If \fBevent\-elb\fR meter has been previously created, it will be associated to the empty_lb logical flow
+.PP
+.PP
+Prior to \fBOVN 20\[char46]09\fR we were setting the \fBreg0[0] = 1\fR only if the IP destination matches the load balancer VIP\[char46] However this had few issues cases where a logical switch doesn\(cqt have any ACLs with \fBallow\-related\fR action\[char46] To understand the issue lets a take a TCP load balancer - \fB10\[char46]0\[char46]0\[char46]10:80=10\[char46]0\[char46]0\[char46]3:80\fR\[char46] If a logical port - p1 with IP - 10\[char46]0\[char46]0\[char46]5 opens a TCP connection with the VIP - 10\[char46]0\[char46]0\[char46]10, then the packet in the ingress pipeline of \(cqp1\(cq is sent to the p1\(cqs conntrack zone id and the packet is load balanced to the backend - 10\[char46]0\[char46]0\[char46]3\[char46] For the reply packet from the backend lport, it is not sent to the conntrack of backend lport\(cqs zone id\[char46] This is fine as long as the packet is valid\[char46] Suppose the backend lport sends an invalid TCP packet (like incorrect sequence number), the packet gets delivered to the lport \(cqp1\(cq without unDNATing the packet to the VIP - 10\[char46]0\[char46]0\[char46]10\[char46] And this causes the connection to be reset by the lport p1\(cqs VIF\[char46]
+.PP
+.PP
+We can\(cqt fix this issue by adding a logical flow to drop ct\[char46]inv packets in the egress pipeline since it will drop all other connections not destined to the load balancers\[char46] To fix this issue, we send all the packets to the conntrack in the ingress pipeline if a load balancer is configured\[char46] We can now add a lflow to drop ct\[char46]inv packets\[char46]
 .PP
 .PP
 This table also has a priority\-110 flow with the match \fBeth\[char46]dst == \fIE\fB\fR for all logical switch datapaths to move traffic to the next table\[char46] Where \fIE\fR is the service monitor mac defined in the \fBoptions:svc_monitor_mac\fR colum of \fBNB_Global\fR table\[char46]
-.ST "Ingress Table 5: Pre-stateful"
+.PP
+.PP
+This table also has a priority\-110 flow with the match \fBinport == \fII\fB\fR for all logical switch datapaths to move traffic to the next table\[char46] Where \fII\fR is the peer of a logical router port\[char46] This flow is added to skip the connection tracking of packets which enter from logical router datapath to logical switch datapath\[char46]
+.ST "Ingress Table 7: Pre-stateful"
 .PP
 .PP
 This table prepares flows for all possible stateful processing in next tables\[char46] It contains a priority\-0 flow that simply moves traffic to the next table\[char46] A priority\-100 flow sends the packets to connection tracker based on a hint provided by the previous tables (with a match for \fBreg0[0] == 1\fR) by using the \fBct_next;\fR action\[char46]
-.ST "Ingress table 6:\fBfrom\-lport\fIACLs"
+.ST "Ingress Table 8:\fBfrom\-lport\fIACL hints"
+.PP
+.PP
+This table consists of logical flows that set hints (\fBreg0\fR bits) to be used in the next stage, in the ACL processing table, if stateful ACLs or load balancers are configured\[char46] Multiple hints can be set for the same packet\[char46] The possible hints are:
+.RS
+.IP \(bu
+\fBreg0[7]\fR: the packet might match an \fBallow\-related\fR ACL and might have to commit the connection to conntrack\[char46]
+.IP \(bu
+\fBreg0[8]\fR: the packet might match an \fBallow\-related\fR ACL but there will be no need to commit the connection to conntrack because it already exists\[char46]
+.IP \(bu
+\fBreg0[9]\fR: the packet might match a \fBdrop/reject\fR\[char46]
+.IP \(bu
+\fBreg0[10]\fR: the packet might match a \fBdrop/reject\fR ACL but the connection was previously allowed so it might have to be committed again with \fBct_label=1/1\fR\[char46]
+.RE
+.PP
+.PP
+The table contains the following flows:
+.RS
+.IP \(bu
+A priority\-7 flow that matches on packets that initiate a new session\[char46] This flow sets \fBreg0[7]\fR and \fBreg0[9]\fR and then advances to the next table\[char46]
+.IP \(bu
+A priority\-6 flow that matches on packets that are in the request direction of an already existing session that has been marked as blocked\[char46] This flow sets \fBreg0[7]\fR and \fBreg0[9]\fR and then advances to the next table\[char46]
+.IP \(bu
+A priority\-5 flow that matches untracked packets\[char46] This flow sets \fBreg0[8]\fR and \fBreg0[9]\fR and then advances to the next table\[char46]
+.IP \(bu
+A priority\-4 flow that matches on packets that are in the request direction of an already existing session that has not been marked as blocked\[char46] This flow sets \fBreg0[8]\fR and \fBreg0[10]\fR and then advances to the next table\[char46]
+.IP \(bu
+A priority\-3 flow that matches on packets that are in not part of established sessions\[char46] This flow sets \fBreg0[9]\fR and then advances to the next table\[char46]
+.IP \(bu
+A priority\-2 flow that matches on packets that are part of an established session that has been marked as blocked\[char46] This flow sets \fBreg0[9]\fR and then advances to the next table\[char46]
+.IP \(bu
+A priority\-1 flow that matches on packets that are part of an established session that has not been marked as blocked\[char46] This flow sets \fBreg0[10]\fR and then advances to the next table\[char46]
+.IP \(bu
+A priority\-0 flow to advance to the next table\[char46]
+.RE
+.ST "Ingress table 9:\fBfrom\-lport\fIACLs"
 .PP
 .PP
 Logical flows in this table closely reproduce those in the \fBACL\fR table in the \fBOVN_Northbound\fR database for the \fBfrom\-lport\fR direction\[char46] The \fBpriority\fR values from the \fBACL\fR table have a limited range and have 1000 added to them to leave room for OVN default flows at both higher and lower priorities\[char46]
@@ -302,11 +387,15 @@ Logical flows in this table closely reproduce those in the \fBACL\fR table in th
 .IP \(bu
 \fBallow\-related\fR ACLs translate into logical flows with the \fBct_commit(ct_label=0/1); next;\fR actions for new connections and \fBreg0[1] = 1; next;\fR for existing connections\[char46]
 .IP \(bu
+\fBreject\fR ACLs translate into logical flows with the \fBtcp_reset { output <\-> inport;
+next(pipeline=egress,table=5);}\fR action for TCP connections,\fBicmp4/icmp6\fR action for UDP connections, and \fBsctp_abort {output <\-%gt; inport;
+next(pipeline=egress,table=5);}\fR action for SCTP associations\[char46]
+.IP \(bu
 Other ACLs translate to \fBdrop;\fR for new or untracked connections and \fBct_commit(ct_label=1/1);\fR for known connections\[char46] Setting \fBct_label\fR marks a connection as one that was previously allowed, but should no longer be allowed due to a policy change\[char46]
 .RE
 .PP
 .PP
-This table also contains a priority 0 flow with action \fBnext;\fR, so that ACLs allow packets by default\[char46] If the logical datapath has a statetful ACL, the following flows will also be added:
+This table also contains a priority 0 flow with action \fBnext;\fR, so that ACLs allow packets by default\[char46] If the logical datapath has a stateful ACL or a load balancer with VIP configured, the following flows will also be added:
 .RS
 .IP \(bu
 A priority\-1 flow that sets the hint to commit IP traffic to the connection tracker (with action \fBreg0[1] = 1; next;\fR)\[char46] This is needed for the default allow policy because, while the initiator\(cqs direction may not have any stateful rules, the server\(cqs may and then its return traffic would not be known and marked as invalid\[char46]
@@ -319,9 +408,11 @@ A priority\-65535 flow that drops all traffic marked by the connection tracker a
 .IP \(bu
 A priority\-65535 flow that drops all traffic in the reply direction with \fBct_label\[char46]blocked\fR set meaning that the connection should no longer be allowed due to a policy change\[char46] Packets in the request direction are skipped here to let a newly created ACL re-allow this connection\[char46]
 .IP \(bu
+A priority\-65535 flow that allows IPv6 Neighbor solicitation, Neighbor discover, Router solicitation, Router advertisement and MLD packets\[char46]
+.IP \(bu
 A priority 34000 logical flow is added for each logical switch datapath with the match \fBeth\[char46]dst = \fIE\fB\fR to allow the service monitor reply packet destined to \fBovn\-controller\fR with the action \fBnext\fR, where \fIE\fR is the service monitor mac defined in the \fBoptions:svc_monitor_mac\fR colum of \fBNB_Global\fR table\[char46]
 .RE
-.ST "Ingress Table 7:\fBfrom\-lport\fIQoS Marking"
+.ST "Ingress Table 10:\fBfrom\-lport\fIQoS Marking"
 .PP
 .PP
 Logical flows in this table closely reproduce those in the \fBQoS\fR table with the \fBaction\fR column set in the \fBOVN_Northbound\fR database for the \fBfrom\-lport\fR direction\[char46]
@@ -331,22 +422,28 @@ For every qos_rules entry in a logical switch with DSCP marking enabled, a flow 
 .IP \(bu
 One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
 .RE
-.ST "Ingress Table 8:\fBfrom\-lport\fIQoS Meter"
+.ST "Ingress Table 11:\fBfrom\-lport\fIQoS Meter"
 .PP
 .PP
 Logical flows in this table closely reproduce those in the \fBQoS\fR table with the \fBbandwidth\fR column set in the \fBOVN_Northbound\fR database for the \fBfrom\-lport\fR direction\[char46]
 .RS
 .IP \(bu
-For every qos_rules entry in a logical switch with metering enabled, a flow will be added at the priorirty mentioned in the QoS table\[char46]
+For every qos_rules entry in a logical switch with metering enabled, a flow will be added at the priority mentioned in the QoS table\[char46]
 .IP \(bu
 One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
 .RE
-.ST "Ingress Table 9: LB"
+.ST "Ingress Table 12: LB"
 .PP
 .PP
-It contains a priority\-0 flow that simply moves traffic to the next table\[char46] For established connections a priority 100 flow matches on \fBct\[char46]est && !ct\[char46]rel && !ct\[char46]new &&
+It contains a priority\-0 flow that simply moves traffic to the next table\[char46]
+.PP
+.PP
+A priority\-65535 flow with the match \fBinport == \fII\fB\fR for all logical switch datapaths to move traffic to the next table\[char46] Where \fII\fR is the peer of a logical router port\[char46] This flow is added to skip the connection tracking of packets which enter from logical router datapath to logical switch datapath\[char46]
+.PP
+.PP
+For established connections a priority 65534 flow matches on \fBct\[char46]est && !ct\[char46]rel && !ct\[char46]new &&
 !ct\[char46]inv\fR and sets an action \fBreg0[2] = 1; next;\fR to act as a hint for table \fBStateful\fR to send packets through connection tracker to NAT the packets\[char46] (The packet will automatically get DNATed to the same IP address as the first packet in that connection\[char46])
-.ST "Ingress Table 10: Stateful"
+.ST "Ingress Table 13: Stateful"
 .RS
 .IP \(bu
 For all the configured load balancing rules for a switch in \fBOVN_Northbound\fR database that includes a L4 port \fIPORT\fR of protocol \fIP\fR and IP address \fIVIP\fR, a priority\-120 flow is added\[char46] For IPv4 \fIVIPs
@@ -355,36 +452,49 @@ ip4\[char46]dst == \fIVIP\fB && \fIP\fB &&
 \fIP\fB\[char46]dst == \fIPORT\fB\fR\[char46] For IPv6 \fIVIPs\fR, the flow matches \fBct\[char46]new && ip && ip6\[char46]dst == \fI
 VIP \fB&& \fIP\fB && \fIP\fB\[char46]dst == \fI
 PORT\fB\fR\[char46] The flow\(cqs action is \fBct_lb(\fIargs\fB)
-\fR, where \fIargs\fR contains comma separated IP addresses (and optional port numbers) to load balance to\[char46] The address family of the IP addresses of \fIargs\fR is the same as the address family of \fIVIP\fR\[char46] If health check is enabled, then \fIargs\fR will only contain those endpoints whose service monitor status entry in \fBOVN_Southbound\fR db is either \fBonline\fR or empty\[char46]
+\fR, where \fIargs\fR contains comma separated IP addresses (and optional port numbers) to load balance to\[char46] The address family of the IP addresses of \fIargs\fR is the same as the address family of \fIVIP\fR\[char46] If health check is enabled, then \fIargs\fR will only contain those endpoints whose service monitor status entry in \fBOVN_Southbound\fR db is either \fBonline\fR or empty\[char46] For IPv4 traffic the flow also loads the original destination IP and transport port in registers \fBreg1\fR and \fBreg2\fR\[char46] For IPv6 traffic the flow also loads the original destination IP and transport port in registers \fBxxreg1\fR and \fBreg2\fR\[char46]
 .IP \(bu
 For all the configured load balancing rules for a switch in \fBOVN_Northbound\fR database that includes just an IP address \fIVIP\fR to match on, OVN adds a priority\-110 flow\[char46] For IPv4 \fIVIPs\fR, the flow matches \fBct\[char46]new && ip &&
 ip4\[char46]dst == \fIVIP\fB\fR\[char46] For IPv6 \fIVIPs\fR, the flow matches \fBct\[char46]new && ip && ip6\[char46]dst == \fI
 VIP\fB\fR\[char46] The action on this flow is \fB
-ct_lb(\fIargs\fB)\fR, where \fIargs\fR contains comma separated IP addresses of the same address family as \fIVIP\fR\[char46]
+ct_lb(\fIargs\fB)\fR, where \fIargs\fR contains comma separated IP addresses of the same address family as \fIVIP\fR\[char46] For IPv4 traffic the flow also loads the original destination IP and transport port in registers \fBreg1\fR and \fBreg2\fR\[char46] For IPv6 traffic the flow also loads the original destination IP and transport port in registers \fBxxreg1\fR and \fBreg2\fR\[char46]
+.IP \(bu
+If the load balancer is created with \fB\-\-reject\fR option and it has no active backends, a TCP reset segment (for tcp) or an ICMP port unreachable packet (for all other kind of traffic) will be sent whenever an incoming packet is received for this load-balancer\[char46] Please note using \fB\-\-reject\fR option will disable empty_lb SB controller event for this load balancer\[char46]
 .IP \(bu
 A priority\-100 flow commits packets to connection tracker using \fBct_commit; next;\fR action based on a hint provided by the previous tables (with a match for \fBreg0[1] == 1\fR)\[char46]
 .IP \(bu
-A priority\-100 flow sends the packets to connection tracker using \fBct_lb;\fR as the action based on a hint provided by the previous tables (with a match for \fBreg0[2] == 1\fR)\[char46]
+Priority\-100 flows that send the packets to connection tracker using \fBct_lb;\fR as the action based on a hint provided by the previous tables (with a match for \fBreg0[2] == 1\fR and on supported load balancer protocols and address families)\[char46] For IPv4 traffic the flows also load the original destination IP and transport port in registers \fBreg1\fR and \fBreg2\fR\[char46] For IPv6 traffic the flows also load the original destination IP and transport port in registers \fBxxreg1\fR and \fBreg2\fR\[char46]
 .IP \(bu
 A priority\-0 flow that simply moves traffic to the next table\[char46]
 .RE
-.ST "Ingress Table 11: Pre-Hairpin"
+.ST "Ingress Table 14: Pre-Hairpin"
 .RS
 .IP \(bu
-For all configured load balancer backends a priority\-2 flow that matches on traffic that needs to be hairpinned, i\[char46]e\[char46], after load balancing the destination IP matches the source IP, which sets \fBreg0[6] = 1 \fR and executes \fBct_snat(VIP)\fR to force replies to these packets to come back through OVN\[char46]
-.IP \(bu
-For all configured load balancer backends a priority\-1 flow that matches on replies to hairpinned traffic, i\[char46]e\[char46], destination IP is VIP, source IP is the backend IP and source L4 port is backend port, which sets \fBreg0[6] = 1 \fR and executes \fBct_snat;\fR\[char46]
+If the logical switch has load balancer(s) configured, then a priority\-100 flow is added with the match \fBip && ct\[char46]trk\fR to check if the packet needs to be hairpinned (if after load balancing the destination IP matches the source IP) or not by executing the actions \fBreg0[6] = chk_lb_hairpin();\fR and \fBreg0[12] = chk_lb_hairpin_reply();\fR and advances the packet to the next table\[char46]
 .IP \(bu
 A priority\-0 flow that simply moves traffic to the next table\[char46]
 .RE
-.ST "Ingress Table 12: Hairpin"
+.ST "Ingress Table 15: Nat-Hairpin"
+.RS
+.IP \(bu
+If the logical switch has load balancer(s) configured, then a priority\-100 flow is added with the match \fBip && ct\[char46]new && ct\[char46]trk &&
+reg0[6] == 1\fR which hairpins the traffic by NATting source IP to the load balancer VIP by executing the action \fBct_snat_to_vip\fR and advances the packet to the next table\[char46]
+.IP \(bu
+If the logical switch has load balancer(s) configured, then a priority\-100 flow is added with the match \fBip && ct\[char46]est && ct\[char46]trk &&
+reg0[6] == 1\fR which hairpins the traffic by NATting source IP to the load balancer VIP by executing the action \fBct_snat\fR and advances the packet to the next table\[char46]
+.IP \(bu
+If the logical switch has load balancer(s) configured, then a priority\-90 flow is added with the match \fBip && reg0[12] == 1\fR which matches on the replies of hairpinned traffic (i\[char46]e\[char46], destination IP is VIP, source IP is the backend IP and source L4 port is backend port for L4 load balancers) and executes \fBct_snat\fR and advances the packet to the next table\[char46]
+.IP \(bu
+A priority\-0 flow that simply moves traffic to the next table\[char46]
+.RE
+.ST "Ingress Table 16: Hairpin"
 .RS
 .IP \(bu
 A priority\-1 flow that hairpins traffic matched by non-default flows in the Pre-Hairpin table\[char46] Hairpinning is done at L2, Ethernet addresses are swapped and the packets are looped back on the input port\[char46]
 .IP \(bu
 A priority\-0 flow that simply moves traffic to the next table\[char46]
 .RE
-.ST "Ingress Table 13: ARP/ND responder"
+.ST "Ingress Table 17: ARP/ND responder"
 .PP
 .PP
 This table implements ARP/ND responder in a logical switch for known IPs\[char46] The advantage of the ARP responder flow is to limit ARP broadcasts by locally responding to ARP requests without the need to send to other hypervisors\[char46] One common case is when the inport is a logical port associated with a VIF and the broadcast is responded to on the local hypervisor rather than broadcast across the whole network and responded to by the destination VM\[char46] This behavior is proxy ARP\[char46]
@@ -453,7 +563,8 @@ Priority\-50 flows that match ARP requests to each known IP address \fIA\fR of e
 \fB        \fR
 .fi
 .IP
-These flows are omitted for logical ports (other than router ports or \fBlocalport\fR ports) that are down and for logical ports of type \fBvirtual\fR\[char46]
+These flows are omitted for logical ports (other than router ports or \fBlocalport\fR ports) that are down (unless \fB
+ignore_lsp_down\fR is configured as true in \fBoptions\fR column of \fBNB_Global\fR table of the \fBNorthbound\fR database), for logical ports of type \fBvirtual\fR and for logical ports with \(cqunknown\(cq address set\[char46]
 .IP \(bu
 Priority\-50 flows that match IPv6 ND neighbor solicitations to each known IP address \fIA\fR (and \fIA\fR\(cqs solicited node address) of every logical switch port except of type router, and respond with neighbor advertisements directly with corresponding Ethernet address \fIE\fR:
 .IP
@@ -507,7 +618,8 @@ Priority\-50 flows that match IPv6 ND neighbor solicitations to each known IP ad
 \fB        \fR
 .fi
 .IP
-These flows are omitted for logical ports (other than router ports or \fBlocalport\fR ports) that are down and for logical ports of type \fBvirtual\fR\[char46]
+These flows are omitted for logical ports (other than router ports or \fBlocalport\fR ports) that are down (unless \fB
+ignore_lsp_down\fR is configured as true in \fBoptions\fR column of \fBNB_Global\fR table of the \fBNorthbound\fR database), for logical ports of type \fBvirtual\fR and for logical ports with \(cqunknown\(cq address set\[char46]
 .IP \(bu
 Priority\-100 flows with match criteria like the ARP and ND flows above, except that they only match packets from the \fBinport\fR that owns the IP addresses in question, with action \fBnext;\fR\[char46] These flows prevent OVN from replying to, for example, an ARP request emitted by a VM for its own IP address\[char46] A VM only makes this kind of request to attempt to detect a duplicate IP address assignment, so sending a reply will prevent the VM from accepting the IP address that it owns\[char46]
 .IP
@@ -585,7 +697,7 @@ These flows are required to respond to an ARP request if an ARP request is sent 
 .IP \(bu
 One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
 .RE
-.ST "Ingress Table 14: DHCP option processing"
+.ST "Ingress Table 18: DHCP option processing"
 .PP
 .PP
 This table adds the DHCPv4 options to a DHCPv4 packet from the logical ports configured with IPv4 address(es) and DHCPv4 options, and similarly for DHCPv6 options\[char46] This table also adds flows for the logical ports of type \fBexternal\fR\[char46]
@@ -619,9 +731,9 @@ A priority\-100 logical flow is added for these logical ports which matches the 
 .IP
 For DHCPv6 Solicit/Request/Confirm packets, this transforms the packet into a DHCPv6 Advertise/Reply, adds the DHCPv6 offer IP \fIip\fR and options to the packet, and stores 1 into reg0[3]\[char46] For other kinds of packets, it just stores 0 into reg0[3]\[char46] Either way, it continues to the next table\[char46]
 .IP \(bu
-A priority\-0 flow that matches all packets to advances to table 15\[char46]
+A priority\-0 flow that matches all packets to advances to table 16\[char46]
 .RE
-.ST "Ingress Table 15: DHCP responses"
+.ST "Ingress Table 19: DHCP responses"
 .PP
 .PP
 This table implements DHCP responder for the DHCP replies generated by the previous table\[char46]
@@ -687,9 +799,9 @@ where \fIE\fR is the server MAC address and \fIS\fR is the server IPv6 LLA addre
 .IP
 (This terminates packet processing; the packet does not go on the next ingress table\[char46])
 .IP \(bu
-A priority\-0 flow that matches all packets to advances to table 16\[char46]
+A priority\-0 flow that matches all packets to advances to table 17\[char46]
 .RE
-.ST "Ingress Table 16 DNS Lookup"
+.ST "Ingress Table 20 DNS Lookup"
 .PP
 .PP
 This table looks up and resolves the DNS names to the corresponding configured IP address(es)\[char46]
@@ -707,7 +819,7 @@ A priority\-100 logical flow for each logical switch datapath if it is configure
 .IP
 For valid DNS packets, this transforms the packet into a DNS reply if the DNS name can be resolved, and stores 1 into reg0[4]\[char46] For failed DNS resolution or other kinds of packets, it just stores 0 into reg0[4]\[char46] Either way, it continues to the next table\[char46]
 .RE
-.ST "Ingress Table 17 DNS Responses"
+.ST "Ingress Table 21 DNS Responses"
 .PP
 .PP
 This table implements DNS responder for the DNS replies generated by the previous table\[char46]
@@ -737,7 +849,7 @@ A priority\-100 logical flow for each logical switch datapath if it is configure
 .IP
 (This terminates ingress packet processing; the packet does not go to the next ingress table\[char46])
 .RE
-.ST "Ingress table 18 External ports"
+.ST "Ingress table 22 External ports"
 .PP
 .PP
 Traffic from the \fBexternal\fR logical ports enter the ingress datapath pipeline via the \fBlocalnet\fR port\[char46] This table adds the below logical flows to handle the traffic from these ports\[char46]
@@ -746,16 +858,20 @@ Traffic from the \fBexternal\fR logical ports enter the ingress datapath pipelin
 A priority\-100 flow is added for each \fBexternal\fR logical port which doesn\(cqt reside on a chassis to drop the ARP/IPv6 NS request to the router IP(s) (of the logical switch) which matches on the \fBinport\fR of the \fBexternal\fR logical port and the valid \fBeth\[char46]src\fR address(es) of the \fBexternal\fR logical port\[char46]
 .IP
 This flow guarantees that the ARP/NS request to the router IP address from the external ports is responded by only the chassis which has claimed these external ports\[char46] All the other chassis, drops these packets\[char46]
+.IP
+A priority\-100 flow is added for each \fBexternal\fR logical port which doesn\(cqt reside on a chassis to drop any packet destined to the router mac - with the match \fBinport == \fIexternal\fB &&
+eth\[char46]src == \fIE\fB && eth\[char46]dst == \fIR\fB
+&& !is_chassis_resident(\(dq\fIexternal\fB\(dq)\fR where \fIE\fR is the external port mac and \fIR\fR is the router port mac\[char46]
 .IP \(bu
-A priority\-0 flow that matches all packets to advances to table 19\[char46]
+A priority\-0 flow that matches all packets to advances to table 20\[char46]
 .RE
-.ST "Ingress Table 19 Destination Lookup"
+.ST "Ingress Table 23 Destination Lookup"
 .PP
 .PP
 This table implements switching behavior\[char46] It contains these logical flows:
 .RS
 .IP \(bu
-A priorirty\-110 flow with the match \fBeth\[char46]src == \fIE\fB\fR for all logical switch datapaths and applies the action \fBhandle_svc_check(inport)\fR\[char46] Where \fIE\fR is the service monitor mac defined in the \fBoptions:svc_monitor_mac\fR colum of \fBNB_Global\fR table\[char46]
+A priority\-110 flow with the match \fBeth\[char46]src == \fIE\fB\fR for all logical switch datapaths and applies the action \fBhandle_svc_check(inport)\fR\[char46] Where \fIE\fR is the service monitor mac defined in the \fBoptions:svc_monitor_mac\fR colum of \fBNB_Global\fR table\[char46]
 .IP \(bu
 A priority\-100 flow that punts all IGMP/MLD packets to \fBovn\-controller\fR if multicast snooping is enabled on the logical switch\[char46] The flow also forwards the IGMP/MLD packets to the \fBMC_MROUTER_STATIC\fR multicast group, which \fBovn\-northd\fR populates with all the logical ports that have \fBoptions\fR \fB:mcast_flood_reports=\(cqtrue\(cq\fR\[char46]
 .IP \(bu
@@ -769,33 +885,53 @@ A priority\-80 flow that forwards all unregistered IP multicast traffic to the \
 .IP \(bu
 A priority\-80 flow that drops all unregistered IP multicast traffic if \fBother_config\fR \fB:mcast_snoop=\(cqtrue\(cq\fR and \fBother_config\fR \fB:mcast_flood_unregistered=\(cqfalse\(cq\fR and the switch is not connected to a logical router that has \fBoptions\fR \fB:mcast_relay=\(cqtrue\(cq\fR and the switch doesn\(cqt have any logical port with \fBoptions\fR \fB:mcast_flood=\(cqtrue\(cq\fR\[char46]
 .IP \(bu
-Priority\-80 flows for each port connected to a logical router matching self originated GARP/ARP request/ND packets\[char46] These packets are flooded to the \fBMC_FLOOD\fR which contains all logical ports\[char46]
+Priority\-80 flows for each IP address/VIP/NAT address owned by a router port connected to the switch\[char46] These flows match ARP requests and ND packets for the specific IP addresses\[char46] Matched packets are forwarded only to the router that owns the IP address and to the \fBMC_FLOOD_L2\fR multicast group which contains all non-router logical ports\[char46]
 .IP \(bu
-Priority\-75 flows for each IP address/VIP/NAT address owned by a router port connected to the switch\[char46] These flows match ARP requests and ND packets for the specific IP addresses\[char46] Matched packets are forwarded only to the router that owns the IP address\[char46]
+Priority\-75 flows for each port connected to a logical router matching self originated ARP request/ND packets\[char46] These packets are flooded to the \fBMC_FLOOD_L2\fR which contains all non-router logical ports\[char46]
 .IP \(bu
 A priority\-70 flow that outputs all packets with an Ethernet broadcast or multicast \fBeth\[char46]dst\fR to the \fBMC_FLOOD\fR multicast group\[char46]
 .IP \(bu
 One priority\-50 flow that matches each known Ethernet address against \fBeth\[char46]dst\fR and outputs the packet to the single associated output port\[char46]
 .IP
-For the Ethernet address on a logical switch port of type \fBrouter\fR, when that logical switch port\(cqs \fBaddresses\fR column is set to \fBrouter\fR and the connected logical router port specifies a \fBredirect\-chassis\fR:
+For the Ethernet address on a logical switch port of type \fBrouter\fR, when that logical switch port\(cqs \fBaddresses\fR column is set to \fBrouter\fR and the connected logical router port has a gateway chassis:
 .RS
 .IP \(bu
-The flow for the connected logical router port\(cqs Ethernet address is only programmed on the \fBredirect\-chassis\fR\[char46]
+The flow for the connected logical router port\(cqs Ethernet address is only programmed on the gateway chassis\[char46]
 .IP \(bu
 If the logical router has rules specified in \fBnat\fR with \fBexternal_mac\fR, then those addresses are also used to populate the switch\(cqs destination lookup on the chassis where \fBlogical_port\fR is resident\[char46]
 .RE
 .IP
-For the Ethernet address on a logical switch port of type \fBrouter\fR, when that logical switch port\(cqs \fBaddresses\fR column is set to \fBrouter\fR and the connected logical router port specifies a \fBreside\-on\-redirect\-chassis\fR and the logical router to which the connected logical router port belongs to has a \fBredirect\-chassis\fR distributed gateway logical router port:
+For the Ethernet address on a logical switch port of type \fBrouter\fR, when that logical switch port\(cqs \fBaddresses\fR column is set to \fBrouter\fR and the connected logical router port specifies a \fBreside\-on\-redirect\-chassis\fR and the logical router to which the connected logical router port belongs to has a distributed gateway LRP:
 .RS
 .IP \(bu
-The flow for the connected logical router port\(cqs Ethernet address is only programmed on the \fBredirect\-chassis\fR\[char46]
+The flow for the connected logical router port\(cqs Ethernet address is only programmed on the gateway chassis\[char46]
 .RE
 .IP
 For each forwarding group configured on the logical switch datapath, a priority\-50 flow that matches on \fBeth\[char46]dst == \fIVIP\fB
 \fR with an action of \fBfwd_group(childports=\fIargs
 \fB)\fR, where \fIargs\fR contains comma separated logical switch child ports to load balance to\[char46] If \fBliveness\fR is enabled, then action also includes \fB liveness=true\fR\[char46]
 .IP \(bu
-One priority\-0 fallback flow that matches all packets and outputs them to the \fBMC_UNKNOWN\fR multicast group, which \fBovn\-northd\fR populates with all enabled logical ports that accept unknown destination packets\[char46] As a small optimization, if no logical ports accept unknown destination packets, \fBovn\-northd\fR omits this multicast group and logical flow\[char46]
+One priority\-0 fallback flow that matches all packets with the action \fBoutport = get_fdb(eth\[char46]dst); next;\fR\[char46] The action \fBget_fdb\fR gets the port for the \fBeth\[char46]dst\fR in the MAC learning table of the logical switch datapath\[char46] If there is no entry for \fBeth\[char46]dst\fR in the MAC learning table, then it stores \fBnone\fR in the \fBoutport\fR\[char46]
+.RE
+.ST "Ingress Table 23 Destination unknown"
+.PP
+.PP
+This table handles the packets whose destination was not found or and looked up in the MAC learning table of the logical switch datapath\[char46] It contains the following flows\[char46]
+.RS
+.IP \(bu
+If the logical switch has logical ports with \(cqunknown\(cq addresses set, then the below logical flow is added
+.RS
+.IP \(bu
+Priority 50 flow with the match \fBoutport == none\fR then outputs them to the \fBMC_UNKNOWN\fR multicast group, which \fBovn\-northd\fR populates with all enabled logical ports that accept unknown destination packets\[char46] As a small optimization, if no logical ports accept unknown destination packets, \fBovn\-northd\fR omits this multicast group and logical flow\[char46]
+.RE
+.IP
+If the logical switch has no logical ports with \(cqunknown\(cq address set, then the below logical flow is added
+.RS
+.IP \(bu
+Priority 50 flow with the match \fBoutport == none\fR and drops the packets\[char46]
+.RE
+.IP \(bu
+One priority\-0 fallback flow that outputs the packet to the egress stage with the outport learnt from \fBget_fdb\fR action\[char46]
 .RE
 .ST "Egress Table 0: Pre-LB"
 .PP
@@ -811,6 +947,9 @@ This is similar to ingress table \fBPre\-ACLs\fR except for \fBto\-lport\fR traf
 .PP
 .PP
 This table also has a priority\-110 flow with the match \fBeth\[char46]src == \fIE\fB\fR for all logical switch datapaths to move traffic to the next table\[char46] Where \fIE\fR is the service monitor mac defined in the \fBoptions:svc_monitor_mac\fR colum of \fBNB_Global\fR table\[char46]
+.PP
+.PP
+This table also has a priority\-110 flow with the match \fBoutport == \fII\fB\fR for all logical switch datapaths to move traffic to the next table\[char46] Where \fII\fR is the peer of a logical router port\[char46] This flow is added to skip the connection tracking of packets which will be entering logical router datapath from logical switch datapath for routing\[char46]
 .ST "Egress Table 2: Pre-stateful"
 .PP
 .PP
@@ -819,7 +958,11 @@ This is similar to ingress table \fBPre\-stateful\fR\[char46]
 .PP
 .PP
 This is similar to ingress table \fBLB\fR\[char46]
-.ST "Egress Table 4:\fBto\-lport\fIACLs"
+.ST "Egress Table 4:\fBfrom\-lport\fIACL hints"
+.PP
+.PP
+This is similar to ingress table \fBACL hints\fR\[char46]
+.ST "Egress Table 5:\fBto\-lport\fIACLs"
 .PP
 .PP
 This is similar to ingress table \fBACLs\fR except for \fBto\-lport\fR ACLs\[char46]
@@ -828,29 +971,29 @@ This is similar to ingress table \fBACLs\fR except for \fBto\-lport\fR ACLs\[cha
 In addition, the following flows are added\[char46]
 .RS
 .IP \(bu
-A priority 34000 logical flow is added for each logical port which has DHCPv4 options defined to allow the DHCPv4 reply packet and which has DHCPv6 options defined to allow the DHCPv6 reply packet from the \fBIngress Table 15: DHCP responses\fR\[char46]
+A priority 34000 logical flow is added for each logical port which has DHCPv4 options defined to allow the DHCPv4 reply packet and which has DHCPv6 options defined to allow the DHCPv6 reply packet from the \fBIngress Table 16: DHCP responses\fR\[char46]
 .IP \(bu
-A priority 34000 logical flow is added for each logical switch datapath configured with DNS records with the match \fBudp\[char46]dst = 53\fR to allow the DNS reply packet from the \fBIngress Table 17: DNS responses\fR\[char46]
+A priority 34000 logical flow is added for each logical switch datapath configured with DNS records with the match \fBudp\[char46]dst = 53\fR to allow the DNS reply packet from the \fBIngress Table 18: DNS responses\fR\[char46]
 .IP \(bu
 A priority 34000 logical flow is added for each logical switch datapath with the match \fBeth\[char46]src = \fIE\fB\fR to allow the service monitor request packet generated by \fBovn\-controller\fR with the action \fBnext\fR, where \fIE\fR is the service monitor mac defined in the \fBoptions:svc_monitor_mac\fR colum of \fBNB_Global\fR table\[char46]
 .RE
-.ST "Egress Table 5:\fBto\-lport\fIQoS Marking"
+.ST "Egress Table 6:\fBto\-lport\fIQoS Marking"
 .PP
 .PP
 This is similar to ingress table \fBQoS marking\fR except they apply to \fBto\-lport\fR QoS rules\[char46]
-.ST "Egress Table 6:\fBto\-lport\fIQoS Meter"
+.ST "Egress Table 7:\fBto\-lport\fIQoS Meter"
 .PP
 .PP
 This is similar to ingress table \fBQoS meter\fR except they apply to \fBto\-lport\fR QoS rules\[char46]
-.ST "Egress Table 7: Stateful"
+.ST "Egress Table 8: Stateful"
 .PP
 .PP
 This is similar to ingress table \fBStateful\fR except that there are no rules added for load balancing new connections\[char46]
-.ST "Egress Table 8: Egress Port Security - IP"
+.ST "Egress Table 9: Egress Port Security - IP"
 .PP
 .PP
 This is similar to the port security logic in table \fBIngress Port Security \- IP\fR except that \fBoutport\fR, \fBeth\[char46]dst\fR, \fBip4\[char46]dst\fR and \fBip6\[char46]dst\fR are checked instead of \fBinport\fR, \fBeth\[char46]src\fR, \fBip4\[char46]src\fR and \fBip6\[char46]src\fR
-.ST "Egress Table 9: Egress Port Security - L2"
+.ST "Egress Table 10: Egress Port Security - L2"
 .PP
 .PP
 This is similar to the ingress port security logic in ingress table \fBAdmission Control and Ingress Port Security \- L2\fR, but with important differences\[char46] Most obviously, \fBoutport\fR and \fBeth\[char46]dst\fR are checked instead of \fBinport\fR and \fBeth\[char46]src\fR\[char46] Second, packets directed to broadcast or multicast \fBeth\[char46]dst\fR are always accepted instead of being subject to the port security rules; this is implemented through a priority\-100 flow that matches on \fBeth\[char46]mcast\fR with action \fBoutput;\fR\[char46] Moreover, to ensure that even broadcast and multicast packets are not delivered to disabled logical ports, a priority\-150 flow for each disabled logical \fBoutport\fR overrides the priority\-100 flow with a \fBdrop;\fR action\[char46] Finally if egress qos has been enabled on a localnet port, the outgoing queue id is set through \fBset_queue\fR action\[char46] Please remember to mark the corresponding physical interface with \fBovn\-egress\-iface\fR set to true in \fBexternal_ids\fR
@@ -868,12 +1011,12 @@ Priority\-100 flows to drop packets with VLAN tags or multicast Ethernet source 
 .IP \(bu
 For each enabled router port \fIP\fR with Ethernet address \fIE\fR, a priority\-50 flow that matches \fBinport ==
 \fIP\fB && (eth\[char46]mcast || eth\[char46]dst ==
-\fIE\fB\fR), with action \fBnext;\fR\[char46]
+\fIE\fB\fR), stores the router port ethernet address and advances to next table, with action \fBxreg0[0\[char46]\[char46]47]=E; next;\fR\[char46]
 .IP
-For the gateway port on a distributed logical router (where one of the logical router ports specifies a \fBredirect\-chassis\fR), the above flow matching \fBeth\[char46]dst == \fIE\fB\fR is only programmed on the gateway port instance on the \fBredirect\-chassis\fR\[char46]
+For the gateway port on a distributed logical router (where one of the logical router ports specifies a gateway chassis), the above flow matching \fBeth\[char46]dst == \fIE\fB\fR is only programmed on the gateway port instance on the gateway chassis\[char46]
 .IP \(bu
 For each \fBdnat_and_snat\fR NAT rule on a distributed router that specifies an external Ethernet address \fIE\fR, a priority\-50 flow that matches \fBinport == \fIGW\fB
-&& eth\[char46]dst == \fIE\fB\fR, where \fIGW\fR is the logical router gateway port, with action \fBnext;\fR\[char46]
+&& eth\[char46]dst == \fIE\fB\fR, where \fIGW\fR is the logical router gateway port, with action \fBxreg0[0\[char46]\[char46]47]=E; next;\fR\[char46]
 .IP
 This flow is only programmed on the gateway port instance on the chassis where the \fBlogical_port\fR specified in the NAT rule resides\[char46]
 .RE
@@ -886,72 +1029,149 @@ Other packets are implicitly dropped\[char46]
 For ARP and IPv6 Neighbor Discovery packets, this table looks into the \fBMAC_Binding\fR records to determine if OVN needs to learn the mac bindings\[char46] Following flows are added:
 .RS
 .IP \(bu
-For each router port \fIP\fR that owns IP address \fIA\fR, which belongs to subnet \fIS\fR with prefix length \fIL\fR, a priority\-100 flow is added which matches \fBinport == \fIP\fB &&
-arp\[char46]spa == \fIS\fB/\fIL\fB && arp\[char46]op == 1\fR (ARP request) with the following actions:
+For each router port \fIP\fR that owns IP address \fIA\fR, which belongs to subnet \fIS\fR with prefix length \fIL\fR, if the option \fBalways_learn_from_arp_request\fR is \fBtrue\fR for this router, a priority\-100 flow is added which matches \fBinport == \fIP\fB && arp\[char46]spa ==
+\fIS\fB/\fIL\fB && arp\[char46]op == 1\fR (ARP request) with the following actions:
 .IP
 .nf
 \fB
 .br
-\fBreg9[4] = lookup_arp(inport, arp\[char46]spa, arp\[char46]sha);
+\fBreg9[2] = lookup_arp(inport, arp\[char46]spa, arp\[char46]sha);
 .br
 \fBnext;
 .br
 \fB        \fR
 .fi
 .IP
-If the logical router port \fIP\fR is a distributed gateway router port, additional match \fBis_chassis_resident(cr\-\fIP\fB)\fR is added so that the resident gateway chassis handles the neighbor lookup\[char46]
-.IP \(bu
-A priority\-100 flow which matches on ARP reply packets and applies the actions:
+If the option \fBalways_learn_from_arp_request\fR is \fBfalse\fR, the following two flows are added\[char46]
+.IP
+A priority\-110 flow is added which matches \fBinport ==
+\fIP\fB && arp\[char46]spa == \fIS\fB/\fIL\fB
+&& arp\[char46]tpa == \fIA\fB && arp\[char46]op == 1\fR (ARP request) with the following actions:
 .IP
 .nf
 \fB
 .br
-\fBreg9[4] = lookup_arp(inport, arp\[char46]spa, arp\[char46]sha);
+\fBreg9[2] = lookup_arp(inport, arp\[char46]spa, arp\[char46]sha);
+.br
+\fBreg9[3] = 1;
+.br
+\fBnext;
+.br
+\fB        \fR
+.fi
+.IP
+A priority\-100 flow is added which matches \fBinport ==
+\fIP\fB && arp\[char46]spa == \fIS\fB/\fIL\fB
+&& arp\[char46]op == 1\fR (ARP request) with the following actions:
+.IP
+.nf
+\fB
+.br
+\fBreg9[2] = lookup_arp(inport, arp\[char46]spa, arp\[char46]sha);
+.br
+\fBreg9[3] = lookup_arp_ip(inport, arp\[char46]spa);
+.br
+\fBnext;
+.br
+\fB        \fR
+.fi
+.IP
+If the logical router port \fIP\fR is a distributed gateway router port, additional match \fBis_chassis_resident(cr\-\fIP\fB)\fR is added for all these flows\[char46]
+.IP \(bu
+A priority\-100 flow which matches on ARP reply packets and applies the actions if the option \fBalways_learn_from_arp_request\fR is \fBtrue\fR:
+.IP
+.nf
+\fB
+.br
+\fBreg9[2] = lookup_arp(inport, arp\[char46]spa, arp\[char46]sha);
+.br
+\fBnext;
+.br
+\fB        \fR
+.fi
+.IP
+If the option \fBalways_learn_from_arp_request\fR is \fBfalse\fR, the above actions will be:
+.IP
+.nf
+\fB
+.br
+\fBreg9[2] = lookup_arp(inport, arp\[char46]spa, arp\[char46]sha);
+.br
+\fBreg9[3] = 1;
 .br
 \fBnext;
 .br
 \fB        \fR
 .fi
 .IP \(bu
-A priority\-100 flow which matches on IPv6 Neighbor Discovery advertisement packet and applies the actions:
+A priority\-100 flow which matches on IPv6 Neighbor Discovery advertisement packet and applies the actions if the option \fBalways_learn_from_arp_request\fR is \fBtrue\fR:
 .IP
 .nf
 \fB
 .br
-\fBreg9[4] = lookup_nd(inport, nd\[char46]target, nd\[char46]tll);
+\fBreg9[2] = lookup_nd(inport, nd\[char46]target, nd\[char46]tll);
+.br
+\fBnext;
+.br
+\fB        \fR
+.fi
+.IP
+If the option \fBalways_learn_from_arp_request\fR is \fBfalse\fR, the above actions will be:
+.IP
+.nf
+\fB
+.br
+\fBreg9[2] = lookup_nd(inport, nd\[char46]target, nd\[char46]tll);
+.br
+\fBreg9[3] = 1;
 .br
 \fBnext;
 .br
 \fB        \fR
 .fi
 .IP \(bu
-A priority\-100 flow which matches on IPv6 Neighbor Discovery solicitation packet and applies the actions:
+A priority\-100 flow which matches on IPv6 Neighbor Discovery solicitation packet and applies the actions if the option \fBalways_learn_from_arp_request\fR is \fBtrue\fR:
 .IP
 .nf
 \fB
 .br
-\fBreg9[4] = lookup_nd(inport, ip6\[char46]src, nd\[char46]sll);
+\fBreg9[2] = lookup_nd(inport, ip6\[char46]src, nd\[char46]sll);
+.br
+\fBnext;
+.br
+\fB        \fR
+.fi
+.IP
+If the option \fBalways_learn_from_arp_request\fR is \fBfalse\fR, the above actions will be:
+.IP
+.nf
+\fB
+.br
+\fBreg9[2] = lookup_nd(inport, ip6\[char46]src, nd\[char46]sll);
+.br
+\fBreg9[3] = lookup_nd_ip(inport, ip6\[char46]src);
 .br
 \fBnext;
 .br
 \fB        \fR
 .fi
 .IP \(bu
-A priority\-0 fallback flow that matches all packets and applies the action \fBreg9[5] = 1; next;\fR advancing the packet to the next table\[char46]
+A priority\-0 fallback flow that matches all packets and applies the action \fBreg9[2] = 1; next;\fR advancing the packet to the next table\[char46]
 .RE
 .ST "Ingress Table 2: Neighbor learning"
 .PP
 .PP
-This table adds flows to learn the mac bindings from the ARP and IPv6 Neighbor Solicitation/Advertisement packets if ARP/ND lookup failed in the previous table\[char46]
+This table adds flows to learn the mac bindings from the ARP and IPv6 Neighbor Solicitation/Advertisement packets if it is needed according to the lookup results from the previous stage\[char46]
 .PP
 .PP
-reg9[4] will be \fB1\fR if the \fBlookup_arp/lookup_nd\fR in the previous table was successful\[char46]
+reg9[2] will be \fB1\fR if the \fBlookup_arp/lookup_nd\fR in the previous table was successful or skipped, meaning no need to learn mac binding from the packet\[char46]
 .PP
 .PP
-reg9[5] will be \fB1\fR if there was no need to do the lookup\[char46]
+reg9[3] will be \fB1\fR if the \fBlookup_arp_ip/lookup_nd_ip\fR in the previous table was successful or skipped, meaning it is ok to learn mac binding from the packet (if reg9[2] is 0)\[char46]
 .RS
 .IP \(bu
-A priority\-100 flow with the match \fBreg9[4] == 1 || reg9[5] == 1\fR and advances the packet to the next table as there is no need to learn the neighbor\[char46]
+A priority\-100 flow with the match \fBreg9[2] == 1 || reg9[3] ==
+0\fR and advances the packet to the next table as there is no need to learn the neighbor\[char46]
 .IP \(bu
 A priority\-90 flow with the match \fBarp\fR and applies the action \fBput_arp(inport, arp\[char46]spa, arp\[char46]sha); next;\fR
 .IP \(bu
@@ -965,10 +1185,20 @@ A priority\-90 flow with the match \fBnd_ns\fR and applies the action \fBput_nd(
 This table is the core of the logical router datapath functionality\[char46] It contains the following flows to implement very basic IP host functionality\[char46]
 .RS
 .IP \(bu
-For each NAT entry of a distributed logical router (with distributed gateway router port) of type \fBsnat\fR, a priorirty\-120 flow with the match \fBinport == \fIP\fB
+For each NAT entry of a distributed logical router (with distributed gateway router port) of type \fBsnat\fR, a priority\-120 flow with the match \fBinport == \fIP\fB
 && ip4\[char46]src == \fIA\fB\fR advances the packet to the next pipeline, where \fIP\fR is the distributed logical router port and \fIA\fR is the \fBexternal_ip\fR set in the NAT entry\[char46] If \fIA\fR is an IPv6 address, then \fBip6\[char46]src\fR is used for the match\[char46]
 .IP
 The above flow is required to handle the routing of the East/west NAT traffic\[char46]
+.IP \(bu
+For each BFD port the two following priority\-110 flows are added to manage BFD traffic:
+.RS
+.IP \(bu
+if \fBip4\[char46]src\fR or \fBip6\[char46]src\fR is any IP address owned by the router port and \fBudp\[char46]dst == 3784
+\fR, the packet is advanced to the next pipeline stage\[char46]
+.IP \(bu
+if \fBip4\[char46]dst\fR or \fBip6\[char46]dst\fR is any IP address owned by the router port and \fBudp\[char46]dst == 3784
+\fR, the \fBhandle_bfd_msg\fR action is executed\[char46]
+.RE
 .IP \(bu
 L3 admission control: A priority\-100 flow drops packets that match any of the following:
 .RS
@@ -986,9 +1216,8 @@ L3 admission control: A priority\-100 flow drops packets that match any of the f
 \fBip4\[char46]src\fR is the broadcast address of any IP network known to the router\[char46]
 .RE
 .IP \(bu
-A priority\-87 flow explicitly allows IPv6 multicast traffic that is supposed to reach the router pipeline (e\[char46]g\[char46], neighbor solicitations and traffic destined to the All-Routers multicast group)\[char46]
-.IP \(bu
-A priority\-86 flow allows IP multicast traffic if \fBoptions\fR:mcast_relay=\(cqtrue\(cq, otherwise drops it\[char46]
+A priority\-100 flow parses DHCPv6 replies from IPv6 prefix delegation routers (\fBudp\[char46]src == 547 &&
+udp\[char46]dst == 546\fR)\[char46] The \fBhandle_dhcpv6_reply\fR is used to send IPv6 prefix delegation messages to the delegation router\[char46]
 .IP \(bu
 ICMP echo reply\[char46] These flows reply to ICMP echo requests received for the router\(cqs IP address\[char46] Let \fIA\fR be an IP address owned by a router port\[char46] Then, for each \fIA\fR that is an IPv4 address, a priority\-90 flow matches on \fBip4\[char46]dst == \fIA\fB\fR and \fBicmp4\[char46]type == 8 && icmp4\[char46]code == 0\fR (ICMP echo request)\[char46] For each \fIA\fR that is an IPv6 address, a priority\-90 flow matches on \fBip6\[char46]dst == \fIA\fB\fR and \fBicmp6\[char46]type == 128 && icmp6\[char46]code == 0\fR (ICMPv6 echo request)\[char46] The port of the router that receives the echo request does not matter\[char46] Also, the \fBip\[char46]ttl\fR of the echo request packet is not checked, so it complies with RFC 1812, section 4\[char46]2\[char46]2\[char46]9\[char46] Flows for ICMPv4 echo requests use the following actions:
 .IP
@@ -1037,19 +1266,19 @@ arp\[char46]spa == \fIS\fB/\fIL\fB && arp\[char46]op == 1
 .br
 \fBeth\[char46]dst = eth\[char46]src;
 .br
-\fBeth\[char46]src = \fR\fIE\fB\fR;
+\fBeth\[char46]src = xreg0[0\[char46]\[char46]47];
 .br
 \fBarp\[char46]op = 2; /* ARP reply\[char46] */
 .br
 \fBarp\[char46]tha = arp\[char46]sha;
 .br
-\fBarp\[char46]sha = \fR\fIE\fB\fR;
+\fBarp\[char46]sha = xreg0[0\[char46]\[char46]47];
 .br
 \fBarp\[char46]tpa = arp\[char46]spa;
 .br
 \fBarp\[char46]spa = \fR\fIA\fB\fR;
 .br
-\fBoutport = \fR\fIP\fB\fR;
+\fBoutport = inport;
 .br
 \fBflags\[char46]loopback = 1;
 .br
@@ -1058,9 +1287,9 @@ arp\[char46]spa == \fIS\fB/\fIL\fB && arp\[char46]op == 1
 \fB        \fR
 .fi
 .IP
-For the gateway port on a distributed logical router (where one of the logical router ports specifies a \fBredirect\-chassis\fR), the above flows are only programmed on the gateway port instance on the \fBredirect\-chassis\fR\[char46] This behavior avoids generation of multiple ARP responses from different chassis, and allows upstream MAC learning to point to the \fBredirect\-chassis\fR\[char46]
+For the gateway port on a distributed logical router (where one of the logical router ports specifies a gateway chassis), the above flows are only programmed on the gateway port instance on the gateway chassis\[char46] This behavior avoids generation of multiple ARP responses from different chassis, and allows upstream MAC learning to point to the gateway chassis\[char46]
 .IP
-For the logical router port with the option \fBreside\-on\-redirect\-chassis\fR set (which is centralized), the above flows are only programmed on the gateway port instance on the \fBredirect\-chassis\fR (if the logical router has a distributed gateway port)\[char46] This behavior avoids generation of multiple ARP responses from different chassis, and allows upstream MAC learning to point to the \fBredirect\-chassis\fR\[char46]
+For the logical router port with the option \fBreside\-on\-redirect\-chassis\fR set (which is centralized), the above flows are only programmed on the gateway port instance on the gateway chassis (if the logical router has a distributed gateway port)\[char46] This behavior avoids generation of multiple ARP responses from different chassis, and allows upstream MAC learning to point to the gateway chassis\[char46]
 .IP \(bu
 Reply to IPv6 Neighbor Solicitations\[char46] These flows reply to Neighbor Solicitation requests for the router\(cqs own IPv6 address and populate the logical router\(cqs mac binding table\[char46]
 .IP
@@ -1073,13 +1302,13 @@ nd\[char46]target == \fIA\fB\fR with the following actions:
 .br
 \fBnd_na_router {
 .br
-\fB    eth\[char46]src = \fR\fIE\fB\fR;
+\fB    eth\[char46]src = xreg0[0\[char46]\[char46]47];
 .br
 \fB    ip6\[char46]src = \fR\fIA\fB\fR;
 .br
 \fB    nd\[char46]target = \fR\fIA\fB\fR;
 .br
-\fB    nd\[char46]tll = \fR\fIE\fB\fR;
+\fB    nd\[char46]tll = xreg0[0\[char46]\[char46]47];
 .br
 \fB    outport = inport;
 .br
@@ -1092,31 +1321,30 @@ nd\[char46]target == \fIA\fB\fR with the following actions:
 \fB        \fR
 .fi
 .IP
-For the gateway port on a distributed logical router (where one of the logical router ports specifies a \fBredirect\-chassis\fR), the above flows replying to IPv6 Neighbor Solicitations are only programmed on the gateway port instance on the \fBredirect\-chassis\fR\[char46] This behavior avoids generation of multiple replies from different chassis, and allows upstream MAC learning to point to the \fBredirect\-chassis\fR\[char46]
+For the gateway port on a distributed logical router (where one of the logical router ports specifies a gateway chassis), the above flows replying to IPv6 Neighbor Solicitations are only programmed on the gateway port instance on the gateway chassis\[char46] This behavior avoids generation of multiple replies from different chassis, and allows upstream MAC learning to point to the gateway chassis\[char46]
 .IP \(bu
-These flows reply to ARP requests or IPv6 neighbor solicitation for the virtual IP addresses configured in the router for DNAT or load balancing\[char46]
+These flows reply to ARP requests or IPv6 neighbor solicitation for the virtual IP addresses configured in the router for NAT (both DNAT and SNAT) or load balancing\[char46]
 .IP
-IPv4: For a configured DNAT IP address or a load balancer IPv4 VIP \fIA\fR, for each router port \fIP\fR with Ethernet address \fIE\fR, a priority\-90 flow matches \fBinport == \fIP\fB && arp\[char46]op == 1 &&
-arp\[char46]tpa == \fIA\fB\fR (ARP request) with the following actions:
+IPv4: For a configured NAT (both DNAT and SNAT) IP address or a load balancer IPv4 VIP \fIA\fR, for each router port \fIP\fR with Ethernet address \fIE\fR, a priority\-90 flow matches \fBarp\[char46]op == 1 && arp\[char46]tpa == \fIA\fB\fR (ARP request) with the following actions:
 .IP
 .nf
 \fB
 .br
 \fBeth\[char46]dst = eth\[char46]src;
 .br
-\fBeth\[char46]src = \fR\fIE\fB\fR;
+\fBeth\[char46]src = xreg0[0\[char46]\[char46]47];
 .br
 \fBarp\[char46]op = 2; /* ARP reply\[char46] */
 .br
 \fBarp\[char46]tha = arp\[char46]sha;
 .br
-\fBarp\[char46]sha = \fR\fIE\fB\fR;
+\fBarp\[char46]sha = xreg0[0\[char46]\[char46]47];
 .br
 \fBarp\[char46]tpa = arp\[char46]spa;
 .br
 \fBarp\[char46]spa = \fR\fIA\fB\fR;
 .br
-\fBoutport = \fR\fIP\fB\fR;
+\fBoutport = inport;
 .br
 \fBflags\[char46]loopback = 1;
 .br
@@ -1125,9 +1353,11 @@ arp\[char46]tpa == \fIA\fB\fR (ARP request) with the following actions:
 \fB        \fR
 .fi
 .IP
+IPv4: For a configured load balancer IPv4 VIP, a similar flow is added with the additional match \fBinport == \fIP\fB\fR\[char46]
+.IP
 If the router port \fIP\fR is a distributed gateway router port, then the \fBis_chassis_resident(\fIP\fB)\fR is also added in the match condition for the load balancer IPv4 VIP \fIA\fR\[char46]
 .IP
-IPv6: For a configured DNAT IP address or a load balancer IPv6 VIP \fIA\fR, solicited node address \fIS\fR, for each router port \fIP\fR with Ethernet address \fIE\fR, a priority\-90 flow matches \fBinport == \fIP\fB && nd_ns &&
+IPv6: For a configured NAT (both DNAT and SNAT) IP address or a load balancer IPv6 VIP \fIA\fR, solicited node address \fIS\fR, for each router port \fIP\fR with Ethernet address \fIE\fR, a priority\-90 flow matches \fBinport == \fIP\fB && nd_ns &&
 ip6\[char46]dst == {\fIA\fB, \fIS\fB} &&
 nd\[char46]target == \fIA\fB\fR with the following actions:
 .IP
@@ -1138,15 +1368,15 @@ nd\[char46]target == \fIA\fB\fR with the following actions:
 .br
 \fBnd_na {
 .br
-\fB    eth\[char46]src = \fR\fIE\fB\fR;
+\fB    eth\[char46]src = xreg0[0\[char46]\[char46]47];
 .br
-\fB    nd\[char46]tll = \fR\fIE\fB\fR;
+\fB    nd\[char46]tll = xreg0[0\[char46]\[char46]47];
 .br
 \fB    ip6\[char46]src = \fR\fIA\fB\fR;
 .br
 \fB    nd\[char46]target = \fR\fIA\fB\fR;
 .br
-\fB    outport = \fR\fIP\fB\fR;
+\fB    outport = inport;
 .br
 \fB    flags\[char46]loopback = 1;
 .br
@@ -1159,10 +1389,10 @@ nd\[char46]target == \fIA\fB\fR with the following actions:
 .IP
 If the router port \fIP\fR is a distributed gateway router port, then the \fBis_chassis_resident(\fIP\fB)\fR is also added in the match condition for the load balancer IPv6 VIP \fIA\fR\[char46]
 .IP
-For the gateway port on a distributed logical router with NAT (where one of the logical router ports specifies a \fBredirect\-chassis\fR):
+For the gateway port on a distributed logical router with NAT (where one of the logical router ports specifies a gateway chassis):
 .RS
 .IP \(bu
-If the corresponding NAT rule cannot be handled in a distributed manner, then this flow is only programmed on the gateway port instance on the \fBredirect\-chassis\fR\[char46] This behavior avoids generation of multiple ARP responses from different chassis, and allows upstream MAC learning to point to the \fBredirect\-chassis\fR\[char46]
+If the corresponding NAT rule cannot be handled in a distributed manner, then a priority\-92 flow is programmed on the gateway port instance on the gateway chassis\[char46] A priority\-91 drop flow is programmed on the other chassis when ARP requests/NS packets are received on the gateway port\[char46] This behavior avoids generation of multiple ARP responses from different chassis, and allows upstream MAC learning to point to the gateway chassis\[char46]
 .IP \(bu
 If the corresponding NAT rule can be handled in a distributed manner, then this flow is only programmed on the gateway port instance where the \fBlogical_port\fR specified in the NAT rule resides\[char46]
 .IP
@@ -1194,6 +1424,12 @@ This behavior avoids generation of multiple ARP responses from different chassis
 .RE
 .IP \(bu
 Priority\-85 flows which drops the ARP and IPv6 Neighbor Discovery packets\[char46]
+.IP \(bu
+A priority\-84 flow explicitly allows IPv6 multicast traffic that is supposed to reach the router pipeline (i\[char46]e\[char46], router solicitation and router advertisement packets)\[char46]
+.IP \(bu
+A priority\-83 flow explicitly drops IPv6 multicast traffic that is destined to reserved multicast groups\[char46]
+.IP \(bu
+A priority\-82 flow allows IP multicast traffic if \fBoptions\fR:mcast_relay=\(cqtrue\(cq, otherwise drops it\[char46]
 .IP \(bu
 UDP port unreachable\[char46] Priority\-80 flows generate ICMP port unreachable messages in reply to UDP datagrams directed to the router\(cqs IP address, except in the special case of gateways, which accept traffic directed to a router IP for load balancing and NAT purposes\[char46]
 .IP
@@ -1268,12 +1504,30 @@ Next table\[char46] A priority\-0 flows match all packets that aren\(cqt already
 .ST "Ingress Table 4: DEFRAG"
 .PP
 .PP
-This is to send packets to connection tracker for tracking and defragmentation\[char46] It contains a priority\-0 flow that simply moves traffic to the next table\[char46] If load balancing rules with virtual IP addresses (and ports) are configured in \fBOVN_Northbound\fR database for a Gateway router, a priority\-100 flow is added for each configured virtual IP address \fIVIP\fR\[char46] For IPv4 \fIVIPs\fR the flow matches \fBip && ip4\[char46]dst == \fIVIP\fB\fR\[char46] For IPv6 \fIVIPs\fR, the flow matches \fBip && ip6\[char46]dst ==
-\fIVIP\fB\fR\[char46] The flow uses the action \fBct_next;\fR to send IP packets to the connection tracker for packet de-fragmentation and tracking before sending it to the next table\[char46]
+This is to send packets to connection tracker for tracking and defragmentation\[char46] It contains a priority\-0 flow that simply moves traffic to the next table\[char46]
+.PP
+.PP
+If load balancing rules with virtual IP addresses (and ports) are configured in \fBOVN_Northbound\fR database for a Gateway router, a priority\-100 flow is added for each configured virtual IP address \fIVIP\fR\[char46] For IPv4 \fIVIPs\fR the flow matches \fBip
+&& ip4\[char46]dst == \fIVIP\fB\fR\[char46] For IPv6 \fIVIPs\fR, the flow matches \fBip && ip6\[char46]dst == \fIVIP\fB\fR\[char46] The flow uses the action \fBct_next;\fR to send IP packets to the connection tracker for packet de-fragmentation and tracking before sending it to the next table\[char46]
+.PP
+.PP
+If ECMP routes with symmetric reply are configured in the \fBOVN_Northbound\fR database for a gateway router, a priority\-100 flow is added for each router port on which symmetric replies are configured\[char46] The matching logic for these ports essentially reverses the configured logic of the ECMP route\[char46] So for instance, a route with a destination routing policy will instead match if the source IP address matches the static route\(cqs prefix\[char46] The flow uses the action \fBct_next\fR to send IP packets to the connection tracker for packet de-fragmentation and tracking before sending it to the next table\[char46]
 .ST "Ingress Table 5: UNSNAT"
 .PP
 .PP
 This is for already established connections\(cq reverse traffic\[char46] i\[char46]e\[char46], SNAT has already been done in egress pipeline and now the packet has entered the ingress pipeline as part of a reply\[char46] It is unSNATted here\[char46]
+.PP
+.PP
+Ingress Table 5: UNSNAT on Gateway and Distributed Routers
+.RS
+.IP \(bu
+If the Router (Gateway or Distributed) is configured with load balancers, then below lflows are added:
+.IP
+For each IPv4 address \fIA\fR defined as load balancer VIP with the protocol \fIP\fR (and the protocol port \fIT\fR if defined) is also present as an \fBexternal_ip\fR in the NAT table, a priority\-120 logical flow is added with the match \fBip4 && ip4\[char46]dst == \fIA\fB &&
+\fIP\fB\fR with the action \fBnext;\fR to advance the packet to the next table\[char46] If the load balancer has protocol port \fBB\fR defined, then the match also has \fB\fIP\fB\[char46]dst == \fIB\fB\fR\[char46]
+.IP
+The above flows are also added for IPv6 load balancers\[char46]
+.RE
 .PP
 .PP
 Ingress Table 5: UNSNAT on Gateway Routers
@@ -1298,7 +1552,7 @@ ip4\[char46]dst == \fIB\fB && inport == \fIGW\fB\fR or \fBip &&
 ip6\[char46]dst == \fIB\fB && inport == \fIGW\fB\fR where \fIGW\fR is the logical router gateway port, with an action \fBct_snat;\fR\[char46] If the NAT rule is of type dnat_and_snat and has \fBstateless=true\fR in the options, then the action would be \fBip4/6\[char46]dst=
 (\fIB\fB)\fR\[char46]
 .IP
-If the NAT rule cannot be handled in a distributed manner, then the priority\-100 flow above is only programmed on the \fBredirect\-chassis\fR\[char46]
+If the NAT rule cannot be handled in a distributed manner, then the priority\-100 flow above is only programmed on the gateway chassis\[char46]
 .IP
 A priority\-0 logical flow with match \fB1\fR has actions \fBnext;\fR\[char46]
 .RE
@@ -1311,7 +1565,7 @@ Packets enter the pipeline with destination IP address that needs to be DNATted 
 Ingress Table 6: Load balancing DNAT rules
 .PP
 .PP
-Following load balancing DNAT flows are added for Gateway router or Router with gateway port\[char46] These flows are programmed only on the \fBredirect\-chassis\fR\[char46] These flows do not get programmed for load balancers with IPv6 \fIVIPs\fR\[char46]
+Following load balancing DNAT flows are added for Gateway router or Router with gateway port\[char46] These flows are programmed only on the gateway chassis\[char46] These flows do not get programmed for load balancers with IPv6 \fIVIPs\fR\[char46]
 .RS
 .IP \(bu
 If controller_event has been enabled for all the configured load balancing rules for a Gateway router or Router with gateway port in \fBOVN_Northbound\fR database that does not have configured backends, a priority\-130 flow is added to trigger ovn-controller events whenever the chassis receives a packet for that particular VIP\[char46] If \fBevent\-elb\fR meter has been previously created, it will be associated to the empty_lb logical flow
@@ -1331,6 +1585,8 @@ ct_lb(\fIargs\fB);\fR\[char46]
 .IP \(bu
 For all the configured load balancing rules for a router in \fBOVN_Northbound\fR database that includes just an IP address \fIVIP\fR to match on, a priority\-110 flow that matches on \fBct\[char46]est && ip && ip4\[char46]dst ==
 \fIVIP\fB\fR (or \fBip6\[char46]dst == \fIVIP\fB\fR) with an action of \fBct_dnat;\fR\[char46] If the router is configured to force SNAT any load-balanced packets, the above action will be replaced by \fBflags\[char46]force_snat_for_lb = 1; ct_dnat;\fR\[char46]
+.IP \(bu
+If the load balancer is created with \fB\-\-reject\fR option and it has no active backends, a TCP reset segment (for tcp) or an ICMP port unreachable packet (for all other kind of traffic) will be sent whenever an incoming packet is received for this load-balancer\[char46] Please note using \fB\-\-reject\fR option will disable empty_lb SB controller event for this load balancer\[char46]
 .RE
 .PP
 .PP
@@ -1342,6 +1598,12 @@ ip4\[char46]dst == \fIA\fB\fR or \fBip &&
 ip6\[char46]dst == \fIA\fB\fR with an action \fBflags\[char46]loopback = 1; ct_dnat(\fIB\fB);\fR\[char46] If the Gateway router is configured to force SNAT any DNATed packet, the above action will be replaced by \fBflags\[char46]force_snat_for_dnat = 1; flags\[char46]loopback = 1;
 ct_dnat(\fIB\fB);\fR\[char46] If the NAT rule is of type dnat_and_snat and has \fBstateless=true\fR in the options, then the action would be \fBip4/6\[char46]dst=
 (\fIB\fB)\fR\[char46]
+.IP
+If the NAT rule has \fBallowed_ext_ips\fR configured, then there is an additional match \fBip4\[char46]src == \fIallowed_ext_ips
+\fB\fR\[char46] Similarly, for IPV6, match would be \fBip6\[char46]src ==
+\fIallowed_ext_ips\fB\fR\[char46]
+.IP
+If the NAT rule has \fBexempted_ext_ips\fR set, then there is an additional flow configured at priority 101\[char46] The flow matches if source ip is an \fBexempted_ext_ip\fR and the action is \fBnext; \fR\[char46] This flow is used to bypass the ct_dnat action for a packet originating from \fBexempted_ext_ips\fR\[char46]
 .IP \(bu
 For all IP packets of a Gateway router, a priority\-50 flow with an action \fBflags\[char46]loopback = 1; ct_dnat;\fR\[char46]
 .IP \(bu
@@ -1358,11 +1620,23 @@ On distributed routers, the DNAT table only handles packets with destination IP 
 For each configuration in the OVN Northbound database, that asks to change the destination IP address of a packet from \fIA\fR to \fIB\fR, a priority\-100 flow matches \fBip &&
 ip4\[char46]dst == \fIB\fB && inport == \fIGW\fB\fR, where \fIGW\fR is the logical router gateway port, with an action \fBct_dnat(\fIB\fB);\fR\[char46] The match will include \fBip6\[char46]dst == \fIB\fB\fR in the IPv6 case\[char46] If the NAT rule is of type dnat_and_snat and has \fBstateless=true\fR in the options, then the action would be \fBip4/6\[char46]dst=(\fIB\fB)\fR\[char46]
 .IP
-If the NAT rule cannot be handled in a distributed manner, then the priority\-100 flow above is only programmed on the \fBredirect\-chassis\fR\[char46]
+If the NAT rule cannot be handled in a distributed manner, then the priority\-100 flow above is only programmed on the gateway chassis\[char46]
+.IP
+If the NAT rule has \fBallowed_ext_ips\fR configured, then there is an additional match \fBip4\[char46]src == \fIallowed_ext_ips
+\fB\fR\[char46] Similarly, for IPV6, match would be \fBip6\[char46]src ==
+\fIallowed_ext_ips\fB\fR\[char46]
+.IP
+If the NAT rule has \fBexempted_ext_ips\fR set, then there is an additional flow configured at priority 101\[char46] The flow matches if source ip is an \fBexempted_ext_ip\fR and the action is \fBnext; \fR\[char46] This flow is used to bypass the ct_dnat action for a packet originating from \fBexempted_ext_ips\fR\[char46]
 .IP
 A priority\-0 logical flow with match \fB1\fR has actions \fBnext;\fR\[char46]
 .RE
-.ST "Ingress Table 7: IPv6 ND RA option processing"
+.ST "Ingress Table 7: ECMP symmetric reply processing"
+.RS
+.IP \(bu
+If ECMP routes with symmetric reply are configured in the \fBOVN_Northbound\fR database for a gateway router, a priority\-100 flow is added for each router port on which symmetric replies are configured\[char46] The matching logic for these ports essentially reverses the configured logic of the ECMP route\[char46] So for instance, a route with a destination routing policy will instead match if the source IP address matches the static route\(cqs prefix\[char46] The flow uses the action \fBct_commit { ct_label\[char46]ecmp_reply_eth = eth\[char46]src;\(dq
+\(dq ct_label\[char46]ecmp_reply_port = \fIK\fB;}; next; \fR to commit the connection and storing \fBeth\[char46]src\fR and the ECMP reply port binding tunnel key \fIK\fR in the \fBct_label\fR\[char46]
+.RE
+.ST "Ingress Table 8: IPv6 ND RA option processing"
 .RS
 .IP \(bu
 A priority\-50 logical flow is added for each logical router port configured with IPv6 ND RA options which matches IPv6 ND Router Solicitation packet and applies the action \fBput_nd_ra_opts\fR and advances the packet to the next table\[char46]
@@ -1379,7 +1653,7 @@ For a valid IPv6 ND RS packet, this transforms the packet into an IPv6 ND RA rep
 .IP \(bu
 A priority\-0 logical flow with match \fB1\fR has actions \fBnext;\fR\[char46]
 .RE
-.ST "Ingress Table 8: IPv6 ND RA responder"
+.ST "Ingress Table 9: IPv6 ND RA responder"
 .PP
 .PP
 This table implements IPv6 ND RA responder for the IPv6 ND RA replies generated by the previous table\[char46]
@@ -1413,58 +1687,26 @@ where \fIE\fR is the MAC address and \fII\fR is the IPv6 link local address of t
 .IP \(bu
 A priority\-0 logical flow with match \fB1\fR has actions \fBnext;\fR\[char46]
 .RE
-.ST "Ingress Table 9: IP Routing"
+.ST "Ingress Table 10: IP Routing"
 .PP
 .PP
 A packet that arrives at this table is an IP packet that should be routed to the address in \fBip4\[char46]dst\fR or \fBip6\[char46]dst\fR\[char46] This table implements IP routing, setting \fBreg0\fR (or \fBxxreg0\fR for IPv6) to the next-hop IP address (leaving \fBip4\[char46]dst\fR or \fBip6\[char46]dst\fR, the packet\(cqs final destination, unchanged) and advances to the next table for ARP resolution\[char46] It also sets \fBreg1\fR (or \fBxxreg1\fR) to the IP address owned by the selected router port (ingress table \fBARP Request\fR will generate an ARP request, if needed, with \fBreg0\fR as the target protocol address and \fBreg1\fR as the source protocol address)\[char46]
 .PP
 .PP
-For ECMP routes, i\[char46]e\[char46] multiple static routes with same policy and prefix but different nexthops, the above actions are deferred to next table\[char46] This table, instead, is responsible for determine the ECMP group id and select a member id within the group based on 5-tuple hashing\[char46] It stores group id in \fBreg8[0\[char46]\[char46]15]\fR and member id in \fBreg8[16\[char46]\[char46]31]\fR\[char46]
+For ECMP routes, i\[char46]e\[char46] multiple static routes with same policy and prefix but different nexthops, the above actions are deferred to next table\[char46] This table, instead, is responsible for determine the ECMP group id and select a member id within the group based on 5-tuple hashing\[char46] It stores group id in \fBreg8[0\[char46]\[char46]15]\fR and member id in \fBreg8[16\[char46]\[char46]31]\fR\[char46] This step is skipped if the traffic going out the ECMP route is reply traffic, and the ECMP route was configured to use symmetric replies\[char46] Instead, the stored \fBct_label\fR value is used to choose the destination\[char46] The least significant 48 bits of the \fBct_label\fR tell the destination MAC address to which the packet should be sent\[char46] The next 16 bits tell the logical router port on which the packet should be sent\[char46] These values in the \fBct_label\fR are set when the initial ingress traffic is received over the ECMP route\[char46]
 .PP
 .PP
 This table contains the following logical flows:
 .RS
 .IP \(bu
+Priority\-550 flow that drops IPv6 Router Solicitation/Advertisement packets that were not processed in previous tables\[char46]
+.IP \(bu
 Priority\-500 flows that match IP multicast traffic destined to groups registered on any of the attached switches and sets \fBoutport\fR to the associated multicast group that will eventually flood the traffic to all interested attached logical switches\[char46] The flows also decrement TTL\[char46]
 .IP \(bu
-Priority\-450 flow that matches unregistered IP multicast traffic and sets \fBoutport\fR to the \fBMC_STATIC\fR multicast group, which \fBovn\-northd\fR populates with the logical ports that have \fBoptions\fR \fB:mcast_flood=\(cqtrue\(cq\fR\[char46]
-.IP \(bu
-For distributed logical routers where one of the logical router ports specifies a \fBredirect\-chassis\fR, a priority\-400 logical flow for each \fBdnat_and_snat\fR NAT rules configured\[char46] These flows will allow to properly forward traffic to the external connections if available and avoid sending it through the tunnel\[char46] Assuming the following NAT rule has been configured:
-.IP
-.nf
-\fB
-.br
-\fBexternal_ip = \fR\fIA\fB\fR;
-.br
-\fBexternal_mac = \fR\fIB\fB\fR;
-.br
-\fBlogical_ip = \fR\fIC\fB\fR;
-.br
-\fB        \fR
-.fi
-.IP
-the following action will be applied:
-.IP
-.nf
-\fB
-.br
-\fBip\[char46]ttl\-\-;
-.br
-\fBreg0 = \fR\fIip\[char46]dst\fB\fR;
-.br
-\fBreg1 = \fR\fIA\fB\fR;
-.br
-\fBeth\[char46]src = \fR\fIB\fB\fR;
-.br
-\fBoutport = \fR\fIrouter-port\fB\fR;
-.br
-\fBnext;
-.br
-\fB        \fR
-.fi
+Priority\-450 flow that matches unregistered IP multicast traffic and sets \fBoutport\fR to the \fBMC_STATIC\fR multicast group, which \fBovn\-northd\fR populates with the logical ports that have \fBoptions\fR \fB:mcast_flood=\(cqtrue\(cq\fR\[char46] If no router ports are configured to flood multicast traffic the packets are dropped\[char46]
 .IP \(bu
 IPv4 routing table\[char46] For each route to IPv4 network \fIN\fR with netmask \fIM\fR, on router port \fIP\fR with IP address \fIA\fR and Ethernet address \fIE\fR, a logical flow with match \fBip4\[char46]dst ==
-\fIN\fB/\fIM\fB\fR, whose priority is \fB400\fR + the number of 1-bits in \fIM\fR if the router port is not a distributed gateway port, else the priority is the number of 1-bits in \fIM\fR, has the following actions:
+\fIN\fB/\fIM\fB\fR, whose priority is the number of 1-bits in \fIM\fR, has the following actions:
 .IP
 .nf
 \fB
@@ -1507,7 +1749,7 @@ IPv6 routing table\[char46] For each route to IPv6 network \fIN\fR with netmask 
 .br
 \fBeth\[char46]src = \fR\fIE\fB\fR;
 .br
-\fBoutport = \fR\fIP\fB\fR;
+\fBoutport = inport;
 .br
 \fBflags\[char46]loopback = 1;
 .br
@@ -1540,10 +1782,13 @@ For each IPv4/IPv6 ECMP group with group id \fIGID\fR and member ids \fIMID1\fR,
 \fB        \fR
 .fi
 .RE
-.ST "Ingress Table 10: IP_ROUTING_ECMP"
+.ST "Ingress Table 11: IP_ROUTING_ECMP"
 .PP
 .PP
 This table implements the second part of IP routing for ECMP routes following the previous table\[char46] If a packet matched a ECMP group in the previous table, this table matches the group id and member id stored from the previous table, setting \fBreg0\fR (or \fBxxreg0\fR for IPv6) to the next-hop IP address (leaving \fBip4\[char46]dst\fR or \fBip6\[char46]dst\fR, the packet\(cqs final destination, unchanged) and advances to the next table for ARP resolution\[char46] It also sets \fBreg1\fR (or \fBxxreg1\fR) to the IP address owned by the selected router port (ingress table \fBARP Request\fR will generate an ARP request, if needed, with \fBreg0\fR as the target protocol address and \fBreg1\fR as the source protocol address)\[char46]
+.PP
+.PP
+This processing is skipped for reply traffic being sent out of an ECMP route if the route was configured to use symmetric replies\[char46]
 .PP
 .PP
 This table contains the following logical flows:
@@ -1567,7 +1812,82 @@ For each member with ID \fIMID\fR in each ECMP group with ID \fIGID\fR, a priori
 \fB        \fR
 .fi
 .RE
-.ST "Ingress Table 12: ARP/ND Resolution"
+.ST "Ingress Table 12: Router policies"
+.PP
+.PP
+This table adds flows for the logical router policies configured on the logical router\[char46] Please see the \fBOVN_Northbound\fR database \fBLogical_Router_Policy\fR table documentation in \fBovn\-nb\fR for supported actions\[char46]
+.RS
+.IP \(bu
+For each router policy configured on the logical router, a logical flow is added with specified priority, match and actions\[char46]
+.IP \(bu
+If the policy action is \fBreroute\fR with 2 or more nexthops defined, then the logical flow is added with the following actions:
+.IP
+.nf
+\fB
+.br
+\fBreg8[0\[char46]\[char46]15] = \fR\fIGID\fB\fR;
+.br
+\fBreg8[16\[char46]\[char46]31] = select(1,\[char46]\[char46]n);
+.br
+\fB        \fR
+.fi
+.IP
+where \fIGID\fR is the ECMP group id generated by \fBovn\-northd\fR for this policy and \fIn\fR is the number of nexthops\[char46] \fBselect\fR action selects one of the nexthop member id, stores it in the register \fBreg8[16\[char46]\[char46]31]\fR and advances the packet to the next stage\[char46]
+.IP \(bu
+If the policy action is \fBreroute\fR with just one nexhop, then the logical flow is added with the following actions:
+.IP
+.nf
+\fB
+.br
+\fB[xx]reg0 = \fR\fIH\fB\fR;
+.br
+\fBeth\[char46]src = \fR\fIE\fB\fR;
+.br
+\fBoutport = \fR\fIP\fB\fR;
+.br
+\fBreg8[0\[char46]\[char46]15] = 0;
+.br
+\fBflags\[char46]loopback = 1;
+.br
+\fBnext;
+.br
+\fB        \fR
+.fi
+.IP
+where \fIH\fR is the \fBnexthop \fR defined in the router policy, \fIE\fR is the ethernet address of the logical router port from which the \fBnexthop\fR is reachable and \fIP\fR is the logical router port from which the \fBnexthop\fR is reachable\[char46]
+.IP \(bu
+If a router policy has the option \fBpkt_mark=\fIm\fB\fR set and if the action is \fBnot\fR drop, then the action also includes \fBpkt\[char46]mark = \fIm\fB\fR to mark the packet with the marker \fIm\fR\[char46]
+.RE
+.ST "Ingress Table 13: ECMP handling for router policies"
+.PP
+.PP
+This table handles the ECMP for the router policies configured with multiple nexthops\[char46]
+.RS
+.IP \(bu
+A priority\-150 flow is added to advance the packet to the next stage if the ECMP group id register \fBreg8[0\[char46]\[char46]15]\fR is 0\[char46]
+.IP \(bu
+For each ECMP reroute router policy with multiple nexthops, a priority\-100 flow is added for each nexthop \fIH\fR with the match \fBreg8[0\[char46]\[char46]15] == \fIGID\fB &&
+reg8[16\[char46]\[char46]31] == \fIM\fB\fR where \fIGID\fR is the router policy group id generated by \fBovn\-northd\fR and \fIM\fR is the member id of the nexthop \fIH\fR generated by \fBovn\-northd\fR\[char46] The following actions are added to the flow:
+.IP
+.nf
+\fB
+.br
+\fB[xx]reg0 = \fR\fIH\fB\fR;
+.br
+\fBeth\[char46]src = \fR\fIE\fB\fR;
+.br
+\fBoutport = \fR\fIP\fB\fR
+.br
+\fB\(dqflags\[char46]loopback = 1; \(dq
+.br
+\fB\(dqnext;\(dq
+.br
+\fB        \fR
+.fi
+.IP
+where \fIH\fR is the \fBnexthop \fR defined in the router policy, \fIE\fR is the ethernet address of the logical router port from which the \fBnexthop\fR is reachable and \fIP\fR is the logical router port from which the \fBnexthop\fR is reachable\[char46]
+.RE
+.ST "Ingress Table 14: ARP/ND Resolution"
 .PP
 .PP
 Any packet that reaches this table is an IP packet whose next-hop IPv4 address is in \fBreg0\fR or IPv6 address is in \fBxxreg0\fR\[char46] (\fBip4\[char46]dst\fR or \fBip6\[char46]dst\fR contains the final destination\[char46]) This table resolves the IP address in \fBreg0\fR (or \fBxxreg0\fR) into an output port in \fBoutport\fR and an Ethernet address in \fBeth\[char46]dst\fR, using the following flows:
@@ -1575,7 +1895,7 @@ Any packet that reaches this table is an IP packet whose next-hop IPv4 address i
 .IP \(bu
 A priority\-500 flow that matches IP multicast traffic that was allowed in the routing pipeline\[char46] For this kind of traffic the \fBoutport\fR was already set so the flow just advances to the next table\[char46]
 .IP \(bu
-Static MAC bindings\[char46] MAC bindings can be known statically based on data in the \fBOVN_Northbound\fR database\[char46] For router ports connected to logical switches, MAC bindings can be known statically from the \fBaddresses\fR column in the \fBLogical_Switch_Port\fR table\[char46] For router ports connected to other logical routers, MAC bindings can be known statically from the \fBmac\fR and \fBnetworks\fR column in the \fBLogical_Router_Port\fR table\[char46]
+Static MAC bindings\[char46] MAC bindings can be known statically based on data in the \fBOVN_Northbound\fR database\[char46] For router ports connected to logical switches, MAC bindings can be known statically from the \fBaddresses\fR column in the \fBLogical_Switch_Port\fR table\[char46] For router ports connected to other logical routers, MAC bindings can be known statically from the \fBmac\fR and \fBnetworks\fR column in the \fBLogical_Router_Port\fR table\[char46] (Note: the flow is NOT installed for the IP addresses that belong to a neighbor logical router port if the current router has the \fBoptions:dynamic_neigh_routers\fR set to \fBtrue\fR)
 .IP
 For each IPv4 address \fIA\fR whose host is known to have Ethernet address \fIE\fR on router port \fIP\fR, a priority\-100 flow with match \fBoutport === \fIP\fB
 && reg0 == \fIA\fB\fR has actions \fBeth\[char46]dst = \fIE\fB; next;\fR\[char46]
@@ -1605,17 +1925,23 @@ next;\fR, where \fBP\fR is the distributed logical router port, \fIE\fR is the E
 .IP
 For IPv6 NAT entries, same flows are added, but using the register \fBxxreg0\fR for the match\[char46]
 .IP \(bu
+Traffic with IP destination an address owned by the router should be dropped\[char46] Such traffic is normally dropped in ingress table \fBIP Input\fR except for IPs that are also shared with SNAT rules\[char46] However, if there was no unSNAT operation that happened successfully until this point in the pipeline and the destination IP of the packet is still a router owned IP, the packets can be safely dropped\[char46]
+.IP
+A priority\-1 logical flow with match \fBip4\[char46]dst = {\[char46]\[char46]}\fR matches on traffic destined to router owned IPv4 addresses which are also SNAT IPs\[char46] This flow has action \fBdrop;\fR\[char46]
+.IP
+A priority\-1 logical flow with match \fBip6\[char46]dst = {\[char46]\[char46]}\fR matches on traffic destined to router owned IPv6 addresses which are also SNAT IPs\[char46] This flow has action \fBdrop;\fR\[char46]
+.IP \(bu
 Dynamic MAC bindings\[char46] These flows resolve MAC-to-IP bindings that have become known dynamically through ARP or neighbor discovery\[char46] (The ingress table \fBARP Request\fR will issue an ARP or neighbor solicitation request for cases where the binding is not yet known\[char46])
 .IP
 A priority\-0 logical flow with match \fBip4\fR has actions \fBget_arp(outport, reg0); next;\fR\[char46]
 .IP
 A priority\-0 logical flow with match \fBip6\fR has actions \fBget_nd(outport, xxreg0); next;\fR\[char46]
 .IP \(bu
-For logical router port with redirect-chassis and redirect-type being set as \fBbridged\fR, a priority\-50 flow will match \fBoutport == \(dqROUTER_PORT\(dq and !is_chassis_resident
+For a distributed gateway LRP with \fBredirect\-type\fR set to \fBbridged\fR, a priority\-50 flow will match \fBoutport == \(dqROUTER_PORT\(dq and !is_chassis_resident
 (\(dqcr\-ROUTER_PORT\(dq)\fR has actions \fBeth\[char46]dst = \fIE\fB;
 next;\fR, where \fIE\fR is the ethernet address of the logical router port\[char46]
 .RE
-.ST "Ingress Table 13: Check packet length"
+.ST "Ingress Table 15: Check packet length"
 .PP
 .PP
 For distributed logical routers with distributed gateway port configured with \fBoptions:gateway_mtu\fR to a valid integer value, this table adds a priority\-50 logical flow with the match \fBip4 && outport == \fIGW_PORT\fB\fR where \fIGW_PORT\fR is the distributed gateway router port and applies the action \fBcheck_pkt_larger\fR and advances the packet to the next table\[char46]
@@ -1633,12 +1959,12 @@ where \fIL\fR is the packet length to check for\[char46] If the packet is larger
 .PP
 .PP
 This table adds one priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
-.ST "Ingress Table 14: Handle larger packets"
+.ST "Ingress Table 16: Handle larger packets"
 .PP
 .PP
-For distributed logical routers with distributed gateway port configured with \fBoptions:gateway_mtu\fR to a valid integer value, this table adds the following priority\-50 logical flow for each logical router port with the match \fBip4 &&
-inport == \fILRP\fB && outport == \fIGW_PORT\fB
-&& REGBIT_PKT_LARGER\fR, where \fILRP\fR is the logical router port and \fIGW_PORT\fR is the distributed gateway router port and applies the following action
+For distributed logical routers with distributed gateway port configured with \fBoptions:gateway_mtu\fR to a valid integer value, this table adds the following priority\-50 logical flow for each logical router port with the match \fBinport == \fILRP\fB
+&& outport == \fIGW_PORT\fB &&
+REGBIT_PKT_LARGER\fR, where \fILRP\fR is the logical router port and \fIGW_PORT\fR is the distributed gateway router port and applies the following action for ipv4 and ipv6 respectively:
 .PP
 .nf
 \fB
@@ -1665,6 +1991,30 @@ inport == \fILRP\fB && outport == \fIGW_PORT\fB
 .br
 \fB};
 .br
+\fB
+.br
+\fBicmp6 {
+.br
+\fB    icmp6\[char46]type = 2;
+.br
+\fB    icmp6\[char46]code = 0;
+.br
+\fB    icmp6\[char46]frag_mtu = \fR\fIM\fB\fR;
+.br
+\fB    eth\[char46]dst = \fR\fIE\fB\fR;
+.br
+\fB    ip6\[char46]dst = ip6\[char46]src;
+.br
+\fB    ip6\[char46]src = \fR\fII\fB\fR;
+.br
+\fB    ip\[char46]ttl = 255;
+.br
+\fB    REGBIT_EGRESS_LOOPBACK = 1;
+.br
+\fB    next(pipeline=ingress, table=0);
+.br
+\fB};
+.br
 \fB    \fR
 .fi
 .RS
@@ -1673,28 +2023,25 @@ Where \fIM\fR is the (fragment MTU - 58) whose value is taken from \fBoptions:ga
 .IP \(bu
 \fIE\fR is the Ethernet address of the logical router port\[char46]
 .IP \(bu
-\fII\fR is the IPv4 address of the logical router port\[char46]
+\fII\fR is the IPv4/IPv6 address of the logical router port\[char46]
 .RE
 .PP
 .PP
 This table adds one priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
-.ST "Ingress Table 15: Gateway Redirect"
+.ST "Ingress Table 17: Gateway Redirect"
 .PP
 .PP
-For distributed logical routers where one of the logical router ports specifies a \fBredirect\-chassis\fR, this table redirects certain packets to the distributed gateway port instance on the \fBredirect\-chassis\fR\[char46] This table has the following flows:
+For distributed logical routers where one of the logical router ports specifies a gateway chassis, this table redirects certain packets to the distributed gateway port instance on the gateway chassis\[char46] This table has the following flows:
 .RS
 .IP \(bu
-A priority\-150 logical flow with match \fBoutport == \fIGW\fB &&
-eth\[char46]dst == 00:00:00:00:00:00\fR has actions \fBoutport = \fICR\fB; next;\fR, where \fIGW\fR is the logical router distributed gateway port and \fICR\fR is the \fBchassisredirect\fR port representing the instance of the logical router distributed gateway port on the \fBredirect\-chassis\fR\[char46]
+For each NAT rule in the OVN Northbound database that can be handled in a distributed manner, a priority\-100 logical flow with match \fBip4\[char46]src == \fIB\fB &&
+outport == \fIGW\fB\fR && is_chassis_resident(\fIP\fR), where \fIGW\fR is the logical router distributed gateway port and \fIP\fR is the NAT logical port\[char46] IP traffic matching the above rule will be managed locally setting \fBreg1\fR to \fIC\fR and \fBeth\[char46]src\fR to \fID\fR, where \fIC\fR is NAT external ip and \fID\fR is NAT external mac\[char46]
 .IP \(bu
-For each NAT rule in the OVN Northbound database that can be handled in a distributed manner, a priority\-200 logical flow with match \fBip4\[char46]src == \fIB\fB &&
-outport == \fIGW\fB\fR, where \fIGW\fR is the logical router distributed gateway port, with actions \fBnext;\fR\[char46]
-.IP \(bu
-A priority\-50 logical flow with match \fBoutport == \fIGW\fB\fR has actions \fBoutport = \fICR\fB; next;\fR, where \fIGW\fR is the logical router distributed gateway port and \fICR\fR is the \fBchassisredirect\fR port representing the instance of the logical router distributed gateway port on the \fBredirect\-chassis\fR\[char46]
+A priority\-50 logical flow with match \fBoutport == \fIGW\fB\fR has actions \fBoutport = \fICR\fB; next;\fR, where \fIGW\fR is the logical router distributed gateway port and \fICR\fR is the \fBchassisredirect\fR port representing the instance of the logical router distributed gateway port on the gateway chassis\[char46]
 .IP \(bu
 A priority\-0 logical flow with match \fB1\fR has actions \fBnext;\fR\[char46]
 .RE
-.ST "Ingress Table 16: ARP Request"
+.ST "Ingress Table 18: ARP Request"
 .PP
 .PP
 In the common case where the Ethernet destination has been resolved, this table outputs the packet\[char46] Otherwise, it composes and sends an ARP or IPv6 Neighbor Solicitation request\[char46] It holds the following flows:
@@ -1773,7 +2120,7 @@ Known MAC address\[char46] A priority\-0 flow with match \fB1\fR has actions \fB
 This is for already established connections\(cq reverse traffic\[char46] i\[char46]e\[char46], DNAT has already been done in ingress pipeline and now the packet has entered the egress pipeline as part of a reply\[char46] For NAT on a distributed router, it is unDNATted here\[char46] For Gateway routers, the unDNAT processing is carried out in the ingress DNAT table\[char46]
 .RS
 .IP \(bu
-For all the configured load balancing rules for a router with gateway port in \fBOVN_Northbound\fR database that includes an IPv4 address \fBVIP\fR, for every backend IPv4 address \fIB\fR defined for the \fBVIP\fR a priority\-120 flow is programmed on \fBredirect\-chassis\fR that matches \fBip && ip4\[char46]src == \fIB\fB &&
+For all the configured load balancing rules for a router with gateway port in \fBOVN_Northbound\fR database that includes an IPv4 address \fBVIP\fR, for every backend IPv4 address \fIB\fR defined for the \fBVIP\fR a priority\-120 flow is programmed on gateway chassis that matches \fBip && ip4\[char46]src == \fIB\fB &&
 outport == \fIGW\fB\fR, where \fIGW\fR is the logical router gateway port with an action \fBct_dnat;\fR\[char46] If the backend IPv4 address \fIB\fR is also configured with L4 port \fIPORT\fR of protocol \fIP\fR, then the match also includes \fBP\[char46]src\fR == \fIPORT\fR\[char46] These flows are not added for load balancers with IPv6 \fIVIPs\fR\[char46]
 .IP
 If the router is configured to force SNAT any load-balanced packets, above action will be replaced by \fBflags\[char46]force_snat_for_lb = 1; ct_dnat;\fR\[char46]
@@ -1782,7 +2129,7 @@ For each configuration in the OVN Northbound database that asks to change the de
 && outport == \fIGW\fB\fR, where \fIGW\fR is the logical router gateway port, with an action \fBct_dnat;\fR\[char46] If the NAT rule is of type dnat_and_snat and has \fBstateless=true\fR in the options, then the action would be \fBip4/6\[char46]src=
 (\fIB\fB)\fR\[char46]
 .IP
-If the NAT rule cannot be handled in a distributed manner, then the priority\-100 flow above is only programmed on the \fBredirect\-chassis\fR\[char46]
+If the NAT rule cannot be handled in a distributed manner, then the priority\-100 flow above is only programmed on the gateway chassis\[char46]
 .IP
 If the NAT rule can be handled in a distributed manner, then there is an additional action \fBeth\[char46]src = \fIEA\fB;\fR, where \fIEA\fR is the ethernet address associated with the IP address \fIA\fR in the NAT rule\[char46] This allows upstream MAC learning to point to the correct chassis\[char46]
 .IP \(bu
@@ -1802,12 +2149,24 @@ Egress Table 1: SNAT on Gateway Routers
 .RS
 .IP \(bu
 If the Gateway router in the OVN Northbound database has been configured to force SNAT a packet (that has been previously DNATted) to \fIB\fR, a priority\-100 flow matches \fBflags\[char46]force_snat_for_dnat == 1 && ip\fR with an action \fBct_snat(\fIB\fB);\fR\[char46]
+.IP \(bu
+If the Gateway router in the OVN Northbound database has been configured to force SNAT a packet (that has been previously load-balanced) using router IP (i\[char46]e \fBoptions\fR:lb_force_snat_ip=router_ip), then for each logical router port \fIP\fR attached to the Gateway router, a priority\-110 flow matches \fBflags\[char46]force_snat_for_lb == 1 && outport == \fIP\fB
+\fR with an action \fBct_snat(\fIR\fB);\fR where \fIR\fR is the IP configured on the router port\[char46] If \fBR\fR is an IPv4 address then the match will also include \fBip4\fR and if it is an IPv6 address, then the match will also include \fBip6\fR\[char46]
 .IP
+If the logical router port \fIP\fR is configured with multiple IPv4 and multiple IPv6 addresses, only the first IPv4 and first IPv6 address is considered\[char46]
+.IP \(bu
 If the Gateway router in the OVN Northbound database has been configured to force SNAT a packet (that has been previously load-balanced) to \fIB\fR, a priority\-100 flow matches \fBflags\[char46]force_snat_for_lb == 1 && ip\fR with an action \fBct_snat(\fIB\fB);\fR\[char46]
-.IP
+.IP \(bu
 For each configuration in the OVN Northbound database, that asks to change the source IP address of a packet from an IP address of \fIA\fR or to change the source IP address of a packet that belongs to network \fIA\fR to \fIB\fR, a flow matches \fBip && ip4\[char46]src == \fIA\fB\fR with an action \fBct_snat(\fIB\fB);\fR\[char46] The priority of the flow is calculated based on the mask of \fIA\fR, with matches having larger masks getting higher priorities\[char46] If the NAT rule is of type dnat_and_snat and has \fBstateless=true\fR in the options, then the action would be \fBip4/6\[char46]src=
 (\fIB\fB)\fR\[char46]
-.IP
+.IP \(bu
+If the NAT rule has \fBallowed_ext_ips\fR configured, then there is an additional match \fBip4\[char46]dst == \fIallowed_ext_ips
+\fB\fR\[char46] Similarly, for IPV6, match would be \fBip6\[char46]dst ==
+\fIallowed_ext_ips\fB\fR\[char46]
+.IP \(bu
+If the NAT rule has \fBexempted_ext_ips\fR set, then there is an additional flow configured at the priority + 1 of corresponding NAT rule\[char46] The flow matches if destination ip is an \fBexempted_ext_ip\fR and the action is \fBnext;
+\fR\[char46] This flow is used to bypass the ct_snat action for a packet which is destinted to \fBexempted_ext_ips\fR\[char46]
+.IP \(bu
 A priority\-0 logical flow with match \fB1\fR has actions \fBnext;\fR\[char46]
 .RE
 .PP
@@ -1819,16 +2178,23 @@ For each configuration in the OVN Northbound database, that asks to change the s
 outport == \fIGW\fB\fR, where \fIGW\fR is the logical router gateway port, with an action \fBct_snat(\fIB\fB);\fR\[char46] The priority of the flow is calculated based on the mask of \fIA\fR, with matches having larger masks getting higher priorities\[char46] If the NAT rule is of type dnat_and_snat and has \fBstateless=true\fR in the options, then the action would be \fBip4/6\[char46]src=
 (\fIB\fB)\fR\[char46]
 .IP
-If the NAT rule cannot be handled in a distributed manner, then the flow above is only programmed on the \fBredirect\-chassis\fR increasing flow priority by 128 in order to be run first
+If the NAT rule cannot be handled in a distributed manner, then the flow above is only programmed on the gateway chassis increasing flow priority by 128 in order to be run first
 .IP
 If the NAT rule can be handled in a distributed manner, then there is an additional action \fBeth\[char46]src = \fIEA\fB;\fR, where \fIEA\fR is the ethernet address associated with the IP address \fIA\fR in the NAT rule\[char46] This allows upstream MAC learning to point to the correct chassis\[char46]
+.IP
+If the NAT rule has \fBallowed_ext_ips\fR configured, then there is an additional match \fBip4\[char46]dst == \fIallowed_ext_ips
+\fB\fR\[char46] Similarly, for IPV6, match would be \fBip6\[char46]dst ==
+\fIallowed_ext_ips\fB\fR\[char46]
+.IP
+If the NAT rule has \fBexempted_ext_ips\fR set, then there is an additional flow configured at the priority + 1 of corresponding NAT rule\[char46] The flow matches if destination ip is an \fBexempted_ext_ip\fR and the action is \fBnext;
+\fR\[char46] This flow is used to bypass the ct_snat action for a flow which is destinted to \fBexempted_ext_ips\fR\[char46]
 .IP \(bu
 A priority\-0 logical flow with match \fB1\fR has actions \fBnext;\fR\[char46]
 .RE
 .ST "Egress Table 2: Egress Loopback"
 .PP
 .PP
-For distributed logical routers where one of the logical router ports specifies a \fBredirect\-chassis\fR\[char46]
+For distributed logical routers where one of the logical router ports specifies a gateway chassis\[char46]
 .PP
 .PP
 While UNDNAT and SNAT processing have already occurred by this point, this traffic needs to be forced through egress loopback on this distributed gateway port instance, in order for UNSNAT and DNAT processing to be applied, and also for IP routing and ARP resolution after all of the NAT processing, so that the packet can be forwarded to the destination\[char46]
