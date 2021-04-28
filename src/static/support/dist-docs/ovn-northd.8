@@ -17,11 +17,11 @@
 .  PP
 .  I "\\$1"
 ..
-build/.PP
+.PP
 .SH "NAME"
 .PP
 .PP
-ovn-northd \- Open Virtual Network central control daemon
+ovn-northd and ovn-northd-ddlog \- Open Virtual Network central control daemon
 .SH "SYNOPSIS"
 .PP
 \fBovn\-northd\fR [\fIoptions\fR]
@@ -29,6 +29,9 @@ ovn-northd \- Open Virtual Network central control daemon
 .PP
 .PP
 \fBovn\-northd\fR is a centralized daemon responsible for translating the high-level OVN configuration into logical configuration consumable by daemons such as \fBovn\-controller\fR\[char46] It translates the logical network configuration in terms of conventional network concepts, taken from the OVN Northbound Database (see \fBovn\-nb\fR(5)), into logical datapath flows in the OVN Southbound Database (see \fBovn\-sb\fR(5)) below it\[char46]
+.PP
+.PP
+\fBovn\-northd\fR is implemented in C\[char46] \fBovn\-northd\-ddlog\fR is a compatible implementation written in DDlog, a language for incremental database processing\[char46] This documentation applies to both implementations, with differences indicated where relevant\[char46]
 .SH "OPTIONS"
 .TP
 \fB\-\-ovnnb\-db=\fIdatabase\fB\fR
@@ -114,7 +117,7 @@ Sets the log pattern for \fIdestination\fR to \fIpattern\fR\[char46] Refer to \f
 Sets the RFC5424 facility of the log message\[char46] \fIfacility\fR can be one of \fBkern\fR, \fBuser\fR, \fBmail\fR, \fBdaemon\fR, \fBauth\fR, \fBsyslog\fR, \fBlpr\fR, \fBnews\fR, \fBuucp\fR, \fBclock\fR, \fBftp\fR, \fBntp\fR, \fBaudit\fR, \fBalert\fR, \fBclock2\fR, \fBlocal0\fR, \fBlocal1\fR, \fBlocal2\fR, \fBlocal3\fR, \fBlocal4\fR, \fBlocal5\fR, \fBlocal6\fR or \fBlocal7\fR\[char46] If this option is not specified, \fBdaemon\fR is used as the default for the local system syslog and \fBlocal0\fR is used while sending a message to the target provided via the \fB\-\-syslog\-target\fR option\[char46]
 .TP
 \fB\-\-log\-file\fR[\fB=\fR\fIfile\fR]
-Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
+Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/local/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
 .TP
 \fB\-\-syslog\-target=\fR\fIhost\fR\fB:\fR\fIport\fR
 Send syslog messages to UDP \fIport\fR on \fIhost\fR, in addition to the system syslog\[char46] The \fIhost\fR must be a numerical IP address, not a hostname\[char46]
@@ -208,6 +211,19 @@ If all databases in a clustered southbound database are removed from disk, then 
 Reset northbound database cluster status when databases are destroyed and rebuilt\[char46]
 .IP
 This performs the same task as \fBsb\-cluster\-state\-reset\fR except for the northbound database client\[char46]
+.RE
+.PP
+.PP
+Only \fBovn\-northd\-ddlog\fR supports the following commands:
+.RS
+.TP
+\fBenable\-cpu\-profiling\fR
+.TQ .5in
+\fBdisable\-cpu\-profiling\fR
+Enables or disables profiling of CPU time used by the DDlog engine\[char46] When CPU profiling is enabled, the \fBprofile\fR command (see below) will include DDlog CPU usage statistics in its output\[char46] Enabling CPU profiling will slow \fBovn\-northd\-ddlog\fR\[char46] Disabling CPU profiling does not clear any previously recorded statistics\[char46]
+.TP
+\fBprofile\fR
+Outputs a profile of the current and peak sizes of arrangements inside DDlog\[char46] This profiling data can be useful for optimizing DDlog code\[char46] If CPU profiling was previously enabled (even if it was later disabled), the output also includes a CPU time profile\[char46] See \fBProfiling\fR inside the tutorial in the DDlog repository for an introduction to profiling DDlog\[char46]
 .RE
 .SH "ACTIVE-STANDBY FOR HIGH AVAILABILITY"
 .PP
@@ -913,7 +929,7 @@ For each forwarding group configured on the logical switch datapath, a priority\
 .IP \(bu
 One priority\-0 fallback flow that matches all packets with the action \fBoutport = get_fdb(eth\[char46]dst); next;\fR\[char46] The action \fBget_fdb\fR gets the port for the \fBeth\[char46]dst\fR in the MAC learning table of the logical switch datapath\[char46] If there is no entry for \fBeth\[char46]dst\fR in the MAC learning table, then it stores \fBnone\fR in the \fBoutport\fR\[char46]
 .RE
-.ST "Ingress Table 23 Destination unknown"
+.ST "Ingress Table 24 Destination unknown"
 .PP
 .PP
 This table handles the packets whose destination was not found or and looked up in the MAC learning table of the logical switch datapath\[char46] It contains the following flows\[char46]
@@ -1535,6 +1551,8 @@ Ingress Table 5: UNSNAT on Gateway Routers
 .IP \(bu
 If the Gateway router has been configured to force SNAT any previously DNATted packets to \fIB\fR, a priority\-110 flow matches \fBip && ip4\[char46]dst == \fIB\fB\fR or \fBip && ip6\[char46]dst == \fIB\fB\fR with an action \fBct_snat; \fR\[char46]
 .IP
+If the Gateway router is configured with \fBlb_force_snat_ip=router_ip\fR then for every logical router port \fIP\fR attached to the Gateway router with the router ip \fIB\fR, a priority\-110 flow is added with the match \fBinport == \fIP\fB && ip4\[char46]dst == \fIB\fB\fR or \fBinport == \fIP\fB && ip6\[char46]dst == \fIB\fB\fR with an action \fBct_snat; \fR\[char46]
+.IP
 If the Gateway router has been configured to force SNAT any previously load-balanced packets to \fIB\fR, a priority\-100 flow matches \fBip && ip4\[char46]dst == \fIB\fB\fR or \fBip && ip6\[char46]dst == \fIB\fB\fR with an action \fBct_snat; \fR\[char46]
 .IP
 For each NAT configuration in the OVN Northbound database, that asks to change the source IP address of a packet from \fIA\fR to \fIB\fR, a priority\-90 flow matches \fBip && ip4\[char46]dst == \fIB\fB\fR or \fBip && ip6\[char46]dst == \fIB\fB\fR with an action \fBct_snat; \fR\[char46] If the NAT rule is of type dnat_and_snat and has \fBstateless=true\fR in the options, then the action would be \fBip4/6\[char46]dst=
@@ -1573,18 +1591,18 @@ If controller_event has been enabled for all the configured load balancing rules
 For all the configured load balancing rules for a Gateway router or Router with gateway port in \fBOVN_Northbound\fR database that includes a L4 port \fIPORT\fR of protocol \fIP\fR and IPv4 or IPv6 address \fIVIP\fR, a priority\-120 flow that matches on \fBct\[char46]new && ip && ip4\[char46]dst == \fIVIP\fB
 && \fIP\fB && \fIP\fB\[char46]dst == \fIPORT
 \fB\fR (\fBip6\[char46]dst == \fIVIP\fB\fR in the IPv6 case) with an action of \fBct_lb(\fIargs\fB)\fR, where \fIargs\fR contains comma separated IPv4 or IPv6 addresses (and optional port numbers) to load balance to\[char46] If the router is configured to force SNAT any load-balanced packets, the above action will be replaced by \fBflags\[char46]force_snat_for_lb = 1;
-ct_lb(\fIargs\fB);\fR\[char46] If health check is enabled, then \fIargs\fR will only contain those endpoints whose service monitor status entry in \fBOVN_Southbound\fR db is either \fBonline\fR or empty\[char46]
+ct_lb(\fIargs\fB);\fR\[char46] If the load balancing rule is configured with \fBskip_snat\fR set to true, the above action will be replaced by \fBflags\[char46]skip_snat_for_lb = 1; ct_lb(\fIargs\fB);\fR\[char46] If health check is enabled, then \fIargs\fR will only contain those endpoints whose service monitor status entry in \fBOVN_Southbound\fR db is either \fBonline\fR or empty\[char46]
 .IP \(bu
 For all the configured load balancing rules for a router in \fBOVN_Northbound\fR database that includes a L4 port \fIPORT\fR of protocol \fIP\fR and IPv4 or IPv6 address \fIVIP\fR, a priority\-120 flow that matches on \fBct\[char46]est && ip && ip4\[char46]dst == \fIVIP\fB
 && \fIP\fB && \fIP\fB\[char46]dst == \fIPORT
-\fB\fR (\fBip6\[char46]dst == \fIVIP\fB\fR in the IPv6 case) with an action of \fBct_dnat;\fR\[char46] If the router is configured to force SNAT any load-balanced packets, the above action will be replaced by \fBflags\[char46]force_snat_for_lb = 1; ct_dnat;\fR\[char46]
+\fB\fR (\fBip6\[char46]dst == \fIVIP\fB\fR in the IPv6 case) with an action of \fBct_dnat;\fR\[char46] If the router is configured to force SNAT any load-balanced packets, the above action will be replaced by \fBflags\[char46]force_snat_for_lb = 1; ct_dnat;\fR\[char46] If the load balancing rule is configured with \fBskip_snat\fR set to true, the above action will be replaced by \fBflags\[char46]skip_snat_for_lb = 1; ct_dnat;\fR\[char46]
 .IP \(bu
 For all the configured load balancing rules for a router in \fBOVN_Northbound\fR database that includes just an IP address \fIVIP\fR to match on, a priority\-110 flow that matches on \fBct\[char46]new && ip && ip4\[char46]dst ==
 \fIVIP\fB\fR (\fBip6\[char46]dst == \fIVIP\fB\fR in the IPv6 case) with an action of \fBct_lb(\fIargs\fB)\fR, where \fIargs\fR contains comma separated IPv4 or IPv6 addresses\[char46] If the router is configured to force SNAT any load-balanced packets, the above action will be replaced by \fBflags\[char46]force_snat_for_lb = 1;
-ct_lb(\fIargs\fB);\fR\[char46]
+ct_lb(\fIargs\fB);\fR\[char46] If the load balancing rule is configured with \fBskip_snat\fR set to true, the above action will be replaced by \fBflags\[char46]skip_snat_for_lb = 1; ct_lb(\fIargs\fB);\fR\[char46]
 .IP \(bu
 For all the configured load balancing rules for a router in \fBOVN_Northbound\fR database that includes just an IP address \fIVIP\fR to match on, a priority\-110 flow that matches on \fBct\[char46]est && ip && ip4\[char46]dst ==
-\fIVIP\fB\fR (or \fBip6\[char46]dst == \fIVIP\fB\fR) with an action of \fBct_dnat;\fR\[char46] If the router is configured to force SNAT any load-balanced packets, the above action will be replaced by \fBflags\[char46]force_snat_for_lb = 1; ct_dnat;\fR\[char46]
+\fIVIP\fB\fR (or \fBip6\[char46]dst == \fIVIP\fB\fR) with an action of \fBct_dnat;\fR\[char46] If the router is configured to force SNAT any load-balanced packets, the above action will be replaced by \fBflags\[char46]force_snat_for_lb = 1; ct_dnat;\fR\[char46] If the load balancing rule is configured with \fBskip_snat\fR set to true, the above action will be replaced by \fBflags\[char46]skip_snat_for_lb = 1; ct_dnat;\fR\[char46]
 .IP \(bu
 If the load balancer is created with \fB\-\-reject\fR option and it has no active backends, a TCP reset segment (for tcp) or an ICMP port unreachable packet (for all other kind of traffic) will be sent whenever an incoming packet is received for this load-balancer\[char46] Please note using \fB\-\-reject\fR option will disable empty_lb SB controller event for this load balancer\[char46]
 .RE
@@ -2149,6 +2167,8 @@ Egress Table 1: SNAT on Gateway Routers
 .RS
 .IP \(bu
 If the Gateway router in the OVN Northbound database has been configured to force SNAT a packet (that has been previously DNATted) to \fIB\fR, a priority\-100 flow matches \fBflags\[char46]force_snat_for_dnat == 1 && ip\fR with an action \fBct_snat(\fIB\fB);\fR\[char46]
+.IP \(bu
+If a load balancer configured to skip snat has been applied to the Gateway router pipeline, a priority\-120 flow matches \fBflags\[char46]skip_snat_for_lb == 1 && ip\fR with an action \fBnext;\fR\[char46]
 .IP \(bu
 If the Gateway router in the OVN Northbound database has been configured to force SNAT a packet (that has been previously load-balanced) using router IP (i\[char46]e \fBoptions\fR:lb_force_snat_ip=router_ip), then for each logical router port \fIP\fR attached to the Gateway router, a priority\-110 flow matches \fBflags\[char46]force_snat_for_lb == 1 && outport == \fIP\fB
 \fR with an action \fBct_snat(\fIR\fB);\fR where \fIR\fR is the IP configured on the router port\[char46] If \fBR\fR is an IPv4 address then the match will also include \fBip4\fR and if it is an IPv6 address, then the match will also include \fBip6\fR\[char46]
