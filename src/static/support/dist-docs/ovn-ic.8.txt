@@ -2,8 +2,6 @@ ovn-ic(8)                         OVN Manual                         ovn-ic(8)
 
 
 
-build/.PP
-
 NAME
        ovn-ic - Open Virtual Network interconnection controller
 
@@ -80,10 +78,10 @@ OPTIONS
 
        --no-chdir
               By default, when --detach is specified, the daemon  changes  its
-              current  working  directory  to  the root directory after it de‐
-              taches. Otherwise, invoking the daemon from a carelessly  chosen
-              directory  would  prevent  the administrator from unmounting the
-              file system that holds that directory.
+              current  working  directory  to  the  root  directory  after  it
+              detaches. Otherwise, invoking the daemon from a carelessly  cho‐
+              sen  directory  would  prevent the administrator from unmounting
+              the file system that holds that directory.
 
               Specifying --no-chdir suppresses this behavior,  preventing  the
               daemon  from changing its current working directory. This may be
@@ -126,18 +124,18 @@ OPTIONS
    Logging Options
        -v[spec]
        --verbose=[spec]
-            Sets logging levels. Without any spec, sets the log level for  ev‐
-            ery  module  and  destination to dbg. Otherwise, spec is a list of
+            Sets logging levels. Without any spec,  sets  the  log  level  for
+            every  module and destination to dbg. Otherwise, spec is a list of
             words separated by spaces or commas or colons, up to one from each
             category below:
 
-            •      A  valid module name, as displayed by the vlog/list command
+            ·      A  valid module name, as displayed by the vlog/list command
                    on ovs-appctl(8), limits the log level change to the speci‐
                    fied module.
 
-            •      syslog,  console, or file, to limit the log level change to
-                   only to the system log, to the console, or to a  file,  re‐
-                   spectively.  (If  --detach  is specified, the daemon closes
+            ·      syslog,  console, or file, to limit the log level change to
+                   only to the system log, to  the  console,  or  to  a  file,
+                   respectively.  (If --detach is specified, the daemon closes
                    its standard file descriptors, so logging  to  the  console
                    will have no effect.)
 
@@ -145,7 +143,7 @@ OPTIONS
                    only useful along with the --syslog-target option (the word
                    has no effect otherwise).
 
-            •      off,  emer,  err,  warn,  info,  or dbg, to control the log
+            ·      off,  emer,  err,  warn,  info,  or dbg, to control the log
                    level. Messages of the given severity  or  higher  will  be
                    logged,  and  messages  of  lower severity will be filtered
                    out. off filters out all messages. See ovs-appctl(8) for  a
@@ -166,8 +164,8 @@ OPTIONS
 
        -vPATTERN:destination:pattern
        --verbose=PATTERN:destination:pattern
-            Sets the log pattern for destination to pattern. Refer to  ovs-ap‐
-            pctl(8) for a description of the valid syntax for pattern.
+            Sets  the  log  pattern  for  destination  to  pattern.  Refer  to
+            ovs-appctl(8) for a description of the valid syntax for pattern.
 
        -vFACILITY:facility
        --verbose=FACILITY:facility
@@ -175,14 +173,14 @@ OPTIONS
             of kern, user, mail, daemon, auth, syslog, lpr, news, uucp, clock,
             ftp,  ntp,  audit,  alert, clock2, local0, local1, local2, local3,
             local4, local5, local6 or local7. If this option is not specified,
-            daemon  is used as the default for the local system syslog and lo‐
-            cal0 is used while sending a message to the  target  provided  via
+            daemon  is  used  as  the  default for the local system syslog and
+            local0 is used while sending a message to the target provided  via
             the --syslog-target option.
 
        --log-file[=file]
             Enables  logging  to a file. If file is specified, then it is used
             as the exact name for the log file. The default log file name used
-            if file is omitted is /usr/var/log/ovn/program.log.
+            if file is omitted is /usr/local/var/log/ovn/program.log.
 
        --syslog-target=host:port
             Send  syslog messages to UDP port on host, in addition to the sys‐
@@ -193,30 +191,30 @@ OPTIONS
             Specify  method  as  how  syslog messages should be sent to syslog
             daemon. The following forms are supported:
 
-            •      libc, to use the libc syslog() function. Downside of  using
+            ·      libc, to use the libc syslog() function. Downside of  using
                    this  options  is that libc adds fixed prefix to every mes‐
                    sage before it is actually sent to the syslog  daemon  over
                    /dev/log UNIX domain socket.
 
-            •      unix:file, to use a UNIX domain socket directly. It is pos‐
+            ·      unix:file, to use a UNIX domain socket directly. It is pos‐
                    sible to specify arbitrary message format with this option.
                    However,  rsyslogd  8.9  and  older versions use hard coded
                    parser function anyway that limits UNIX domain socket  use.
                    If  you  want  to  use  arbitrary message format with older
-                   rsyslogd versions, then use UDP socket to localhost IP  ad‐
-                   dress instead.
+                   rsyslogd versions, then use  UDP  socket  to  localhost  IP
+                   address instead.
 
-            •      udp:ip:port,  to  use  a UDP socket. With this method it is
+            ·      udp:ip:port,  to  use  a UDP socket. With this method it is
                    possible to use arbitrary message format  also  with  older
-                   rsyslogd.  When sending syslog messages over UDP socket ex‐
-                   tra precaution needs to be taken into account, for example,
-                   syslog daemon needs to be configured to listen on the spec‐
-                   ified UDP port, accidental iptables rules could  be  inter‐
-                   fering  with  local syslog traffic and there are some secu‐
-                   rity considerations that apply to UDP sockets, but  do  not
-                   apply to UNIX domain sockets.
+                   rsyslogd.  When  sending  syslog  messages  over UDP socket
+                   extra precaution needs to be taken into account, for  exam‐
+                   ple,  syslog daemon needs to be configured to listen on the
+                   specified UDP port,  accidental  iptables  rules  could  be
+                   interfering  with  local  syslog traffic and there are some
+                   security considerations that apply to UDP sockets,  but  do
+                   not apply to UNIX domain sockets.
 
-            •      null, to discard all messages logged to syslog.
+            ·      null, to discard all messages logged to syslog.
 
             The  default is taken from the OVS_SYSLOG_METHOD environment vari‐
             able; if it is unset, the default is libc.
