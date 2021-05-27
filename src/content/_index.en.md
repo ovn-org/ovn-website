@@ -36,9 +36,7 @@ Distribution documentation (aka man pages) is [available here](https://www.ovn.o
 We have weekly IRC meetings you can participate in:
 
 [OVN weekly](http://eavesdrop.openstack.org/meetings/ovn_community_development_discussion/2021/)
-IRC meeting every Thu 1715 UTC
-
-Freenode **#openvswitch**
+IRC meeting every Thu 1715 UTC in **#openvswitch** on [irc.libera.chat](https://libera.chat) 
 
 {{% notice info %}}
 Until recently, OVN code lived within the Open vSwitch codebase. OVN was
