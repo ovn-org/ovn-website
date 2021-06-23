@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-sb" 5 " DB Schema 20.17.0" "Open vSwitch 21.03.90" "Open vSwitch Manual"
+.TH "ovn-sb" 5 " DB Schema 20.18.0" "Open vSwitch 21.06.0" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -726,7 +726,7 @@ For a one-bit field or predicate, a mention of its name is equivalent to \fB\fIs
 .IP
 Most of the symbols below have integer type\[char46] Only \fBinport\fR and \fBoutport\fR have string type\[char46] \fBinport\fR names a logical port\[char46] Thus, its value is a \fBlogical_port\fR name from the \fBPort_Binding\fR table\[char46] \fBoutport\fR may name a logical port, as \fBinport\fR, or a logical multicast group defined in the \fBMulticast_Group\fR table\[char46] For both symbols, only names within the flow\(cqs logical datapath may be used\[char46]
 .IP
-The \fBreg\fR\fIX\fR symbols are 32-bit integers\[char46] The \fBxxreg\fR\fIX\fR symbols are 128-bit integers, which overlay four of the 32-bit registers: \fBxxreg0\fR overlays \fBreg0\fR through \fBreg3\fR, with \fBreg0\fR supplying the most-significant bits of \fBxxreg0\fR and \fBreg3\fR the least-signficant\[char46] \fBxxreg1\fR similarly overlays \fBreg4\fR through \fBreg7\fR\[char46]
+The \fBreg\fR\fIX\fR symbols are 32-bit integers\[char46] The \fBxxreg\fR\fIX\fR symbols are 128-bit integers, which overlay four of the 32-bit registers: \fBxxreg0\fR overlays \fBreg0\fR through \fBreg3\fR, with \fBreg0\fR supplying the most-significant bits of \fBxxreg0\fR and \fBreg3\fR the least-significant\[char46] \fBxxreg1\fR similarly overlays \fBreg4\fR through \fBreg7\fR\[char46]
 .RS
 .IP \(bu
 \fBreg0\fR\[char46]\[char46]\[char46]\fBreg9\fR
@@ -864,7 +864,7 @@ By default, output to the input port is implicitly dropped, that is, \fBoutput\f
 Executes the given logical datapath \fItable\fR in \fIpipeline\fR as a subroutine\[char46] The default \fItable\fR is just after the current one\[char46] If \fIpipeline\fR is specified, it may be \fBingress\fR or \fBegress\fR; the default \fIpipeline\fR is the one currently executing\[char46] Actions in the both ingress and egress pipeline can use \fBnext\fR to jump across the other pipeline\[char46] Actions in the ingress pipeline should use \fBnext\fR to jump into the specific table of egress pipeline only if it is certain that the packets are local and not tunnelled and wants to skip certain stages in the packet processing\[char46]
 .TP
 \fB\fIfield\fB = \fIconstant\fB;\fR
-Sets data or metadata field \fIfield\fR to constant value \fIconstant\fR, e\[char46]g\[char46] \fBoutport = \(dqvif0\(dq;\fR to set the logical output port\[char46] To set only a subset of bits in a field, specify a subfield for \fIfield\fR or a masked \fIconstant\fR, e\[char46]g\[char46] one may use \fBvlan\[char46]pcp[2] = 1;\fR or \fBvlan\[char46]pcp = 4/4;\fR to set the most sigificant bit of the VLAN PCP\[char46]
+Sets data or metadata field \fIfield\fR to constant value \fIconstant\fR, e\[char46]g\[char46] \fBoutport = \(dqvif0\(dq;\fR to set the logical output port\[char46] To set only a subset of bits in a field, specify a subfield for \fIfield\fR or a masked \fIconstant\fR, e\[char46]g\[char46] one may use \fBvlan\[char46]pcp[2] = 1;\fR or \fBvlan\[char46]pcp = 4/4;\fR to set the most significant bit of the VLAN PCP\[char46]
 .IP
 Assigning to a field with prerequisites implicitly adds those prerequisites to \fBmatch\fR; thus, for example, a flow that sets \fBtcp\[char46]dst\fR applies only to TCP flows, regardless of whether its \fBmatch\fR mentions any TCP field\[char46]
 .IP
@@ -2708,7 +2708,7 @@ string
 optional string, either \fBtcp\fR or \fBudp\fR
 .TQ 2.75in
 \fBport\fR
-integer, in range 0 to 32,767
+integer, in range 0 to 65,535
 .TQ 2.75in
 \fBlogical_port\fR
 string
@@ -2755,7 +2755,7 @@ map of string-string pairs
 IP of the service to be monitored\[char46] Only IPv4 is supported\[char46]
 .IP "\fBprotocol\fR: optional string, either \fBtcp\fR or \fBudp\fR"
 The protocol of the service\[char46]
-.IP "\fBport\fR: integer, in range 0 to 32,767"
+.IP "\fBport\fR: integer, in range 0 to 65,535"
 The TCP or UDP port of the service\[char46]
 .IP "\fBlogical_port\fR: string"
 The VIF of the logical port on which the service is running\[char46] The \fBovn\-controller\fR that binds this \fBlogical_port\fR monitors the service by sending periodic monitor packets\[char46]

@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nb" 5 " DB Schema 5.31.0" "Open vSwitch 21.03.90" "Open vSwitch Manual"
+.TH "ovn-nb" 5 " DB Schema 5.32.0" "Open vSwitch 21.06.0" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -197,6 +197,9 @@ optional string
 .TQ 2.75in
 \fBoptions : ignore_lsp_down\fR
 optional string
+.TQ 2.75in
+\fBoptions : use_ct_inv_match\fR
+optional string
 .TQ .25in
 \fIOptions for configuring interconnection route advertisement:\fR
 .RS .25in
@@ -320,6 +323,8 @@ Parallel computation is enabled only if the system has 4 or more cores/threads a
 The default value is \fBfalse\fR\[char46]
 .IP "\fBoptions : ignore_lsp_down\fR: optional string"
 If set to false, ARP/ND reply flows for logical switch ports will be installed only if the port is up, i\[char46]e\[char46] claimed by a Chassis\[char46] If set to true, these flows are installed regardless of the status of the port, which can result in a situation that ARP request to an IP is resolved even before the relevant VM/container is running\[char46] For environments where this is not an issue, setting it to \fBtrue\fR can reduce the load and latency of the control plane\[char46] The default value is \fBfalse\fR\[char46]
+.IP "\fBoptions : use_ct_inv_match\fR: optional string"
+If set to false, \fBovn\-northd\fR will not use the \fBct\[char46]inv\fR field in any of the logical flow matches\[char46] The default value is true\[char46] If the NIC supports offloading OVS datapath flows but doesn\(cqt support offloading ct_state \fBinv\fR flag, then the datapath flows matching on this flag (either \fB+inv\fR or \fB\-inv\fR) will not be offloaded\[char46] CMS should consider setting \fBuse_ct_inv_match\fR to \fBfalse\fR in such cases\[char46] This results in a side effect of the invalid packets getting delivered to the destination VIF, which otherwise would have been dropped by \fBOVN\fR\[char46]
 .ST "Options for configuring interconnection route advertisement:"
 .PP
 .PP
@@ -658,6 +663,9 @@ optional string
 .TQ 2.50in
 \fBoptions : qos_burst\fR
 optional string
+.TQ 2.50in
+\fBoptions : hostname\fR
+optional string
 .RE
 .TQ .25in
 \fIVirtual port Options:\fR
@@ -876,6 +884,8 @@ If set, identifies a specific chassis (by name or hostname) that is allowed to b
 If set, indicates the maximum rate for data sent from this interface, in bit/s\[char46] The traffic will be shaped according to this limit\[char46]
 .IP "\fBoptions : qos_burst\fR: optional string"
 If set, indicates the maximum burst size for data sent from this interface, in bits\[char46]
+.IP "\fBoptions : hostname\fR: optional string"
+If set, indicates the DHCPv4 option \(dqHostname\(dq (option code 12) associated for this Logical Switch Port\[char46] If DHCPv4 is enabled for this Logical Switch Port, hostname dhcp option will be included in DHCP reply\[char46]
 .ST "Virtual port Options:"
 .PP
 .PP
@@ -1324,7 +1334,7 @@ string, either \fBfrom\-lport\fR or \fBto\-lport\fR
 string
 .TQ 3.00in
 \fBaction\fR
-string, one of \fBallow\-related\fR, \fBallow\fR, \fBdrop\fR, or \fBreject\fR
+string, one of \fBallow\-related\fR, \fBallow\-stateless\fR, \fBallow\fR, \fBdrop\fR, or \fBreject\fR
 .TQ .25in
 \fILogging:\fR
 .RS .25in
@@ -1353,6 +1363,8 @@ map of string-string pairs
 The ACL rule\(cqs priority\[char46] Rules with numerically higher priority take precedence over those with lower\[char46] If two ACL rules with the same priority both match, then the one actually applied to a packet is undefined\[char46]
 .IP
 Return traffic from an \fBallow\-related\fR flow is always allowed and cannot be changed through an ACL\[char46]
+.IP
+\fBallow\-stateless\fR flows always take precedence before stateful ACLs, regardless of their priority\[char46] (Both \fBallow\fR and \fBallow\-related\fR ACLs can be stateful\[char46])
 .IP "\fBdirection\fR: string, either \fBfrom\-lport\fR or \fBto\-lport\fR"
 Direction of the traffic to which this rule should apply:
 .RS
@@ -1367,11 +1379,13 @@ The packets that the ACL should match, in the same expression language used for 
 By default all traffic is allowed\[char46] When writing a more restrictive policy, it is important to remember to allow flows such as ARP and IPv6 neighbor discovery packets\[char46]
 .IP
 Note that you can not create an ACL matching on a port with type=router or type=localnet\[char46]
-.IP "\fBaction\fR: string, one of \fBallow\-related\fR, \fBallow\fR, \fBdrop\fR, or \fBreject\fR"
+.IP "\fBaction\fR: string, one of \fBallow\-related\fR, \fBallow\-stateless\fR, \fBallow\fR, \fBdrop\fR, or \fBreject\fR"
 The action to take when the ACL rule matches:
 .RS
 .IP \(bu
-\fBallow\fR: Forward the packet\[char46]
+\fBallow\-stateless\fR: Always forward the packet in stateless manner, omitting connection tracking mechanism, regardless of other rules defined for the switch\[char46] May require defining additional rules for inbound replies\[char46] For example, if you define a rule to allow outgoing TCP traffic directed to an IP address, then you probably also want to define another rule to allow incoming TCP traffic coming from this same IP address\[char46]
+.IP \(bu
+\fBallow\fR: Forward the packet\[char46] It will also send the packets through connection tracking when \fBallow\-related\fR rules exist on the logical switch\[char46] Otherwise, it\(cqs equivalent to \fBallow\-stateless\fR\[char46]
 .IP \(bu
 \fBallow\-related\fR: Forward the packet and related traffic (e\[char46]g\[char46] inbound replies to an outbound connection)\[char46]
 .IP \(bu
@@ -1958,7 +1972,7 @@ If it is specified, this setting describes the policy used to make routing decis
 .IP
 If not specified, the default is \fBdst\-ip\fR\[char46]
 .IP "\fBnexthop\fR: string"
-Nexthop IP address for this route\[char46] Nexthop IP address should be the IP address of a connected router port or the IP address of a logical port\[char46]
+Nexthop IP address for this route\[char46] Nexthop IP address should be the IP address of a connected router port or the IP address of a logical port or can be set to \fBdiscard\fR for dropping packets which match the given route\[char46]
 .IP "\fBoutput_port\fR: optional string"
 The name of the \fBLogical_Router_Port\fR via which the packet needs to be sent out\[char46] This is optional and when not specified, OVN will automatically figure this out based on the \fBnexthop\fR\[char46] When this is specified and there are multiple IP addresses on the router port and none of them are in the same subnet of \fBnexthop\fR, OVN chooses the first IP address as the one via which the \fBnexthop\fR is reachable\[char46]
 .IP "\fBbfd\fR: optional weak reference to \fBBFD\fR"
@@ -1974,7 +1988,7 @@ See \fBExternal IDs\fR at the beginning of this document\[char46]
 .IP "\fBoptions\fR: map of string-string pairs"
 This column provides general key/value settings\[char46] The supported options are described individually below\[char46]
 .IP "\fBoptions : ecmp_symmetric_reply\fR: optional string"
-It true, then new traffic that arrives over this route will have its reply traffic bypass ECMP route selection and will be sent out this route instead\[char46] Note that this option overrides any rules set in the \fBLogical_Router_policy\fR table\[char46] This option only works on gateway routers (routers that have \fBoptions:chassis\fR set)\[char46]
+If true, then new traffic that arrives over this route will have its reply traffic bypass ECMP route selection and will be sent out this route instead\[char46] Note that this option overrides any rules set in the \fBLogical_Router_policy\fR table\[char46] This option only works on gateway routers (routers that have \fBoptions:chassis\fR set)\[char46]
 .bp
 .SH "Logical_Router_Policy TABLE"
 .PP
@@ -2259,6 +2273,9 @@ optional string
 \fBoptions : tftp_server_address\fR
 optional string
 .TQ 2.50in
+\fBoptions : hostname\fR
+optional string
+.TQ 2.50in
 \fBoptions : domain_name\fR
 optional string
 .TQ 2.50in
@@ -2420,6 +2437,8 @@ The DHCPv4 option code for this option is 67\[char46] This option is used to ide
 The DHCPv4 option code for this option is 210\[char46] In PXELINUX\(cq case this option is used to set a common path prefix, instead of deriving it from the bootfile name\[char46]
 .IP "\fBoptions : tftp_server_address\fR: optional string"
 The DHCPv4 option code for this option is 150\[char46] The option contains one or more IPv4 addresses that the client MAY use\[char46] This option is Cisco proprietary, the IEEE standard that matches with this requirement is option 66 (tftp_server)\[char46]
+.IP "\fBoptions : hostname\fR: optional string"
+The DHCPv4 option code for this option is 12\[char46] If set, indicates the DHCPv4 option \(dqHostname\(dq\[char46] Alternatively, this option can be configured in \fBoptions:hostname\fR column in table \fBLogical_Switch_Port\fR\[char46] If Hostname option value is set in both conflicting \fBLogical_Switch_Port\fR and \fBDHCP_Options\fR tables, \fBLogical_Switch_Port\fR takes precedence\[char46]
 .IP "\fBoptions : domain_name\fR: optional string"
 The DHCPv4 option code for this option is 15\[char46] This option specifies the domain name that client should use when resolving hostnames via the Domain Name System\[char46]
 .IP "\fBoptions : bootfile_name_alt\fR: optional string"
@@ -2661,9 +2680,11 @@ map of string-string pairs
 map of string-string pairs
 .SS "Details:
 .IP "\fBrecords\fR: map of string-string pairs"
-Key-value pair of DNS records with \fBDNS query name\fR as the key and value as a string of IP address(es) separated by comma or space\[char46]
+Key-value pair of DNS records with \fBDNS query name\fR as the key and value as a string of IP address(es) separated by comma or space\[char46] For PTR requests, the key-value pair can be \fBReverse IPv4 address\[char46]in\-addr\[char46]arpa\fR and the value \fBDNS domain name\fR\[char46] For IPv6 addresses, the key has to be \fBReverse IPv6 address\[char46]ip6\[char46]arpa\fR\[char46]
 .IP
 \fBExample: \fR \(dqvm1\[char46]ovn\[char46]org\(dq = \(dq10\[char46]0\[char46]0\[char46]4 aef0::4\(dq
+.IP
+\fBExample: \fR \(dq4\[char46]0\[char46]0\[char46]10\[char46]in-addr\[char46]arpa\(dq = \(dqvm1\[char46]ovn\[char46]org\(dq
 .IP "\fBexternal_ids\fR: map of string-string pairs"
 See \fBExternal IDs\fR at the beginning of this document\[char46]
 .bp
