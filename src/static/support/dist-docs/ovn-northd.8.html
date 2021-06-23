@@ -34,6 +34,24 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
               the  <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>B</b><b>_</b><b>D</b><b>B</b> environment variable is set, its value is used as
               the default. Otherwise, the default is <b>u</b><b>n</b><b>i</b><b>x</b><b>:</b><b>/</b><b>o</b><b>v</b><b>n</b><b>s</b><b>b</b><b>_</b><b>d</b><b>b</b><b>.</b><b>s</b><b>o</b><b>c</b><b>k</b>.
 
+       <b>-</b><b>-</b><b>d</b><b>d</b><b>l</b><b>o</b><b>g</b><b>-</b><b>r</b><b>e</b><b>c</b><b>o</b><b>r</b><b>d</b><b>=</b><u>f</u><u>i</u><u>l</u><u>e</u>
+              This option is for <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>-</b><b>d</b><b>d</b><b>l</b><b>o</b><b>g</b> only. It causes the daemon to
+              record  the  initial database state and later changes to <u>f</u><u>i</u><u>l</u><u>e</u> in
+              the text-based DDlog command format. The <b>o</b><b>v</b><b>n</b><b>_</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b><b>_</b><b>c</b><b>l</b><b>i</b>  program
+              can  later  replay  these  changes  for debugging purposes. This
+              option has a performance impact. See <b>d</b><b>e</b><b>b</b><b>u</b><b>g</b><b>g</b><b>i</b><b>n</b><b>g</b><b>-</b><b>d</b><b>d</b><b>l</b><b>o</b><b>g</b><b>.</b><b>r</b><b>s</b><b>t</b> in  the
+              OVN documentation for more details.
+
+       <b>-</b><b>-</b><b>d</b><b>r</b><b>y</b><b>-</b><b>r</b><b>u</b><b>n</b>
+              Causes   <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>  to  start  paused.  In  the  paused  state,
+              <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> does not apply any changes to the databases, although
+              it  continues  to  monitor  them.  For more information, see the
+              <b>p</b><b>a</b><b>u</b><b>s</b><b>e</b> command, under <b>R</b><b>u</b><b>n</b><b>t</b><b>i</b><b>m</b><b>e</b> <b>M</b><b>a</b><b>n</b><b>a</b><b>g</b><b>e</b><b>m</b><b>e</b><b>n</b><b>t</b> <b>C</b><b>o</b><b>m</b><b>m</b><b>a</b><b>n</b><b>d</b><b>s</b> below.
+
+              For  <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b><b>-</b><b>d</b><b>d</b><b>l</b><b>o</b><b>g</b>,  one   could   use   this   option   with
+              <b>-</b><b>-</b><b>d</b><b>d</b><b>l</b><b>o</b><b>g</b><b>-</b><b>r</b><b>e</b><b>c</b><b>o</b><b>r</b><b>d</b>  to  generate  a  replay log without restarting a
+              process or disturbing a running system.
+
        <u>d</u><u>a</u><u>t</u><u>a</u><u>b</u><u>a</u><u>s</u><u>e</u> in the above options must be an OVSDB active or  passive  con‐
        nection method, as described in <b>o</b><b>v</b><b>s</b><b>d</b><b>b</b>(7).
 
@@ -281,9 +299,11 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
 
               <b>e</b><b>x</b><b>i</b><b>t</b>   Causes <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> to gracefully terminate.
 
-              <b>p</b><b>a</b><b>u</b><b>s</b><b>e</b>  Pauses  the  ovn-northd  operation  from  processing  any
-                     Northbound and Southbound  database  changes.  This  will
-                     also instruct ovn-northd to drop any lock on SB DB.
+              <b>p</b><b>a</b><b>u</b><b>s</b><b>e</b>  Pauses <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>. When it is paused, <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> receives
+                     changes  from  the  Northbound  and  Southbound  database
+                     changes  as  usual,  but  it does not send any updates. A
+                     paused <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> also drops database locks, which allows
+                     any other non-paused instance of <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> to take over.
 
               <b>r</b><b>e</b><b>s</b><b>u</b><b>m</b><b>e</b> Resumes  the  ovn-northd  operation to process Northbound
                      and Southbound database  contents  and  generate  logical
@@ -484,7 +504,7 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
               ·      One priority-0 fallback flow that matches all packets and
                      advances to the next table.
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>5</u><u>:</u><b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b><u>P</u><u>r</u><u>e</u><u>-</u><u>A</u><u>C</u><u>L</u><u>s</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>5</u><u>:</u> <b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> <u>P</u><u>r</u><u>e</u><u>-</u><u>A</u><u>C</u><u>L</u><u>s</u>
 
        This table prepares flows  for  possible  stateful  ACL  processing  in
        ingress  table  <b>A</b><b>C</b><b>L</b><b>s</b>.  It  contains a priority-0 flow that simply moves
@@ -494,7 +514,9 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
        tracker  before  eventually advancing to ingress table <b>A</b><b>C</b><b>L</b><b>s</b>. If special
        ports such as route ports or localnet ports can’t use  ct(),  a  prior‐
        ity-110 flow is added to skip over stateful ACLs. IPv6 Neighbor Discov‐
-       ery and MLD traffic also skips stateful ACLs.
+       ery and MLD traffic also skips  stateful  ACLs.  For  "allow-stateless"
+       ACLs, a flow is added to bypass setting the hint for connection tracker
+       processing.
 
        This table also has a priority-110 flow with the match <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b> <u>E</u> for
        all logical switch datapaths to move traffic to the next table. Where <u>E</u>
@@ -508,36 +530,37 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
        that  simply  moves  traffic  to the next table. Moreover it contains a
        priority-110 flow to move IPv6 Neighbor Discovery and  MLD  traffic  to
        the  next table. If load balancing rules with virtual IP addresses (and
-       ports) are configured in <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database  for  alogical  switch
+       ports) are configured in <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database for a  logical  switch
        datapath, a priority-100 flow is added with the match <b>i</b><b>p</b> to match on IP
-       packets and sets the action <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>0</b><b>]</b> <b>=</b> <b>1</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> to act as a hint for ta‐
+       packets and sets the action <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>2</b><b>]</b> <b>=</b> <b>1</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> to act as a hint for ta‐
        ble  <b>P</b><b>r</b><b>e</b><b>-</b><b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>f</b><b>u</b><b>l</b>  to  send  IP  packets  to the connection tracker for
-       packet de-fragmentation before eventually advancing  to  ingress  table
-       <b>L</b><b>B</b>.  If controller_event has been enabled and load balancing rules with
-       empty backends have been added in <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>, a 130 flow  is  added
-       to trigger ovn-controller events whenever the chassis receives a packet
-       for that particular VIP. If <b>e</b><b>v</b><b>e</b><b>n</b><b>t</b><b>-</b><b>e</b><b>l</b><b>b</b> meter has  been  previously  cre‐
-       ated, it will be associated to the empty_lb logical flow
+       packet de-fragmentation (and to possibly do  DNAT  for  already  estab‐
+       lished  load  balanced  traffic) before eventually advancing to ingress
+       table <b>S</b><b>t</b><b>a</b><b>t</b><b>e</b><b>f</b><b>u</b><b>l</b>. If controller_event has been enabled and load balancing
+       rules with empty backends have been added in <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>, a 130 flow
+       is added to trigger ovn-controller events whenever the chassis receives
+       a  packet  for  that particular VIP. If <b>e</b><b>v</b><b>e</b><b>n</b><b>t</b><b>-</b><b>e</b><b>l</b><b>b</b> meter has been previ‐
+       ously created, it will be associated to the empty_lb logical flow
 
-       Prior  to <b>O</b><b>V</b><b>N</b> <b>2</b><b>0</b><b>.</b><b>0</b><b>9</b> we were setting the <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>0</b><b>]</b> <b>=</b> <b>1</b> only if the IP des‐
-       tination matches the load balancer VIP. However  this  had  few  issues
-       cases  where  a logical switch doesn’t have any ACLs with <b>a</b><b>l</b><b>l</b><b>o</b><b>w</b><b>-</b><b>r</b><b>e</b><b>l</b><b>a</b><b>t</b><b>e</b><b>d</b>
-       action. To understand the issue lets a  take  a  TCP  load  balancer  -
-       <b>1</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>.</b><b>1</b><b>0</b><b>:</b><b>8</b><b>0</b><b>=</b><b>1</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>.</b><b>3</b><b>:</b><b>8</b><b>0</b>.  If  a  logical  port - p1 with IP - 10.0.0.5
+       Prior to <b>O</b><b>V</b><b>N</b> <b>2</b><b>0</b><b>.</b><b>0</b><b>9</b> we were setting the <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>0</b><b>]</b> <b>=</b> <b>1</b> only if the IP  des‐
+       tination  matches  the  load  balancer VIP. However this had few issues
+       cases where a logical switch doesn’t have any ACLs  with  <b>a</b><b>l</b><b>l</b><b>o</b><b>w</b><b>-</b><b>r</b><b>e</b><b>l</b><b>a</b><b>t</b><b>e</b><b>d</b>
+       action.  To  understand  the  issue  lets  a take a TCP load balancer -
+       <b>1</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>.</b><b>1</b><b>0</b><b>:</b><b>8</b><b>0</b><b>=</b><b>1</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>.</b><b>3</b><b>:</b><b>8</b><b>0</b>. If a logical port - p1  with  IP  -  10.0.0.5
        opens a TCP connection with the VIP - 10.0.0.10, then the packet in the
-       ingress  pipeline of ’p1’ is sent to the p1’s conntrack zone id and the
+       ingress pipeline of ’p1’ is sent to the p1’s conntrack zone id and  the
        packet is load balanced to the backend - 10.0.0.3. For the reply packet
-       from  the  backend  lport,  it  is not sent to the conntrack of backend
-       lport’s zone id. This is fine as long as the packet is  valid.  Suppose
-       the  backend lport sends an invalid TCP packet (like incorrect sequence
-       number), the packet gets delivered to the lport ’p1’ without  unDNATing
+       from the backend lport, it is not sent  to  the  conntrack  of  backend
+       lport’s  zone  id. This is fine as long as the packet is valid. Suppose
+       the backend lport sends an invalid TCP packet (like incorrect  sequence
+       number),  the packet gets delivered to the lport ’p1’ without unDNATing
        the packet to the VIP - 10.0.0.10. And this causes the connection to be
        reset by the lport p1’s VIF.
 
        We can’t fix this issue by adding a logical flow to drop ct.inv packets
-       in  the  egress  pipeline  since it will drop all other connections not
-       destined to the load balancers. To fix this  issue,  we  send  all  the
-       packets  to the conntrack in the ingress pipeline if a load balancer is
+       in the egress pipeline since it will drop  all  other  connections  not
+       destined  to  the  load  balancers.  To fix this issue, we send all the
+       packets to the conntrack in the ingress pipeline if a load balancer  is
        configured. We can now add a lflow to drop ct.inv packets.
 
        This table also has a priority-110 flow with the match <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b> <u>E</u> for
@@ -545,21 +568,42 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
        is the service monitor mac defined in the <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>s</b><b>v</b><b>c</b><b>_</b><b>m</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b><b>_</b><b>m</b><b>a</b><b>c</b> colum
        of <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> table.
 
-       This  table also has a priority-110 flow with the match <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>I</u> for
+       This table also has a priority-110 flow with the match <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>I</u>  for
        all logical switch datapaths to move traffic to the next table. Where <u>I</u>
-       is  the  peer  of a logical router port. This flow is added to skip the
+       is the peer of a logical router port. This flow is added  to  skip  the
        connection tracking of packets which enter from logical router datapath
        to logical switch datapath.
 
      <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>7</u><u>:</u> <u>P</u><u>r</u><u>e</u><u>-</u><u>s</u><u>t</u><u>a</u><u>t</u><u>e</u><u>f</u><u>u</u><u>l</u>
 
-       This  table prepares flows for all possible stateful processing in next
-       tables. It contains a priority-0 flow that simply moves traffic to  the
-       next table. A priority-100 flow sends the packets to connection tracker
-       based on a hint provided by the  previous  tables  (with  a  match  for
-       <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>0</b><b>]</b> <b>=</b><b>=</b> <b>1</b>) by using the <b>c</b><b>t</b><b>_</b><b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action.
+       This table prepares flows for all possible stateful processing in  next
+       tables.  It contains a priority-0 flow that simply moves traffic to the
+       next table.
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>8</u><u>:</u><b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b><u>A</u><u>C</u><u>L</u> <u>h</u><u>i</u><u>n</u><u>t</u><u>s</u>
+              ·      Priority-120 flows that send the  packets  to  connection
+                     tracker  using  <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b><b>;</b>  as the action so that the already
+                     established traffic destined to  the  load  balancer  VIP
+                     gets  DNATted  based  on  a hint provided by the previous
+                     tables (with a match for <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>2</b><b>]</b> <b>=</b><b>=</b> <b>1</b>  and  on  supported
+                     load  balancer  protocols and address families). For IPv4
+                     traffic the flows also load the original  destination  IP
+                     and  transport  port in registers <b>r</b><b>e</b><b>g</b><b>1</b> and <b>r</b><b>e</b><b>g</b><b>2</b>. For IPv6
+                     traffic the flows also load the original  destination  IP
+                     and transport port in registers <b>x</b><b>x</b><b>r</b><b>e</b><b>g</b><b>1</b> and <b>r</b><b>e</b><b>g</b><b>2</b>.
+
+              ·      A  priority-110  flow  sends  the  packets  to connection
+                     tracker based on a hint provided by the  previous  tables
+                     (with  a  match  for  <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>2</b><b>]</b>  <b>=</b><b>=</b>  <b>1</b>) by using the <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b><b>;</b>
+                     action. This flow is added to handle the traffic for load
+                     balancer  VIPs  whose protocol is not defined (mainly for
+                     ICMP traffic).
+
+              ·      A priority-100  flow  sends  the  packets  to  connection
+                     tracker  based  on a hint provided by the previous tables
+                     (with a match for <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>0</b><b>]</b> <b>=</b><b>=</b> <b>1</b>)  by  using  the  <b>c</b><b>t</b><b>_</b><b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>
+                     action.
+
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>8</u><u>:</u> <b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> <u>A</u><u>C</u><u>L</u> <u>h</u><u>i</u><u>n</u><u>t</u><u>s</u>
 
        This  table  consists of logical flows that set hints (<b>r</b><b>e</b><b>g</b><b>0</b> bits) to be
        used in the next stage, in the ACL processing table, if  stateful  ACLs
@@ -580,6 +624,10 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      be committed again with <b>c</b><b>t</b><b>_</b><b>l</b><b>a</b><b>b</b><b>e</b><b>l</b><b>=</b><b>1</b><b>/</b><b>1</b>.
 
        The table contains the following flows:
+
+              ·      A priority-65535 flow to advance to the next table if the
+                     logical switch has <b>n</b><b>o</b> ACLs configured, otherwise a prior‐
+                     ity-0 flow to advance to the next table.
 
               ·      A priority-7 flow that matches on packets that initiate a
                      new session. This flow sets <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>7</b><b>]</b> and <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>9</b><b>]</b> and  then
@@ -613,9 +661,7 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      blocked. This flow sets <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>1</b><b>0</b><b>]</b> and then advances to the
                      next table.
 
-              ·      A priority-0 flow to advance to the next table.
-
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>9</u><u>:</u><b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b><u>A</u><u>C</u><u>L</u><u>s</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>9</u><u>:</u> <b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> <u>A</u><u>C</u><u>L</u><u>s</u>
 
        Logical flows in this table closely reproduce those in the <b>A</b><b>C</b><b>L</b> table in
        the <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database for the <b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> direction. The  <b>p</b><b>r</b><b>i</b><b>o</b><b>r</b><b>i</b><b>t</b><b>y</b>
@@ -633,23 +679,29 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      <b>c</b><b>t</b><b>_</b><b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b><b>(</b><b>c</b><b>t</b><b>_</b><b>l</b><b>a</b><b>b</b><b>e</b><b>l</b><b>=</b><b>0</b><b>/</b><b>1</b><b>)</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> actions  for  new  connec‐
                      tions and <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>1</b><b>]</b> <b>=</b> <b>1</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> for existing connections.
 
-              ·      <b>r</b><b>e</b><b>j</b><b>e</b><b>c</b><b>t</b>   ACLs  translate  into  logical  flows  with  the
-                     <b>t</b><b>c</b><b>p</b><b>_</b><b>r</b><b>e</b><b>s</b><b>e</b><b>t</b> <b>{</b> <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b> <lt;<lt;<b>-</b>>gt;>gt;  <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>;</b>  <b>n</b><b>e</b><b>x</b><b>t</b><b>(</b><b>p</b><b>i</b><b>p</b><b>e</b><b>l</b><b>i</b><b>n</b><b>e</b><b>=</b><b>e</b><b>g</b><b>r</b><b>e</b><b>s</b><b>s</b><b>,</b><b>t</b><b>a</b><b>‐</b>
-                     <b>b</b><b>l</b><b>e</b><b>=</b><b>5</b><b>)</b><b>;</b><b>}</b>  action  for  TCP connections,<b>i</b><b>c</b><b>m</b><b>p</b><b>4</b><b>/</b><b>i</b><b>c</b><b>m</b><b>p</b><b>6</b> action
-                     for  UDP  connections,  and  <b>s</b><b>c</b><b>t</b><b>p</b><b>_</b><b>a</b><b>b</b><b>o</b><b>r</b><b>t</b>  <b>{</b><b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b>   <lt;<lt;<b>-</b><b>%</b><b>g</b><b>t</b><b>;</b>
-                     <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>;</b>  <b>n</b><b>e</b><b>x</b><b>t</b><b>(</b><b>p</b><b>i</b><b>p</b><b>e</b><b>l</b><b>i</b><b>n</b><b>e</b><b>=</b><b>e</b><b>g</b><b>r</b><b>e</b><b>s</b><b>s</b><b>,</b><b>t</b><b>a</b><b>b</b><b>l</b><b>e</b><b>=</b><b>5</b><b>)</b><b>;</b><b>}</b>  action for SCTP
+              ·      <b>a</b><b>l</b><b>l</b><b>o</b><b>w</b><b>-</b><b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>l</b><b>e</b><b>s</b><b>s</b>  ACLs  translate  into logical flows with
+                     the <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action.
+
+              ·      <b>r</b><b>e</b><b>j</b><b>e</b><b>c</b><b>t</b>  ACLs  translate  into  logical  flows  with   the
+                     <b>t</b><b>c</b><b>p</b><b>_</b><b>r</b><b>e</b><b>s</b><b>e</b><b>t</b>  <b>{</b>  <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b> <lt;<lt;<b>-</b>>gt;>gt; <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>(</b><b>p</b><b>i</b><b>p</b><b>e</b><b>l</b><b>i</b><b>n</b><b>e</b><b>=</b><b>e</b><b>g</b><b>r</b><b>e</b><b>s</b><b>s</b><b>,</b><b>t</b><b>a</b><b>‐</b>
+                     <b>b</b><b>l</b><b>e</b><b>=</b><b>5</b><b>)</b><b>;</b><b>}</b> action for  TCP  connections,<b>i</b><b>c</b><b>m</b><b>p</b><b>4</b><b>/</b><b>i</b><b>c</b><b>m</b><b>p</b><b>6</b>  action
+                     for   UDP  connections,  and  <b>s</b><b>c</b><b>t</b><b>p</b><b>_</b><b>a</b><b>b</b><b>o</b><b>r</b><b>t</b>  <b>{</b><b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b>  <lt;<lt;<b>-</b><b>%</b><b>g</b><b>t</b><b>;</b>
+                     <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>(</b><b>p</b><b>i</b><b>p</b><b>e</b><b>l</b><b>i</b><b>n</b><b>e</b><b>=</b><b>e</b><b>g</b><b>r</b><b>e</b><b>s</b><b>s</b><b>,</b><b>t</b><b>a</b><b>b</b><b>l</b><b>e</b><b>=</b><b>5</b><b>)</b><b>;</b><b>}</b> action  for  SCTP
                      associations.
 
-              ·      Other ACLs translate to <b>d</b><b>r</b><b>o</b><b>p</b><b>;</b> for new or  untracked  con‐
-                     nections  and  <b>c</b><b>t</b><b>_</b><b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b><b>(</b><b>c</b><b>t</b><b>_</b><b>l</b><b>a</b><b>b</b><b>e</b><b>l</b><b>=</b><b>1</b><b>/</b><b>1</b><b>)</b><b>;</b> for known connec‐
-                     tions. Setting <b>c</b><b>t</b><b>_</b><b>l</b><b>a</b><b>b</b><b>e</b><b>l</b> marks a connection  as  one  that
-                     was  previously  allowed, but should no longer be allowed
+              ·      Other  ACLs  translate to <b>d</b><b>r</b><b>o</b><b>p</b><b>;</b> for new or untracked con‐
+                     nections and <b>c</b><b>t</b><b>_</b><b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b><b>(</b><b>c</b><b>t</b><b>_</b><b>l</b><b>a</b><b>b</b><b>e</b><b>l</b><b>=</b><b>1</b><b>/</b><b>1</b><b>)</b><b>;</b> for  known  connec‐
+                     tions.  Setting  <b>c</b><b>t</b><b>_</b><b>l</b><b>a</b><b>b</b><b>e</b><b>l</b>  marks a connection as one that
+                     was previously allowed, but should no longer  be  allowed
                      due to a policy change.
 
-       This table also contains a priority 0 flow with action <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>,  so  that
-       ACLs  allow  packets by default. If the logical datapath has a stateful
-       ACL or a load balancer with VIP configured, the  following  flows  will
-       also be added:
+       This  table contains a priority-65535 flow to advance to the next table
+       if the logical switch has <b>n</b><b>o</b> ACLs configured,  otherwise  a  priority-0
+       flow  to  advance  to  the  next  table  so  that ACLs allow packets by
+       default.
+
+       If the logical datapath has a stateful ACL or a load balancer with  VIP
+       configured, the following flows will also be added:
 
               ·      A priority-1 flow that sets the hint to commit IP traffic
                      to the connection  tracker  (with  action  <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>1</b><b>]</b>  <b>=</b>  <b>1</b><b>;</b>
@@ -658,7 +710,7 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      stateful  rules,  the  server’s  may  and then its return
                      traffic would not be known and marked as invalid.
 
-              ·      A priority-65535 flow that  allows  any  traffic  in  the
+              ·      A priority-65532 flow that  allows  any  traffic  in  the
                      reply  direction for a connection that has been committed
                      to the connection tracker (i.e., established  flows),  as
                      long as the committed flow does not have <b>c</b><b>t</b><b>_</b><b>l</b><b>a</b><b>b</b><b>e</b><b>l</b><b>.</b><b>b</b><b>l</b><b>o</b><b>c</b><b>k</b><b>e</b><b>d</b>
@@ -670,76 +722,62 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      set  and packets in the reply direction will no longer be
                      allowed, either.
 
-              ·      A priority-65535 flow that allows  any  traffic  that  is
+              ·      A priority-65532 flow that allows  any  traffic  that  is
                      considered  related to a committed flow in the connection
                      tracker (e.g., an ICMP Port Unreachable from  a  non-lis‐
                      tening  UDP port), as long as the committed flow does not
                      have <b>c</b><b>t</b><b>_</b><b>l</b><b>a</b><b>b</b><b>e</b><b>l</b><b>.</b><b>b</b><b>l</b><b>o</b><b>c</b><b>k</b><b>e</b><b>d</b> set.
 
-              ·      A priority-65535 flow that drops all  traffic  marked  by
+              ·      A priority-65532 flow that drops all  traffic  marked  by
                      the connection tracker as invalid.
 
-              ·      A priority-65535 flow that drops all traffic in the reply
+              ·      A priority-65532 flow that drops all traffic in the reply
                      direction with <b>c</b><b>t</b><b>_</b><b>l</b><b>a</b><b>b</b><b>e</b><b>l</b><b>.</b><b>b</b><b>l</b><b>o</b><b>c</b><b>k</b><b>e</b><b>d</b> set meaning that the con‐
                      nection  should  no  longer  be  allowed  due to a policy
                      change. Packets in the request direction are skipped here
                      to let a newly created ACL re-allow this connection.
 
-              ·      A priority-65535 flow that allows IPv6 Neighbor solicita‐
+              ·      A priority-65532 flow that allows IPv6 Neighbor solicita‐
                      tion,  Neighbor  discover,  Router  solicitation,  Router
                      advertisement and MLD packets.
 
-              ·      A  priority  34000 logical flow is added for each logical
-                     switch datapath with the match <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b> <u>E</u> to  allow  the
-                     service  monitor  reply packet destined to <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>
-                     with the action <b>n</b><b>e</b><b>x</b><b>t</b>, where <u>E</u> is the service monitor  mac
+       If the logical datapath has any ACL or a load balancer with VIP config‐
+       ured, the following flow will also be added:
+
+              ·      A priority 34000 logical flow is added for  each  logical
+                     switch  datapath  with the match <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b> <u>E</u> to allow the
+                     service monitor reply packet destined  to  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>
+                     with  the action <b>n</b><b>e</b><b>x</b><b>t</b>, where <u>E</u> is the service monitor mac
                      defined in the <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>s</b><b>v</b><b>c</b><b>_</b><b>m</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b><b>_</b><b>m</b><b>a</b><b>c</b> colum of <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b>
                      table.
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>0</u><u>:</u><b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b><u>Q</u><u>o</u><u>S</u> <u>M</u><u>a</u><u>r</u><u>k</u><u>i</u><u>n</u><u>g</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>0</u><u>:</u> <b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> <u>Q</u><u>o</u><u>S</u> <u>M</u><u>a</u><u>r</u><u>k</u><u>i</u><u>n</u><u>g</u>
 
-       Logical flows in this table closely reproduce those in  the  <b>Q</b><b>o</b><b>S</b>  table
-       with  the  <b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>  column  set  in  the <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database for the
+       Logical  flows  in  this table closely reproduce those in the <b>Q</b><b>o</b><b>S</b> table
+       with the <b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b> column set  in  the  <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>  database  for  the
        <b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> direction.
 
-              ·      For every qos_rules entry in a logical switch  with  DSCP
-                     marking  enabled,  a  flow  will be added at the priority
+              ·      For  every  qos_rules entry in a logical switch with DSCP
+                     marking enabled, a flow will be  added  at  the  priority
                      mentioned in the QoS table.
 
               ·      One priority-0 fallback flow that matches all packets and
                      advances to the next table.
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>1</u><u>:</u><b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b><u>Q</u><u>o</u><u>S</u> <u>M</u><u>e</u><u>t</u><u>e</u><u>r</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>1</u><u>:</u> <b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> <u>Q</u><u>o</u><u>S</u> <u>M</u><u>e</u><u>t</u><u>e</u><u>r</u>
 
-       Logical  flows  in  this table closely reproduce those in the <b>Q</b><b>o</b><b>S</b> table
-       with the <b>b</b><b>a</b><b>n</b><b>d</b><b>w</b><b>i</b><b>d</b><b>t</b><b>h</b> column set in the <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>  database  for  the
+       Logical flows in this table closely reproduce those in  the  <b>Q</b><b>o</b><b>S</b>  table
+       with  the  <b>b</b><b>a</b><b>n</b><b>d</b><b>w</b><b>i</b><b>d</b><b>t</b><b>h</b>  column set in the <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database for the
        <b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> direction.
 
               ·      For every qos_rules entry in a logical switch with meter‐
-                     ing enabled, a flow will be added at  the  priority  men‐
+                     ing  enabled,  a  flow will be added at the priority men‐
                      tioned in the QoS table.
 
               ·      One priority-0 fallback flow that matches all packets and
                      advances to the next table.
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>2</u><u>:</u> <u>L</u><u>B</u>
-
-       It contains a priority-0 flow that simply moves traffic to the next ta‐
-       ble.
-
-       A priority-65535 flow with the match <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>I</u> for all logical switch
-       datapaths to move traffic to the next table. Where <u>I</u> is the peer  of  a
-       logical router port. This flow is added to skip the connection tracking
-       of packets which enter from logical router datapath to  logical  switch
-       datapath.
-
-       For  established connections a priority 65534 flow matches on <b>c</b><b>t</b><b>.</b><b>e</b><b>s</b><b>t</b> &amp;&amp;&amp;&amp;
-       <b>!</b><b>c</b><b>t</b><b>.</b><b>r</b><b>e</b><b>l</b> &amp;&amp;&amp;&amp; <b>!</b><b>c</b><b>t</b><b>.</b><b>n</b><b>e</b><b>w</b> &amp;&amp;&amp;&amp; <b>!</b><b>c</b><b>t</b><b>.</b><b>i</b><b>n</b><b>v</b> and sets an action <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>2</b><b>]</b> <b>=</b> <b>1</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>  to
-       act  as  a  hint  for table <b>S</b><b>t</b><b>a</b><b>t</b><b>e</b><b>f</b><b>u</b><b>l</b> to send packets through connection
-       tracker to NAT the packets. (The packet will automatically  get  DNATed
-       to the same IP address as the first packet in that connection.)
-
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>3</u><u>:</u> <u>S</u><u>t</u><u>a</u><u>t</u><u>e</u><u>f</u><u>u</u><u>l</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>2</u><u>:</u> <u>S</u><u>t</u><u>a</u><u>t</u><u>e</u><u>f</u><u>u</u><u>l</u>
 
               ·      For  all the configured load balancing rules for a switch
                      in <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database that includes a L4  port  <u>P</u><u>O</u><u>R</u><u>T</u>
@@ -784,20 +822,10 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      using <b>c</b><b>t</b><b>_</b><b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action based on a hint provided by
                      the previous tables (with a match for <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>1</b><b>]</b> <b>=</b><b>=</b> <b>1</b>).
 
-              ·      Priority-100 flows that send the  packets  to  connection
-                     tracker  using  <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b><b>;</b> as the action based on a hint pro‐
-                     vided by the previous tables (with a match for <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>2</b><b>]</b> <b>=</b><b>=</b>
-                     <b>1</b>  and  on  supported load balancer protocols and address
-                     families). For IPv4 traffic the flows also load the orig‐
-                     inal  destination IP and transport port in registers <b>r</b><b>e</b><b>g</b><b>1</b>
-                     and <b>r</b><b>e</b><b>g</b><b>2</b>. For IPv6 traffic the flows also load the origi‐
-                     nal destination IP and transport port in registers <b>x</b><b>x</b><b>r</b><b>e</b><b>g</b><b>1</b>
-                     and <b>r</b><b>e</b><b>g</b><b>2</b>.
-
               ·      A priority-0 flow that simply moves traffic to  the  next
                      table.
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>4</u><u>:</u> <u>P</u><u>r</u><u>e</u><u>-</u><u>H</u><u>a</u><u>i</u><u>r</u><u>p</u><u>i</u><u>n</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>3</u><u>:</u> <u>P</u><u>r</u><u>e</u><u>-</u><u>H</u><u>a</u><u>i</u><u>r</u><u>p</u><u>i</u><u>n</u>
 
               ·      If  the  logical  switch has load balancer(s) configured,
                      then a priority-100 flow is added with the  match  <b>i</b><b>p</b>  &amp;&amp;&amp;&amp;
@@ -810,7 +838,7 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
               ·      A  priority-0  flow that simply moves traffic to the next
                      table.
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>5</u><u>:</u> <u>N</u><u>a</u><u>t</u><u>-</u><u>H</u><u>a</u><u>i</u><u>r</u><u>p</u><u>i</u><u>n</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>4</u><u>:</u> <u>N</u><u>a</u><u>t</u><u>-</u><u>H</u><u>a</u><u>i</u><u>r</u><u>p</u><u>i</u><u>n</u>
 
               ·      If the logical switch has  load  balancer(s)  configured,
                      then  a  priority-100  flow is added with the match <b>i</b><b>p</b> &amp;&amp;&amp;&amp;
@@ -837,7 +865,7 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
               ·      A priority-0 flow that simply moves traffic to  the  next
                      table.
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>6</u><u>:</u> <u>H</u><u>a</u><u>i</u><u>r</u><u>p</u><u>i</u><u>n</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>5</u><u>:</u> <u>H</u><u>a</u><u>i</u><u>r</u><u>p</u><u>i</u><u>n</u>
 
               ·      A  priority-1  flow that hairpins traffic matched by non-
                      default flows in the Pre-Hairpin  table.  Hairpinning  is
@@ -847,7 +875,7 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
               ·      A priority-0 flow that simply moves traffic to  the  next
                      table.
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>7</u><u>:</u> <u>A</u><u>R</u><u>P</u><u>/</u><u>N</u><u>D</u> <u>r</u><u>e</u><u>s</u><u>p</u><u>o</u><u>n</u><u>d</u><u>e</u><u>r</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>6</u><u>:</u> <u>A</u><u>R</u><u>P</u><u>/</u><u>N</u><u>D</u> <u>r</u><u>e</u><u>s</u><u>p</u><u>o</u><u>n</u><u>d</u><u>e</u><u>r</u>
 
        This  table  implements  ARP/ND responder in a logical switch for known
        IPs. The advantage of the ARP responder flow is to limit ARP broadcasts
@@ -942,12 +970,13 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      router  ports  or  <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> ports) that are down (unless
                      <b>i</b><b>g</b><b>n</b><b>o</b><b>r</b><b>e</b><b>_</b><b>l</b><b>s</b><b>p</b><b>_</b><b>d</b><b>o</b><b>w</b><b>n</b> is configured as true in  <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>  column
                      of <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> table of the <b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database), for logi‐
-                     cal ports of type <b>v</b><b>i</b><b>r</b><b>t</b><b>u</b><b>a</b><b>l</b>  and  for  logical  ports  with
-                     ’unknown’ address set.
+                     cal  ports  of  type  <b>v</b><b>i</b><b>r</b><b>t</b><b>u</b><b>a</b><b>l</b>,  for  logical  ports  with
+                     ’unknown’  address set and for logical ports of a logical
+                     switch configured with <b>o</b><b>t</b><b>h</b><b>e</b><b>r</b><b>_</b><b>c</b><b>o</b><b>n</b><b>f</b><b>i</b><b>g</b><b>:</b><b>v</b><b>l</b><b>a</b><b>n</b><b>-</b><b>p</b><b>a</b><b>s</b><b>s</b><b>t</b><b>h</b><b>r</b><b>u</b><b>=</b><b>t</b><b>r</b><b>u</b><b>e</b>.
 
-              ·      Priority-50  flows  that match IPv6 ND neighbor solicita‐
-                     tions to each known IP address <u>A</u> (and <u>A</u>’s solicited  node
-                     address)  of  every  logical  switch  port except of type
+              ·      Priority-50 flows that match IPv6 ND  neighbor  solicita‐
+                     tions  to each known IP address <u>A</u> (and <u>A</u>’s solicited node
+                     address) of every logical  switch  port  except  of  type
                      router, and respond with neighbor advertisements directly
                      with corresponding Ethernet address <u>E</u>:
 
@@ -962,9 +991,9 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      <b>}</b><b>;</b>
 
 
-                     Priority-50  flows  that match IPv6 ND neighbor solicita‐
-                     tions to each known IP address <u>A</u> (and <u>A</u>’s solicited  node
-                     address)  of  logical  switch  port  of  type router, and
+                     Priority-50 flows that match IPv6 ND  neighbor  solicita‐
+                     tions  to each known IP address <u>A</u> (and <u>A</u>’s solicited node
+                     address) of logical  switch  port  of  type  router,  and
                      respond with neighbor advertisements directly with corre‐
                      sponding Ethernet address <u>E</u>:
 
@@ -979,35 +1008,35 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      <b>}</b><b>;</b>
 
 
-                     These  flows  are  omitted  for logical ports (other than
-                     router ports or <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> ports) that  are  down  (unless
-                     <b>i</b><b>g</b><b>n</b><b>o</b><b>r</b><b>e</b><b>_</b><b>l</b><b>s</b><b>p</b><b>_</b><b>d</b><b>o</b><b>w</b><b>n</b>  is  configured as true in <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> column
+                     These flows are omitted for  logical  ports  (other  than
+                     router  ports  or  <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> ports) that are down (unless
+                     <b>i</b><b>g</b><b>n</b><b>o</b><b>r</b><b>e</b><b>_</b><b>l</b><b>s</b><b>p</b><b>_</b><b>d</b><b>o</b><b>w</b><b>n</b> is configured as true in  <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>  column
                      of <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> table of the <b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database), for logi‐
-                     cal  ports  of  type  <b>v</b><b>i</b><b>r</b><b>t</b><b>u</b><b>a</b><b>l</b>  and for logical ports with
+                     cal ports of type <b>v</b><b>i</b><b>r</b><b>t</b><b>u</b><b>a</b><b>l</b>  and  for  logical  ports  with
                      ’unknown’ address set.
 
-              ·      Priority-100 flows with match criteria like the  ARP  and
-                     ND  flows above, except that they only match packets from
-                     the <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> that owns the IP addresses in  question,  with
-                     action  <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>.  These flows prevent OVN from replying to,
-                     for example, an ARP request emitted by a VM for  its  own
-                     IP  address.  A  VM  only  makes  this kind of request to
-                     attempt to detect a duplicate IP address  assignment,  so
+              ·      Priority-100  flows  with match criteria like the ARP and
+                     ND flows above, except that they only match packets  from
+                     the  <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b>  that owns the IP addresses in question, with
+                     action <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>. These flows prevent OVN from  replying  to,
+                     for  example,  an ARP request emitted by a VM for its own
+                     IP address. A VM only  makes  this  kind  of  request  to
+                     attempt  to  detect a duplicate IP address assignment, so
                      sending a reply will prevent the VM from accepting the IP
                      address that it owns.
 
-                     In place of <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>, it would be reasonable  to  use  <b>d</b><b>r</b><b>o</b><b>p</b><b>;</b>
+                     In  place  of  <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>, it would be reasonable to use <b>d</b><b>r</b><b>o</b><b>p</b><b>;</b>
                      for the flows’ actions. If everything is working as it is
-                     configured, then this would produce  equivalent  results,
+                     configured,  then  this would produce equivalent results,
                      since no host should reply to the request. But ARPing for
-                     one’s own IP address is  intended  to  detect  situations
-                     where  the network is not working as configured, so drop‐
+                     one’s  own  IP  address  is intended to detect situations
+                     where the network is not working as configured, so  drop‐
                      ping the request would frustrate that intent.
 
-              ·      For each <u>S</u><u>V</u><u>C</u><b>_</b><u>M</u><u>O</u><u>N</u><b>_</b><u>S</u><u>R</u><u>C</u><b>_</b><u>I</u><u>P</u>  defined  in  the  value  of  the
-                     <b>i</b><b>p</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b><b>_</b><b>m</b><b>a</b><b>p</b><b>p</b><b>i</b><b>n</b><b>g</b><b>s</b><b>:</b><b>E</b><b>N</b><b>D</b><b>P</b><b>O</b><b>I</b><b>N</b><b>T</b><b>_</b><b>I</b><b>P</b>  column of <b>L</b><b>o</b><b>a</b><b>d</b><b>_</b><b>B</b><b>a</b><b>l</b><b>a</b><b>n</b><b>c</b><b>e</b><b>r</b> ta‐
-                     ble, priority-110 logical flow is added  with  the  match
-                     <b>a</b><b>r</b><b>p</b><b>.</b><b>t</b><b>p</b><b>a</b>  <b>=</b><b>=</b>  <u>S</u><u>V</u><u>C</u><b>_</b><u>M</u><u>O</u><u>N</u><b>_</b><u>S</u><u>R</u><u>C</u><b>_</b><u>I</u><u>P</u> &amp;&amp;&amp;&amp; &amp;&amp;&amp;&amp; <b>a</b><b>r</b><b>p</b><b>.</b><b>o</b><b>p</b> <b>=</b><b>=</b> <b>1</b> and applies
+              ·      For  each  <u>S</u><u>V</u><u>C</u><b>_</b><u>M</u><u>O</u><u>N</u><b>_</b><u>S</u><u>R</u><u>C</u><b>_</b><u>I</u><u>P</u>  defined  in  the  value of the
+                     <b>i</b><b>p</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b><b>_</b><b>m</b><b>a</b><b>p</b><b>p</b><b>i</b><b>n</b><b>g</b><b>s</b><b>:</b><b>E</b><b>N</b><b>D</b><b>P</b><b>O</b><b>I</b><b>N</b><b>T</b><b>_</b><b>I</b><b>P</b> column of <b>L</b><b>o</b><b>a</b><b>d</b><b>_</b><b>B</b><b>a</b><b>l</b><b>a</b><b>n</b><b>c</b><b>e</b><b>r</b>  ta‐
+                     ble,  priority-110  logical  flow is added with the match
+                     <b>a</b><b>r</b><b>p</b><b>.</b><b>t</b><b>p</b><b>a</b> <b>=</b><b>=</b> <u>S</u><u>V</u><u>C</u><b>_</b><u>M</u><u>O</u><u>N</u><b>_</b><u>S</u><u>R</u><u>C</u><b>_</b><u>I</u><u>P</u> &amp;&amp;&amp;&amp; &amp;&amp;&amp;&amp; <b>a</b><b>r</b><b>p</b><b>.</b><b>o</b><b>p</b> <b>=</b><b>=</b> <b>1</b>  and  applies
                      the action
 
                      <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b> <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b><b>;</b>
@@ -1022,20 +1051,20 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b><b>;</b>
 
 
-                     where <u>E</u> is the service monitor source mac defined in  the
-                     <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>s</b><b>v</b><b>c</b><b>_</b><b>m</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b><b>_</b><b>m</b><b>a</b><b>c</b>  column  in  the <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> table.
+                     where  <u>E</u> is the service monitor source mac defined in the
+                     <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>s</b><b>v</b><b>c</b><b>_</b><b>m</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b><b>_</b><b>m</b><b>a</b><b>c</b> column in  the  <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b>  table.
                      This mac is used as the source mac in the service monitor
                      packets for the load balancer endpoint IP health checks.
 
-                     <u>S</u><u>V</u><u>C</u><b>_</b><u>M</u><u>O</u><u>N</u><b>_</b><u>S</u><u>R</u><u>C</u><b>_</b><u>I</u><u>P</u>  is  used  as the source ip in the service
-                     monitor IPv4 packets for the load  balancer  endpoint  IP
+                     <u>S</u><u>V</u><u>C</u><b>_</b><u>M</u><u>O</u><u>N</u><b>_</b><u>S</u><u>R</u><u>C</u><b>_</b><u>I</u><u>P</u> is used as the source ip  in  the  service
+                     monitor  IPv4  packets  for the load balancer endpoint IP
                      health checks.
 
-                     These  flows  are  required if an ARP request is sent for
+                     These flows are required if an ARP request  is  sent  for
                      the IP <u>S</u><u>V</u><u>C</u><b>_</b><u>M</u><u>O</u><u>N</u><b>_</b><u>S</u><u>R</u><u>C</u><b>_</b><u>I</u><u>P</u>.
 
-              ·      For each <u>V</u><u>I</u><u>P</u> configured in the table  <b>F</b><b>o</b><b>r</b><b>w</b><b>a</b><b>r</b><b>d</b><b>i</b><b>n</b><b>g</b><b>_</b><b>G</b><b>r</b><b>o</b><b>u</b><b>p</b>  a
-                     priority-50  logical flow is added with the match <b>a</b><b>r</b><b>p</b><b>.</b><b>t</b><b>p</b><b>a</b>
+              ·      For  each  <u>V</u><u>I</u><u>P</u> configured in the table <b>F</b><b>o</b><b>r</b><b>w</b><b>a</b><b>r</b><b>d</b><b>i</b><b>n</b><b>g</b><b>_</b><b>G</b><b>r</b><b>o</b><b>u</b><b>p</b> a
+                     priority-50 logical flow is added with the match  <b>a</b><b>r</b><b>p</b><b>.</b><b>t</b><b>p</b><b>a</b>
                      <b>=</b><b>=</b> <u>v</u><u>i</u><u>p</u> &amp;&amp;&amp;&amp; &amp;&amp;&amp;&amp; <b>a</b><b>r</b><b>p</b><b>.</b><b>o</b><b>p</b> <b>=</b><b>=</b> <b>1</b>
                       and applies the action
 
@@ -1051,69 +1080,69 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b><b>;</b>
 
 
-                     where <u>E</u> is the forwarding  group’s  mac  defined  in  the
+                     where  <u>E</u>  is  the  forwarding  group’s mac defined in the
                      <b>v</b><b>m</b><b>a</b><b>c</b>.
 
                      <u>A</u> is used as either the destination ip for load balancing
-                     traffic to child ports or as nexthop to hosts behind  the
+                     traffic  to child ports or as nexthop to hosts behind the
                      child ports.
 
-                     These  flows are required to respond to an ARP request if
+                     These flows are required to respond to an ARP request  if
                      an ARP request is sent for the IP <u>v</u><u>i</u><u>p</u>.
 
               ·      One priority-0 fallback flow that matches all packets and
                      advances to the next table.
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>8</u><u>:</u> <u>D</u><u>H</u><u>C</u><u>P</u> <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u> <u>p</u><u>r</u><u>o</u><u>c</u><u>e</u><u>s</u><u>s</u><u>i</u><u>n</u><u>g</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>7</u><u>:</u> <u>D</u><u>H</u><u>C</u><u>P</u> <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u> <u>p</u><u>r</u><u>o</u><u>c</u><u>e</u><u>s</u><u>s</u><u>i</u><u>n</u><u>g</u>
 
-       This  table adds the DHCPv4 options to a DHCPv4 packet from the logical
-       ports configured with IPv4 address(es) and DHCPv4  options,  and  simi‐
-       larly  for  DHCPv6  options. This table also adds flows for the logical
+       This table adds the DHCPv4 options to a DHCPv4 packet from the  logical
+       ports  configured  with  IPv4 address(es) and DHCPv4 options, and simi‐
+       larly for DHCPv6 options. This table also adds flows  for  the  logical
        ports of type <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b>.
 
-              ·      A priority-100 logical flow is added  for  these  logical
+              ·      A  priority-100  logical  flow is added for these logical
                      ports which matches the IPv4 packet with <b>u</b><b>d</b><b>p</b><b>.</b><b>s</b><b>r</b><b>c</b> = 68 and
-                     <b>u</b><b>d</b><b>p</b><b>.</b><b>d</b><b>s</b><b>t</b> = 67 and applies  the  action  <b>p</b><b>u</b><b>t</b><b>_</b><b>d</b><b>h</b><b>c</b><b>p</b><b>_</b><b>o</b><b>p</b><b>t</b><b>s</b>  and
+                     <b>u</b><b>d</b><b>p</b><b>.</b><b>d</b><b>s</b><b>t</b>  =  67  and  applies the action <b>p</b><b>u</b><b>t</b><b>_</b><b>d</b><b>h</b><b>c</b><b>p</b><b>_</b><b>o</b><b>p</b><b>t</b><b>s</b> and
                      advances the packet to the next table.
 
                      <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>3</b><b>]</b> <b>=</b> <b>p</b><b>u</b><b>t</b><b>_</b><b>d</b><b>h</b><b>c</b><b>p</b><b>_</b><b>o</b><b>p</b><b>t</b><b>s</b><b>(</b><b>o</b><b>f</b><b>f</b><b>e</b><b>r</b><b>_</b><b>i</b><b>p</b> <b>=</b> <u>i</u><u>p</u>, <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u>...);
                      <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>
 
 
-                     For  DHCPDISCOVER  and  DHCPREQUEST,  this transforms the
-                     packet into a DHCP reply, adds the DHCP offer IP  <u>i</u><u>p</u>  and
-                     options  to  the  packet,  and stores 1 into reg0[3]. For
-                     other kinds of packets, it just stores  0  into  reg0[3].
+                     For DHCPDISCOVER and  DHCPREQUEST,  this  transforms  the
+                     packet  into  a DHCP reply, adds the DHCP offer IP <u>i</u><u>p</u> and
+                     options to the packet, and stores  1  into  reg0[3].  For
+                     other  kinds  of  packets, it just stores 0 into reg0[3].
                      Either way, it continues to the next table.
 
-              ·      A  priority-100  logical  flow is added for these logical
-                     ports which matches the IPv6 packet with  <b>u</b><b>d</b><b>p</b><b>.</b><b>s</b><b>r</b><b>c</b>  =  546
-                     and  <b>u</b><b>d</b><b>p</b><b>.</b><b>d</b><b>s</b><b>t</b> = 547 and applies the action <b>p</b><b>u</b><b>t</b><b>_</b><b>d</b><b>h</b><b>c</b><b>p</b><b>v</b><b>6</b><b>_</b><b>o</b><b>p</b><b>t</b><b>s</b>
+              ·      A priority-100 logical flow is added  for  these  logical
+                     ports  which  matches  the IPv6 packet with <b>u</b><b>d</b><b>p</b><b>.</b><b>s</b><b>r</b><b>c</b> = 546
+                     and <b>u</b><b>d</b><b>p</b><b>.</b><b>d</b><b>s</b><b>t</b> = 547 and applies the action  <b>p</b><b>u</b><b>t</b><b>_</b><b>d</b><b>h</b><b>c</b><b>p</b><b>v</b><b>6</b><b>_</b><b>o</b><b>p</b><b>t</b><b>s</b>
                      and advances the packet to the next table.
 
                      <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>3</b><b>]</b> <b>=</b> <b>p</b><b>u</b><b>t</b><b>_</b><b>d</b><b>h</b><b>c</b><b>p</b><b>v</b><b>6</b><b>_</b><b>o</b><b>p</b><b>t</b><b>s</b><b>(</b><b>i</b><b>a</b><b>_</b><b>a</b><b>d</b><b>d</b><b>r</b> <b>=</b> <u>i</u><u>p</u>, <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u>...);
                      <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>
 
 
-                     For DHCPv6 Solicit/Request/Confirm packets,  this  trans‐
-                     forms  the packet into a DHCPv6 Advertise/Reply, adds the
-                     DHCPv6 offer IP <u>i</u><u>p</u> and options to the packet, and  stores
-                     1  into  reg0[3].  For  other  kinds  of packets, it just
-                     stores 0 into reg0[3]. Either way, it  continues  to  the
+                     For  DHCPv6  Solicit/Request/Confirm packets, this trans‐
+                     forms the packet into a DHCPv6 Advertise/Reply, adds  the
+                     DHCPv6  offer IP <u>i</u><u>p</u> and options to the packet, and stores
+                     1 into reg0[3]. For  other  kinds  of  packets,  it  just
+                     stores  0  into  reg0[3]. Either way, it continues to the
                      next table.
 
               ·      A priority-0 flow that matches all packets to advances to
                      table 16.
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>9</u><u>:</u> <u>D</u><u>H</u><u>C</u><u>P</u> <u>r</u><u>e</u><u>s</u><u>p</u><u>o</u><u>n</u><u>s</u><u>e</u><u>s</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>8</u><u>:</u> <u>D</u><u>H</u><u>C</u><u>P</u> <u>r</u><u>e</u><u>s</u><u>p</u><u>o</u><u>n</u><u>s</u><u>e</u><u>s</u>
 
-       This table implements DHCP responder for the DHCP replies generated  by
+       This  table implements DHCP responder for the DHCP replies generated by
        the previous table.
 
-              ·      A  priority  100  logical  flow  is added for the logical
-                     ports configured with DHCPv4 options which  matches  IPv4
+              ·      A priority 100 logical flow  is  added  for  the  logical
+                     ports  configured  with DHCPv4 options which matches IPv4
                      packets with <b>u</b><b>d</b><b>p</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <b>6</b><b>8</b> &amp;&amp;&amp;&amp; <b>u</b><b>d</b><b>p</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b> <b>6</b><b>7</b> &amp;&amp;&amp;&amp; <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>3</b><b>]</b> <b>=</b><b>=</b>
-                     <b>1</b> and responds back to the <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b>  after  applying  these
+                     <b>1</b>  and  responds  back to the <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> after applying these
                      actions. If <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>3</b><b>]</b> is set to 1, it means that the action
                      <b>p</b><b>u</b><b>t</b><b>_</b><b>d</b><b>h</b><b>c</b><b>p</b><b>_</b><b>o</b><b>p</b><b>t</b><b>s</b> was successful.
 
@@ -1127,16 +1156,16 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b><b>;</b>
 
 
-                     where <u>E</u> is the server MAC address and  <u>S</u>  is  the  server
-                     IPv4  address  defined  in  the DHCPv4 options. Note that
+                     where  <u>E</u>  is  the  server MAC address and <u>S</u> is the server
+                     IPv4 address defined in the  DHCPv4  options.  Note  that
                      <b>i</b><b>p</b><b>4</b><b>.</b><b>d</b><b>s</b><b>t</b> field is handled by <b>p</b><b>u</b><b>t</b><b>_</b><b>d</b><b>h</b><b>c</b><b>p</b><b>_</b><b>o</b><b>p</b><b>t</b><b>s</b>.
 
-                     (This terminates ingress packet  processing;  the  packet
+                     (This  terminates  ingress  packet processing; the packet
                      does not go to the next ingress table.)
 
-              ·      A  priority  100  logical  flow  is added for the logical
-                     ports configured with DHCPv6 options which  matches  IPv6
-                     packets  with <b>u</b><b>d</b><b>p</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <b>5</b><b>4</b><b>6</b> &amp;&amp;&amp;&amp; <b>u</b><b>d</b><b>p</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b> <b>5</b><b>4</b><b>7</b> &amp;&amp;&amp;&amp; <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>3</b><b>]</b>
+              ·      A priority 100 logical flow  is  added  for  the  logical
+                     ports  configured  with DHCPv6 options which matches IPv6
+                     packets with <b>u</b><b>d</b><b>p</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <b>5</b><b>4</b><b>6</b> &amp;&amp;&amp;&amp; <b>u</b><b>d</b><b>p</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b> <b>5</b><b>4</b><b>7</b> &amp;&amp;&amp;&amp;  <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>3</b><b>]</b>
                      <b>=</b><b>=</b> <b>1</b> and responds back to the <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> after applying these
                      actions. If <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>3</b><b>]</b> is set to 1, it means that the action
                      <b>p</b><b>u</b><b>t</b><b>_</b><b>d</b><b>h</b><b>c</b><b>p</b><b>v</b><b>6</b><b>_</b><b>o</b><b>p</b><b>t</b><b>s</b> was successful.
@@ -1152,46 +1181,46 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b><b>;</b>
 
 
-                     where <u>E</u> is the server MAC address and  <u>S</u>  is  the  server
-                     IPv6  LLA address generated from the <b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b><b>_</b><b>i</b><b>d</b> defined in
-                     the DHCPv6 options and <u>A</u> is the IPv6 address  defined  in
+                     where  <u>E</u>  is  the  server MAC address and <u>S</u> is the server
+                     IPv6 LLA address generated from the <b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b><b>_</b><b>i</b><b>d</b> defined  in
+                     the  DHCPv6  options and <u>A</u> is the IPv6 address defined in
                      the logical port’s addresses column.
 
-                     (This  terminates  packet processing; the packet does not
+                     (This terminates packet processing; the packet  does  not
                      go on the next ingress table.)
 
               ·      A priority-0 flow that matches all packets to advances to
                      table 17.
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>2</u><u>0</u> <u>D</u><u>N</u><u>S</u> <u>L</u><u>o</u><u>o</u><u>k</u><u>u</u><u>p</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>9</u> <u>D</u><u>N</u><u>S</u> <u>L</u><u>o</u><u>o</u><u>k</u><u>u</u><u>p</u>
 
-       This  table  looks  up  and resolves the DNS names to the corresponding
+       This table looks up and resolves the DNS  names  to  the  corresponding
        configured IP address(es).
 
               ·      A priority-100 logical flow for each logical switch data‐
-                     path  if it is configured with DNS records, which matches
-                     the IPv4 and IPv6 packets with <b>u</b><b>d</b><b>p</b><b>.</b><b>d</b><b>s</b><b>t</b> = 53  and  applies
+                     path if it is configured with DNS records, which  matches
+                     the  IPv4  and IPv6 packets with <b>u</b><b>d</b><b>p</b><b>.</b><b>d</b><b>s</b><b>t</b> = 53 and applies
                      the action <b>d</b><b>n</b><b>s</b><b>_</b><b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b> and advances the packet to the next
                      table.
 
                      <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>4</b><b>]</b> <b>=</b> <b>d</b><b>n</b><b>s</b><b>_</b><b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>(</b><b>)</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>
 
 
-                     For valid DNS packets, this transforms the packet into  a
-                     DNS  reply  if the DNS name can be resolved, and stores 1
+                     For  valid DNS packets, this transforms the packet into a
+                     DNS reply if the DNS name can be resolved, and  stores  1
                      into reg0[4]. For failed DNS resolution or other kinds of
-                     packets,  it  just  stores 0 into reg0[4]. Either way, it
+                     packets, it just stores 0 into reg0[4].  Either  way,  it
                      continues to the next table.
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>2</u><u>1</u> <u>D</u><u>N</u><u>S</u> <u>R</u><u>e</u><u>s</u><u>p</u><u>o</u><u>n</u><u>s</u><u>e</u><u>s</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>2</u><u>0</u> <u>D</u><u>N</u><u>S</u> <u>R</u><u>e</u><u>s</u><u>p</u><u>o</u><u>n</u><u>s</u><u>e</u><u>s</u>
 
-       This table implements DNS responder for the DNS  replies  generated  by
+       This  table  implements  DNS responder for the DNS replies generated by
        the previous table.
 
               ·      A priority-100 logical flow for each logical switch data‐
-                     path if it is configured with DNS records, which  matches
+                     path  if it is configured with DNS records, which matches
                      the IPv4 and IPv6 packets with <b>u</b><b>d</b><b>p</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b> <b>5</b><b>3</b> &amp;&amp;&amp;&amp; <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>4</b><b>]</b> <b>=</b><b>=</b>
-                     <b>1</b> and responds back to the <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b>  after  applying  these
+                     <b>1</b>  and  responds  back to the <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> after applying these
                      actions. If <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>4</b><b>]</b> is set to 1, it means that the action
                      <b>d</b><b>n</b><b>s</b><b>_</b><b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b> was successful.
 
@@ -1204,195 +1233,197 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b><b>;</b>
 
 
-                     (This terminates ingress packet  processing;  the  packet
+                     (This  terminates  ingress  packet processing; the packet
                      does not go to the next ingress table.)
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>2</u><u>2</u> <u>E</u><u>x</u><u>t</u><u>e</u><u>r</u><u>n</u><u>a</u><u>l</u> <u>p</u><u>o</u><u>r</u><u>t</u><u>s</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>2</u><u>1</u> <u>E</u><u>x</u><u>t</u><u>e</u><u>r</u><u>n</u><u>a</u><u>l</u> <u>p</u><u>o</u><u>r</u><u>t</u><u>s</u>
 
-       Traffic  from  the  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b>  logical  ports enter the ingress datapath
+       Traffic from the <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> logical  ports  enter  the  ingress  datapath
        pipeline via the <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>n</b><b>e</b><b>t</b> port. This table adds the below logical flows
        to handle the traffic from these ports.
 
-              ·      A  priority-100  flow  is added for each <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> logical
-                     port which doesn’t  reside  on  a  chassis  to  drop  the
-                     ARP/IPv6  NS  request to the router IP(s) (of the logical
+              ·      A priority-100 flow is added for  each  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b>  logical
+                     port  which  doesn’t  reside  on  a  chassis  to drop the
+                     ARP/IPv6 NS request to the router IP(s) (of  the  logical
                      switch) which matches on the <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> of the <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> logi‐
-                     cal  port and the valid <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b> address(es) of the <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>‐</b>
+                     cal port and the valid <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b> address(es) of the  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>‐</b>
                      <b>n</b><b>a</b><b>l</b> logical port.
 
-                     This flow guarantees  that  the  ARP/NS  request  to  the
+                     This  flow  guarantees  that  the  ARP/NS  request to the
                      router IP address from the external ports is responded by
-                     only the chassis which has claimed these external  ports.
+                     only  the chassis which has claimed these external ports.
                      All the other chassis, drops these packets.
 
-                     A  priority-100  flow  is added for each <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> logical
+                     A priority-100 flow is added for  each  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b>  logical
                      port which doesn’t reside on a chassis to drop any packet
-                     destined  to  the  router  mac - with the match <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b>
-                     <u>e</u><u>x</u><u>t</u><u>e</u><u>r</u><u>n</u><u>a</u><u>l</u> &amp;&amp;&amp;&amp; <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>E</u> &amp;&amp;&amp;&amp; <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b>  <b>=</b><b>=</b>  <u>R</u>  &amp;&amp;&amp;&amp;  <b>!</b><b>i</b><b>s</b><b>_</b><b>c</b><b>h</b><b>a</b><b>s</b><b>‐</b>
+                     destined to the router mac - with  the  match  <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b>  <b>=</b><b>=</b>
+                     <u>e</u><u>x</u><u>t</u><u>e</u><u>r</u><u>n</u><u>a</u><u>l</u>  &amp;&amp;&amp;&amp;  <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b>  <b>=</b><b>=</b>  <u>E</u> &amp;&amp;&amp;&amp; <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b> <u>R</u> &amp;&amp;&amp;&amp; <b>!</b><b>i</b><b>s</b><b>_</b><b>c</b><b>h</b><b>a</b><b>s</b><b>‐</b>
                      <b>s</b><b>i</b><b>s</b><b>_</b><b>r</b><b>e</b><b>s</b><b>i</b><b>d</b><b>e</b><b>n</b><b>t</b><b>(</b><b>"</b><u>e</u><u>x</u><u>t</u><u>e</u><u>r</u><u>n</u><u>a</u><u>l</u><b>"</b><b>)</b> where <u>E</u> is the external port mac
                      and <u>R</u> is the router port mac.
 
               ·      A priority-0 flow that matches all packets to advances to
                      table 20.
 
-     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>2</u><u>3</u> <u>D</u><u>e</u><u>s</u><u>t</u><u>i</u><u>n</u><u>a</u><u>t</u><u>i</u><u>o</u><u>n</u> <u>L</u><u>o</u><u>o</u><u>k</u><u>u</u><u>p</u>
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>2</u><u>2</u> <u>D</u><u>e</u><u>s</u><u>t</u><u>i</u><u>n</u><u>a</u><u>t</u><u>i</u><u>o</u><u>n</u> <u>L</u><u>o</u><u>o</u><u>k</u><u>u</u><u>p</u>
 
-       This  table  implements  switching  behavior. It contains these logical
+       This table implements switching behavior.  It  contains  these  logical
        flows:
 
-              ·      A priority-110 flow with the match <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>E</u>  for  all
-                     logical  switch  datapaths  and  applies  the action <b>h</b><b>a</b><b>n</b><b>‐</b>
+              ·      A  priority-110  flow with the match <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>E</u> for all
+                     logical switch datapaths  and  applies  the  action  <b>h</b><b>a</b><b>n</b><b>‐</b>
                      <b>d</b><b>l</b><b>e</b><b>_</b><b>s</b><b>v</b><b>c</b><b>_</b><b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>)</b>. Where <u>E</u> is the service monitor mac
                      defined in the <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>s</b><b>v</b><b>c</b><b>_</b><b>m</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b><b>_</b><b>m</b><b>a</b><b>c</b> colum of <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b>
                      table.
 
-              ·      A priority-100 flow that punts all  IGMP/MLD  packets  to
-                     <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  if  multicast  snooping is enabled on the
+              ·      A  priority-100  flow  that punts all IGMP/MLD packets to
+                     <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> if multicast snooping is  enabled  on  the
                      logical switch. The flow also forwards the IGMP/MLD pack‐
                      ets  to  the  <b>M</b><b>C</b><b>_</b><b>M</b><b>R</b><b>O</b><b>U</b><b>T</b><b>E</b><b>R</b><b>_</b><b>S</b><b>T</b><b>A</b><b>T</b><b>I</b><b>C</b>  multicast  group,  which
                      <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> populates with all the logical ports that have
                      <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b><b>m</b><b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>f</b><b>l</b><b>o</b><b>o</b><b>d</b><b>_</b><b>r</b><b>e</b><b>p</b><b>o</b><b>r</b><b>t</b><b>s</b><b>=</b><b>’</b><b>t</b><b>r</b><b>u</b><b>e</b><b>’</b>.
 
-              ·      Priority-90  flows  that  forward registered IP multicast
-                     traffic to their  corresponding  multicast  group,  which
-                     <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>  creates  based  on learnt <b>I</b><b>G</b><b>M</b><b>P</b><b>_</b><b>G</b><b>r</b><b>o</b><b>u</b><b>p</b> entries.
-                     The flows also forward packets  to  the  <b>M</b><b>C</b><b>_</b><b>M</b><b>R</b><b>O</b><b>U</b><b>T</b><b>E</b><b>R</b><b>_</b><b>F</b><b>L</b><b>O</b><b>O</b><b>D</b>
-                     multicast  group, which <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>d</b><b>h</b> populates with all the
-                     logical ports that are connected to logical routers  with
+              ·      Priority-90 flows that forward  registered  IP  multicast
+                     traffic  to  their  corresponding  multicast group, which
+                     <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> creates based on  learnt  <b>I</b><b>G</b><b>M</b><b>P</b><b>_</b><b>G</b><b>r</b><b>o</b><b>u</b><b>p</b>  entries.
+                     The  flows  also  forward packets to the <b>M</b><b>C</b><b>_</b><b>M</b><b>R</b><b>O</b><b>U</b><b>T</b><b>E</b><b>R</b><b>_</b><b>F</b><b>L</b><b>O</b><b>O</b><b>D</b>
+                     multicast group, which <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>d</b><b>h</b> populates with all  the
+                     logical  ports that are connected to logical routers with
                      <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>:mcast_relay=’true’.
 
               ·      A priority-85 flow that forwards all IP multicast traffic
-                     destined to 224.0.0.X to the  <b>M</b><b>C</b><b>_</b><b>F</b><b>L</b><b>O</b><b>O</b><b>D</b>  multicast  group,
+                     destined  to  224.0.0.X  to the <b>M</b><b>C</b><b>_</b><b>F</b><b>L</b><b>O</b><b>O</b><b>D</b> multicast group,
                      which  <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>  populates  with  all  enabled  logical
                      ports.
 
               ·      A priority-85 flow that forwards all IP multicast traffic
-                     destined  to reserved multicast IPv6 addresses (RFC 4291,
-                     2.7.1, e.g., Solicited-Node multicast)  to  the  <b>M</b><b>C</b><b>_</b><b>F</b><b>L</b><b>O</b><b>O</b><b>D</b>
-                     multicast  group,  which  <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>  populates  with all
+                     destined to reserved multicast IPv6 addresses (RFC  4291,
+                     2.7.1,  e.g.,  Solicited-Node  multicast) to the <b>M</b><b>C</b><b>_</b><b>F</b><b>L</b><b>O</b><b>O</b><b>D</b>
+                     multicast group,  which  <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>  populates  with  all
                      enabled logical ports.
 
               ·      A priority-80 flow that forwards all unregistered IP mul‐
-                     ticast  traffic  to  the <b>M</b><b>C</b><b>_</b><b>S</b><b>T</b><b>A</b><b>T</b><b>I</b><b>C</b> multicast group, which
+                     ticast traffic to the <b>M</b><b>C</b><b>_</b><b>S</b><b>T</b><b>A</b><b>T</b><b>I</b><b>C</b>  multicast  group,  which
                      <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> populates with all the logical ports that have
-                     <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>   <b>:</b><b>m</b><b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>f</b><b>l</b><b>o</b><b>o</b><b>d</b><b>=</b><b>’</b><b>t</b><b>r</b><b>u</b><b>e</b><b>’</b>.  The  flow  also  forwards
+                     <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>  <b>:</b><b>m</b><b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>f</b><b>l</b><b>o</b><b>o</b><b>d</b><b>=</b><b>’</b><b>t</b><b>r</b><b>u</b><b>e</b><b>’</b>.  The  flow  also   forwards
                      unregistered IP multicast traffic to the <b>M</b><b>C</b><b>_</b><b>M</b><b>R</b><b>O</b><b>U</b><b>T</b><b>E</b><b>R</b><b>_</b><b>F</b><b>L</b><b>O</b><b>O</b><b>D</b>
-                     multicast  group, which <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> populates with all the
-                     logical ports connected  to  logical  routers  that  have
+                     multicast group, which <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> populates with all  the
+                     logical  ports  connected  to  logical  routers that have
                      <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b><b>m</b><b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>r</b><b>e</b><b>l</b><b>a</b><b>y</b><b>=</b><b>’</b><b>t</b><b>r</b><b>u</b><b>e</b><b>’</b>.
 
-              ·      A  priority-80 flow that drops all unregistered IP multi‐
+              ·      A priority-80 flow that drops all unregistered IP  multi‐
                      cast  traffic  if  <b>o</b><b>t</b><b>h</b><b>e</b><b>r</b><b>_</b><b>c</b><b>o</b><b>n</b><b>f</b><b>i</b><b>g</b>  <b>:</b><b>m</b><b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>s</b><b>n</b><b>o</b><b>o</b><b>p</b><b>=</b><b>’</b><b>t</b><b>r</b><b>u</b><b>e</b><b>’</b>  and
                      <b>o</b><b>t</b><b>h</b><b>e</b><b>r</b><b>_</b><b>c</b><b>o</b><b>n</b><b>f</b><b>i</b><b>g</b>  <b>:</b><b>m</b><b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>f</b><b>l</b><b>o</b><b>o</b><b>d</b><b>_</b><b>u</b><b>n</b><b>r</b><b>e</b><b>g</b><b>i</b><b>s</b><b>t</b><b>e</b><b>r</b><b>e</b><b>d</b><b>=</b><b>’</b><b>f</b><b>a</b><b>l</b><b>s</b><b>e</b><b>’</b>  and  the
-                     switch is not connected to  a  logical  router  that  has
-                     <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>  <b>:</b><b>m</b><b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>r</b><b>e</b><b>l</b><b>a</b><b>y</b><b>=</b><b>’</b><b>t</b><b>r</b><b>u</b><b>e</b><b>’</b>  and the switch doesn’t have
+                     switch  is  not  connected  to  a logical router that has
+                     <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b><b>m</b><b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>r</b><b>e</b><b>l</b><b>a</b><b>y</b><b>=</b><b>’</b><b>t</b><b>r</b><b>u</b><b>e</b><b>’</b> and the switch  doesn’t  have
                      any logical port with <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b><b>m</b><b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>f</b><b>l</b><b>o</b><b>o</b><b>d</b><b>=</b><b>’</b><b>t</b><b>r</b><b>u</b><b>e</b><b>’</b>.
 
-              ·      Priority-80 flows for  each  IP  address/VIP/NAT  address
-                     owned  by  a  router  port connected to the switch. These
-                     flows match ARP requests and ND packets for the  specific
-                     IP  addresses.  Matched packets are forwarded only to the
-                     router that owns the IP address and  to  the  <b>M</b><b>C</b><b>_</b><b>F</b><b>L</b><b>O</b><b>O</b><b>D</b><b>_</b><b>L</b><b>2</b>
-                     multicast  group  which  contains  all non-router logical
+              ·      Priority-80  flows  for  each  IP address/VIP/NAT address
+                     owned by a router port connected  to  the  switch.  These
+                     flows  match ARP requests and ND packets for the specific
+                     IP addresses. Matched packets are forwarded only  to  the
+                     router  that  owns  the IP address and to the <b>M</b><b>C</b><b>_</b><b>F</b><b>L</b><b>O</b><b>O</b><b>D</b><b>_</b><b>L</b><b>2</b>
+                     multicast group which  contains  all  non-router  logical
                      ports.
 
-              ·      Priority-75 flows for each port connected  to  a  logical
-                     router  matching  self originated ARP request/ND packets.
-                     These packets are flooded to the <b>M</b><b>C</b><b>_</b><b>F</b><b>L</b><b>O</b><b>O</b><b>D</b><b>_</b><b>L</b><b>2</b>  which  con‐
+              ·      Priority-75  flows  for  each port connected to a logical
+                     router matching self originated ARP  request/ND  packets.
+                     These  packets  are flooded to the <b>M</b><b>C</b><b>_</b><b>F</b><b>L</b><b>O</b><b>O</b><b>D</b><b>_</b><b>L</b><b>2</b> which con‐
                      tains all non-router logical ports.
 
-              ·      A  priority-70 flow that outputs all packets with an Eth‐
+              ·      A priority-70 flow that outputs all packets with an  Eth‐
                      ernet broadcast or multicast <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> to the <b>M</b><b>C</b><b>_</b><b>F</b><b>L</b><b>O</b><b>O</b><b>D</b> mul‐
                      ticast group.
 
-              ·      One  priority-50  flow  that  matches each known Ethernet
-                     address against <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> and outputs  the  packet  to  the
+              ·      One priority-50 flow that  matches  each  known  Ethernet
+                     address  against  <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b>  and  outputs the packet to the
                      single associated output port.
 
                      For the Ethernet address on a logical switch port of type
-                     <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>, when that logical switch port’s <b>a</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>e</b><b>s</b>  column
-                     is  set  to  <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> and the connected logical router port
+                     <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>,  when that logical switch port’s <b>a</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>e</b><b>s</b> column
+                     is set to <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> and the connected  logical  router  port
                      has a gateway chassis:
 
-                     ·      The flow for the connected logical  router  port’s
+                     ·      The  flow  for the connected logical router port’s
                             Ethernet address is only programmed on the gateway
                             chassis.
 
-                     ·      If the logical router has rules specified  in  <b>n</b><b>a</b><b>t</b>
-                            with  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>m</b><b>a</b><b>c</b>,  then those addresses are also
-                            used to populate the switch’s  destination  lookup
+                     ·      If  the  logical router has rules specified in <b>n</b><b>a</b><b>t</b>
+                            with <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>m</b><b>a</b><b>c</b>, then those addresses  are  also
+                            used  to  populate the switch’s destination lookup
                             on the chassis where <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b> is resident.
 
                      For the Ethernet address on a logical switch port of type
-                     <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>, when that logical switch port’s <b>a</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>e</b><b>s</b>  column
-                     is  set  to  <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> and the connected logical router port
-                     specifies a <b>r</b><b>e</b><b>s</b><b>i</b><b>d</b><b>e</b><b>-</b><b>o</b><b>n</b><b>-</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>  and  the  logical
+                     <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>,  when that logical switch port’s <b>a</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>e</b><b>s</b> column
+                     is set to <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> and the connected  logical  router  port
+                     specifies  a  <b>r</b><b>e</b><b>s</b><b>i</b><b>d</b><b>e</b><b>-</b><b>o</b><b>n</b><b>-</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>  and the logical
                      router to which the connected logical router port belongs
                      to has a distributed gateway LRP:
 
-                     ·      The flow for the connected logical  router  port’s
+                     ·      The  flow  for the connected logical router port’s
                             Ethernet address is only programmed on the gateway
                             chassis.
 
-                     For each  forwarding  group  configured  on  the  logical
-                     switch  datapath,  a  priority-50  flow  that  matches on
+                     For  each  forwarding  group  configured  on  the logical
+                     switch datapath,  a  priority-50  flow  that  matches  on
                      <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b> <u>V</u><u>I</u><u>P</u>
-                      with an action  of  <b>f</b><b>w</b><b>d</b><b>_</b><b>g</b><b>r</b><b>o</b><b>u</b><b>p</b><b>(</b><b>c</b><b>h</b><b>i</b><b>l</b><b>d</b><b>p</b><b>o</b><b>r</b><b>t</b><b>s</b><b>=</b><u>a</u><u>r</u><u>g</u><u>s</u>  <b>)</b>,  where
-                     <u>a</u><u>r</u><u>g</u><u>s</u>  contains comma separated logical switch child ports
-                     to load balance to. If <b>l</b><b>i</b><b>v</b><b>e</b><b>n</b><b>e</b><b>s</b><b>s</b> is enabled,  then  action
+                      with  an  action  of  <b>f</b><b>w</b><b>d</b><b>_</b><b>g</b><b>r</b><b>o</b><b>u</b><b>p</b><b>(</b><b>c</b><b>h</b><b>i</b><b>l</b><b>d</b><b>p</b><b>o</b><b>r</b><b>t</b><b>s</b><b>=</b><u>a</u><u>r</u><u>g</u><u>s</u> <b>)</b>, where
+                     <u>a</u><u>r</u><u>g</u><u>s</u> contains comma separated logical switch child  ports
+                     to  load  balance to. If <b>l</b><b>i</b><b>v</b><b>e</b><b>n</b><b>e</b><b>s</b><b>s</b> is enabled, then action
                      also includes  <b>l</b><b>i</b><b>v</b><b>e</b><b>n</b><b>e</b><b>s</b><b>s</b><b>=</b><b>t</b><b>r</b><b>u</b><b>e</b>.
 
-              ·      One  priority-0  fallback  flow  that matches all packets
-                     with the action <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b>  <b>g</b><b>e</b><b>t</b><b>_</b><b>f</b><b>d</b><b>b</b><b>(</b><b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b><b>)</b><b>;</b>  <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>.  The
-                     action  <b>g</b><b>e</b><b>t</b><b>_</b><b>f</b><b>d</b><b>b</b>  gets the port for the <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> in the MAC
-                     learning table of the logical switch datapath.  If  there
-                     is  no  entry for <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> in the MAC learning table, then
+              ·      One priority-0 fallback flow  that  matches  all  packets
+                     with  the  action  <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b> <b>g</b><b>e</b><b>t</b><b>_</b><b>f</b><b>d</b><b>b</b><b>(</b><b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b><b>)</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>. The
+                     action <b>g</b><b>e</b><b>t</b><b>_</b><b>f</b><b>d</b><b>b</b> gets the port for the <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> in  the  MAC
+                     learning  table  of the logical switch datapath. If there
+                     is no entry for <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> in the MAC learning  table,  then
                      it stores <b>n</b><b>o</b><b>n</b><b>e</b> in the <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b>.
 
      <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>2</u><u>4</u> <u>D</u><u>e</u><u>s</u><u>t</u><u>i</u><u>n</u><u>a</u><u>t</u><u>i</u><u>o</u><u>n</u> <u>u</u><u>n</u><u>k</u><u>n</u><u>o</u><u>w</u><u>n</u>
 
-       This table handles the packets whose destination was not found  or  and
-       looked  up in the MAC learning table of the logical switch datapath. It
+       This  table  handles the packets whose destination was not found or and
+       looked up in the MAC learning table of the logical switch datapath.  It
        contains the following flows.
 
-              ·      If the logical switch has logical  ports  with  ’unknown’
+              ·      If  the  logical  switch has logical ports with ’unknown’
                      addresses set, then the below logical flow is added
 
-                     ·      Priority  50  flow  with the match <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <b>n</b><b>o</b><b>n</b><b>e</b>
-                            then outputs  them  to  the  <b>M</b><b>C</b><b>_</b><b>U</b><b>N</b><b>K</b><b>N</b><b>O</b><b>W</b><b>N</b>  multicast
+                     ·      Priority 50 flow with the match  <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b>  <b>=</b><b>=</b>  <b>n</b><b>o</b><b>n</b><b>e</b>
+                            then  outputs  them  to  the  <b>M</b><b>C</b><b>_</b><b>U</b><b>N</b><b>K</b><b>N</b><b>O</b><b>W</b><b>N</b> multicast
                             group, which <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> populates with all enabled
                             logical  ports  that  accept  unknown  destination
-                            packets.  As  a  small optimization, if no logical
-                            ports   accept   unknown   destination    packets,
-                            <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>  omits this multicast group and logical
+                            packets. As a small optimization,  if  no  logical
+                            ports    accept   unknown   destination   packets,
+                            <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> omits this multicast group and  logical
                             flow.
 
                      If the logical switch has no logical ports with ’unknown’
                      address set, then the below logical flow is added
 
-                     ·      Priority  50  flow  with the match <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <b>n</b><b>o</b><b>n</b><b>e</b>
+                     ·      Priority 50 flow with the match  <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b>  <b>=</b><b>=</b>  <b>n</b><b>o</b><b>n</b><b>e</b>
                             and drops the packets.
 
-              ·      One priority-0 fallback flow that outputs the  packet  to
-                     the  egress  stage  with  the outport learnt from <b>g</b><b>e</b><b>t</b><b>_</b><b>f</b><b>d</b><b>b</b>
+              ·      One  priority-0  fallback flow that outputs the packet to
+                     the egress stage with the  outport  learnt  from  <b>g</b><b>e</b><b>t</b><b>_</b><b>f</b><b>d</b><b>b</b>
                      action.
 
      <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>0</u><u>:</u> <u>P</u><u>r</u><u>e</u><u>-</u><u>L</u><u>B</u>
 
        This table is similar to ingress table <b>P</b><b>r</b><b>e</b><b>-</b><b>L</b><b>B</b>. It contains a priority-0
-       flow  that simply moves traffic to the next table. Moreover it contains
+       flow that simply moves traffic to the next table. Moreover it  contains
        a priority-110 flow to move IPv6 Neighbor Discovery traffic to the next
-       table.  If  any  load  balancing rules exist for the datapath, a prior‐
-       ity-100 flow is added with a match of <b>i</b><b>p</b> and action  of  <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>0</b><b>]</b>  <b>=</b>  <b>1</b><b>;</b>
+       table. If any load balancing rules exist for  the  datapath,  a  prior‐
+       ity-100  flow  is  added  with a match of <b>i</b><b>p</b> and action of <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>2</b><b>]</b> <b>=</b> <b>1</b><b>;</b>
        <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> to act as a hint for table <b>P</b><b>r</b><b>e</b><b>-</b><b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>f</b><b>u</b><b>l</b> to send IP packets to the
-       connection tracker for packet de-fragmentation.
+       connection  tracker  for  packet de-fragmentation and possibly DNAT the
+       destination VIP to one of the selected  backend  for  already  commited
+       load balanced traffic.
 
        This table also has a priority-110 flow with the match <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>E</u> for
        all logical switch datapaths to move traffic to the next table. Where <u>E</u>
        is the service monitor mac defined in the <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>s</b><b>v</b><b>c</b><b>_</b><b>m</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b><b>_</b><b>m</b><b>a</b><b>c</b> colum
        of <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> table.
 
-     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>:</u><b>t</b><b>o</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b><u>P</u><u>r</u><u>e</u><u>-</u><u>A</u><u>C</u><u>L</u><u>s</u>
+     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>:</u> <b>t</b><b>o</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> <u>P</u><u>r</u><u>e</u><u>-</u><u>A</u><u>C</u><u>L</u><u>s</u>
 
        This is similar to ingress table <b>P</b><b>r</b><b>e</b><b>-</b><b>A</b><b>C</b><b>L</b><b>s</b> except for <b>t</b><b>o</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> traffic.
 
@@ -1403,23 +1434,36 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
 
        This table also has a priority-110 flow with the match <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>I</u> for
        all logical switch datapaths to move traffic to the next table. Where <u>I</u>
-       is the peer of a logical router port. This flow is added  to  skip  the
-       connection  tracking  of  packets which will be entering logical router
+       is  the  peer  of a logical router port. This flow is added to skip the
+       connection tracking of packets which will be  entering  logical  router
        datapath from logical switch datapath for routing.
 
      <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>2</u><u>:</u> <u>P</u><u>r</u><u>e</u><u>-</u><u>s</u><u>t</u><u>a</u><u>t</u><u>e</u><u>f</u><u>u</u><u>l</u>
 
-       This is similar to ingress table <b>P</b><b>r</b><b>e</b><b>-</b><b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>f</b><b>u</b><b>l</b>.
+       This  is  similar  to  ingress  table <b>P</b><b>r</b><b>e</b><b>-</b><b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>f</b><b>u</b><b>l</b>. This table adds the
+       below 3 logical flows.
 
-     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>3</u><u>:</u> <u>L</u><u>B</u>
+              ·      A Priority-120 flow that send the packets  to  connection
+                     tracker  using  <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b><b>;</b>  as the action so that the already
+                     established traffic gets unDNATted from the backend IP to
+                     the  load  balancer  VIP  based on a hint provided by the
+                     previous tables with a match for <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>2</b><b>]</b>  <b>=</b><b>=</b>  <b>1</b>.  If  the
+                     packet was not DNATted earlier, then <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b> functions like
+                     <b>c</b><b>t</b><b>_</b><b>n</b><b>e</b><b>x</b><b>t</b>.
 
-       This is similar to ingress table <b>L</b><b>B</b>.
+              ·      A priority-100  flow  sends  the  packets  to  connection
+                     tracker  based  on a hint provided by the previous tables
+                     (with a match for <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>0</b><b>]</b> <b>=</b><b>=</b> <b>1</b>)  by  using  the  <b>c</b><b>t</b><b>_</b><b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>
+                     action.
 
-     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>4</u><u>:</u><b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b><u>A</u><u>C</u><u>L</u> <u>h</u><u>i</u><u>n</u><u>t</u><u>s</u>
+              ·      A  priority-0 flow that matches all packets to advance to
+                     the next table.
+
+     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>3</u><u>:</u> <b>f</b><b>r</b><b>o</b><b>m</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> <u>A</u><u>C</u><u>L</u> <u>h</u><u>i</u><u>n</u><u>t</u><u>s</u>
 
        This is similar to ingress table <b>A</b><b>C</b><b>L</b> <b>h</b><b>i</b><b>n</b><b>t</b><b>s</b>.
 
-     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>5</u><u>:</u><b>t</b><b>o</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b><u>A</u><u>C</u><u>L</u><u>s</u>
+     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>4</u><u>:</u> <b>t</b><b>o</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> <u>A</u><u>C</u><u>L</u><u>s</u>
 
        This is similar to ingress table <b>A</b><b>C</b><b>L</b><b>s</b> except for <b>t</b><b>o</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> ACLs.
 
@@ -1443,28 +1487,28 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      itor  mac defined in the <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>s</b><b>v</b><b>c</b><b>_</b><b>m</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b><b>_</b><b>m</b><b>a</b><b>c</b> colum of
                      <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> table.
 
-     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>6</u><u>:</u><b>t</b><b>o</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b><u>Q</u><u>o</u><u>S</u> <u>M</u><u>a</u><u>r</u><u>k</u><u>i</u><u>n</u><u>g</u>
+     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>5</u><u>:</u> <b>t</b><b>o</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> <u>Q</u><u>o</u><u>S</u> <u>M</u><u>a</u><u>r</u><u>k</u><u>i</u><u>n</u><u>g</u>
 
        This is similar to ingress table  <b>Q</b><b>o</b><b>S</b>  <b>m</b><b>a</b><b>r</b><b>k</b><b>i</b><b>n</b><b>g</b>  except  they  apply  to
        <b>t</b><b>o</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> QoS rules.
 
-     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>7</u><u>:</u><b>t</b><b>o</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b><u>Q</u><u>o</u><u>S</u> <u>M</u><u>e</u><u>t</u><u>e</u><u>r</u>
+     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>6</u><u>:</u> <b>t</b><b>o</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> <u>Q</u><u>o</u><u>S</u> <u>M</u><u>e</u><u>t</u><u>e</u><u>r</u>
 
        This  is  similar  to  ingress  table  <b>Q</b><b>o</b><b>S</b>  <b>m</b><b>e</b><b>t</b><b>e</b><b>r</b>  except they apply to
        <b>t</b><b>o</b><b>-</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> QoS rules.
 
-     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>8</u><u>:</u> <u>S</u><u>t</u><u>a</u><u>t</u><u>e</u><u>f</u><u>u</u><u>l</u>
+     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>7</u><u>:</u> <u>S</u><u>t</u><u>a</u><u>t</u><u>e</u><u>f</u><u>u</u><u>l</u>
 
        This is similar to ingress table <b>S</b><b>t</b><b>a</b><b>t</b><b>e</b><b>f</b><b>u</b><b>l</b>  except  that  there  are  no
        rules added for load balancing new connections.
 
-     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>9</u><u>:</u> <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>P</u><u>o</u><u>r</u><u>t</u> <u>S</u><u>e</u><u>c</u><u>u</u><u>r</u><u>i</u><u>t</u><u>y</u> <u>-</u> <u>I</u><u>P</u>
+     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>8</u><u>:</u> <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>P</u><u>o</u><u>r</u><u>t</u> <u>S</u><u>e</u><u>c</u><u>u</u><u>r</u><u>i</u><u>t</u><u>y</u> <u>-</u> <u>I</u><u>P</u>
 
        This  is similar to the port security logic in table <b>I</b><b>n</b><b>g</b><b>r</b><b>e</b><b>s</b><b>s</b> <b>P</b><b>o</b><b>r</b><b>t</b> <b>S</b><b>e</b><b>c</b><b>u</b><b>‐</b>
        <b>r</b><b>i</b><b>t</b><b>y</b> <b>-</b> <b>I</b><b>P</b> except that <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b>, <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b>, <b>i</b><b>p</b><b>4</b><b>.</b><b>d</b><b>s</b><b>t</b> and <b>i</b><b>p</b><b>6</b><b>.</b><b>d</b><b>s</b><b>t</b> are checked
        instead of <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b>, <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b>, <b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b> and <b>i</b><b>p</b><b>6</b><b>.</b><b>s</b><b>r</b><b>c</b>
 
-     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>0</u><u>:</u> <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>P</u><u>o</u><u>r</u><u>t</u> <u>S</u><u>e</u><u>c</u><u>u</u><u>r</u><u>i</u><u>t</u><u>y</u> <u>-</u> <u>L</u><u>2</u>
+     <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>9</u><u>:</u> <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>P</u><u>o</u><u>r</u><u>t</u> <u>S</u><u>e</u><u>c</u><u>u</u><u>r</u><u>i</u><u>t</u><u>y</u> <u>-</u> <u>L</u><u>2</u>
 
        This  is  similar  to  the ingress port security logic in ingress table
        <b>A</b><b>d</b><b>m</b><b>i</b><b>s</b><b>s</b><b>i</b><b>o</b><b>n</b> <b>C</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b> <b>a</b><b>n</b><b>d</b> <b>I</b><b>n</b><b>g</b><b>r</b><b>e</b><b>s</b><b>s</b> <b>P</b><b>o</b><b>r</b><b>t</b> <b>S</b><b>e</b><b>c</b><b>u</b><b>r</b><b>i</b><b>t</b><b>y</b> <b>-</b> <b>L</b><b>2</b>,  but  with  important
@@ -1804,8 +1848,7 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
                      <b>a</b><b>r</b><b>p</b><b>.</b><b>o</b><b>p</b> <b>=</b> <b>2</b><b>;</b> <b>/</b><b>*</b> <b>A</b><b>R</b><b>P</b> <b>r</b><b>e</b><b>p</b><b>l</b><b>y</b><b>.</b> <b>*</b><b>/</b>
                      <b>a</b><b>r</b><b>p</b><b>.</b><b>t</b><b>h</b><b>a</b> <b>=</b> <b>a</b><b>r</b><b>p</b><b>.</b><b>s</b><b>h</b><b>a</b><b>;</b>
                      <b>a</b><b>r</b><b>p</b><b>.</b><b>s</b><b>h</b><b>a</b> <b>=</b> <b>x</b><b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>0</b><b>.</b><b>.</b><b>4</b><b>7</b><b>]</b><b>;</b>
-                     <b>a</b><b>r</b><b>p</b><b>.</b><b>t</b><b>p</b><b>a</b> <b>=</b> <b>a</b><b>r</b><b>p</b><b>.</b><b>s</b><b>p</b><b>a</b><b>;</b>
-                     <b>a</b><b>r</b><b>p</b><b>.</b><b>s</b><b>p</b><b>a</b> <b>=</b> <u>A</u>;
+                     <b>a</b><b>r</b><b>p</b><b>.</b><b>t</b><b>p</b><b>a</b> <lt;<lt;<b>-</b>>gt;>gt; <b>a</b><b>r</b><b>p</b><b>.</b><b>s</b><b>p</b><b>a</b><b>;</b>
                      <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b> <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>;</b>
                      <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>l</b><b>o</b><b>o</b><b>p</b><b>b</b><b>a</b><b>c</b><b>k</b> <b>=</b> <b>1</b><b>;</b>
                      <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b><b>;</b>
@@ -1991,7 +2034,7 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
        tracking before sending it to the next table.
 
        If ECMP routes with symmetric reply are configured  in  the  <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>‐</b>
-       <b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>  database  for a gateway router, a priority-100 flow is added for
+       <b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>  database  for a gateway router, a priority-300 flow is added for
        each router port on which symmetric replies are configured. The  match‐
        ing  logic for these ports essentially reverses the configured logic of
        the ECMP route. So for instance, a route  with  a  destination  routing
@@ -2972,5 +3015,5 @@ ovn-northd(8)                     OVN Manual                     ovn-northd(8)
 
 
 
-OVN 21.03.90                      ovn-northd                     ovn-northd(8)
+OVN 21.06.0                       ovn-northd                     ovn-northd(8)
 </pre></body></html>
