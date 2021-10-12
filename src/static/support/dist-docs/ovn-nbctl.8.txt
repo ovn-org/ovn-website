@@ -9,175 +9,700 @@ SYNOPSIS
        ovn-nbctl [options] command [arg...]
 
 DESCRIPTION
-       This utility can be used to manage the OVN northbound database.
+       The ovn-nbctl program configures the OVN_Northbound database by provid‐
+       ing a high-level interface to its configuration database. See ovn-nb(5)
+       for comprehensive documentation of the database schema.
 
-GENERAL COMMANDS
-       init   Initializes  the  database,  if it is empty. If the database has
+       ovn-nbctl  connects  to  an  ovsdb-server  process  that  maintains  an
+       OVN_Northbound  configuration  database.  Using  this  connection,   it
+       queries  and possibly applies changes to the database, depending on the
+       supplied commands.
+
+       ovn-nbctl can perform any number of commands in a  single  run,  imple‐
+       mented as a single atomic transaction against the database.
+
+       The  ovn-nbctl  command  line  begins  with global options (see OPTIONS
+       below for details). The global options are followed by one or more com‐
+       mands.  Each  command  should begin with -- by itself as a command-line
+       argument, to separate it from the following commands.  (The  --  before
+       the first command is optional.) The command itself starts with command-
+       specific options, if any, followed by the command name  and  any  argu‐
+       ments.
+
+DAEMON MODE
+       When  it  is invoked in the most ordinary way, ovn-nbctl connects to an
+       OVSDB server that hosts the northbound database,  retrieves  a  partial
+       copy  of  the  database that is complete enough to do its work, sends a
+       transaction request to the  server,  and  receives  and  processes  the
+       server’s  reply.  In  common  interactive use, this is fine, but if the
+       database is large, the step in which ovn-nbctl retrieves a partial copy
+       of  the  database  can  take a long time, which yields poor performance
+       overall.
+
+       To improve performance in such  a  case,  ovn-nbctl  offers  a  "daemon
+       mode,"  in  which  the user first starts ovn-nbctl running in the back‐
+       ground and afterward uses the daemon to execute operations.  Over  sev‐
+       eral  ovn-nbctl  command  invocations,  this  performs  better  overall
+       because it retrieves a copy of the database only once at the beginning,
+       not once per program run.
+
+       Use the --detach option to start an ovn-nbctl daemon. With this option,
+       ovn-nbctl prints the name of a control socket  to  stdout.  The  client
+       should  save this name in environment variable OVN_NB_DAEMON. Under the
+       Bourne shell this might be done like this:
+
+             export OVN_NB_DAEMON=$(ovn-nbctl --pidfile --detach)
+
+
+       When OVN_NB_DAEMON is set, ovn-nbctl  automatically  and  transparently
+       uses the daemon to execute its commands.
+
+       When  the daemon is no longer needed, kill it and unset the environment
+       variable, e.g.:
+
+             kill $(cat $OVN_RUNDIR/ovn-nbctl.pid)
+             unset OVN_NB_DAEMON
+
+
+       When using daemon mode, an alternative to the OVN_NB_DAEMON environment
+       variable  is  to  specify a path for the Unix socket. When starting the
+       ovn-nbctl daemon, specify the -u option with a full path to  the  loca‐
+       tion of the socket file. Here is an exmple:
+
+             ovn-nbctl --detach -u /tmp/mysock.ctl
+
+
+       Then  to connect to the running daemon, use the -u option with the full
+       path to the socket created when the daemon was started:
+
+             ovn-nbctl -u /tmp/mysock.ctl show
+
+
+     Daemon Commands
+
+       Daemon mode is internally implemented using the same mechanism used  by
+       ovn-appctl.  One  may  also  use ovn-appctl directly with the following
+       commands:
+
+              run [options] command [arg...] [--  [options]  command  [arg...]
+              ...]
+                     Instructs the daemon process to run one or more ovn-nbctl
+                     commands described above and reply with  the  results  of
+                     running  these  commands.  Accepts the --no-wait, --wait,
+                     --timeout,  --dry-run,   --oneline,   and   the   options
+                     described  under  Table Formatting Options in addition to
+                     the the command-specific options.
+
+              exit   Causes ovn-nbctl to gracefully terminate.
+
+OPTIONS
+       The options listed below affect the behavior of ovn-nbctl as  a  whole.
+       Some individual commands also accept their own options, which are given
+       just before the command name. If the first command on the command  line
+       has  options,  then  those  options  must  be separated from the global
+       options by --.
+
+       ovn-nbctl also accepts options from the  OVN_NBCTL_OPTIONS  environment
+       variable,  in  the same format as on the command line. Options from the
+       command line override those in the environment.
+
+              --no-wait | --wait=none
+              --wait=sb
+              --wait=hv
+                   These options control whether and how ovn-nbctl  waits  for
+                   the OVN system to become up-to-date with changes made in an
+                   ovn-nbctl invocation.
+
+                   By default, or if --no-wait or --wait=none, ovn-nbctl exits
+                   immediately after confirming that changes have been commit‐
+                   ted to the northbound database, without waiting.
+
+                   With  --wait=sb,  before  ovn-nbctl  exits,  it  waits  for
+                   ovn-northd to bring the southbound database up-to-date with
+                   the northbound database updates.
+
+                   With --wait=hv, before  ovn-nbctl  exits,  it  additionally
+                   waits  for  all  OVN  chassis (hypervisors and gateways) to
+                   become up-to-date with  the  northbound  database  updates.
+                   (This  can become an indefinite wait if any chassis is mal‐
+                   functioning.)
+
+                   Ordinarily, --wait=sb or --wait=hv only waits  for  changes
+                   by  the  current  ovn-nbctl invocation to take effect. This
+                   means that, if none of the commands supplied  to  ovn-nbctl
+                   change the database, then the command does not wait at all.
+                   Use the sync command to override this behavior.
+
+              --db database
+                   The OVSDB database remote  to  contact.  If  the  OVN_NB_DB
+                   environment  variable  is  set,  its  value  is used as the
+                   default. Otherwise, the default is unix:/ovnnb_db.sock, but
+                   this  default  is  unlikely to be useful outside of single-
+                   machine OVN test environments.
+
+              --leader-only
+              --no-leader-only
+                   By default, or with --leader-only, when the database server
+                   is a clustered database, ovn-nbctl will avoid servers other
+                   than the cluster leader. This ensures that  any  data  that
+                   ovn-nbctl   reads   and   reports   is   up-to-date.   With
+                   --no-leader-only, ovn-nbctl will  use  any  server  in  the
+                   cluster, which means that for read-only transactions it can
+                   report and act on stale data (transactions that modify  the
+                   database are always serialized even with --no-leader-only).
+                   Refer to Understanding Cluster Consistency in ovsdb(7)  for
+                   more information.
+
+              --shuffle-remotes
+              --no-shuffle-remotes
+                   By  default, or with --shuffle-remotes, when there are mul‐
+                   tiple remotes specified  in  the  OVSDB  connection  string
+                   specified  by  --db  or the OVN_NB_DB environment variable,
+                   the order of the remotes will be shuffled before the client
+                   tries to connect. The remotes will be shuffled only once to
+                   a new order before the first connection attempt.  The  fol‐
+                   lowing retries, if any, will follow the same new order. The
+                   default behavior is to make sure  clients  of  a  clustered
+                   database  can  distribute  evenly  to  all memembers of the
+                   cluster. With --no-shuffle-remotes, ovn-nbctl will use  the
+                   original  order  specified in the connection string to con‐
+                   nect. This allows user  to  specify  the  preferred  order,
+                   which is particularly useful for testing.
+
+              --no-syslog
+                   By default, ovn-nbctl logs its arguments and the details of
+                   any changes that it makes to the system  log.  This  option
+                   disables this logging.
+
+                   This option is equivalent to --verbose=nbctl:syslog:warn.
+
+              --oneline
+                   Modifies the output format so that the output for each com‐
+                   mand is printed on a single line. New-line characters  that
+                   would  otherwise  separate  lines are printed as \fB\\n\fR,
+                   and any instances of \fB\\\fR that would  otherwise  appear
+                   in  the  output  are  doubled. Prints a blank line for each
+                   command that has no output. This option does not affect the
+                   formatting  of  output  from the list or find commands; see
+                   Table Formatting Options below.
+
+              --dry-run
+                   Prevents ovn-nbctl from actually modifying the database.
+
+              -t secs
+              --timeout=secs
+                   By default, or with a secs of 0,  ovn-nbctl  waits  forever
+                   for  a  response from the database. This option limits run‐
+                   time to approximately secs seconds. If the timeout expires,
+                   ovn-nbctl will exit with a SIGALRM signal. (A timeout would
+                   normally happen only if the database cannot  be  contacted,
+                   or if the system is overloaded.)
+
+              --print-wait-time
+                   When  --wait is specified, the option --print-wait-time can
+                   be used to print the time spent on  waiting,  depending  on
+                   the  value  specified  in   --wait  option. If --wait=sb is
+                   specified, it prints "ovn-northd delay before  processing",
+                   which  is  the time between the Northbound DB update by the
+                   command and the moment when  ovn-northd  starts  processing
+                   the  update, and "ovn-northd completion", which is the time
+                   between the  Northbound  DB  update  and  the  moment  when
+                   ovn-northd  completes  the  Southbound DB updating success‐
+                   fully. If --wait=hv is specified, in addition to the  above
+                   information, it also prints "ovn-controller(s) completion",
+                   which is the time between the Northbound DB update and  the
+                   moment  when the slowest hypervisor finishes processing the
+                   update.
+
+   Daemon Options
+       --pidfile[=pidfile]
+              Causes a file (by default, program.pid) to be created indicating
+              the  PID  of the running process. If the pidfile argument is not
+              specified, or if it does not begin with /, then it is created in
+              .
+
+              If --pidfile is not specified, no pidfile is created.
+
+       --overwrite-pidfile
+              By  default,  when --pidfile is specified and the specified pid‐
+              file already exists and is locked by a running process, the dae‐
+              mon refuses to start. Specify --overwrite-pidfile to cause it to
+              instead overwrite the pidfile.
+
+              When --pidfile is not specified, this option has no effect.
+
+       --detach
+              Runs this program as a background process.  The  process  forks,
+              and  in  the  child it starts a new session, closes the standard
+              file descriptors (which has the side effect of disabling logging
+              to  the  console), and changes its current directory to the root
+              (unless --no-chdir is specified). After the child completes  its
+              initialization, the parent exits.
+
+       --monitor
+              Creates  an  additional  process  to monitor this program. If it
+              dies due to a signal that indicates a programming  error  (SIGA‐
+              BRT, SIGALRM, SIGBUS, SIGFPE, SIGILL, SIGPIPE, SIGSEGV, SIGXCPU,
+              or SIGXFSZ) then the monitor process starts a new copy of it. If
+              the daemon dies or exits for another reason, the monitor process
+              exits.
+
+              This option is normally used with --detach, but  it  also  func‐
+              tions without it.
+
+       --no-chdir
+              By  default,  when --detach is specified, the daemon changes its
+              current  working  directory  to  the  root  directory  after  it
+              detaches.  Otherwise, invoking the daemon from a carelessly cho‐
+              sen directory would prevent the  administrator  from  unmounting
+              the file system that holds that directory.
+
+              Specifying  --no-chdir  suppresses this behavior, preventing the
+              daemon from changing its current working directory. This may  be
+              useful for collecting core files, since it is common behavior to
+              write core dumps into the current working directory and the root
+              directory is not a good directory to use.
+
+              This option has no effect when --detach is not specified.
+
+       --no-self-confinement
+              By  default  this daemon will try to self-confine itself to work
+              with files under  well-known  directories  determined  at  build
+              time.  It  is better to stick with this default behavior and not
+              to use this flag unless some other Access  Control  is  used  to
+              confine  daemon.  Note  that in contrast to other access control
+              implementations that are typically  enforced  from  kernel-space
+              (e.g.  DAC  or  MAC), self-confinement is imposed from the user-
+              space daemon itself and hence should not be considered as a full
+              confinement  strategy,  but instead should be viewed as an addi‐
+              tional layer of security.
+
+       --user=user:group
+              Causes this program to run as  a  different  user  specified  in
+              user:group,  thus  dropping  most  of the root privileges. Short
+              forms user and :group are also allowed,  with  current  user  or
+              group  assumed,  respectively.  Only daemons started by the root
+              user accepts this argument.
+
+              On   Linux,   daemons   will   be   granted   CAP_IPC_LOCK   and
+              CAP_NET_BIND_SERVICES  before  dropping root privileges. Daemons
+              that interact with a datapath, such  as  ovs-vswitchd,  will  be
+              granted  three  additional  capabilities,  namely CAP_NET_ADMIN,
+              CAP_NET_BROADCAST and CAP_NET_RAW. The  capability  change  will
+              apply even if the new user is root.
+
+              On Windows, this option is not currently supported. For security
+              reasons, specifying this option will cause  the  daemon  process
+              not to start.
+
+   Logging options
+       -v[spec]
+       --verbose=[spec]
+            Sets  logging  levels.  Without  any  spec, sets the log level for
+            every module and destination to dbg. Otherwise, spec is a list  of
+            words separated by spaces or commas or colons, up to one from each
+            category below:
+
+            ·      A valid module name, as displayed by the vlog/list  command
+                   on ovs-appctl(8), limits the log level change to the speci‐
+                   fied module.
+
+            ·      syslog, console, or file, to limit the log level change  to
+                   only  to  the  system  log,  to  the console, or to a file,
+                   respectively. (If --detach is specified, the daemon  closes
+                   its  standard  file  descriptors, so logging to the console
+                   will have no effect.)
+
+                   On Windows platform, syslog is accepted as a  word  and  is
+                   only useful along with the --syslog-target option (the word
+                   has no effect otherwise).
+
+            ·      off, emer, err, warn, info, or  dbg,  to  control  the  log
+                   level.  Messages  of  the  given severity or higher will be
+                   logged, and messages of lower  severity  will  be  filtered
+                   out.  off filters out all messages. See ovs-appctl(8) for a
+                   definition of each log level.
+
+            Case is not significant within spec.
+
+            Regardless of the log levels set for file, logging to a file  will
+            not take place unless --log-file is also specified (see below).
+
+            For compatibility with older versions of OVS, any is accepted as a
+            word but has no effect.
+
+       -v
+       --verbose
+            Sets the maximum logging verbosity  level,  equivalent  to  --ver‐
+            bose=dbg.
+
+       -vPATTERN:destination:pattern
+       --verbose=PATTERN:destination:pattern
+            Sets  the  log  pattern  for  destination  to  pattern.  Refer  to
+            ovs-appctl(8) for a description of the valid syntax for pattern.
+
+       -vFACILITY:facility
+       --verbose=FACILITY:facility
+            Sets the RFC5424 facility of the log message. facility can be  one
+            of kern, user, mail, daemon, auth, syslog, lpr, news, uucp, clock,
+            ftp, ntp, audit, alert, clock2, local0,  local1,  local2,  local3,
+            local4, local5, local6 or local7. If this option is not specified,
+            daemon is used as the default for  the  local  system  syslog  and
+            local0  is used while sending a message to the target provided via
+            the --syslog-target option.
+
+       --log-file[=file]
+            Enables logging to a file. If file is specified, then it  is  used
+            as the exact name for the log file. The default log file name used
+            if file is omitted is /usr/local/var/log/ovn/program.log.
+
+       --syslog-target=host:port
+            Send syslog messages to UDP port on host, in addition to the  sys‐
+            tem  syslog.  The host must be a numerical IP address, not a host‐
+            name.
+
+       --syslog-method=method
+            Specify method as how syslog messages should  be  sent  to  syslog
+            daemon. The following forms are supported:
+
+            ·      libc,  to use the libc syslog() function. Downside of using
+                   this options is that libc adds fixed prefix to  every  mes‐
+                   sage  before  it is actually sent to the syslog daemon over
+                   /dev/log UNIX domain socket.
+
+            ·      unix:file, to use a UNIX domain socket directly. It is pos‐
+                   sible to specify arbitrary message format with this option.
+                   However, rsyslogd 8.9 and older  versions  use  hard  coded
+                   parser  function anyway that limits UNIX domain socket use.
+                   If you want to use  arbitrary  message  format  with  older
+                   rsyslogd  versions,  then  use  UDP  socket to localhost IP
+                   address instead.
+
+            ·      udp:ip:port, to use a UDP socket. With this  method  it  is
+                   possible  to  use  arbitrary message format also with older
+                   rsyslogd. When sending  syslog  messages  over  UDP  socket
+                   extra  precaution needs to be taken into account, for exam‐
+                   ple, syslog daemon needs to be configured to listen on  the
+                   specified  UDP  port,  accidental  iptables  rules could be
+                   interfering with local syslog traffic and  there  are  some
+                   security  considerations  that apply to UDP sockets, but do
+                   not apply to UNIX domain sockets.
+
+            ·      null, to discard all messages logged to syslog.
+
+            The default is taken from the OVS_SYSLOG_METHOD environment  vari‐
+            able; if it is unset, the default is libc.
+
+   Table Formatting Options
+       These  options control the format of output from the list and find com‐
+       mands.
+
+              -f format
+              --format=format
+                   Sets the type of table formatting. The following  types  of
+                   format are available:
+
+                   table  2-D text tables with aligned columns.
+
+                   list (default)
+                          A  list  with one column per line and rows separated
+                          by a blank line.
+
+                   html   HTML tables.
+
+                   csv    Comma-separated values as defined in RFC 4180.
+
+                   json   JSON format as defined in RFC 4627. The output is  a
+                          sequence  of JSON objects, each of which corresponds
+                          to one table. Each JSON  object  has  the  following
+                          members with the noted values:
+
+                          caption
+                                 The  table’s  caption. This member is omitted
+                                 if the table has no caption.
+
+                          headings
+                                 An array with one element per  table  column.
+                                 Each  array  element  is  a string giving the
+                                 corresponding column’s heading.
+
+                          data   An array with one element per table row. Each
+                                 element is also an array with one element per
+                                 table column. The elements  of  this  second-
+                                 level array are the cells that constitute the
+                                 table. Cells that  represent  OVSDB  data  or
+                                 data   types  are  expressed  in  the  format
+                                 described in the OVSDB  specification;  other
+                                 cells are simply expressed as text strings.
+
+              -d format
+              --data=format
+                   Sets  the  formatting for cells within output tables unless
+                   the table format is set to json, in which case json format‐
+                   ting  is  always  used when formatting cells. The following
+                   types of format are available:
+
+                   string (default)
+                          The simple format described in the  Database  Values
+                          section of ovs-vsctl(8).
+
+                   bare   The  simple format with punctuation stripped off: []
+                          and {} are omitted around sets, maps, and empty col‐
+                          umns,  items  within  sets  and maps are space-sepa‐
+                          rated, and strings are never quoted. This format may
+                          be easier for scripts to parse.
+
+                   json   The RFC 4627 JSON format as described above.
+
+              --no-headings
+                   This  option  suppresses  the  heading  row  that otherwise
+                   appears in the first row of table output.
+
+              --pretty
+                   By default, JSON in output is printed as compactly as  pos‐
+                   sible. This option causes JSON in output to be printed in a
+                   more readable fashion. Members of objects and  elements  of
+                   arrays are printed one per line, with indentation.
+
+                   This option does not affect JSON in tables, which is always
+                   printed compactly.
+
+              --bare
+                   Equivalent to --format=list --data=bare --no-headings.
+
+   PKI Options
+       PKI configuration is required to use SSL  for  the  connection  to  the
+       database.
+
+              -p privkey.pem
+              --private-key=privkey.pem
+                   Specifies  a  PEM  file  containing the private key used as
+                   identity for outgoing SSL connections.
+
+              -c cert.pem
+              --certificate=cert.pem
+                   Specifies a PEM file containing a certificate  that  certi‐
+                   fies the private key specified on -p or --private-key to be
+                   trustworthy. The certificate must be signed by the certifi‐
+                   cate  authority  (CA) that the peer in SSL connections will
+                   use to verify it.
+
+              -C cacert.pem
+              --ca-cert=cacert.pem
+                   Specifies a PEM file containing the CA certificate for ver‐
+                   ifying certificates presented to this program by SSL peers.
+                   (This may be the same certificate that  SSL  peers  use  to
+                   verify the certificate specified on -c or --certificate, or
+                   it may be a different one, depending on the PKI  design  in
+                   use.)
+
+              -C none
+              --ca-cert=none
+                   Disables  verification  of  certificates  presented  by SSL
+                   peers. This introduces a security risk,  because  it  means
+                   that  certificates  cannot be verified to be those of known
+                   trusted hosts.
+
+              --bootstrap-ca-cert=cacert.pem
+                     When cacert.pem exists, this option has the  same  effect
+                     as  -C  or --ca-cert. If it does not exist, then the exe‐
+                     cutable will attempt to obtain the  CA  certificate  from
+                     the  SSL  peer on its first SSL connection and save it to
+                     the named PEM file. If it is successful, it will  immedi‐
+                     ately drop the connection and reconnect, and from then on
+                     all SSL connections must be authenticated by  a  certifi‐
+                     cate signed by the CA certificate thus obtained.
+
+                     This  option  exposes the SSL connection to a man-in-the-
+                     middle attack obtaining the initial CA  certificate,  but
+                     it may be useful for bootstrapping.
+
+                     This  option  is only useful if the SSL peer sends its CA
+                     certificate as part of the SSL certificate chain. The SSL
+                     protocol  does not require the server to send the CA cer‐
+                     tificate.
+
+                     This option is mutually exclusive with -C and --ca-cert.
+
+   Other Options
+       -h
+       --help
+            Prints a brief help message to the console.
+
+       -V
+       --version
+            Prints version information to the console.
+
+COMMANDS
+       The following sections describe the commands that ovn-nbctl supports.
+
+   General Commands
+       init   Initializes the database, if it is empty. If  the  database  has
               already been initialized, this command has no effect.
 
        show [switch | router]
-              Prints a brief overview of the database contents. If  switch  is
+              Prints  a  brief overview of the database contents. If switch is
               provided, only records related to that logical switch are shown.
-              If router is provided, only  records  related  to  that  logical
+              If  router  is  provided,  only  records related to that logical
               router are shown.
 
-LOGICAL SWITCH COMMANDS
-       ls-add Creates  a  new,  unnamed logical switch, which initially has no
-              ports. The switch does not have  a  name,  other  commands  must
+   Logical Switch Commands
+       ls-add Creates a new, unnamed logical switch, which  initially  has  no
+              ports.  The  switch  does  not  have a name, other commands must
               refer to this switch by its UUID.
 
        [--may-exist | --add-duplicate] ls-add switch
-              Creates  a  new logical switch named switch, which initially has
+              Creates a new logical switch named switch, which  initially  has
               no ports.
 
-              The OVN northbound database  schema  does  not  require  logical
-              switch  names  to be unique, but the whole point to the names is
+              The  OVN  northbound  database  schema  does not require logical
+              switch names to be unique, but the whole point to the  names  is
               to provide an easy way for humans to refer to the switches, mak‐
-              ing  duplicate  names unhelpful. Thus, without any options, this
-              command regards it as an error if switch is  a  duplicate  name.
-              With  --may-exist, adding a duplicate name succeeds but does not
-              create a new logical switch. With --add-duplicate,  the  command
+              ing duplicate names unhelpful. Thus, without any  options,  this
+              command  regards  it  as an error if switch is a duplicate name.
+              With --may-exist, adding a duplicate name succeeds but does  not
+              create  a  new logical switch. With --add-duplicate, the command
               really creates a new logical switch with a duplicate name. It is
-              an error to specify both options. If there are multiple  logical
-              switches  with  a duplicate name, configure the logical switches
+              an  error to specify both options. If there are multiple logical
+              switches with a duplicate name, configure the  logical  switches
               using the UUID instead of the switch name.
 
        [--if-exists] ls-del switch
-              Deletes switch. It is an error if switch does not exist,  unless
+              Deletes  switch. It is an error if switch does not exist, unless
               --if-exists is specified.
 
        ls-list
               Lists all existing switches on standard output, one per line.
 
-ACL COMMANDS
-       These  commands  operates on ACL objects for a given entity. The entity
+   ACL Commands
+       These commands operates on ACL objects for a given entity.  The  entity
        can be either a logical switch or a port group. The entity can be spec‐
-       ified  as  uuid  or  name. The --type option can be used to specify the
-       type of the entity, in case both a logical switch  and  a  port  groups
-       exist  with  the  same  name  specified for entity. type must be either
+       ified as uuid or name. The --type option can be  used  to  specify  the
+       type  of  the  entity,  in case both a logical switch and a port groups
+       exist with the same name specified for  entity.  type  must  be  either
        switch or port-group.
 
               [--type={switch | port-group}] [--log] [--meter=meter] [--sever‐
-              ity=severity]  [--name=name] [--may-exist] acl-add entity direc‐
-              tion priority match verdict
-                     Adds the specified  ACL  to  entity.  direction  must  be
+              ity=severity]   [--name=name]   [--label=label]    [--may-exist]
+              acl-add entity direction priority match verdict
+                     Adds  the  specified  ACL  to  entity.  direction must be
                      either from-lport or to-lport. priority must be between 0
-                     and 32767, inclusive. A full description  of  the  fields
-                     are  in  ovn-nb(5). If --may-exist is specified, adding a
-                     duplicated ACL succeeds but the ACL is  not  really  cre‐
-                     ated.   Without  --may-exist,  adding  a  duplicated  ACL
+                     and  32767,  inclusive.  A full description of the fields
+                     are in ovn-nb(5). If --may-exist is specified,  adding  a
+                     duplicated  ACL  succeeds  but the ACL is not really cre‐
+                     ated.  Without  --may-exist,  adding  a  duplicated   ACL
                      results in error.
 
-                     The --log option enables packet logging for the ACL.  The
-                     options  --severity  and  --name  specify  a severity and
+                     The  --log option enables packet logging for the ACL. The
+                     options --severity and  --name  specify  a  severity  and
                      name, respectively, for log entries (and also enable log‐
-                     ging).  The  severity  must  be  one  of  alert, warning,
-                     notice, info, or debug. If a severity is  not  specified,
-                     the  default is info. The --meter=meter option is used to
-                     rate-limit packet logging. The  meter  argument  names  a
+                     ging). The  severity  must  be  one  of  alert,  warning,
+                     notice,  info,  or debug. If a severity is not specified,
+                     the default is info. The --meter=meter option is used  to
+                     rate-limit  packet  logging.  The  meter argument names a
                      meter configured by meter-add.
 
               [--type={switch | port-group}] acl-del entity [direction [prior‐
               ity match]]
                      Deletes ACLs from entity. If only entity is supplied, all
-                     the  ACLs  from  the  entity are deleted. If direction is
+                     the ACLs from the entity are  deleted.  If  direction  is
                      also specified, then all the flows in that direction will
-                     be  deleted from the entity. If all the fields are given,
-                     then a single flow that matches all the  fields  will  be
+                     be deleted from the entity. If all the fields are  given,
+                     then  a  single  flow that matches all the fields will be
                      deleted.
 
               [--type={switch | port-group}] acl-list entity
                      Lists the ACLs on entity.
 
-LOGICAL SWITCH QOS RULE COMMANDS
+   Logical Switch QoS Rule Commands
        [--may-exist]  qos-add  switch  direction  priority  match  [dscp=dscp]
        [rate=rate [burst=burst]]
               Adds QoS marking and metering rules to switch. direction must be
-              either  from-lport  or  to-lport. priority must be between 0 and
+              either from-lport or to-lport. priority must be  between  0  and
               32767, inclusive.
 
-              If dscp=dscp is specified, then matching packets will have  DSCP
-              marking  applied.  dscp  must be between 0 and 63, inclusive. If
-              rate=rate is specified then matching packets will have  metering
-              applied   at   rate   kbps.  If  metering  is  configured,  then
-              burst=burst specifies the burst rate  limit  in  kilobits.  dscp
+              If  dscp=dscp is specified, then matching packets will have DSCP
+              marking applied. dscp must be between 0 and  63,  inclusive.  If
+              rate=rate  is specified then matching packets will have metering
+              applied  at  rate  kbps.  If  metering   is   configured,   then
+              burst=burst  specifies  the  burst  rate limit in kilobits. dscp
               and/or rate are required arguments.
 
-              If  --may-exist  is specified, adding a duplicated QoS rule suc‐
-              ceeds  but  the  QoS  rule  is  not  really   created.   Without
+              If --may-exist is specified, adding a duplicated QoS  rule  suc‐
+              ceeds   but   the  QoS  rule  is  not  really  created.  Without
               --may-exist, adding a duplicated QoS rule results in error.
 
        qos-del switch [direction [priority match]]
-              Deletes  QoS  rules from switch. If only switch is supplied, all
-              the QoS rules from the logical switch are deleted. If  direction
-              is  also specified, then all the flows in that direction will be
+              Deletes QoS rules from switch. If only switch is  supplied,  all
+              the  QoS rules from the logical switch are deleted. If direction
+              is also specified, then all the flows in that direction will  be
               deleted from the logical switch. If all the fields are supplied,
-              then  a  single  flow  that  matches  the  given  fields will be
+              then a single  flow  that  matches  the  given  fields  will  be
               deleted.
 
-              If switch and uuid are supplied, then the QoS rule  with  sepci‐
+              If  switch  and uuid are supplied, then the QoS rule with sepci‐
               fied uuid is deleted.
 
        qos-list switch
               Lists the QoS rules on switch.
 
-METER COMMANDS
+   Meter Commands
        meter-add name action rate unit [burst]
               Adds the specified meter. name must be a unique name to identify
-              this meter. The action argument  specifies  what  should  happen
+              this  meter.  The  action  argument specifies what should happen
               when this meter is exceeded. The only supported action is drop.
 
-              The  unit specifies the unit for the rate argument; valid values
-              are kbps and pktps for kilobits per second and packets per  sec‐
+              The unit specifies the unit for the rate argument; valid  values
+              are  kbps and pktps for kilobits per second and packets per sec‐
               ond, respectively. The burst option configures the maximum burst
               allowed for the band in kilobits or packets depending on whether
-              the  unit  chosen was kbps or pktps, respectively. If a burst is
+              the unit chosen was kbps or pktps, respectively. If a  burst  is
               not supplied, the switch is free to select some reasonable value
               depending on its configuration.
 
-              ovn-nbctl  only  supports adding a meter with a single band, but
+              ovn-nbctl only supports adding a meter with a single  band,  but
               the other commands support meters with multiple bands.
 
-              Names that start with "__" (two underscores)  are  reserved  for
+              Names  that  start  with "__" (two underscores) are reserved for
               internal use by OVN, so ovn-nbctl does not allow adding them.
 
        meter-del [name]
-              Deletes  meters.  By default, all meters are deleted. If name is
+              Deletes meters. By default, all meters are deleted. If  name  is
               supplied, only the meter with that name will be deleted.
 
        meter-list
               Lists all meters.
 
-LOGICAL SWITCH PORT COMMANDS
+   Logical Switch Port Commands
        [--may-exist] lsp-add switch port
               Creates on lswitch a new logical switch port named port.
 
-              It is an error if a logical  port  named  port  already  exists,
-              unless  --may-exist  is specified. Regardless of --may-exist, it
+              It  is  an  error  if  a logical port named port already exists,
+              unless --may-exist is specified. Regardless of  --may-exist,  it
               is an error if the existing port is in some logical switch other
               than switch or if it has a parent port.
 
        [--may-exist] lsp-add switch port parent tag_request
-              Creates  on  switch  a  logical switch port named port that is a
-              child of parent that is identified  with  VLAN  ID  tag_request,
-              which  must  be between 0 and 4095, inclusive. If tag_request is
-              0, ovn-northd generates a tag that is unique  in  the  scope  of
-              parent.  This  is  useful in cases such as virtualized container
-              environments where Open vSwitch does not have a  direct  connec‐
+              Creates on switch a logical switch port named  port  that  is  a
+              child  of  parent  that  is identified with VLAN ID tag_request,
+              which must be between 0 and 4095, inclusive. If  tag_request  is
+              0,  ovn-northd  generates  a  tag that is unique in the scope of
+              parent. This is useful in cases such  as  virtualized  container
+              environments  where  Open vSwitch does not have a direct connec‐
               tion to the container’s port and it must be shared with the vir‐
               tual machine’s port.
 
-              It is an error if a logical  port  named  port  already  exists,
-              unless  --may-exist  is specified. Regardless of --may-exist, it
-              is an error if the existing port is not in switch or if it  does
+              It  is  an  error  if  a logical port named port already exists,
+              unless --may-exist is specified. Regardless of  --may-exist,  it
+              is  an error if the existing port is not in switch or if it does
               not have the specified parent and tag_request.
 
        [--if-exists] lsp-del port
-              Deletes  port.  It  is  an  error if port does not exist, unless
+              Deletes port. It is an error if  port  does  not  exist,  unless
               --if-exists is specified.
 
        lsp-list switch
-              Lists all the logical switch ports  within  switch  on  standard
+              Lists  all  the  logical  switch ports within switch on standard
               output, one per line.
 
        lsp-get-parent port
@@ -190,29 +715,29 @@ LOGICAL SWITCH PORT COMMANDS
               Sets the addresses associated with port to address. Each address
               should be one of the following:
 
-              an Ethernet address, optionally followed by a space and  one  or
+              an  Ethernet  address, optionally followed by a space and one or
               more IP addresses
-                     OVN  delivers  packets  for  the Ethernet address to this
+                     OVN delivers packets for the  Ethernet  address  to  this
                      port.
 
               unknown
-                     OVN delivers unicast Ethernet packets  whose  destination
+                     OVN  delivers  unicast Ethernet packets whose destination
                      MAC address is not in any logical port’s addresses column
                      to ports with address unknown.
 
               dynamic
-                     Use this keyword to make ovn-northd generate  a  globally
+                     Use  this  keyword to make ovn-northd generate a globally
                      unique MAC address and choose an unused IPv4 address with
-                     the logical port’s subnet and store them  in  the  port’s
+                     the  logical  port’s  subnet and store them in the port’s
                      dynamic_addresses column.
 
               router Accepted only when the type of the logical switch port is
-                     router. This indicates that the Ethernet, IPv4, and  IPv6
+                     router.  This indicates that the Ethernet, IPv4, and IPv6
                      addresses for this logical switch port should be obtained
-                     from the connected logical router port, as  specified  by
+                     from  the  connected logical router port, as specified by
                      router-port in lsp-set-options.
 
-              Multiple  addresses may be set. If no address argument is given,
+              Multiple addresses may be set. If no address argument is  given,
               port will have no addresses associated with it.
 
        lsp-get-addresses port
@@ -220,34 +745,34 @@ LOGICAL SWITCH PORT COMMANDS
               one per line.
 
        lsp-set-port-security port [addrs]...
-              Sets  the port security addresses associated with port to addrs.
-              Multiple sets of addresses may be set by  using  multiple  addrs
-              arguments.  If  no  addrs  argument is given, port will not have
+              Sets the port security addresses associated with port to  addrs.
+              Multiple  sets  of  addresses may be set by using multiple addrs
+              arguments. If no addrs argument is given,  port  will  not  have
               port security enabled.
 
               Port security limits the addresses from which a logical port may
-              send  packets  and  to  which  it  may  receive packets. See the
+              send packets and to  which  it  may  receive  packets.  See  the
               ovn-nb(5) documentation for the port_security column in the Log‐
               ical_Switch_Port table for details.
 
        lsp-get-port-security port
-              Lists  all  the  port security addresses associated with port on
+              Lists all the port security addresses associated  with  port  on
               standard output, one per line.
 
        lsp-get-up port
               Prints the state of port, either up or down.
 
        lsp-set-enabled port state
-              Set the administrative state of port,  either  enabled  or  dis‐
-              abled.  When  a  port is disabled, no traffic is allowed into or
+              Set  the  administrative  state  of port, either enabled or dis‐
+              abled. When a port is disabled, no traffic is  allowed  into  or
               out of the port.
 
        lsp-get-enabled port
-              Prints the administrative state of port, either enabled or  dis‐
+              Prints  the administrative state of port, either enabled or dis‐
               abled.
 
        lsp-set-type port type
-              Set  the  type for the logical port. The type must be one of the
+              Set the type for the logical port. The type must be one  of  the
               following:
 
               (empty string)
@@ -256,17 +781,17 @@ LOGICAL SWITCH PORT COMMANDS
               router A connection to a logical router.
 
               localnet
-                     A connection to a locally accessible  network  from  each
+                     A  connection  to  a locally accessible network from each
                      ovn-controller instance. A logical switch can only have a
-                     single localnet port attached.  This  is  used  to  model
+                     single  localnet  port  attached.  This  is used to model
                      direct connectivity to an existing network.
 
               localport
-                     A  connection  to  a local VIF. Traffic that arrives on a
-                     localport is never forwarded over  a  tunnel  to  another
-                     chassis.  These  ports  are  present on every chassis and
-                     have the same address in all of them.  This  is  used  to
-                     model  connectivity  to  local services that run on every
+                     A connection to a local VIF. Traffic that  arrives  on  a
+                     localport  is  never  forwarded  over a tunnel to another
+                     chassis. These ports are present  on  every  chassis  and
+                     have  the  same  address  in all of them. This is used to
+                     model connectivity to local services that  run  on  every
                      hypervisor.
 
               l2gateway
@@ -285,7 +810,7 @@ LOGICAL SWITCH PORT COMMANDS
 
        lsp-set-dhcpv4-options port dhcp_options
               Set the DHCPv4 options for the logical port. The dhcp_options is
-              a  UUID  referring  to a set of DHCP options in the DHCP_Options
+              a UUID referring to a set of DHCP options  in  the  DHCP_Options
               table.
 
        lsp-get-dhcpv4-options port
@@ -293,7 +818,7 @@ LOGICAL SWITCH PORT COMMANDS
 
        lsp-set-dhcpv6-options port dhcp_options
               Set the DHCPv6 options for the logical port. The dhcp_options is
-              a  UUID  referring  to a set of DHCP options in the DHCP_Options
+              a UUID referring to a set of DHCP options  in  the  DHCP_Options
               table.
 
        lsp-get-dhcpv6-options port
@@ -302,119 +827,120 @@ LOGICAL SWITCH PORT COMMANDS
        lsp-get-ls port
               Get the logical switch which the port belongs to.
 
-FORWARDING GROUP COMMANDS
+   Forwarding Group Commands
        [--liveness]fwd-group-add group switch vip vmac ports
-              Creates a new forwarding group named group as the name with  the
-              provided  vip  and  vmac. vip should be a virtual IP address and
-              vmac should be a virtual MAC address to  access  the  forwarding
-              group.  ports  are the logical switch port names that are put in
+              Creates  a new forwarding group named group as the name with the
+              provided vip and vmac. vip should be a virtual  IP  address  and
+              vmac  should  be  a virtual MAC address to access the forwarding
+              group. ports are the logical switch port names that are  put  in
               the forwarding group. Example for ports is lsp1 lsp2 ... Traffic
               destined to virtual IP of the forwarding group will be load bal‐
               anced to all the child ports.
 
               When --liveness is specified then child ports are expected to be
               bound to external devices like routers. BFD should be configured
-              between hypervisors and the external  devices.  The  child  port
-              selection  will become dependent on BFD status with its external
+              between  hypervisors  and  the  external devices. The child port
+              selection will become dependent on BFD status with its  external
               device.
 
        [--if-exists] fwd-group-del group
-               Deletes group. It is an error if group does not  exist,  unless
+                Deletes  group. It is an error if group does not exist, unless
               --if-exists is specified.
 
        fwd-group-list [switch]
-              Lists  all  existing  forwarding  groups, If switch is specified
-              then only the forwarding groups configured for  switch  will  be
+              Lists all existing forwarding groups,  If  switch  is  specified
+              then  only  the  forwarding groups configured for switch will be
               listed.
 
-LOGICAL ROUTER COMMANDS
-       lr-add Creates  a  new,  unnamed logical router, which initially has no
-              ports. The router does not have  a  name,  other  commands  must
+   Logical Router Commands
+       lr-add Creates a new, unnamed logical router, which  initially  has  no
+              ports.  The  router  does  not  have a name, other commands must
               refer to this router by its UUID.
 
        [--may-exist | --add-duplicate] lr-add router
-              Creates  a  new logical router named router, which initially has
+              Creates a new logical router named router, which  initially  has
               no ports.
 
-              The OVN northbound database  schema  does  not  require  logical
-              router  names  to be unique, but the whole point to the names is
-              to provide an easy way for humans to refer to the routers,  mak‐
-              ing  duplicate  names unhelpful. Thus, without any options, this
-              command regards it as an error if router is  a  duplicate  name.
-              With  --may-exist, adding a duplicate name succeeds but does not
-              create a new logical router. With --add-duplicate,  the  command
+              The  OVN  northbound  database  schema  does not require logical
+              router names to be unique, but the whole point to the  names  is
+              to  provide an easy way for humans to refer to the routers, mak‐
+              ing duplicate names unhelpful. Thus, without any  options,  this
+              command  regards  it  as an error if router is a duplicate name.
+              With --may-exist, adding a duplicate name succeeds but does  not
+              create  a  new logical router. With --add-duplicate, the command
               really creates a new logical router with a duplicate name. It is
-              an error to specify both options. If there are multiple  logical
-              routers  with  a  duplicate  name, configure the logical routers
+              an  error to specify both options. If there are multiple logical
+              routers with a duplicate name,  configure  the  logical  routers
               using the UUID instead of the router name.
 
        [--if-exists] lr-del router
-              Deletes router. It is an error if router does not exist,  unless
+              Deletes  router. It is an error if router does not exist, unless
               --if-exists is specified.
 
        lr-list
               Lists all existing routers on standard output, one per line.
 
-LOGICAL ROUTER PORT COMMANDS
+   Logical Router Port Commands
        [--may-exist] lrp-add router port mac network... [peer=peer]
               Creates on router a new logical router port named port with Eth‐
-              ernet address mac and one or more IP  address/netmask  for  each
+              ernet  address  mac  and one or more IP address/netmask for each
               network.
 
               The optional argument peer identifies a logical router port that
-              connects to this one. The following example adds a  router  port
+              connects  to  this one. The following example adds a router port
               with an IPv4 and IPv6 address with peer lr1:
 
               lrp-add lr0 lrp0 00:11:22:33:44:55 192.168.0.1/24 2001:db8::1/64
               peer=lr1
 
-              It is an error if a  logical  router  port  named  port  already
-              exists,   unless   --may-exist   is   specified.  Regardless  of
-              --may-exist, it is an error if the existing router  port  is  in
+              It  is  an  error  if  a  logical router port named port already
+              exists,  unless  --may-exist   is   specified.   Regardless   of
+              --may-exist,  it  is  an error if the existing router port is in
               some logical router other than router.
 
        [--if-exists] lrp-del port
-              Deletes  port.  It  is  an  error if port does not exist, unless
+              Deletes port. It is an error if  port  does  not  exist,  unless
               --if-exists is specified.
 
        lrp-list router
-              Lists all the logical router ports  within  router  on  standard
+              Lists  all  the  logical  router ports within router on standard
               output, one per line.
 
        lrp-set-enabled port state
-              Set  the  administrative  state  of port, either enabled or dis‐
-              abled. When a port is disabled, no traffic is  allowed  into  or
+              Set the administrative state of port,  either  enabled  or  dis‐
+              abled.  When  a  port is disabled, no traffic is allowed into or
               out of the port.
 
        lrp-get-enabled port
-              Prints  the administrative state of port, either enabled or dis‐
+              Prints the administrative state of port, either enabled or  dis‐
               abled.
 
        lrp-set-gateway-chassis port chassis [priority]
-              Set gateway chassis for port. chassis is the name of  the  chas‐
+              Set  gateway  chassis for port. chassis is the name of the chas‐
               sis. This creates a gateway chassis entry in Gateway_Chassis ta‐
-              ble. It won’t check if chassis really exists  in  OVN_Southbound
-              database.  Priority will be set to 0 if priority is not provided
+              ble.  It  won’t check if chassis really exists in OVN_Southbound
+              database. Priority will be set to 0 if priority is not  provided
               by user. priority must be between 0 and 32767, inclusive.
 
        lrp-del-gateway-chassis port chassis
-              Deletes gateway chassis from port. It is  an  error  if  gateway
+              Deletes  gateway  chassis  from  port. It is an error if gateway
               chassis with chassis for port does not exist.
 
        lrp-get-gateway-chassis port
               Lists all the gateway chassis with priority within port on stan‐
               dard output, one per line, ordered based on priority.
 
-LOGICAL ROUTER STATIC ROUTE COMMANDS
+   Logical Router Static Route Commands
        [--may-exist]   [--policy=POLICY]   [--ecmp]   [--ecmp-symmetric-reply]
        [--bfd[=UUID]] lr-route-add router prefix nexthop [port]
-              Adds  the specified route to router. prefix describes an IPv4 or
-              IPv6 prefix for this route, such  as  192.168.100.0/24.  nexthop
+              Adds the specified route to router. prefix describes an IPv4  or
+              IPv6  prefix  for  this route, such as 192.168.100.0/24. nexthop
               specifies the gateway to use for this route, which should be the
-              IP address of one of router  logical  router  ports  or  the  IP
-              address  of  a  logical port. If port is specified, packets that
-              match this route will be sent out that port. When port is  omit‐
-              ted, OVN infers the output port based on nexthop.
+              IP  address  of  one  of  router  logical router ports or the IP
+              address of a logical port. If port is  specified,  packets  that
+              match  this route will be sent out that port. When port is omit‐
+              ted, OVN infers the output port based on nexthop. Nexthop can be
+              set to discard for dropping packets which match the given route.
 
               --policy  describes  the  policy used to make routing decisions.
               This should be one of "dst-ip" or "src-ip".  If  not  specified,
@@ -457,7 +983,7 @@ LOGICAL ROUTER STATIC ROUTE COMMANDS
        lr-route-list router
               Lists the routes on router.
 
-LOGICAL ROUTER POLICY COMMANDS
+   Logical Router Policy Commands
        [--may-exist]lr-policy-add router priority match action  [nexthop[,nex‐
        thop,...]] [options key=value]]
               Add  Policy  to  router  which  provides a way to configure per‐
@@ -497,7 +1023,7 @@ LOGICAL ROUTER POLICY COMMANDS
        lr-policy-list router
               Lists the polices on router.
 
-NAT COMMANDS
+   NAT Commands
        [--may-exist] [--stateless]lr-nat-add  router  type  external_ip  logi‐
        cal_ip [logical_port external_mac]
               Adds  the specified NAT to router. The type must be one of snat,
@@ -557,7 +1083,7 @@ NAT COMMANDS
        lr-nat-list router
               Lists the NATs on router.
 
-LOAD BALANCER COMMANDS
+   Load Balancer Commands
        [--may-exist | --add-duplicate | --reject | --event] lb-add lb vip  ips
        [protocol]
               Creates  a  new load balancer named lb with the provided vip and
@@ -636,7 +1162,7 @@ LOAD BALANCER COMMANDS
        lr-lb-list router
               Lists the LBs for the given router.
 
-DHCP OPTIONS COMMANDS
+   DHCP Options commands
        dhcp-options-create cidr [key=value]
               Creates  a new DHCP Options entry in the DHCP_Options table with
               the specified cidr and optional external-ids.
@@ -653,7 +1179,7 @@ DHCP OPTIONS COMMANDS
        dhcp-options-get-options dhcp-option
               Lists the DHCP Options for the dhcp-option UUID.
 
-PORT GROUP COMMANDS
+   Port Group commands
        pg-add group [port]...
               Creates a new port group in the  Port_Group  table  named  group
               with optional ports added to the group.
@@ -666,7 +1192,7 @@ PORT GROUP COMMANDS
               Deletes port group group. It is  an  error  if  group  does  not
               exist.
 
-HA CHASSIS GROUP COMMANDS
+   HA Chassis Group commands
        ha-chassis-group-add group
               Creates  a  new  HA  chassis group in the HA_Chassis_Group table
               named group.
@@ -689,7 +1215,113 @@ HA CHASSIS GROUP COMMANDS
               Removes  the HA chassis chassis from the HA chassis group group.
               It is an error if chassis does not exist.
 
-DATABASE COMMANDS
+   Control Plane Protection Policy commands
+       These commands manage meters configured in Copp table linking  them  to
+       logical  datapaths  through  copp  column  in  Logical_Switch  or Logi‐
+       cal_Router tables. Protocol packets for which  CoPP  is  enforced  when
+       sending packets to ovn-controller (if configured):
+
+              ·      ARP
+
+              ·      ND_NS
+
+              ·      ND_NA
+
+              ·      ND_RA
+
+              ·      ND
+
+              ·      DNS
+
+              ·      IGMP
+
+              ·      packets that require ARP resolution before forwarding
+
+              ·      packets that require ND_NS before forwarding
+
+              ·      packets that need to be replied to with ICMP Errors
+
+              ·      packets that need to be replied to with TCP RST
+
+              ·      packets that need to be replied to with DHCP_OPTS
+
+              ·      packets that trigger a reject action
+
+              ·      packets that trigger a SCTP abort action
+
+              ·      controller_events
+
+              ·      BFD
+
+              ls-copp-add switch proto meter
+                     Adds  the  control  proto  to meter mapping to the switch
+                     control plane protection policy. If no policy exists yet,
+                     it  creates  one. If a mapping already existed for proto,
+                     this will overwrite it.
+
+              ls-copp-del switch [proto]
+                     Removes the control proto mapping from the switch control
+                     plane  protection  policy. If proto is not specified, the
+                     whole control plane protection policy is destroyed.
+
+              ls-copp-list switch
+                     Display the current control plane protection  policy  for
+                     switch.
+
+              lr-copp-add router proto meter
+                     Adds  the  control  proto  to meter mapping to the router
+                     control plane protection policy. If no policy exists yet,
+                     it  creates  one. If a mapping already existed for proto,
+                     this will overwrite it.
+
+              lr-copp-del router [proto]
+                     Removes the control proto mapping from the router control
+                     plane  protection  policy. If proto is not specified, the
+                     whole control plane protection policy is destroyed.
+
+              lr-copp-list router
+                     Display the current control plane protection  policy  for
+                     router.
+
+   Synchronization Commands
+       sync   Ordinarily, --wait=sb or --wait=hv only waits for changes by the
+              current ovn-nbctl invocation to take effect. This means that, if
+              none  of the commands supplied to ovn-nbctl change the database,
+              then the command does not wait at all. With  the  sync  command,
+              however,  ovn-nbctl  waits even for earlier changes to the data‐
+              base to propagate down to the southbound database or all of  the
+              OVN chassis, according to the argument to --wait.
+
+   Remote Connectivity Commands
+       These commands manipulate the connections column in the NB_Global table
+       and rows in the Connection table. When ovsdb-server  is  configured  to
+       use  the  connections  column  for  OVSDB  connections, this allows the
+       administrator to use ovn-nbctl to configure database connections.
+
+              get-connection
+                     Prints the configured connection(s).
+
+              del-connection
+                     Deletes the configured connection(s).
+
+              [--inactivity-probe=msecs] set-connection target...
+                     Sets  the  configured  manager  target  or  targets.  Use
+                     --inactivity-probe=msecs  to  override  the  default idle
+                     connection inactivity probe time. Use 0 to disable  inac‐
+                     tivity probes.
+
+   SSL Configuration Commands
+       get-ssl
+              Prints the SSL configuration.
+
+       del-ssl
+              Deletes the current SSL configuration.
+
+       [--bootstrap]  set-ssl  private-key  certificate ca-cert [ssl-protocol-
+       list [ssl-cipher-list]]
+              Sets the SSL configuration.
+
+   Database Commands
        These commands query and modify the contents of ovsdb tables. They  are
        a slight abstraction of the ovsdb interface and as such they operate at
        a lower level than other ovn-nbctl commands.
@@ -1008,515 +1640,27 @@ DATABASE COMMANDS
                      log  record  created by the command will include the com‐
                      mand and its arguments.
 
-SYNCHRONIZATION COMMANDS
-       sync   Ordinarily, --wait=sb or --wait=hv only waits for changes by the
-              current ovn-nbctl invocation to take effect. This means that, if
-              none of the commands supplied to ovn-nbctl change the  database,
-              then  the  command  does not wait at all. With the sync command,
-              however, ovn-nbctl waits even for earlier changes to  the  data‐
-              base  to propagate down to the southbound database or all of the
-              OVN chassis, according to the argument to --wait.
-
-REMOTE CONNECTIVITY COMMANDS
-       get-connection
-              Prints the configured connection(s).
-
-       del-connection
-              Deletes the configured connection(s).
-
-       [--inactivity-probe=msecs] set-connection target...
-              Sets the configured manager target or  targets.  Use  --inactiv‐
-              ity-probe=msecs to override the default idle connection inactiv‐
-              ity probe time. Use 0 to disable inactivity probes.
-
-SSL CONFIGURATION COMMANDS
-       get-ssl
-              Prints the SSL configuration.
-
-       del-ssl
-              Deletes the current SSL configuration.
-
-       [--bootstrap] set-ssl private-key  certificate  ca-cert  [ssl-protocol-
-       list [ssl-cipher-list]]
-              Sets the SSL configuration.
-
-DAEMON MODE
-       When  it  is invoked in the most ordinary way, ovn-nbctl connects to an
-       OVSDB server that hosts the northbound database,  retrieves  a  partial
-       copy  of  the  database that is complete enough to do its work, sends a
-       transaction request to the  server,  and  receives  and  processes  the
-       server’s  reply.  In  common  interactive use, this is fine, but if the
-       database is large, the step in which ovn-nbctl retrieves a partial copy
-       of  the  database  can  take a long time, which yields poor performance
-       overall.
-
-       To improve performance in such  a  case,  ovn-nbctl  offers  a  "daemon
-       mode,"  in  which  the user first starts ovn-nbctl running in the back‐
-       ground and afterward uses the daemon to execute operations.  Over  sev‐
-       eral  ovn-nbctl  command  invocations,  this  performs  better  overall
-       because it retrieves a copy of the database only once at the beginning,
-       not once per program run.
-
-       Use the --detach option to start an ovn-nbctl daemon. With this option,
-       ovn-nbctl prints the name of a control socket  to  stdout.  The  client
-       should  save this name in environment variable OVN_NB_DAEMON. Under the
-       Bourne shell this might be done like this:
-
-             export OVN_NB_DAEMON=$(ovn-nbctl --pidfile --detach)
-
-
-       When OVN_NB_DAEMON is set, ovn-nbctl  automatically  and  transparently
-       uses the daemon to execute its commands.
-
-       When  the daemon is no longer needed, kill it and unset the environment
-       variable, e.g.:
-
-             kill $(cat $OVN_RUNDIR/ovn-nbctl.pid)
-             unset OVN_NB_DAEMON
-
-
-       When using daemon mode, an alternative to the OVN_NB_DAEMON environment
-       variable  is  to  specify a path for the Unix socket. When starting the
-       ovn-nbctl daemon, specify the -u option with a full path to  the  loca‐
-       tion of the socket file. Here is an exmple:
-
-             ovn-nbctl --detach -u /tmp/mysock.ctl
-
-
-       Then  to connect to the running daemon, use the -u option with the full
-       path to the socket created when the daemon was started:
-
-             ovn-nbctl -u /tmp/mysock.ctl show
-
-
-       Daemon mode is experimental.
-
-   Daemon Commands
-       Daemon mode is internally implemented using the same mechanism used  by
-       ovs-appctl.  One  may  also  use ovs-appctl directly with the following
-       commands:
-
-              run [options] command [arg...] [--  [options]  command  [arg...]
-              ...]
-                     Instructs the daemon process to run one or more ovn-nbctl
-                     commands described above and reply with  the  results  of
-                     running  these  commands.  Accepts the --no-wait, --wait,
-                     --timeout,  --dry-run,   --oneline,   and   the   options
-                     described  under  Table Formatting Options in addition to
-                     the the command-specific options.
-
-              exit   Causes ovn-nbctl to gracefully terminate.
-
-OPTIONS
-       --no-wait | --wait=none
-       --wait=sb
-       --wait=hv
-            These options control whether and how ovn-nbctl waits for the  OVN
-            system  to  become  up-to-date  with  changes made in an ovn-nbctl
-            invocation.
-
-            By default, or if --no-wait or --wait=none, ovn-nbctl exits  imme‐
-            diately  after  confirming that changes have been committed to the
-            northbound database, without waiting.
-
-            With --wait=sb, before ovn-nbctl exits, it waits for ovn-northd to
-            bring the southbound database up-to-date with the northbound data‐
-            base updates.
-
-            With --wait=hv, before ovn-nbctl exits, it additionally waits  for
-            all  OVN  chassis  (hypervisors and gateways) to become up-to-date
-            with the northbound database updates. (This can become an  indefi‐
-            nite wait if any chassis is malfunctioning.)
-
-            Ordinarily,  --wait=sb  or --wait=hv only waits for changes by the
-            current ovn-nbctl invocation to take effect. This means  that,  if
-            none  of  the  commands supplied to ovn-nbctl change the database,
-            then the command does not wait at all. Use  the  sync  command  to
-            override this behavior.
-
-       --print-wait-time
-            When --wait is specified, the option --print-wait-time can be used
-            to print the time spent on waiting, depending on the value  speci‐
-            fied in  --wait option. If --wait=sb is specified, it prints "ovn-
-            northd delay before processing", which is  the  time  between  the
-            Northbound   DB   update  by  the  command  and  the  moment  when
-            ovn-northd starts processing the update, and  "ovn-northd  comple‐
-            tion",  which is the time between the Northbound DB update and the
-            moment when ovn-northd completes the Southbound DB  updating  suc‐
-            cessfully.  If  --wait=hv  is  specified, in addition to the above
-            information, it also prints "ovn-controller(s) completion",  which
-            is  the  time between the Northbound DB update and the moment when
-            the slowest hypervisor finishes processing the update.
-
-       --db database
-            The OVSDB database remote to contact. If the OVN_NB_DB environment
-            variable  is set, its value is used as the default. Otherwise, the
-            default is unix:/ovnnb_db.sock, but this default is unlikely to be
-            useful outside of single-machine OVN test environments.
-
-       --leader-only
-       --no-leader-only
-            By  default,  or with --leader-only, when the database server is a
-            clustered database, ovn-nbctl will avoid servers  other  than  the
-            cluster  leader.  This  ensures that any data that ovn-nbctl reads
-            and reports is up-to-date. With --no-leader-only,  ovn-nbctl  will
-            use  any  server  in  the  cluster, which means that for read-only
-            transactions it can report and act  on  stale  data  (transactions
-            that   modify   the  database  are  always  serialized  even  with
-            --no-leader-only). Refer to Understanding Cluster  Consistency  in
-            ovsdb(7) for more information.
-
-       --shuffle-remotes
-       --no-shuffle-remotes
-            By  default,  or  with  --shuffle-remotes, when there are multiple
-            remotes specified in the OVSDB connection string specified by --db
-            or  the  OVN_NB_DB  environment variable, the order of the remotes
-            will be shuffled before the client tries to connect.  The  remotes
-            will be shuffled only once to a new order before the first connec‐
-            tion attempt. The following retries, if any, will follow the  same
-            new order. The default behavior is to make sure clients of a clus‐
-            tered database can distribute evenly to all memembers of the clus‐
-            ter.  With  --no-shuffle-remotes,  ovn-nbctl will use the original
-            order specified in the connection string to connect.  This  allows
-            user  to specify the preferred order, which is particularly useful
-            for testing.
+ENVIRONMENT
+       OVN_NB_DAEMON
+              If set, this should name the Unix domain socket for an ovn-nbctl
+              server process. See Daemon Mode, above, for more information.
 
        OVN_NBCTL_OPTIONS
-            User can set one or more OVN_NBCTL_OPTIONS options in  environment
-            variable. Under the Bourne shell this might be done like this:
+              If  set,  a set of options for ovn-nbctl to apply automatically,
+              in the same form as on the command line.
 
-                      OVN_NBCTL_OPTIONS="--db=unix:nb1.ovsdb --no-leader-only"
+       OVN_NB_DB
+              If set, the default database to contact when the --db option  is
+              not used.
 
+EXIT STATUS
+       0      Successful program execution.
 
-            When  OVN_NBCTL_OPTIONS is set, ovn-nbctl automatically and trans‐
-            parently uses the environment variable to  execute  its  commands.
-            However  user  can  still over-ride environment options by passing
-            different in cli.
+       1      Usage, syntax, or network error.
 
-            When the environment variable is no longer needed, unset it, e.g.:
+SEE ALSO
+       ovn-nb(5), ovn-appctl(8).
 
-                      unset OVN_NBCTL_OPTIONS
 
 
-   Daemon Options
-       --pidfile[=pidfile]
-              Causes a file (by default, program.pid) to be created indicating
-              the  PID  of the running process. If the pidfile argument is not
-              specified, or if it does not begin with /, then it is created in
-              .
-
-              If --pidfile is not specified, no pidfile is created.
-
-       --overwrite-pidfile
-              By  default,  when --pidfile is specified and the specified pid‐
-              file already exists and is locked by a running process, the dae‐
-              mon refuses to start. Specify --overwrite-pidfile to cause it to
-              instead overwrite the pidfile.
-
-              When --pidfile is not specified, this option has no effect.
-
-       --detach
-              Runs this program as a background process.  The  process  forks,
-              and  in  the  child it starts a new session, closes the standard
-              file descriptors (which has the side effect of disabling logging
-              to  the  console), and changes its current directory to the root
-              (unless --no-chdir is specified). After the child completes  its
-              initialization, the parent exits.
-
-       --monitor
-              Creates  an  additional  process  to monitor this program. If it
-              dies due to a signal that indicates a programming  error  (SIGA‐
-              BRT, SIGALRM, SIGBUS, SIGFPE, SIGILL, SIGPIPE, SIGSEGV, SIGXCPU,
-              or SIGXFSZ) then the monitor process starts a new copy of it. If
-              the daemon dies or exits for another reason, the monitor process
-              exits.
-
-              This option is normally used with --detach, but  it  also  func‐
-              tions without it.
-
-       --no-chdir
-              By  default,  when --detach is specified, the daemon changes its
-              current  working  directory  to  the  root  directory  after  it
-              detaches.  Otherwise, invoking the daemon from a carelessly cho‐
-              sen directory would prevent the  administrator  from  unmounting
-              the file system that holds that directory.
-
-              Specifying  --no-chdir  suppresses this behavior, preventing the
-              daemon from changing its current working directory. This may  be
-              useful for collecting core files, since it is common behavior to
-              write core dumps into the current working directory and the root
-              directory is not a good directory to use.
-
-              This option has no effect when --detach is not specified.
-
-       --no-self-confinement
-              By  default  this daemon will try to self-confine itself to work
-              with files under  well-known  directories  determined  at  build
-              time.  It  is better to stick with this default behavior and not
-              to use this flag unless some other Access  Control  is  used  to
-              confine  daemon.  Note  that in contrast to other access control
-              implementations that are typically  enforced  from  kernel-space
-              (e.g.  DAC  or  MAC), self-confinement is imposed from the user-
-              space daemon itself and hence should not be considered as a full
-              confinement  strategy,  but instead should be viewed as an addi‐
-              tional layer of security.
-
-       --user=user:group
-              Causes this program to run as  a  different  user  specified  in
-              user:group,  thus  dropping  most  of the root privileges. Short
-              forms user and :group are also allowed,  with  current  user  or
-              group  assumed,  respectively.  Only daemons started by the root
-              user accepts this argument.
-
-              On   Linux,   daemons   will   be   granted   CAP_IPC_LOCK   and
-              CAP_NET_BIND_SERVICES  before  dropping root privileges. Daemons
-              that interact with a datapath, such  as  ovs-vswitchd,  will  be
-              granted  three  additional  capabilities,  namely CAP_NET_ADMIN,
-              CAP_NET_BROADCAST and CAP_NET_RAW. The  capability  change  will
-              apply even if the new user is root.
-
-              On Windows, this option is not currently supported. For security
-              reasons, specifying this option will cause  the  daemon  process
-              not to start.
-
-LOGGING OPTIONS
-       -v[spec]
-       --verbose=[spec]
-            Sets  logging  levels.  Without  any  spec, sets the log level for
-            every module and destination to dbg. Otherwise, spec is a list  of
-            words separated by spaces or commas or colons, up to one from each
-            category below:
-
-            ·      A valid module name, as displayed by the vlog/list  command
-                   on ovs-appctl(8), limits the log level change to the speci‐
-                   fied module.
-
-            ·      syslog, console, or file, to limit the log level change  to
-                   only  to  the  system  log,  to  the console, or to a file,
-                   respectively. (If --detach is specified, the daemon  closes
-                   its  standard  file  descriptors, so logging to the console
-                   will have no effect.)
-
-                   On Windows platform, syslog is accepted as a  word  and  is
-                   only useful along with the --syslog-target option (the word
-                   has no effect otherwise).
-
-            ·      off, emer, err, warn, info, or  dbg,  to  control  the  log
-                   level.  Messages  of  the  given severity or higher will be
-                   logged, and messages of lower  severity  will  be  filtered
-                   out.  off filters out all messages. See ovs-appctl(8) for a
-                   definition of each log level.
-
-            Case is not significant within spec.
-
-            Regardless of the log levels set for file, logging to a file  will
-            not take place unless --log-file is also specified (see below).
-
-            For compatibility with older versions of OVS, any is accepted as a
-            word but has no effect.
-
-       -v
-       --verbose
-            Sets the maximum logging verbosity  level,  equivalent  to  --ver‐
-            bose=dbg.
-
-       -vPATTERN:destination:pattern
-       --verbose=PATTERN:destination:pattern
-            Sets  the  log  pattern  for  destination  to  pattern.  Refer  to
-            ovs-appctl(8) for a description of the valid syntax for pattern.
-
-       -vFACILITY:facility
-       --verbose=FACILITY:facility
-            Sets the RFC5424 facility of the log message. facility can be  one
-            of kern, user, mail, daemon, auth, syslog, lpr, news, uucp, clock,
-            ftp, ntp, audit, alert, clock2, local0,  local1,  local2,  local3,
-            local4, local5, local6 or local7. If this option is not specified,
-            daemon is used as the default for  the  local  system  syslog  and
-            local0  is used while sending a message to the target provided via
-            the --syslog-target option.
-
-       --log-file[=file]
-            Enables logging to a file. If file is specified, then it  is  used
-            as the exact name for the log file. The default log file name used
-            if file is omitted is /usr/local/var/log/ovn/program.log.
-
-       --syslog-target=host:port
-            Send syslog messages to UDP port on host, in addition to the  sys‐
-            tem  syslog.  The host must be a numerical IP address, not a host‐
-            name.
-
-       --syslog-method=method
-            Specify method as how syslog messages should  be  sent  to  syslog
-            daemon. The following forms are supported:
-
-            ·      libc,  to use the libc syslog() function. Downside of using
-                   this options is that libc adds fixed prefix to  every  mes‐
-                   sage  before  it is actually sent to the syslog daemon over
-                   /dev/log UNIX domain socket.
-
-            ·      unix:file, to use a UNIX domain socket directly. It is pos‐
-                   sible to specify arbitrary message format with this option.
-                   However, rsyslogd 8.9 and older  versions  use  hard  coded
-                   parser  function anyway that limits UNIX domain socket use.
-                   If you want to use  arbitrary  message  format  with  older
-                   rsyslogd  versions,  then  use  UDP  socket to localhost IP
-                   address instead.
-
-            ·      udp:ip:port, to use a UDP socket. With this  method  it  is
-                   possible  to  use  arbitrary message format also with older
-                   rsyslogd. When sending  syslog  messages  over  UDP  socket
-                   extra  precaution needs to be taken into account, for exam‐
-                   ple, syslog daemon needs to be configured to listen on  the
-                   specified  UDP  port,  accidental  iptables  rules could be
-                   interfering with local syslog traffic and  there  are  some
-                   security  considerations  that apply to UDP sockets, but do
-                   not apply to UNIX domain sockets.
-
-            ·      null, to discard all messages logged to syslog.
-
-            The default is taken from the OVS_SYSLOG_METHOD environment  vari‐
-            able; if it is unset, the default is libc.
-
-TABLE FORMATTING OPTIONS
-       These  options control the format of output from the list and find com‐
-       mands.
-
-              -f format
-              --format=format
-                   Sets the type of table formatting. The following  types  of
-                   format are available:
-
-                   table  2-D text tables with aligned columns.
-
-                   list (default)
-                          A  list  with one column per line and rows separated
-                          by a blank line.
-
-                   html   HTML tables.
-
-                   csv    Comma-separated values as defined in RFC 4180.
-
-                   json   JSON format as defined in RFC 4627. The output is  a
-                          sequence  of JSON objects, each of which corresponds
-                          to one table. Each JSON  object  has  the  following
-                          members with the noted values:
-
-                          caption
-                                 The  table’s  caption. This member is omitted
-                                 if the table has no caption.
-
-                          headings
-                                 An array with one element per  table  column.
-                                 Each  array  element  is  a string giving the
-                                 corresponding column’s heading.
-
-                          data   An array with one element per table row. Each
-                                 element is also an array with one element per
-                                 table column. The elements  of  this  second-
-                                 level array are the cells that constitute the
-                                 table. Cells that  represent  OVSDB  data  or
-                                 data   types  are  expressed  in  the  format
-                                 described in the OVSDB  specification;  other
-                                 cells are simply expressed as text strings.
-
-              -d format
-              --data=format
-                   Sets  the  formatting for cells within output tables unless
-                   the table format is set to json, in which case json format‐
-                   ting  is  always  used when formatting cells. The following
-                   types of format are available:
-
-                   string (default)
-                          The simple format described in the  Database  Values
-                          section of ovs-vsctl(8).
-
-                   bare   The  simple format with punctuation stripped off: []
-                          and {} are omitted around sets, maps, and empty col‐
-                          umns,  items  within  sets  and maps are space-sepa‐
-                          rated, and strings are never quoted. This format may
-                          be easier for scripts to parse.
-
-                   json   The RFC 4627 JSON format as described above.
-
-              --no-headings
-                   This  option  suppresses  the  heading  row  that otherwise
-                   appears in the first row of table output.
-
-              --pretty
-                   By default, JSON in output is printed as compactly as  pos‐
-                   sible. This option causes JSON in output to be printed in a
-                   more readable fashion. Members of objects and  elements  of
-                   arrays are printed one per line, with indentation.
-
-                   This option does not affect JSON in tables, which is always
-                   printed compactly.
-
-              --bare
-                   Equivalent to --format=list --data=bare --no-headings.
-
-   PKI Options
-       PKI configuration is required to use SSL  for  the  connection  to  the
-       database.
-
-              -p privkey.pem
-              --private-key=privkey.pem
-                   Specifies  a  PEM  file  containing the private key used as
-                   identity for outgoing SSL connections.
-
-              -c cert.pem
-              --certificate=cert.pem
-                   Specifies a PEM file containing a certificate  that  certi‐
-                   fies the private key specified on -p or --private-key to be
-                   trustworthy. The certificate must be signed by the certifi‐
-                   cate  authority  (CA) that the peer in SSL connections will
-                   use to verify it.
-
-              -C cacert.pem
-              --ca-cert=cacert.pem
-                   Specifies a PEM file containing the CA certificate for ver‐
-                   ifying certificates presented to this program by SSL peers.
-                   (This may be the same certificate that  SSL  peers  use  to
-                   verify the certificate specified on -c or --certificate, or
-                   it may be a different one, depending on the PKI  design  in
-                   use.)
-
-              -C none
-              --ca-cert=none
-                   Disables  verification  of  certificates  presented  by SSL
-                   peers. This introduces a security risk,  because  it  means
-                   that  certificates  cannot be verified to be those of known
-                   trusted hosts.
-
-              --bootstrap-ca-cert=cacert.pem
-                     When cacert.pem exists, this option has the  same  effect
-                     as  -C  or --ca-cert. If it does not exist, then the exe‐
-                     cutable will attempt to obtain the  CA  certificate  from
-                     the  SSL  peer on its first SSL connection and save it to
-                     the named PEM file. If it is successful, it will  immedi‐
-                     ately drop the connection and reconnect, and from then on
-                     all SSL connections must be authenticated by  a  certifi‐
-                     cate signed by the CA certificate thus obtained.
-
-                     This  option  exposes the SSL connection to a man-in-the-
-                     middle attack obtaining the initial CA  certificate,  but
-                     it may be useful for bootstrapping.
-
-                     This  option  is only useful if the SSL peer sends its CA
-                     certificate as part of the SSL certificate chain. The SSL
-                     protocol  does not require the server to send the CA cer‐
-                     tificate.
-
-                     This option is mutually exclusive with -C and --ca-cert.
-
-   Other Options
-       -h
-       --help
-            Prints a brief help message to the console.
-
-       -V
-       --version
-            Prints version information to the console.
-
-
-
-OVN 21.03.90                       ovn-nbctl                      ovn-nbctl(8)
+OVN 21.09.90                       ovn-nbctl                      ovn-nbctl(8)

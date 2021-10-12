@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nbctl" 8 "ovn-nbctl" "OVN 21\[char46]03\[char46]90" "OVN Manual"
+.TH "ovn-nbctl" 8 "ovn-nbctl" "OVN 21\[char46]09\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -28,15 +28,358 @@ ovn-nbctl \- Open Virtual Network northbound db management utility
 .SH "DESCRIPTION"
 .PP
 .PP
-This utility can be used to manage the OVN northbound database\[char46]
-.SH "GENERAL COMMANDS"
+The \fBovn\-nbctl\fR program configures the \fBOVN_Northbound\fR database by providing a high-level interface to its configuration database\[char46] See \fBovn\-nb\fR(5) for comprehensive documentation of the database schema\[char46]
+.PP
+.PP
+\fBovn\-nbctl\fR connects to an \fBovsdb\-server\fR process that maintains an OVN_Northbound configuration database\[char46] Using this connection, it queries and possibly applies changes to the database, depending on the supplied commands\[char46]
+.PP
+.PP
+\fBovn\-nbctl\fR can perform any number of commands in a single run, implemented as a single atomic transaction against the database\[char46]
+.PP
+.PP
+The \fBovn\-nbctl\fR command line begins with global options (see \fBOPTIONS\fR below for details)\[char46] The global options are followed by one or more commands\[char46] Each command should begin with \fB\-\-\fR by itself as a command-line argument, to separate it from the following commands\[char46] (The \fB\-\-\fR before the first command is optional\[char46]) The command itself starts with command-specific options, if any, followed by the command name and any arguments\[char46]
+.SH "DAEMON MODE"
+.PP
+.PP
+When it is invoked in the most ordinary way, \fBovn\-nbctl\fR connects to an OVSDB server that hosts the northbound database, retrieves a partial copy of the database that is complete enough to do its work, sends a transaction request to the server, and receives and processes the server\(cqs reply\[char46] In common interactive use, this is fine, but if the database is large, the step in which \fBovn\-nbctl\fR retrieves a partial copy of the database can take a long time, which yields poor performance overall\[char46]
+.PP
+.PP
+To improve performance in such a case, \fBovn\-nbctl\fR offers a \(dqdaemon mode,\(dq in which the user first starts \fBovn\-nbctl\fR running in the background and afterward uses the daemon to execute operations\[char46] Over several \fBovn\-nbctl\fR command invocations, this performs better overall because it retrieves a copy of the database only once at the beginning, not once per program run\[char46]
+.PP
+.PP
+Use the \fB\-\-detach\fR option to start an \fBovn\-nbctl\fR daemon\[char46] With this option, \fBovn\-nbctl\fR prints the name of a control socket to stdout\[char46] The client should save this name in environment variable \fBOVN_NB_DAEMON\fR\[char46] Under the Bourne shell this might be done like this:
+.PP
+.nf
+\fL
+.br
+\fL      export OVN_NB_DAEMON=$(ovn\-nbctl \-\-pidfile \-\-detach)
+.br
+\fL    \fR
+.fi
+.PP
+.PP
+When \fBOVN_NB_DAEMON\fR is set, \fBovn\-nbctl\fR automatically and transparently uses the daemon to execute its commands\[char46]
+.PP
+.PP
+When the daemon is no longer needed, kill it and unset the environment variable, e\[char46]g\[char46]:
+.PP
+.nf
+\fL
+.br
+\fL      kill $(cat $OVN_RUNDIR/ovn\-nbctl\[char46]pid)
+.br
+\fL      unset OVN_NB_DAEMON
+.br
+\fL    \fR
+.fi
+.PP
+.PP
+When using daemon mode, an alternative to the \fBOVN_NB_DAEMON\fR environment variable is to specify a path for the Unix socket\[char46] When starting the ovn-nbctl daemon, specify the \fB\-u\fR option with a full path to the location of the socket file\[char46] Here is an exmple:
+.PP
+.nf
+\fL
+.br
+\fL      ovn\-nbctl \-\-detach \-u /tmp/mysock\[char46]ctl
+.br
+\fL    \fR
+.fi
+.PP
+.PP
+Then to connect to the running daemon, use the \fB\-u\fR option with the full path to the socket created when the daemon was started:
+.PP
+.nf
+\fL
+.br
+\fL      ovn\-nbctl \-u /tmp/mysock\[char46]ctl show
+.br
+\fL    \fR
+.fi
+.ST "Daemon Commands"
+.PP
+.PP
+Daemon mode is internally implemented using the same mechanism used by \fBovn\-appctl\fR\[char46] One may also use \fBovn\-appctl\fR directly with the following commands:
+.RS
+.TP
+\fBrun\fR [\fIoptions\fR] \fIcommand\fR [\fIarg\fR\[char46]\[char46]\[char46]] [\fB\-\-\fR [\fIoptions\fR] \fIcommand\fR [\fIarg\fR\[char46]\[char46]\[char46]] \[char46]\[char46]\[char46]]
+Instructs the daemon process to run one or more \fBovn\-nbctl\fR commands described above and reply with the results of running these commands\[char46] Accepts the \fB\-\-no\-wait\fR, \fB\-\-wait\fR, \fB\-\-timeout\fR, \fB\-\-dry\-run\fR, \fB\-\-oneline\fR, and the options described under \fBTable Formatting Options\fR in addition to the the command-specific options\[char46]
+.TP
+\fBexit\fR
+Causes \fBovn\-nbctl\fR to gracefully terminate\[char46]
+.RE
+.SH "OPTIONS"
+.PP
+.PP
+The options listed below affect the behavior of \fBovn\-nbctl\fR as a whole\[char46] Some individual commands also accept their own options, which are given just before the command name\[char46] If the first command on the command line has options, then those options must be separated from the global options by \fB\-\-\fR\[char46]
+.PP
+.PP
+\fBovn\-nbctl\fR also accepts options from the \fBOVN_NBCTL_OPTIONS\fR environment variable, in the same format as on the command line\[char46] Options from the command line override those in the environment\[char46]
+.RS
+.TP
+\fB\-\-no\-wait\fR | \fB\-\-wait=none\fR
+.TQ .5in
+\fB\-\-wait=sb\fR
+.TQ .5in
+\fB\-\-wait=hv\fR
+These options control whether and how \fBovn\-nbctl\fR waits for the OVN system to become up-to-date with changes made in an \fBovn\-nbctl\fR invocation\[char46]
+.IP
+By default, or if \fB\-\-no\-wait\fR or \fB\-\-wait=none\fR, \fBovn\-nbctl\fR exits immediately after confirming that changes have been committed to the northbound database, without waiting\[char46]
+.IP
+With \fB\-\-wait=sb\fR, before \fBovn\-nbctl\fR exits, it waits for \fBovn\-northd\fR to bring the southbound database up-to-date with the northbound database updates\[char46]
+.IP
+With \fB\-\-wait=hv\fR, before \fBovn\-nbctl\fR exits, it additionally waits for all OVN chassis (hypervisors and gateways) to become up-to-date with the northbound database updates\[char46] (This can become an indefinite wait if any chassis is malfunctioning\[char46])
+.IP
+Ordinarily, \fB\-\-wait=sb\fR or \fB\-\-wait=hv\fR only waits for changes by the current \fBovn\-nbctl\fR invocation to take effect\[char46] This means that, if none of the commands supplied to \fBovn\-nbctl\fR change the database, then the command does not wait at all\[char46] Use the \fBsync\fR command to override this behavior\[char46]
+.TP
+\fB\-\-db\fR \fIdatabase\fR
+The OVSDB database remote to contact\[char46] If the \fBOVN_NB_DB\fR environment variable is set, its value is used as the default\[char46] Otherwise, the default is \fBunix:/ovnnb_db\[char46]sock\fR, but this default is unlikely to be useful outside of single-machine OVN test environments\[char46]
+.TP
+\fB\-\-leader\-only\fR
+.TQ .5in
+\fB\-\-no\-leader\-only\fR
+By default, or with \fB\-\-leader\-only\fR, when the database server is a clustered database, \fBovn\-nbctl\fR will avoid servers other than the cluster leader\[char46] This ensures that any data that \fBovn\-nbctl\fR reads and reports is up-to-date\[char46] With \fB\-\-no\-leader\-only\fR, \fBovn\-nbctl\fR will use any server in the cluster, which means that for read-only transactions it can report and act on stale data (transactions that modify the database are always serialized even with \fB\-\-no\-leader\-only\fR)\[char46] Refer to \fBUnderstanding Cluster Consistency\fR in \fBovsdb\fR(7) for more information\[char46]
+.TP
+\fB\-\-shuffle\-remotes\fR
+.TQ .5in
+\fB\-\-no\-shuffle\-remotes\fR
+By default, or with \fB\-\-shuffle\-remotes\fR, when there are multiple remotes specified in the OVSDB connection string specified by \fB\-\-db\fR or the \fBOVN_NB_DB\fR environment variable, the order of the remotes will be shuffled before the client tries to connect\[char46] The remotes will be shuffled only once to a new order before the first connection attempt\[char46] The following retries, if any, will follow the same new order\[char46] The default behavior is to make sure clients of a clustered database can distribute evenly to all memembers of the cluster\[char46] With \fB\-\-no\-shuffle\-remotes\fR, \fBovn\-nbctl\fR will use the original order specified in the connection string to connect\[char46] This allows user to specify the preferred order, which is particularly useful for testing\[char46]
+.TP
+\fB\-\-no\-syslog\fR
+By default, \fBovn\-nbctl\fR logs its arguments and the details of any changes that it makes to the system log\[char46] This option disables this logging\[char46]
+.IP
+This option is equivalent to \fB\-\-verbose=nbctl:syslog:warn\fR\[char46]
+.TP
+\fB\-\-oneline\fR
+Modifies the output format so that the output for each command is printed on a single line\[char46] New-line characters that would otherwise separate lines are printed as \efB\e\en\efR, and any instances of \efB\e\e\efR that would otherwise appear in the output are doubled\[char46] Prints a blank line for each command that has no output\[char46] This option does not affect the formatting of output from the \fBlist\fR or \fBfind\fR commands; see \fBTable Formatting Options\fR below\[char46]
+.TP
+\fB\-\-dry\-run\fR
+Prevents \fBovn\-nbctl\fR from actually modifying the database\[char46]
+.TP
+\fB\-t \fIsecs\fB\fR
+.TQ .5in
+\fB\-\-timeout=\fIsecs\fB\fR
+By default, or with a \fIsecs\fR of \fB0\fR, \fBovn\-nbctl\fR waits forever for a response from the database\[char46] This option limits runtime to approximately \fIsecs\fR seconds\[char46] If the timeout expires, \fBovn\-nbctl\fR will exit with a \fBSIGALRM\fR signal\[char46] (A timeout would normally happen only if the database cannot be contacted, or if the system is overloaded\[char46])
+.TP
+\fB\-\-print\-wait\-time\fR
+When \fB\-\-wait\fR is specified, the option \fB\-\-print\-wait\-time\fR can be used to print the time spent on waiting, depending on the value specified in \fB \-\-wait\fR option\[char46] If \fB\-\-wait=sb\fR is specified, it prints \(dqovn-northd delay before processing\(dq, which is the time between the Northbound DB update by the command and the moment when \fB ovn\-northd\fR starts processing the update, and \(dqovn-northd completion\(dq, which is the time between the Northbound DB update and the moment when \fBovn\-northd\fR completes the Southbound DB updating successfully\[char46] If \fB\-\-wait=hv\fR is specified, in addition to the above information, it also prints \(dqovn-controller(s) completion\(dq, which is the time between the Northbound DB update and the moment when the slowest hypervisor finishes processing the update\[char46]
+.RE
+.SS "Daemon Options"
+.TP
+\fB\-\-pidfile\fR[\fB=\fR\fIpidfile\fR]
+Causes a file (by default, \fB\fIprogram\fB\[char46]pid\fR) to be created indicating the PID of the running process\[char46] If the \fIpidfile\fR argument is not specified, or if it does not begin with \fB/\fR, then it is created in \fB\fR\[char46]
+.IP
+If \fB\-\-pidfile\fR is not specified, no pidfile is created\[char46]
+.TP
+\fB\-\-overwrite\-pidfile\fR
+By default, when \fB\-\-pidfile\fR is specified and the specified pidfile already exists and is locked by a running process, the daemon refuses to start\[char46] Specify \fB\-\-overwrite\-pidfile\fR to cause it to instead overwrite the pidfile\[char46]
+.IP
+When \fB\-\-pidfile\fR is not specified, this option has no effect\[char46]
+.TP
+\fB\-\-detach\fR
+Runs this program as a background process\[char46] The process forks, and in the child it starts a new session, closes the standard file descriptors (which has the side effect of disabling logging to the console), and changes its current directory to the root (unless \fB\-\-no\-chdir\fR is specified)\[char46] After the child completes its initialization, the parent exits\[char46]
+.TP
+\fB\-\-monitor\fR
+Creates an additional process to monitor this program\[char46] If it dies due to a signal that indicates a programming error (\fBSIGABRT\fR, \fBSIGALRM\fR, \fBSIGBUS\fR, \fBSIGFPE\fR, \fBSIGILL\fR, \fBSIGPIPE\fR, \fBSIGSEGV\fR, \fBSIGXCPU\fR, or \fBSIGXFSZ\fR) then the monitor process starts a new copy of it\[char46] If the daemon dies or exits for another reason, the monitor process exits\[char46]
+.IP
+This option is normally used with \fB\-\-detach\fR, but it also functions without it\[char46]
+.TP
+\fB\-\-no\-chdir\fR
+By default, when \fB\-\-detach\fR is specified, the daemon changes its current working directory to the root directory after it detaches\[char46] Otherwise, invoking the daemon from a carelessly chosen directory would prevent the administrator from unmounting the file system that holds that directory\[char46]
+.IP
+Specifying \fB\-\-no\-chdir\fR suppresses this behavior, preventing the daemon from changing its current working directory\[char46] This may be useful for collecting core files, since it is common behavior to write core dumps into the current working directory and the root directory is not a good directory to use\[char46]
+.IP
+This option has no effect when \fB\-\-detach\fR is not specified\[char46]
+.TP
+\fB\-\-no\-self\-confinement\fR
+By default this daemon will try to self-confine itself to work with files under well-known directories determined at build time\[char46] It is better to stick with this default behavior and not to use this flag unless some other Access Control is used to confine daemon\[char46] Note that in contrast to other access control implementations that are typically enforced from kernel-space (e\[char46]g\[char46] DAC or MAC), self-confinement is imposed from the user-space daemon itself and hence should not be considered as a full confinement strategy, but instead should be viewed as an additional layer of security\[char46]
+.TP
+\fB\-\-user=\fR\fIuser\fR\fB:\fR\fIgroup\fR
+Causes this program to run as a different user specified in \fIuser\fR\fB:\fR\fIgroup\fR, thus dropping most of the root privileges\[char46] Short forms \fIuser\fR and \fB:\fR\fIgroup\fR are also allowed, with current user or group assumed, respectively\[char46] Only daemons started by the root user accepts this argument\[char46]
+.IP
+On Linux, daemons will be granted \fBCAP_IPC_LOCK\fR and \fBCAP_NET_BIND_SERVICES\fR before dropping root privileges\[char46] Daemons that interact with a datapath, such as \fBovs\-vswitchd\fR, will be granted three additional capabilities, namely \fBCAP_NET_ADMIN\fR, \fBCAP_NET_BROADCAST\fR and \fBCAP_NET_RAW\fR\[char46] The capability change will apply even if the new user is root\[char46]
+.IP
+On Windows, this option is not currently supported\[char46] For security reasons, specifying this option will cause the daemon process not to start\[char46]
+.SS "Logging options"
+.TP
+\fB\-v\fR[\fIspec\fR]
+.TQ .5in
+\fB\-\-verbose=\fR[\fIspec\fR]
+Sets logging levels\[char46] Without any \fIspec\fR, sets the log level for every module and destination to \fBdbg\fR\[char46] Otherwise, \fIspec\fR is a list of words separated by spaces or commas or colons, up to one from each category below:
+.RS
+.IP \(bu
+A valid module name, as displayed by the \fBvlog/list\fR command on \fBovs\-appctl\fR(8), limits the log level change to the specified module\[char46]
+.IP \(bu
+\fBsyslog\fR, \fBconsole\fR, or \fBfile\fR, to limit the log level change to only to the system log, to the console, or to a file, respectively\[char46] (If \fB\-\-detach\fR is specified, the daemon closes its standard file descriptors, so logging to the console will have no effect\[char46])
+.IP
+On Windows platform, \fBsyslog\fR is accepted as a word and is only useful along with the \fB\-\-syslog\-target\fR option (the word has no effect otherwise)\[char46]
+.IP \(bu
+\fBoff\fR, \fBemer\fR, \fBerr\fR, \fBwarn\fR, \fBinfo\fR, or \fBdbg\fR, to control the log level\[char46] Messages of the given severity or higher will be logged, and messages of lower severity will be filtered out\[char46] \fBoff\fR filters out all messages\[char46] See \fBovs\-appctl\fR(8) for a definition of each log level\[char46]
+.RE
+.IP
+Case is not significant within \fIspec\fR\[char46]
+.IP
+Regardless of the log levels set for \fBfile\fR, logging to a file will not take place unless \fB\-\-log\-file\fR is also specified (see below)\[char46]
+.IP
+For compatibility with older versions of OVS, \fBany\fR is accepted as a word but has no effect\[char46]
+.TP
+\fB\-v\fR
+.TQ .5in
+\fB\-\-verbose\fR
+Sets the maximum logging verbosity level, equivalent to \fB\-\-verbose=dbg\fR\[char46]
+.TP
+\fB\-vPATTERN:\fR\fIdestination\fR\fB:\fR\fIpattern\fR
+.TQ .5in
+\fB\-\-verbose=PATTERN:\fR\fIdestination\fR\fB:\fR\fIpattern\fR
+Sets the log pattern for \fIdestination\fR to \fIpattern\fR\[char46] Refer to \fBovs\-appctl\fR(8) for a description of the valid syntax for \fIpattern\fR\[char46]
+.TP
+\fB\-vFACILITY:\fR\fIfacility\fR
+.TQ .5in
+\fB\-\-verbose=FACILITY:\fR\fIfacility\fR
+Sets the RFC5424 facility of the log message\[char46] \fIfacility\fR can be one of \fBkern\fR, \fBuser\fR, \fBmail\fR, \fBdaemon\fR, \fBauth\fR, \fBsyslog\fR, \fBlpr\fR, \fBnews\fR, \fBuucp\fR, \fBclock\fR, \fBftp\fR, \fBntp\fR, \fBaudit\fR, \fBalert\fR, \fBclock2\fR, \fBlocal0\fR, \fBlocal1\fR, \fBlocal2\fR, \fBlocal3\fR, \fBlocal4\fR, \fBlocal5\fR, \fBlocal6\fR or \fBlocal7\fR\[char46] If this option is not specified, \fBdaemon\fR is used as the default for the local system syslog and \fBlocal0\fR is used while sending a message to the target provided via the \fB\-\-syslog\-target\fR option\[char46]
+.TP
+\fB\-\-log\-file\fR[\fB=\fR\fIfile\fR]
+Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/local/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
+.TP
+\fB\-\-syslog\-target=\fR\fIhost\fR\fB:\fR\fIport\fR
+Send syslog messages to UDP \fIport\fR on \fIhost\fR, in addition to the system syslog\[char46] The \fIhost\fR must be a numerical IP address, not a hostname\[char46]
+.TP
+\fB\-\-syslog\-method=\fR\fImethod\fR
+Specify \fImethod\fR as how syslog messages should be sent to syslog daemon\[char46] The following forms are supported:
+.RS
+.IP \(bu
+\fBlibc\fR, to use the libc \fBsyslog()\fR function\[char46] Downside of using this options is that libc adds fixed prefix to every message before it is actually sent to the syslog daemon over \fB/dev/log\fR UNIX domain socket\[char46]
+.IP \(bu
+\fBunix:\fIfile\fB\fR, to use a UNIX domain socket directly\[char46] It is possible to specify arbitrary message format with this option\[char46] However, \fBrsyslogd 8\[char46]9\fR and older versions use hard coded parser function anyway that limits UNIX domain socket use\[char46] If you want to use arbitrary message format with older \fBrsyslogd\fR versions, then use UDP socket to localhost IP address instead\[char46]
+.IP \(bu
+\fBudp:\fIip\fB:\fIport\fB\fR, to use a UDP socket\[char46] With this method it is possible to use arbitrary message format also with older \fBrsyslogd\fR\[char46] When sending syslog messages over UDP socket extra precaution needs to be taken into account, for example, syslog daemon needs to be configured to listen on the specified UDP port, accidental iptables rules could be interfering with local syslog traffic and there are some security considerations that apply to UDP sockets, but do not apply to UNIX domain sockets\[char46]
+.IP \(bu
+\fBnull\fR, to discard all messages logged to syslog\[char46]
+.RE
+.IP
+The default is taken from the \fBOVS_SYSLOG_METHOD\fR environment variable; if it is unset, the default is \fBlibc\fR\[char46]
+.SS "Table Formatting Options"
+These options control the format of output from the \fBlist\fR and \fBfind\fR commands\[char46]
+.RS
+.TP
+\fB\-f\fR \fIformat\fR
+.TQ .5in
+\fB\-\-format=\fR\fIformat\fR
+Sets the type of table formatting\[char46] The following types of \fIformat\fR are available:
+.RS
+.TP
+\fBtable\fR
+2-D text tables with aligned columns\[char46]
+.TP
+\fBlist\fR (default)
+A list with one column per line and rows separated by a blank line\[char46]
+.TP
+\fBhtml\fR
+HTML tables\[char46]
+.TP
+\fBcsv\fR
+Comma-separated values as defined in RFC 4180\[char46]
+.TP
+\fBjson\fR
+JSON format as defined in RFC 4627\[char46] The output is a sequence of JSON objects, each of which corresponds to one table\[char46] Each JSON object has the following members with the noted values:
+.RS
+.TP
+\fBcaption\fR
+The table\(cqs caption\[char46] This member is omitted if the table has no caption\[char46]
+.TP
+\fBheadings\fR
+An array with one element per table column\[char46] Each array element is a string giving the corresponding column\(cqs heading\[char46]
+.TP
+\fBdata\fR
+An array with one element per table row\[char46] Each element is also an array with one element per table column\[char46] The elements of this second-level array are the cells that constitute the table\[char46] Cells that represent OVSDB data or data types are expressed in the format described in the OVSDB specification; other cells are simply expressed as text strings\[char46]
+.RE
+.RE
+.TP
+\fB\-d\fR \fIformat\fR
+.TQ .5in
+\fB\-\-data=\fR\fIformat\fR
+Sets the formatting for cells within output tables unless the table format is set to \fBjson\fR, in which case \fBjson\fR formatting is always used when formatting cells\[char46] The following types of \fIformat\fR are available:
+.RS
+.TP
+\fBstring\fR (default)
+The simple format described in the \fBDatabase Values\fR section of \fBovs\-vsctl\fR(8)\[char46]
+.TP
+\fBbare\fR
+The simple format with punctuation stripped off: \fB[]\fR and \fB{}\fR are omitted around sets, maps, and empty columns, items within sets and maps are space-separated, and strings are never quoted\[char46] This format may be easier for scripts to parse\[char46]
+.TP
+\fBjson\fR
+The RFC 4627 JSON format as described above\[char46]
+.RE
+.TP
+\fB\-\-no\-headings\fR
+This option suppresses the heading row that otherwise appears in the first row of table output\[char46]
+.TP
+\fB\-\-pretty\fR
+By default, JSON in output is printed as compactly as possible\[char46] This option causes JSON in output to be printed in a more readable fashion\[char46] Members of objects and elements of arrays are printed one per line, with indentation\[char46]
+.IP
+This option does not affect JSON in tables, which is always printed compactly\[char46]
+.TP
+\fB\-\-bare\fR
+Equivalent to \fB\-\-format=list \-\-data=bare \-\-no\-headings\fR\[char46]
+.RE
+.SS "PKI Options"
+.PP
+.PP
+PKI configuration is required to use SSL for the connection to the database\[char46]
+.RS
+.TP
+\fB\-p\fR \fIprivkey\[char46]pem\fR
+.TQ .5in
+\fB\-\-private\-key=\fR\fIprivkey\[char46]pem\fR
+Specifies a PEM file containing the private key used as identity for outgoing SSL connections\[char46]
+.TP
+\fB\-c\fR \fIcert\[char46]pem\fR
+.TQ .5in
+\fB\-\-certificate=\fR\fIcert\[char46]pem\fR
+Specifies a PEM file containing a certificate that certifies the private key specified on \fB\-p\fR or \fB\-\-private\-key\fR to be trustworthy\[char46] The certificate must be signed by the certificate authority (CA) that the peer in SSL connections will use to verify it\[char46]
+.TP
+\fB\-C\fR \fIcacert\[char46]pem\fR
+.TQ .5in
+\fB\-\-ca\-cert=\fR\fIcacert\[char46]pem\fR
+Specifies a PEM file containing the CA certificate for verifying certificates presented to this program by SSL peers\[char46] (This may be the same certificate that SSL peers use to verify the certificate specified on \fB\-c\fR or \fB\-\-certificate\fR, or it may be a different one, depending on the PKI design in use\[char46])
+.TP
+\fB\-C none\fR
+.TQ .5in
+\fB\-\-ca\-cert=none\fR
+Disables verification of certificates presented by SSL peers\[char46] This introduces a security risk, because it means that certificates cannot be verified to be those of known trusted hosts\[char46]
+.RE
+.RS
+.TP
+\fB\-\-bootstrap\-ca\-cert=\fR\fIcacert\[char46]pem\fR
+When \fIcacert\[char46]pem\fR exists, this option has the same effect as \fB\-C\fR or \fB\-\-ca\-cert\fR\[char46] If it does not exist, then the executable will attempt to obtain the CA certificate from the SSL peer on its first SSL connection and save it to the named PEM file\[char46] If it is successful, it will immediately drop the connection and reconnect, and from then on all SSL connections must be authenticated by a certificate signed by the CA certificate thus obtained\[char46]
+.IP
+This option exposes the SSL connection to a man-in-the-middle attack obtaining the initial CA certificate, but it may be useful for bootstrapping\[char46]
+.IP
+This option is only useful if the SSL peer sends its CA certificate as part of the SSL certificate chain\[char46] The SSL protocol does not require the server to send the CA certificate\[char46]
+.IP
+This option is mutually exclusive with \fB\-C\fR and \fB\-\-ca\-cert\fR\[char46]
+.RE
+.SS "Other Options"
+.TP
+\fB\-h\fR
+.TQ .5in
+\fB\-\-help\fR
+Prints a brief help message to the console\[char46]
+.TP
+\fB\-V\fR
+.TQ .5in
+\fB\-\-version\fR
+Prints version information to the console\[char46]
+.SH "COMMANDS"
+.PP
+.PP
+The following sections describe the commands that \fBovn\-nbctl\fR supports\[char46]
+.SS "General Commands"
 .TP
 \fBinit\fR
 Initializes the database, if it is empty\[char46] If the database has already been initialized, this command has no effect\[char46]
 .TP
 \fBshow [\fIswitch\fB | \fIrouter\fB]\fR
 Prints a brief overview of the database contents\[char46] If \fIswitch\fR is provided, only records related to that logical switch are shown\[char46] If \fIrouter\fR is provided, only records related to that logical router are shown\[char46]
-.SH "LOGICAL SWITCH COMMANDS"
+.SS "Logical Switch Commands"
 .TP
 \fBls\-add\fR
 Creates a new, unnamed logical switch, which initially has no ports\[char46] The switch does not have a name, other commands must refer to this switch by its UUID\[char46]
@@ -51,13 +394,13 @@ Deletes \fIswitch\fR\[char46] It is an error if \fIswitch\fR does not exist, unl
 .TP
 \fBls\-list\fR
 Lists all existing switches on standard output, one per line\[char46]
-.SH "ACL COMMANDS"
+.SS "ACL Commands"
 .PP
 .PP
 These commands operates on ACL objects for a given \fIentity\fR\[char46] The \fIentity\fR can be either a logical switch or a port group\[char46] The \fIentity\fR can be specified as uuid or name\[char46] The \fB\-\-type\fR option can be used to specify the type of the \fIentity\fR, in case both a logical switch and a port groups exist with the same name specified for \fIentity\fR\[char46] \fBtype\fR must be either \fBswitch\fR or \fBport\-group\fR\[char46]
 .RS
 .TP
-[\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] [\fB\-\-log\fR] [\fB\-\-meter=\fR\fImeter\fR] [\fB\-\-severity=\fR\fIseverity\fR] [\fB\-\-name=\fR\fIname\fR] [\fB\-\-may\-exist\fR] \fBacl\-add\fR \fIentity\fR \fIdirection\fR \fIpriority\fR \fImatch\fR \fIverdict\fR
+[\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] [\fB\-\-log\fR] [\fB\-\-meter=\fR\fImeter\fR] [\fB\-\-severity=\fR\fIseverity\fR] [\fB\-\-name=\fR\fIname\fR] [\fB\-\-label=\fR\fIlabel\fR] [\fB\-\-may\-exist\fR] \fBacl\-add\fR \fIentity\fR \fIdirection\fR \fIpriority\fR \fImatch\fR \fIverdict\fR
 Adds the specified ACL to \fIentity\fR\[char46] \fIdirection\fR must be either \fBfrom\-lport\fR or \fBto\-lport\fR\[char46] \fIpriority\fR must be between \fB0\fR and \fB32767\fR, inclusive\[char46] A full description of the fields are in \fBovn\-nb\fR(5)\[char46] If \fB\-\-may\-exist\fR is specified, adding a duplicated ACL succeeds but the ACL is not really created\[char46] Without \fB\-\-may\-exist\fR, adding a duplicated ACL results in error\[char46]
 .IP
 The \fB\-\-log\fR option enables packet logging for the ACL\[char46] The options \fB\-\-severity\fR and \fB\-\-name\fR specify a severity and name, respectively, for log entries (and also enable logging)\[char46] The severity must be one of \fBalert\fR, \fBwarning\fR, \fBnotice\fR, \fBinfo\fR, or \fBdebug\fR\[char46] If a severity is not specified, the default is \fBinfo\fR\[char46] The \fB\-\-meter=\fImeter\fB\fR option is used to rate-limit packet logging\[char46] The \fImeter\fR argument names a meter configured by \fBmeter\-add\fR\[char46]
@@ -68,7 +411,7 @@ Deletes ACLs from \fIentity\fR\[char46] If only \fIentity\fR is supplied, all th
 [\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] \fBacl\-list\fR \fIentity\fR
 Lists the ACLs on \fIentity\fR\[char46]
 .RE
-.SH "LOGICAL SWITCH QOS RULE COMMANDS"
+.SS "Logical Switch QoS Rule Commands"
 .TP
 [\fB\-\-may\-exist\fR] \fBqos\-add\fR \fIswitch\fR \fIdirection\fR \fIpriority\fR \fImatch\fR [\fBdscp=\fR\fIdscp\fR] [\fBrate=\fR\fIrate\fR [\fBburst=\fR\fIburst\fR]]
 Adds QoS marking and metering rules to \fIswitch\fR\[char46] \fIdirection\fR must be either \fBfrom\-lport\fR or \fBto\-lport\fR\[char46] \fIpriority\fR must be between \fB0\fR and \fB32767\fR, inclusive\[char46]
@@ -84,7 +427,7 @@ If \fIswitch\fR and \fIuuid\fR are supplied, then the QoS rule with sepcified uu
 .TP
 \fBqos\-list\fR \fIswitch\fR
 Lists the QoS rules on \fIswitch\fR\[char46]
-.SH "METER COMMANDS"
+.SS "Meter Commands"
 .TP
 \fBmeter\-add\fR \fIname\fR \fIaction\fR \fIrate\fR \fIunit\fR [\fIburst\fR]
 Adds the specified meter\[char46] \fIname\fR must be a unique name to identify this meter\[char46] The \fIaction\fR argument specifies what should happen when this meter is exceeded\[char46] The only supported action is \fBdrop\fR\[char46]
@@ -100,7 +443,7 @@ Deletes meters\[char46] By default, all meters are deleted\[char46] If \fIname\f
 .TP
 \fBmeter\-list\fR
 Lists all meters\[char46]
-.SH "LOGICAL SWITCH PORT COMMANDS"
+.SS "Logical Switch Port Commands"
 .TP
 [\fB\-\-may\-exist\fR] \fBlsp\-add\fR \fIswitch\fR \fIport\fR
 Creates on \fIlswitch\fR a new logical switch port named \fIport\fR\[char46]
@@ -209,7 +552,7 @@ Get the configured DHCPv6 options for the logical port\[char46]
 .TP
 \fBlsp\-get\-ls\fR \fIport\fR
 Get the logical switch which the \fIport\fR belongs to\[char46]
-.SH "FORWARDING GROUP COMMANDS"
+.SS "Forwarding Group Commands"
 .TP
 [\fB\-\-liveness\fR]\fBfwd\-group\-add\fR \fIgroup\fR \fIswitch\fR \fIvip\fR \fIvmac\fR \fIports\fR
 Creates a new forwarding group named \fIgroup\fR as the name with the provided \fIvip\fR and \fIvmac\fR\[char46] \fIvip\fR should be a virtual IP address and \fIvmac\fR should be a virtual MAC address to access the forwarding group\[char46] \fIports\fR are the logical switch port names that are put in the forwarding group\[char46] Example for \fIports\fR is lsp1 lsp2 \[char46]\[char46]\[char46] Traffic destined to virtual IP of the forwarding group will be load balanced to all the child ports\[char46]
@@ -222,7 +565,7 @@ Deletes \fIgroup\fR\[char46] It is an error if \fIgroup\fR does not exist, unles
 .TP
 \fBfwd\-group\-list\fR [\fIswitch\fR]
 Lists all existing forwarding groups, If \fIswitch\fR is specified then only the forwarding groups configured for \fIswitch\fR will be listed\[char46]
-.SH "LOGICAL ROUTER COMMANDS"
+.SS "Logical Router Commands"
 .TP
 \fBlr\-add\fR
 Creates a new, unnamed logical router, which initially has no ports\[char46] The router does not have a name, other commands must refer to this router by its UUID\[char46]
@@ -237,7 +580,7 @@ Deletes \fIrouter\fR\[char46] It is an error if \fIrouter\fR does not exist, unl
 .TP
 \fBlr\-list\fR
 Lists all existing routers on standard output, one per line\[char46]
-.SH "LOGICAL ROUTER PORT COMMANDS"
+.SS "Logical Router Port Commands"
 .TP
 [\fB\-\-may\-exist\fR] \fBlrp\-add\fR \fIrouter\fR \fIport\fR \fImac\fR \fInetwork\fR\[char46]\[char46]\[char46] [\fBpeer=\fR\fIpeer\fR]
 Creates on \fIrouter\fR a new logical router port named \fIport\fR with Ethernet address \fImac\fR and one or more IP address/netmask for each \fInetwork\fR\[char46]
@@ -268,10 +611,10 @@ Deletes gateway chassis from \fIport\fR\[char46] It is an error if gateway chass
 .TP
 \fBlrp\-get\-gateway\-chassis\fR \fIport\fR
 Lists all the gateway chassis with priority within \fIport\fR on standard output, one per line, ordered based on priority\[char46]
-.SH "LOGICAL ROUTER STATIC ROUTE COMMANDS"
+.SS "Logical Router Static Route Commands"
 .TP
 [\fB\-\-may\-exist\fR] [\fB\-\-policy\fR=\fIPOLICY\fR] [\fB\-\-ecmp\fR] [\fB\-\-ecmp\-symmetric\-reply\fR] [\fB\-\-bfd[=\fIUUID\fB\fR]] \fBlr\-route\-add\fR \fIrouter\fR \fIprefix\fR \fInexthop\fR [\fIport\fR]
-Adds the specified route to \fIrouter\fR\[char46] \fIprefix\fR describes an IPv4 or IPv6 prefix for this route, such as \fB192\[char46]168\[char46]100\[char46]0/24\fR\[char46] \fInexthop\fR specifies the gateway to use for this route, which should be the IP address of one of \fIrouter\fR logical router ports or the IP address of a logical port\[char46] If \fIport\fR is specified, packets that match this route will be sent out that port\[char46] When \fIport\fR is omitted, OVN infers the output port based on \fInexthop\fR\[char46]
+Adds the specified route to \fIrouter\fR\[char46] \fIprefix\fR describes an IPv4 or IPv6 prefix for this route, such as \fB192\[char46]168\[char46]100\[char46]0/24\fR\[char46] \fInexthop\fR specifies the gateway to use for this route, which should be the IP address of one of \fIrouter\fR logical router ports or the IP address of a logical port\[char46] If \fIport\fR is specified, packets that match this route will be sent out that port\[char46] When \fIport\fR is omitted, OVN infers the output port based on \fInexthop\fR\[char46] Nexthop can be set to \fIdiscard\fR for dropping packets which match the given route\[char46]
 .IP
 \fB\-\-policy\fR describes the policy used to make routing decisions\[char46] This should be one of \(dqdst-ip\(dq or \(dqsrc-ip\(dq\[char46] If not specified, the default is \(dqdst-ip\(dq\[char46]
 .IP
@@ -290,7 +633,7 @@ It is an error if there is no matching route entry, unless \fB\-\-if\-exists\fR 
 .TP
 \fBlr\-route\-list\fR \fIrouter\fR
 Lists the routes on \fIrouter\fR\[char46]
-.SH "LOGICAL ROUTER POLICY COMMANDS"
+.SS "Logical Router Policy Commands"
 .TP
 [\fB\-\-may\-exist\fR]\fBlr\-policy\-add\fR \fIrouter\fR \fIpriority\fR \fImatch\fR \fIaction\fR [\fInexthop\fR[,\fInexthop\fR,\[char46]\[char46]\[char46]]] [\fIoptions key=value]\fR]
 Add Policy to \fIrouter\fR which provides a way to configure permit/deny and reroute policies on the router\[char46] Permit/deny policies are similar to OVN ACLs, but exist on the logical-router\[char46] Reroute policies are needed for service-insertion and service-chaining\[char46] \fInexthop\fR is an optional parameter\[char46] It needs to be provided only when \fIaction\fR is \fIreroute\fR\[char46] Multiple \fBnexthops\fR can be specified for ECMP routing\[char46] A policy is uniquely identified by \fIpriority\fR and \fImatch\fR\[char46] Multiple policies can have the same \fIpriority\fR\[char46] \fIoptions\fR sets the router policy options as key-value pair\[char46] The supported option is : \fBpkt_mark\fR\[char46]
@@ -313,7 +656,7 @@ If \fIrouter\fR and \fIuuid\fR are supplied, then the policy with sepcified uuid
 .TP
 \fBlr\-policy\-list\fR \fIrouter\fR
 Lists the polices on \fIrouter\fR\[char46]
-.SH "NAT COMMANDS"
+.SS "NAT Commands"
 .TP
 [\fB\-\-may\-exist\fR] [\fB\-\-stateless\fR]\fBlr\-nat\-add\fR \fIrouter\fR \fItype\fR \fIexternal_ip\fR \fIlogical_ip\fR [\fIlogical_port\fR \fIexternal_mac\fR]
 Adds the specified NAT to \fIrouter\fR\[char46] The \fItype\fR must be one of \fBsnat\fR, \fBdnat\fR, or \fBdnat_and_snat\fR\[char46] The \fIexternal_ip\fR is an IPv4 address\[char46] The \fIlogical_ip\fR is an IPv4 network (e\[char46]g 192\[char46]168\[char46]1\[char46]0/24) or an IPv4 address\[char46] The \fIlogical_port\fR and \fIexternal_mac\fR are only accepted when \fIrouter\fR is a distributed router (rather than a gateway router) and \fItype\fR is \fBdnat_and_snat\fR\[char46] The \fIlogical_port\fR is the name of an existing logical switch port where the \fIlogical_ip\fR resides\[char46] The \fIexternal_mac\fR is an Ethernet address\[char46] The \fI\-\-stateless\fR
@@ -337,7 +680,7 @@ It is an error if \fIip\fR is specified and there is no matching NAT entry, unle
 .TP
 \fBlr\-nat\-list\fR \fIrouter\fR
 Lists the NATs on \fIrouter\fR\[char46]
-.SH "LOAD BALANCER COMMANDS"
+.SS "Load Balancer Commands"
 .TP
 [\fB\-\-may\-exist\fR | \fB\-\-add\-duplicate\fR | \fB\-\-reject\fR | \fB\-\-event\fR] \fBlb\-add\fR \fIlb\fR \fIvip\fR \fIips\fR [\fIprotocol\fR]
 Creates a new load balancer named \fIlb\fR with the provided \fIvip\fR and \fIips\fR or adds the \fIvip\fR to an existing \fIlb\fR\[char46] \fIvip\fR should be a virtual IP address (or an IP address and a port number with \fB:\fR as a separator)\[char46] Examples for \fIvip\fR are \fB192\[char46]168\[char46]1\[char46]4\fR, \fBfd0f::1\fR, and \fB192\[char46]168\[char46]1\[char46]5:8080\fR\[char46] \fIips\fR should be comma separated IP endpoints (or comma separated IP addresses and port numbers with \fB:\fR as a separator)\[char46] \fIips\fR must be the same address family as \fIvip\fR\[char46] Examples for \fIips\fR are \fB10\[char46]0\[char46]0\[char46]1,10\[char46]0\[char46]0\[char46]2\fRor \fB[fdef::1]:8800,[fdef::2]:8800\fR\[char46]
@@ -378,7 +721,7 @@ Removes \fIlb\fR from \fIrouter\fR\[char46] If only \fIrouter\fR is supplied, al
 .TP
 \fBlr\-lb\-list\fR \fIrouter\fR
 Lists the LBs for the given \fIrouter\fR\[char46]
-.SH "DHCP OPTIONS COMMANDS"
+.SS "DHCP Options commands"
 .TP
 \fBdhcp\-options\-create\fR \fIcidr\fR [\fIkey=value\fR]
 Creates a new DHCP Options entry in the \fBDHCP_Options\fR table with the specified \fBcidr\fR and optional \fBexternal\-ids\fR\[char46]
@@ -394,7 +737,7 @@ Set the DHCP Options for the \fIdhcp-option\fR UUID\[char46]
 .TP
 \fBdhcp\-options\-get\-options\fR \fIdhcp-option\fR
 Lists the DHCP Options for the \fIdhcp-option\fR UUID\[char46]
-.SH "PORT GROUP COMMANDS"
+.SS "Port Group commands"
 .TP
 \fBpg\-add\fR \fIgroup\fR [\fIport\fR]\[char46]\[char46]\[char46]
 Creates a new port group in the \fBPort_Group\fR table named \fBgroup\fR with optional \fBports\fR added to the group\[char46]
@@ -404,7 +747,7 @@ Sets \fBports\fR on the port group named \fBgroup\fR\[char46] It is an error if 
 .TP
 \fBpg\-del\fR \fIgroup\fR
 Deletes port group \fBgroup\fR\[char46] It is an error if \fBgroup\fR does not exist\[char46]
-.SH "HA CHASSIS GROUP COMMANDS"
+.SS "HA Chassis Group commands"
 .TP
 \fBha\-chassis\-group\-add\fR \fIgroup\fR
 Creates a new HA chassis group in the \fBHA_Chassis_Group\fR table named \fBgroup\fR\[char46]
@@ -420,7 +763,94 @@ Adds a new HA chassis \fBchassis\fR to the HA Chassis group \fBgroup\fR with the
 .TP
 \fBha\-chassis\-group\-remove\-chassis\fR \fIgroup\fR \fIchassis\fR
 Removes the HA chassis \fBchassis\fR from the HA chassis group \fBgroup\fR\[char46] It is an error if \fBchassis\fR does not exist\[char46]
-.SH "DATABASE COMMANDS"
+.SS "Control Plane Protection Policy commands"
+.PP
+.PP
+These commands manage meters configured in \fBCopp\fR table linking them to logical datapaths through \fBcopp\fR column in \fBLogical_Switch\fR or \fBLogical_Router\fR tables\[char46] Protocol packets for which CoPP is enforced when sending packets to ovn-controller (if configured):
+.RS
+.IP \(bu
+ARP
+.IP \(bu
+ND_NS
+.IP \(bu
+ND_NA
+.IP \(bu
+ND_RA
+.IP \(bu
+ND
+.IP \(bu
+DNS
+.IP \(bu
+IGMP
+.IP \(bu
+packets that require ARP resolution before forwarding
+.IP \(bu
+packets that require ND_NS before forwarding
+.IP \(bu
+packets that need to be replied to with ICMP Errors
+.IP \(bu
+packets that need to be replied to with TCP RST
+.IP \(bu
+packets that need to be replied to with DHCP_OPTS
+.IP \(bu
+packets that trigger a reject action
+.IP \(bu
+packets that trigger a SCTP abort action
+.IP \(bu
+controller_events
+.IP \(bu
+BFD
+.RE
+.RS
+.TP
+\fBls\-copp\-add\fR \fIswitch\fR \fIproto\fR \fImeter\fR
+Adds the control \fBproto\fR to \fBmeter\fR mapping to the \fBswitch\fR control plane protection policy\[char46] If no policy exists yet, it creates one\[char46] If a mapping already existed for \fBproto\fR, this will overwrite it\[char46]
+.TP
+\fBls\-copp\-del\fR \fIswitch\fR [\fIproto\fR]
+Removes the control \fBproto\fR mapping from the \fBswitch\fR control plane protection policy\[char46] If \fBproto\fR is not specified, the whole control plane protection policy is destroyed\[char46]
+.TP
+\fBls\-copp\-list\fR \fIswitch\fR
+Display the current control plane protection policy for \fBswitch\fR\[char46]
+.TP
+\fBlr\-copp\-add\fR \fIrouter\fR \fIproto\fR \fImeter\fR
+Adds the control \fBproto\fR to \fBmeter\fR mapping to the \fBrouter\fR control plane protection policy\[char46] If no policy exists yet, it creates one\[char46] If a mapping already existed for \fBproto\fR, this will overwrite it\[char46]
+.TP
+\fBlr\-copp\-del\fR \fIrouter\fR [\fIproto\fR]
+Removes the control \fBproto\fR mapping from the \fBrouter\fR control plane protection policy\[char46] If \fBproto\fR is not specified, the whole control plane protection policy is destroyed\[char46]
+.TP
+\fBlr\-copp\-list\fR \fIrouter\fR
+Display the current control plane protection policy for \fBrouter\fR\[char46]
+.RE
+.SS "Synchronization Commands"
+.TP
+sync
+Ordinarily, \fB\-\-wait=sb\fR or \fB\-\-wait=hv\fR only waits for changes by the current \fBovn\-nbctl\fR invocation to take effect\[char46] This means that, if none of the commands supplied to \fBovn\-nbctl\fR change the database, then the command does not wait at all\[char46] With the \fBsync\fR command, however, \fBovn\-nbctl\fR waits even for earlier changes to the database to propagate down to the southbound database or all of the OVN chassis, according to the argument to \fB\-\-wait\fR\[char46]
+.SS "Remote Connectivity Commands"
+.PP
+.PP
+These commands manipulate the \fBconnections\fR column in the \fBNB_Global\fR table and rows in the \fBConnection\fR table\[char46] When \fBovsdb\-server\fR is configured to use the \fBconnections\fR column for OVSDB connections, this allows the administrator to use \fBovn\-nbctl\fR to configure database connections\[char46]
+.RS
+.TP
+\fBget\-connection\fR
+Prints the configured connection(s)\[char46]
+.TP
+\fBdel\-connection\fR
+Deletes the configured connection(s)\[char46]
+.TP
+[\fB\-\-inactivity\-probe=\fR\fImsecs\fR] \fBset\-connection\fR \fItarget\fR\[char46]\[char46]\[char46]
+Sets the configured manager target or targets\[char46] Use \fB\-\-inactivity\-probe=\fR\fImsecs\fR to override the default idle connection inactivity probe time\[char46] Use 0 to disable inactivity probes\[char46]
+.RE
+.SS "SSL Configuration Commands"
+.TP
+\fBget\-ssl\fR
+Prints the SSL configuration\[char46]
+.TP
+\fBdel\-ssl\fR
+Deletes the current SSL configuration\[char46]
+.TP
+[\fB\-\-bootstrap\fR] \fBset\-ssl\fR \fIprivate-key\fR \fIcertificate\fR \fIca-cert\fR [\fIssl-protocol-list\fR [\fIssl-cipher-list\fR]]
+Sets the SSL configuration\[char46]
+.SS "Database Commands"
 .PP
 .PP
 These commands query and modify the contents of \fBovsdb\fR tables\[char46] They are a slight abstraction of the \fBovsdb\fR interface and as such they operate at a lower level than other \fBovn\-nbctl\fR commands\[char46]
@@ -593,359 +1023,22 @@ Consider specifying \fB\-\-timeout=0\fR along with \fB\-\-wait\-until\fR, to pre
 \fBcomment\fR [\fIarg\fR]\[char46]\[char46]\[char46]
 This command has no effect on behavior, but any database log record created by the command will include the command and its arguments\[char46]
 .RE
-.SH "SYNCHRONIZATION COMMANDS"
+.SH "ENVIRONMENT"
 .TP
-sync
-Ordinarily, \fB\-\-wait=sb\fR or \fB\-\-wait=hv\fR only waits for changes by the current \fBovn\-nbctl\fR invocation to take effect\[char46] This means that, if none of the commands supplied to \fBovn\-nbctl\fR change the database, then the command does not wait at all\[char46] With the \fBsync\fR command, however, \fBovn\-nbctl\fR waits even for earlier changes to the database to propagate down to the southbound database or all of the OVN chassis, according to the argument to \fB\-\-wait\fR\[char46]
-.SH "REMOTE CONNECTIVITY COMMANDS"
-.TP
-\fBget\-connection\fR
-Prints the configured connection(s)\[char46]
-.TP
-\fBdel\-connection\fR
-Deletes the configured connection(s)\[char46]
-.TP
-[\fB\-\-inactivity\-probe=\fR\fImsecs\fR] \fBset\-connection\fR \fItarget\fR\[char46]\[char46]\[char46]
-Sets the configured manager target or targets\[char46] Use \fB\-\-inactivity\-probe=\fR\fImsecs\fR to override the default idle connection inactivity probe time\[char46] Use 0 to disable inactivity probes\[char46]
-.SH "SSL CONFIGURATION COMMANDS"
-.TP
-\fBget\-ssl\fR
-Prints the SSL configuration\[char46]
-.TP
-\fBdel\-ssl\fR
-Deletes the current SSL configuration\[char46]
-.TP
-[\fB\-\-bootstrap\fR] \fBset\-ssl\fR \fIprivate-key\fR \fIcertificate\fR \fIca-cert\fR [\fIssl-protocol-list\fR [\fIssl-cipher-list\fR]]
-Sets the SSL configuration\[char46]
-.SH "DAEMON MODE"
-.PP
-.PP
-When it is invoked in the most ordinary way, \fBovn\-nbctl\fR connects to an OVSDB server that hosts the northbound database, retrieves a partial copy of the database that is complete enough to do its work, sends a transaction request to the server, and receives and processes the server\(cqs reply\[char46] In common interactive use, this is fine, but if the database is large, the step in which \fBovn\-nbctl\fR retrieves a partial copy of the database can take a long time, which yields poor performance overall\[char46]
-.PP
-.PP
-To improve performance in such a case, \fBovn\-nbctl\fR offers a \(dqdaemon mode,\(dq in which the user first starts \fBovn\-nbctl\fR running in the background and afterward uses the daemon to execute operations\[char46] Over several \fBovn\-nbctl\fR command invocations, this performs better overall because it retrieves a copy of the database only once at the beginning, not once per program run\[char46]
-.PP
-.PP
-Use the \fB\-\-detach\fR option to start an \fBovn\-nbctl\fR daemon\[char46] With this option, \fBovn\-nbctl\fR prints the name of a control socket to stdout\[char46] The client should save this name in environment variable \fBOVN_NB_DAEMON\fR\[char46] Under the Bourne shell this might be done like this:
-.PP
-.nf
-\fL
-.br
-\fL      export OVN_NB_DAEMON=$(ovn\-nbctl \-\-pidfile \-\-detach)
-.br
-\fL    \fR
-.fi
-.PP
-.PP
-When \fBOVN_NB_DAEMON\fR is set, \fBovn\-nbctl\fR automatically and transparently uses the daemon to execute its commands\[char46]
-.PP
-.PP
-When the daemon is no longer needed, kill it and unset the environment variable, e\[char46]g\[char46]:
-.PP
-.nf
-\fL
-.br
-\fL      kill $(cat $OVN_RUNDIR/ovn\-nbctl\[char46]pid)
-.br
-\fL      unset OVN_NB_DAEMON
-.br
-\fL    \fR
-.fi
-.PP
-.PP
-When using daemon mode, an alternative to the OVN_NB_DAEMON environment variable is to specify a path for the Unix socket\[char46] When starting the ovn-nbctl daemon, specify the \fB\-u\fR option with a full path to the location of the socket file\[char46] Here is an exmple:
-.PP
-.nf
-\fL
-.br
-\fL      ovn\-nbctl \-\-detach \-u /tmp/mysock\[char46]ctl
-.br
-\fL    \fR
-.fi
-.PP
-.PP
-Then to connect to the running daemon, use the \fB\-u\fR option with the full path to the socket created when the daemon was started:
-.PP
-.nf
-\fL
-.br
-\fL      ovn\-nbctl \-u /tmp/mysock\[char46]ctl show
-.br
-\fL    \fR
-.fi
-.PP
-.PP
-Daemon mode is experimental\[char46]
-.SS "Daemon Commands"
-.PP
-.PP
-Daemon mode is internally implemented using the same mechanism used by \fBovs\-appctl\fR\[char46] One may also use \fBovs\-appctl\fR directly with the following commands:
-.RS
-.TP
-\fBrun\fR [\fIoptions\fR] \fIcommand\fR [\fIarg\fR\[char46]\[char46]\[char46]] [\fB\-\-\fR [\fIoptions\fR] \fIcommand\fR [\fIarg\fR\[char46]\[char46]\[char46]] \[char46]\[char46]\[char46]]
-Instructs the daemon process to run one or more \fBovn\-nbctl\fR commands described above and reply with the results of running these commands\[char46] Accepts the \fB\-\-no\-wait\fR, \fB\-\-wait\fR, \fB\-\-timeout\fR, \fB\-\-dry\-run\fR, \fB\-\-oneline\fR, and the options described under \fBTable Formatting Options\fR in addition to the the command-specific options\[char46]
-.TP
-\fBexit\fR
-Causes \fBovn\-nbctl\fR to gracefully terminate\[char46]
-.RE
-.SH "OPTIONS"
-.TP
-\fB\-\-no\-wait\fR | \fB\-\-wait=none\fR
-.TQ .5in
-\fB\-\-wait=sb\fR
-.TQ .5in
-\fB\-\-wait=hv\fR
-These options control whether and how \fBovn\-nbctl\fR waits for the OVN system to become up-to-date with changes made in an \fBovn\-nbctl\fR invocation\[char46]
-.IP
-By default, or if \fB\-\-no\-wait\fR or \fB\-\-wait=none\fR, \fBovn\-nbctl\fR exits immediately after confirming that changes have been committed to the northbound database, without waiting\[char46]
-.IP
-With \fB\-\-wait=sb\fR, before \fBovn\-nbctl\fR exits, it waits for \fBovn\-northd\fR to bring the southbound database up-to-date with the northbound database updates\[char46]
-.IP
-With \fB\-\-wait=hv\fR, before \fBovn\-nbctl\fR exits, it additionally waits for all OVN chassis (hypervisors and gateways) to become up-to-date with the northbound database updates\[char46] (This can become an indefinite wait if any chassis is malfunctioning\[char46])
-.IP
-Ordinarily, \fB\-\-wait=sb\fR or \fB\-\-wait=hv\fR only waits for changes by the current \fBovn\-nbctl\fR invocation to take effect\[char46] This means that, if none of the commands supplied to \fBovn\-nbctl\fR change the database, then the command does not wait at all\[char46] Use the \fBsync\fR command to override this behavior\[char46]
-.TP
-\fB\-\-print\-wait\-time\fR
-When \fB\-\-wait\fR is specified, the option \fB\-\-print\-wait\-time\fR can be used to print the time spent on waiting, depending on the value specified in \fB \-\-wait\fR option\[char46] If \fB\-\-wait=sb\fR is specified, it prints \(dqovn-northd delay before processing\(dq, which is the time between the Northbound DB update by the command and the moment when \fB ovn\-northd\fR starts processing the update, and \(dqovn-northd completion\(dq, which is the time between the Northbound DB update and the moment when \fBovn\-northd\fR completes the Southbound DB updating successfully\[char46] If \fB\-\-wait=hv\fR is specified, in addition to the above information, it also prints \(dqovn-controller(s) completion\(dq, which is the time between the Northbound DB update and the moment when the slowest hypervisor finishes processing the update\[char46]
-.TP
-\fB\-\-db\fR \fIdatabase\fR
-The OVSDB database remote to contact\[char46] If the \fBOVN_NB_DB\fR environment variable is set, its value is used as the default\[char46] Otherwise, the default is \fBunix:/ovnnb_db\[char46]sock\fR, but this default is unlikely to be useful outside of single-machine OVN test environments\[char46]
-.TP
-\fB\-\-leader\-only\fR
-.TQ .5in
-\fB\-\-no\-leader\-only\fR
-By default, or with \fB\-\-leader\-only\fR, when the database server is a clustered database, \fBovn\-nbctl\fR will avoid servers other than the cluster leader\[char46] This ensures that any data that \fBovn\-nbctl\fR reads and reports is up-to-date\[char46] With \fB\-\-no\-leader\-only\fR, \fBovn\-nbctl\fR will use any server in the cluster, which means that for read-only transactions it can report and act on stale data (transactions that modify the database are always serialized even with \fB\-\-no\-leader\-only\fR)\[char46] Refer to \fBUnderstanding Cluster Consistency\fR in \fBovsdb\fR(7) for more information\[char46]
-.TP
-\fB\-\-shuffle\-remotes\fR
-.TQ .5in
-\fB\-\-no\-shuffle\-remotes\fR
-By default, or with \fB\-\-shuffle\-remotes\fR, when there are multiple remotes specified in the OVSDB connection string specified by \fB\-\-db\fR or the \fBOVN_NB_DB\fR environment variable, the order of the remotes will be shuffled before the client tries to connect\[char46] The remotes will be shuffled only once to a new order before the first connection attempt\[char46] The following retries, if any, will follow the same new order\[char46] The default behavior is to make sure clients of a clustered database can distribute evenly to all memembers of the cluster\[char46] With \fB\-\-no\-shuffle\-remotes\fR, \fBovn\-nbctl\fR will use the original order specified in the connection string to connect\[char46] This allows user to specify the preferred order, which is particularly useful for testing\[char46]
+\fBOVN_NB_DAEMON\fR
+If set, this should name the Unix domain socket for an \fBovn\-nbctl\fR server process\[char46] See \fBDaemon Mode\fR, above, for more information\[char46]
 .TP
 \fBOVN_NBCTL_OPTIONS\fR
-User can set one or more \fBOVN_NBCTL_OPTIONS\fR options in environment variable\[char46] Under the Bourne shell this might be done like this:
-.IP
-.nf
-\fL
-.br
-\fL          OVN_NBCTL_OPTIONS=\(dq\-\-db=unix:nb1\[char46]ovsdb \-\-no\-leader\-only\(dq
-.br
-\fL        \fR
-.fi
-.IP
-When \fBOVN_NBCTL_OPTIONS\fR is set, \fBovn\-nbctl\fR automatically and transparently uses the environment variable to execute its commands\[char46] However user can still over-ride environment options by passing different in cli\[char46]
-.IP
-When the environment variable is no longer needed, unset it, e\[char46]g\[char46]:
-.IP
-.nf
-\fL
-.br
-\fL          unset OVN_NBCTL_OPTIONS
-.br
-\fL        \fR
-.fi
-.SS "Daemon Options"
+If set, a set of options for \fBovn\-nbctl\fR to apply automatically, in the same form as on the command line\[char46]
 .TP
-\fB\-\-pidfile\fR[\fB=\fR\fIpidfile\fR]
-Causes a file (by default, \fB\fIprogram\fB\[char46]pid\fR) to be created indicating the PID of the running process\[char46] If the \fIpidfile\fR argument is not specified, or if it does not begin with \fB/\fR, then it is created in \fB\fR\[char46]
-.IP
-If \fB\-\-pidfile\fR is not specified, no pidfile is created\[char46]
+\fBOVN_NB_DB\fR
+If set, the default database to contact when the \fB\-\-db\fR option is not used\[char46]
+.SH "EXIT STATUS"
 .TP
-\fB\-\-overwrite\-pidfile\fR
-By default, when \fB\-\-pidfile\fR is specified and the specified pidfile already exists and is locked by a running process, the daemon refuses to start\[char46] Specify \fB\-\-overwrite\-pidfile\fR to cause it to instead overwrite the pidfile\[char46]
-.IP
-When \fB\-\-pidfile\fR is not specified, this option has no effect\[char46]
+0
+Successful program execution\[char46]
 .TP
-\fB\-\-detach\fR
-Runs this program as a background process\[char46] The process forks, and in the child it starts a new session, closes the standard file descriptors (which has the side effect of disabling logging to the console), and changes its current directory to the root (unless \fB\-\-no\-chdir\fR is specified)\[char46] After the child completes its initialization, the parent exits\[char46]
-.TP
-\fB\-\-monitor\fR
-Creates an additional process to monitor this program\[char46] If it dies due to a signal that indicates a programming error (\fBSIGABRT\fR, \fBSIGALRM\fR, \fBSIGBUS\fR, \fBSIGFPE\fR, \fBSIGILL\fR, \fBSIGPIPE\fR, \fBSIGSEGV\fR, \fBSIGXCPU\fR, or \fBSIGXFSZ\fR) then the monitor process starts a new copy of it\[char46] If the daemon dies or exits for another reason, the monitor process exits\[char46]
-.IP
-This option is normally used with \fB\-\-detach\fR, but it also functions without it\[char46]
-.TP
-\fB\-\-no\-chdir\fR
-By default, when \fB\-\-detach\fR is specified, the daemon changes its current working directory to the root directory after it detaches\[char46] Otherwise, invoking the daemon from a carelessly chosen directory would prevent the administrator from unmounting the file system that holds that directory\[char46]
-.IP
-Specifying \fB\-\-no\-chdir\fR suppresses this behavior, preventing the daemon from changing its current working directory\[char46] This may be useful for collecting core files, since it is common behavior to write core dumps into the current working directory and the root directory is not a good directory to use\[char46]
-.IP
-This option has no effect when \fB\-\-detach\fR is not specified\[char46]
-.TP
-\fB\-\-no\-self\-confinement\fR
-By default this daemon will try to self-confine itself to work with files under well-known directories determined at build time\[char46] It is better to stick with this default behavior and not to use this flag unless some other Access Control is used to confine daemon\[char46] Note that in contrast to other access control implementations that are typically enforced from kernel-space (e\[char46]g\[char46] DAC or MAC), self-confinement is imposed from the user-space daemon itself and hence should not be considered as a full confinement strategy, but instead should be viewed as an additional layer of security\[char46]
-.TP
-\fB\-\-user=\fR\fIuser\fR\fB:\fR\fIgroup\fR
-Causes this program to run as a different user specified in \fIuser\fR\fB:\fR\fIgroup\fR, thus dropping most of the root privileges\[char46] Short forms \fIuser\fR and \fB:\fR\fIgroup\fR are also allowed, with current user or group assumed, respectively\[char46] Only daemons started by the root user accepts this argument\[char46]
-.IP
-On Linux, daemons will be granted \fBCAP_IPC_LOCK\fR and \fBCAP_NET_BIND_SERVICES\fR before dropping root privileges\[char46] Daemons that interact with a datapath, such as \fBovs\-vswitchd\fR, will be granted three additional capabilities, namely \fBCAP_NET_ADMIN\fR, \fBCAP_NET_BROADCAST\fR and \fBCAP_NET_RAW\fR\[char46] The capability change will apply even if the new user is root\[char46]
-.IP
-On Windows, this option is not currently supported\[char46] For security reasons, specifying this option will cause the daemon process not to start\[char46]
-.SH "LOGGING OPTIONS"
-.TP
-\fB\-v\fR[\fIspec\fR]
-.TQ .5in
-\fB\-\-verbose=\fR[\fIspec\fR]
-Sets logging levels\[char46] Without any \fIspec\fR, sets the log level for every module and destination to \fBdbg\fR\[char46] Otherwise, \fIspec\fR is a list of words separated by spaces or commas or colons, up to one from each category below:
-.RS
-.IP \(bu
-A valid module name, as displayed by the \fBvlog/list\fR command on \fBovs\-appctl\fR(8), limits the log level change to the specified module\[char46]
-.IP \(bu
-\fBsyslog\fR, \fBconsole\fR, or \fBfile\fR, to limit the log level change to only to the system log, to the console, or to a file, respectively\[char46] (If \fB\-\-detach\fR is specified, the daemon closes its standard file descriptors, so logging to the console will have no effect\[char46])
-.IP
-On Windows platform, \fBsyslog\fR is accepted as a word and is only useful along with the \fB\-\-syslog\-target\fR option (the word has no effect otherwise)\[char46]
-.IP \(bu
-\fBoff\fR, \fBemer\fR, \fBerr\fR, \fBwarn\fR, \fBinfo\fR, or \fBdbg\fR, to control the log level\[char46] Messages of the given severity or higher will be logged, and messages of lower severity will be filtered out\[char46] \fBoff\fR filters out all messages\[char46] See \fBovs\-appctl\fR(8) for a definition of each log level\[char46]
-.RE
-.IP
-Case is not significant within \fIspec\fR\[char46]
-.IP
-Regardless of the log levels set for \fBfile\fR, logging to a file will not take place unless \fB\-\-log\-file\fR is also specified (see below)\[char46]
-.IP
-For compatibility with older versions of OVS, \fBany\fR is accepted as a word but has no effect\[char46]
-.TP
-\fB\-v\fR
-.TQ .5in
-\fB\-\-verbose\fR
-Sets the maximum logging verbosity level, equivalent to \fB\-\-verbose=dbg\fR\[char46]
-.TP
-\fB\-vPATTERN:\fR\fIdestination\fR\fB:\fR\fIpattern\fR
-.TQ .5in
-\fB\-\-verbose=PATTERN:\fR\fIdestination\fR\fB:\fR\fIpattern\fR
-Sets the log pattern for \fIdestination\fR to \fIpattern\fR\[char46] Refer to \fBovs\-appctl\fR(8) for a description of the valid syntax for \fIpattern\fR\[char46]
-.TP
-\fB\-vFACILITY:\fR\fIfacility\fR
-.TQ .5in
-\fB\-\-verbose=FACILITY:\fR\fIfacility\fR
-Sets the RFC5424 facility of the log message\[char46] \fIfacility\fR can be one of \fBkern\fR, \fBuser\fR, \fBmail\fR, \fBdaemon\fR, \fBauth\fR, \fBsyslog\fR, \fBlpr\fR, \fBnews\fR, \fBuucp\fR, \fBclock\fR, \fBftp\fR, \fBntp\fR, \fBaudit\fR, \fBalert\fR, \fBclock2\fR, \fBlocal0\fR, \fBlocal1\fR, \fBlocal2\fR, \fBlocal3\fR, \fBlocal4\fR, \fBlocal5\fR, \fBlocal6\fR or \fBlocal7\fR\[char46] If this option is not specified, \fBdaemon\fR is used as the default for the local system syslog and \fBlocal0\fR is used while sending a message to the target provided via the \fB\-\-syslog\-target\fR option\[char46]
-.TP
-\fB\-\-log\-file\fR[\fB=\fR\fIfile\fR]
-Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/local/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
-.TP
-\fB\-\-syslog\-target=\fR\fIhost\fR\fB:\fR\fIport\fR
-Send syslog messages to UDP \fIport\fR on \fIhost\fR, in addition to the system syslog\[char46] The \fIhost\fR must be a numerical IP address, not a hostname\[char46]
-.TP
-\fB\-\-syslog\-method=\fR\fImethod\fR
-Specify \fImethod\fR as how syslog messages should be sent to syslog daemon\[char46] The following forms are supported:
-.RS
-.IP \(bu
-\fBlibc\fR, to use the libc \fBsyslog()\fR function\[char46] Downside of using this options is that libc adds fixed prefix to every message before it is actually sent to the syslog daemon over \fB/dev/log\fR UNIX domain socket\[char46]
-.IP \(bu
-\fBunix:\fIfile\fB\fR, to use a UNIX domain socket directly\[char46] It is possible to specify arbitrary message format with this option\[char46] However, \fBrsyslogd 8\[char46]9\fR and older versions use hard coded parser function anyway that limits UNIX domain socket use\[char46] If you want to use arbitrary message format with older \fBrsyslogd\fR versions, then use UDP socket to localhost IP address instead\[char46]
-.IP \(bu
-\fBudp:\fIip\fB:\fIport\fB\fR, to use a UDP socket\[char46] With this method it is possible to use arbitrary message format also with older \fBrsyslogd\fR\[char46] When sending syslog messages over UDP socket extra precaution needs to be taken into account, for example, syslog daemon needs to be configured to listen on the specified UDP port, accidental iptables rules could be interfering with local syslog traffic and there are some security considerations that apply to UDP sockets, but do not apply to UNIX domain sockets\[char46]
-.IP \(bu
-\fBnull\fR, to discard all messages logged to syslog\[char46]
-.RE
-.IP
-The default is taken from the \fBOVS_SYSLOG_METHOD\fR environment variable; if it is unset, the default is \fBlibc\fR\[char46]
-.SH "TABLE FORMATTING OPTIONS"
-These options control the format of output from the \fBlist\fR and \fBfind\fR commands\[char46]
-.RS
-.TP
-\fB\-f\fR \fIformat\fR
-.TQ .5in
-\fB\-\-format=\fR\fIformat\fR
-Sets the type of table formatting\[char46] The following types of \fIformat\fR are available:
-.RS
-.TP
-\fBtable\fR
-2-D text tables with aligned columns\[char46]
-.TP
-\fBlist\fR (default)
-A list with one column per line and rows separated by a blank line\[char46]
-.TP
-\fBhtml\fR
-HTML tables\[char46]
-.TP
-\fBcsv\fR
-Comma-separated values as defined in RFC 4180\[char46]
-.TP
-\fBjson\fR
-JSON format as defined in RFC 4627\[char46] The output is a sequence of JSON objects, each of which corresponds to one table\[char46] Each JSON object has the following members with the noted values:
-.RS
-.TP
-\fBcaption\fR
-The table\(cqs caption\[char46] This member is omitted if the table has no caption\[char46]
-.TP
-\fBheadings\fR
-An array with one element per table column\[char46] Each array element is a string giving the corresponding column\(cqs heading\[char46]
-.TP
-\fBdata\fR
-An array with one element per table row\[char46] Each element is also an array with one element per table column\[char46] The elements of this second-level array are the cells that constitute the table\[char46] Cells that represent OVSDB data or data types are expressed in the format described in the OVSDB specification; other cells are simply expressed as text strings\[char46]
-.RE
-.RE
-.TP
-\fB\-d\fR \fIformat\fR
-.TQ .5in
-\fB\-\-data=\fR\fIformat\fR
-Sets the formatting for cells within output tables unless the table format is set to \fBjson\fR, in which case \fBjson\fR formatting is always used when formatting cells\[char46] The following types of \fIformat\fR are available:
-.RS
-.TP
-\fBstring\fR (default)
-The simple format described in the \fBDatabase Values\fR section of \fBovs\-vsctl\fR(8)\[char46]
-.TP
-\fBbare\fR
-The simple format with punctuation stripped off: \fB[]\fR and \fB{}\fR are omitted around sets, maps, and empty columns, items within sets and maps are space-separated, and strings are never quoted\[char46] This format may be easier for scripts to parse\[char46]
-.TP
-\fBjson\fR
-The RFC 4627 JSON format as described above\[char46]
-.RE
-.TP
-\fB\-\-no\-headings\fR
-This option suppresses the heading row that otherwise appears in the first row of table output\[char46]
-.TP
-\fB\-\-pretty\fR
-By default, JSON in output is printed as compactly as possible\[char46] This option causes JSON in output to be printed in a more readable fashion\[char46] Members of objects and elements of arrays are printed one per line, with indentation\[char46]
-.IP
-This option does not affect JSON in tables, which is always printed compactly\[char46]
-.TP
-\fB\-\-bare\fR
-Equivalent to \fB\-\-format=list \-\-data=bare \-\-no\-headings\fR\[char46]
-.RE
-.SS "PKI Options"
-.PP
-.PP
-PKI configuration is required to use SSL for the connection to the database\[char46]
-.RS
-.TP
-\fB\-p\fR \fIprivkey\[char46]pem\fR
-.TQ .5in
-\fB\-\-private\-key=\fR\fIprivkey\[char46]pem\fR
-Specifies a PEM file containing the private key used as identity for outgoing SSL connections\[char46]
-.TP
-\fB\-c\fR \fIcert\[char46]pem\fR
-.TQ .5in
-\fB\-\-certificate=\fR\fIcert\[char46]pem\fR
-Specifies a PEM file containing a certificate that certifies the private key specified on \fB\-p\fR or \fB\-\-private\-key\fR to be trustworthy\[char46] The certificate must be signed by the certificate authority (CA) that the peer in SSL connections will use to verify it\[char46]
-.TP
-\fB\-C\fR \fIcacert\[char46]pem\fR
-.TQ .5in
-\fB\-\-ca\-cert=\fR\fIcacert\[char46]pem\fR
-Specifies a PEM file containing the CA certificate for verifying certificates presented to this program by SSL peers\[char46] (This may be the same certificate that SSL peers use to verify the certificate specified on \fB\-c\fR or \fB\-\-certificate\fR, or it may be a different one, depending on the PKI design in use\[char46])
-.TP
-\fB\-C none\fR
-.TQ .5in
-\fB\-\-ca\-cert=none\fR
-Disables verification of certificates presented by SSL peers\[char46] This introduces a security risk, because it means that certificates cannot be verified to be those of known trusted hosts\[char46]
-.RE
-.RS
-.TP
-\fB\-\-bootstrap\-ca\-cert=\fR\fIcacert\[char46]pem\fR
-When \fIcacert\[char46]pem\fR exists, this option has the same effect as \fB\-C\fR or \fB\-\-ca\-cert\fR\[char46] If it does not exist, then the executable will attempt to obtain the CA certificate from the SSL peer on its first SSL connection and save it to the named PEM file\[char46] If it is successful, it will immediately drop the connection and reconnect, and from then on all SSL connections must be authenticated by a certificate signed by the CA certificate thus obtained\[char46]
-.IP
-This option exposes the SSL connection to a man-in-the-middle attack obtaining the initial CA certificate, but it may be useful for bootstrapping\[char46]
-.IP
-This option is only useful if the SSL peer sends its CA certificate as part of the SSL certificate chain\[char46] The SSL protocol does not require the server to send the CA certificate\[char46]
-.IP
-This option is mutually exclusive with \fB\-C\fR and \fB\-\-ca\-cert\fR\[char46]
-.RE
-.SS "Other Options"
-.TP
-\fB\-h\fR
-.TQ .5in
-\fB\-\-help\fR
-Prints a brief help message to the console\[char46]
-.TP
-\fB\-V\fR
-.TQ .5in
-\fB\-\-version\fR
-Prints version information to the console\[char46]
+1
+Usage, syntax, or network error\[char46]
+.SH "SEE ALSO"
+\fBovn\-nb\fR(5), \fBovn\-appctl\fR(8)\[char46]

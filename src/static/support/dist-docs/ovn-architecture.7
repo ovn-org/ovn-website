@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-architecture" 7 "OVN Architecture" "OVN 21\[char46]03\[char46]90" "OVN Manual"
+.TH "ovn-architecture" 7 "OVN Architecture" "OVN 21\[char46]09\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -376,6 +376,9 @@ The CMS may configure distributed gateway ports three different ways\[char46] Se
 .PP
 .PP
 Distributed gateway ports support high availability\[char46] When more than one chassis is specified, OVN only uses one at a time as the gateway chassis\[char46] OVN uses BFD to monitor gateway connectivity, preferring the highest-priority gateway that is online\[char46]
+.PP
+.PP
+A logical router can have multiple distributed gateway ports, each connecting different external networks\[char46] However, some features, such as NAT and load balancers, are not supported yet for logical routers with more than one distributed gateway port configured\[char46]
 .SU "Physical VLAN MTU Issues"
 .PP
 .PP
@@ -424,6 +427,13 @@ The \fBredirect\-type\fR option requires the administrator or the CMS to configu
 .PP
 .PP
 Set the \fBredirect\-type\fR option on a distributed gateway port\[char46]
+.SU "Using Distributed Gateway Ports For Scalability"
+.PP
+.PP
+Although the primary goal of distributed gateway ports is to provide connectivity to external networks, there is a special use case for scalability\[char46]
+.PP
+.PP
+In some deployments, such as the ones using \fBovn\-kubernetes\fR, logical switches are bound to individual chassises, and are connected by a distributed logical router\[char46] In such deployments, the chassis level logical switches are centralized on the chassis instead of distributed, which means the \fBovn\-controller\fR on each chassis doesn\(cqt need to process flows and ports of logical switches on other chassises\[char46] However, without any specific hint, \fBovn\-controller\fR would still process all the logical switches as if they are fully distributed\[char46] In this case, distributed gateway port can be very useful\[char46] The chassis level logical switches can be connected to the distributed router using distributed gateway ports, by setting the gateway chassis (or HA chassis groups with only a single chassis in it) to the chassis that each logical switch is bound to\[char46] \fBovn\-controller\fR would then skip processing the logical switches on all the other chassises, largely improving the scalability, especially when there are a big number of chassises\[char46]
 .SS "Life Cycle of a VIF"
 .PP
 .PP
@@ -527,7 +537,7 @@ Geneve and STT tunnels pass this field as part of the tunnel key\[char46] Ramp s
 logical output port field
 A field that denotes the logical port from which the packet will leave the logical datapath\[char46] This is initialized to 0 at the beginning of the logical ingress pipeline\[char46] OVN stores this in Open vSwitch extension register number 15\[char46]
 .IP
-Geneve, STT and regular VXLAN tunnels pass this field as part of the tunnel key\[char46] Ramp switch VXLAN tunnels do not transmit the logical output port field, and since they do not carry a logical output port field in the tunnel key, when a packet is received from ramp switch VXLAN tunnel by an OVN hypervisor, the packet is resubmitted to table 8 to determine the output port(s); when the packet reaches table 32, these packets are resubmitted to table 33 for local delivery by checking a MLF_RCV_FROM_RAMP flag, which is set when the packet arrives from a ramp tunnel\[char46]
+Geneve, STT and regular VXLAN tunnels pass this field as part of the tunnel key\[char46] Ramp switch VXLAN tunnels do not transmit the logical output port field, and since they do not carry a logical output port field in the tunnel key, when a packet is received from ramp switch VXLAN tunnel by an OVN hypervisor, the packet is resubmitted to table 8 to determine the output port(s); when the packet reaches table 37, these packets are resubmitted to table 38 for local delivery by checking a MLF_RCV_FROM_RAMP flag, which is set when the packet arrives from a ramp tunnel\[char46]
 .TP
 conntrack zone field for logical ports
 A field that denotes the connection tracking zone for logical ports\[char46] The value only has local significance and is not meaningful between chassis\[char46] This is initialized to 0 at the beginning of the logical ingress pipeline\[char46] OVN stores this in Open vSwitch extension register number 13\[char46]
@@ -567,7 +577,7 @@ Most OVN actions have fairly obvious implementations in OpenFlow (with OVS exten
 .RS
 .TP
 \fBoutput:\fR
-Implemented by resubmitting the packet to table 32\[char46] If the pipeline executes more than one \fBoutput\fR action, then each one is separately resubmitted to table 32\[char46] This can be used to send multiple copies of the packet to multiple ports\[char46] (If the packet was not modified between the \fBoutput\fR actions, and some of the copies are destined to the same hypervisor, then using a logical multicast output port would save bandwidth between hypervisors\[char46])
+Implemented by resubmitting the packet to table 37\[char46] If the pipeline executes more than one \fBoutput\fR action, then each one is separately resubmitted to table 37\[char46] This can be used to send multiple copies of the packet to multiple ports\[char46] (If the packet was not modified between the \fBoutput\fR actions, and some of the copies are destined to the same hypervisor, then using a logical multicast output port would save bandwidth between hypervisors\[char46])
 .TP
 \fBget_arp(\fIP\fB, \fIA\fB);\fR
 .TQ .5in
@@ -591,33 +601,33 @@ Implemented by storing arguments into OpenFlow fields, then resubmitting to tabl
 (The OpenFlow actions save and restore the OpenFlow fields used for the arguments, so that the OVN actions do not have to be aware of this temporary use\[char46])
 .RE
 .IP 3. .4in
-OpenFlow tables 32 through 47 implement the \fBoutput\fR action in the logical ingress pipeline\[char46] Specifically, table 32 handles packets to remote hypervisors, table 33 handles packets to the local hypervisor, and table 34 checks whether packets whose logical ingress and egress port are the same should be discarded\[char46]
+OpenFlow tables 37 through 39 implement the \fBoutput\fR action in the logical ingress pipeline\[char46] Specifically, table 37 handles packets to remote hypervisors, table 38 handles packets to the local hypervisor, and table 39 checks whether packets whose logical ingress and egress port are the same should be discarded\[char46]
 .IP
-Logical patch ports are a special case\[char46] Logical patch ports do not have a physical location and effectively reside on every hypervisor\[char46] Thus, flow table 33, for output to ports on the local hypervisor, naturally implements output to unicast logical patch ports too\[char46] However, applying the same logic to a logical patch port that is part of a logical multicast group yields packet duplication, because each hypervisor that contains a logical port in the multicast group will also output the packet to the logical patch port\[char46] Thus, multicast groups implement output to logical patch ports in table 32\[char46]
+Logical patch ports are a special case\[char46] Logical patch ports do not have a physical location and effectively reside on every hypervisor\[char46] Thus, flow table 38, for output to ports on the local hypervisor, naturally implements output to unicast logical patch ports too\[char46] However, applying the same logic to a logical patch port that is part of a logical multicast group yields packet duplication, because each hypervisor that contains a logical port in the multicast group will also output the packet to the logical patch port\[char46] Thus, multicast groups implement output to logical patch ports in table 37\[char46]
 .IP
-Each flow in table 32 matches on a logical output port for unicast or multicast logical ports that include a logical port on a remote hypervisor\[char46] Each flow\(cqs actions implement sending a packet to the port it matches\[char46] For unicast logical output ports on remote hypervisors, the actions set the tunnel key to the correct value, then send the packet on the tunnel port to the correct hypervisor\[char46] (When the remote hypervisor receives the packet, table 0 there will recognize it as a tunneled packet and pass it along to table 33\[char46]) For multicast logical output ports, the actions send one copy of the packet to each remote hypervisor, in the same way as for unicast destinations\[char46] If a multicast group includes a logical port or ports on the local hypervisor, then its actions also resubmit to table 33\[char46] Table 32 also includes:
+Each flow in table 37 matches on a logical output port for unicast or multicast logical ports that include a logical port on a remote hypervisor\[char46] Each flow\(cqs actions implement sending a packet to the port it matches\[char46] For unicast logical output ports on remote hypervisors, the actions set the tunnel key to the correct value, then send the packet on the tunnel port to the correct hypervisor\[char46] (When the remote hypervisor receives the packet, table 0 there will recognize it as a tunneled packet and pass it along to table 38\[char46]) For multicast logical output ports, the actions send one copy of the packet to each remote hypervisor, in the same way as for unicast destinations\[char46] If a multicast group includes a logical port or ports on the local hypervisor, then its actions also resubmit to table 38\[char46] Table 37 also includes:
 .RS
 .IP \(bu
-A higher-priority rule to match packets received from ramp switch tunnels, based on flag MLF_RCV_FROM_RAMP, and resubmit these packets to table 33 for local delivery\[char46] Packets received from ramp switch tunnels reach here because of a lack of logical output port field in the tunnel key and thus these packets needed to be submitted to table 8 to determine the output port\[char46]
+A higher-priority rule to match packets received from ramp switch tunnels, based on flag MLF_RCV_FROM_RAMP, and resubmit these packets to table 38 for local delivery\[char46] Packets received from ramp switch tunnels reach here because of a lack of logical output port field in the tunnel key and thus these packets needed to be submitted to table 8 to determine the output port\[char46]
 .IP \(bu
-A higher-priority rule to match packets received from ports of type \fBlocalport\fR, based on the logical input port, and resubmit these packets to table 33 for local delivery\[char46] Ports of type \fBlocalport\fR exist on every hypervisor and by definition their traffic should never go out through a tunnel\[char46]
+A higher-priority rule to match packets received from ports of type \fBlocalport\fR, based on the logical input port, and resubmit these packets to table 38 for local delivery\[char46] Ports of type \fBlocalport\fR exist on every hypervisor and by definition their traffic should never go out through a tunnel\[char46]
 .IP \(bu
 A higher-priority rule to match packets that have the MLF_LOCAL_ONLY logical flow flag set, and whose destination is a multicast address\[char46] This flag indicates that the packet should not be delivered to remote hypervisors, even if the multicast destination includes ports on remote hypervisors\[char46] This flag is used when \fBovn\-controller\fR is the originator of the multicast packet\[char46] Since each \fBovn\-controller\fR instance is originating these packets, the packets only need to be delivered to local ports\[char46]
 .IP \(bu
-A fallback flow that resubmits to table 33 if there is no other match\[char46]
+A fallback flow that resubmits to table 38 if there is no other match\[char46]
 .RE
 .IP
-Flows in table 33 resemble those in table 32 but for logical ports that reside locally rather than remotely\[char46] For unicast logical output ports on the local hypervisor, the actions just resubmit to table 34\[char46] For multicast output ports that include one or more logical ports on the local hypervisor, for each such logical port \fIP\fR, the actions change the logical output port to \fIP\fR, then resubmit to table 34\[char46]
+Flows in table 38 resemble those in table 37 but for logical ports that reside locally rather than remotely\[char46] For unicast logical output ports on the local hypervisor, the actions just resubmit to table 39\[char46] For multicast output ports that include one or more logical ports on the local hypervisor, for each such logical port \fIP\fR, the actions change the logical output port to \fIP\fR, then resubmit to table 39\[char46]
 .IP
-A special case is that when a localnet port exists on the datapath, remote port is connected by switching to the localnet port\[char46] In this case, instead of adding a flow in table 32 to reach the remote port, a flow is added in table 33 to switch the logical outport to the localnet port, and resubmit to table 33 as if it were unicasted to a logical port on the local hypervisor\[char46]
+A special case is that when a localnet port exists on the datapath, remote port is connected by switching to the localnet port\[char46] In this case, instead of adding a flow in table 37 to reach the remote port, a flow is added in table 38 to switch the logical outport to the localnet port, and resubmit to table 38 as if it were unicasted to a logical port on the local hypervisor\[char46]
 .IP
-Table 34 matches and drops packets for which the logical input and output ports are the same and the MLF_ALLOW_LOOPBACK flag is not set\[char46] It resubmits other packets to table 40\[char46]
+Table 39 matches and drops packets for which the logical input and output ports are the same and the MLF_ALLOW_LOOPBACK flag is not set\[char46] It also drops MLF_LOCAL_ONLY packets directed to a localnet port\[char46] It resubmits other packets to table 40\[char46]
 .IP 4. .4in
 OpenFlow tables 40 through 63 execute the logical egress pipeline from the \fBLogical_Flow\fR table in the OVN Southbound database\[char46] The egress pipeline can perform a final stage of validation before packet delivery\[char46] Eventually, it may execute an \fBoutput\fR action, which \fBovn\-controller\fR implements by resubmitting to table 64\[char46] A packet for which the pipeline never executes \fBoutput\fR is effectively dropped (although it may have been transmitted through a tunnel across a physical network)\[char46]
 .IP
 The egress pipeline cannot change the logical output port or cause further tunneling\[char46]
 .IP 5. .4in
-Table 64 bypasses OpenFlow loopback when MLF_ALLOW_LOOPBACK is set\[char46] Logical loopback was handled in table 34, but OpenFlow by default also prevents loopback to the OpenFlow ingress port\[char46] Thus, when MLF_ALLOW_LOOPBACK is set, OpenFlow table 64 saves the OpenFlow ingress port, sets it to zero, resubmits to table 65 for logical-to-physical transformation, and then restores the OpenFlow ingress port, effectively disabling OpenFlow loopback prevents\[char46] When MLF_ALLOW_LOOPBACK is unset, table 64 flow simply resubmits to table 65\[char46]
+Table 64 bypasses OpenFlow loopback when MLF_ALLOW_LOOPBACK is set\[char46] Logical loopback was handled in table 39, but OpenFlow by default also prevents loopback to the OpenFlow ingress port\[char46] Thus, when MLF_ALLOW_LOOPBACK is set, OpenFlow table 64 saves the OpenFlow ingress port, sets it to zero, resubmits to table 65 for logical-to-physical transformation, and then restores the OpenFlow ingress port, effectively disabling OpenFlow loopback prevents\[char46] When MLF_ALLOW_LOOPBACK is unset, table 64 flow simply resubmits to table 65\[char46]
 .IP 6. .4in
 OpenFlow table 65 performs logical-to-physical translation, the opposite of table 0\[char46] It matches the packet\(cqs logical egress port\[char46] Its actions output the packet to the port attached to the OVN integration bridge that represents that logical port\[char46] If the logical egress port is a container nested with a VM, then before sending the packet the actions push on a VLAN header with an appropriate VLAN ID\[char46]
 .RE
@@ -627,7 +637,7 @@ OpenFlow table 65 performs logical-to-physical translation, the opposite of tabl
 Typically logical routers and logical patch ports do not have a physical location and effectively reside on every hypervisor\[char46] This is the case for logical patch ports between logical routers and logical switches behind those logical routers, to which VMs (and VIFs) attach\[char46]
 .PP
 .PP
-Consider a packet sent from one virtual machine or container to another VM or container that resides on a different subnet\[char46] The packet will traverse tables 0 to 65 as described in the previous section \fBArchitectural Physical Life Cycle of a Packet\fR, using the logical datapath representing the logical switch that the sender is attached to\[char46] At table 32, the packet will use the fallback flow that resubmits locally to table 33 on the same hypervisor\[char46] In this case, all of the processing from table 0 to table 65 occurs on the hypervisor where the sender resides\[char46]
+Consider a packet sent from one virtual machine or container to another VM or container that resides on a different subnet\[char46] The packet will traverse tables 0 to 65 as described in the previous section \fBArchitectural Physical Life Cycle of a Packet\fR, using the logical datapath representing the logical switch that the sender is attached to\[char46] At table 37, the packet will use the fallback flow that resubmits locally to table 38 on the same hypervisor\[char46] In this case, all of the processing from table 0 to table 65 occurs on the hypervisor where the sender resides\[char46]
 .PP
 .PP
 When the packet reaches table 65, the logical egress port is a logical patch port\[char46] \fBovn\-controller\fR implements output to the logical patch is packet by cloning and resubmitting directly to the first OpenFlow flow table in the ingress pipeline, setting the logical ingress port to the peer logical patch port, and using the peer logical patch port\(cqs logical datapath (that represents the logical router)\[char46]
@@ -636,7 +646,7 @@ When the packet reaches table 65, the logical egress port is a logical patch por
 The packet re-enters the ingress pipeline in order to traverse tables 8 to 65 again, this time using the logical datapath representing the logical router\[char46] The processing continues as described in the previous section \fBArchitectural Physical Life Cycle of a Packet\fR\[char46] When the packet reachs table 65, the logical egress port will once again be a logical patch port\[char46] In the same manner as described above, this logical patch port will cause the packet to be resubmitted to OpenFlow tables 8 to 65, this time using the logical datapath representing the logical switch that the destination VM or container is attached to\[char46]
 .PP
 .PP
-The packet traverses tables 8 to 65 a third and final time\[char46] If the destination VM or container resides on a remote hypervisor, then table 32 will send the packet on a tunnel port from the sender\(cqs hypervisor to the remote hypervisor\[char46] Finally table 65 will output the packet directly to the destination VM or container\[char46]
+The packet traverses tables 8 to 65 a third and final time\[char46] If the destination VM or container resides on a remote hypervisor, then table 37 will send the packet on a tunnel port from the sender\(cqs hypervisor to the remote hypervisor\[char46] Finally table 65 will output the packet directly to the destination VM or container\[char46]
 .PP
 .PP
 The following sections describe two exceptions, where logical routers and/or logical patch ports are associated with a physical location\[char46]
@@ -646,7 +656,7 @@ The following sections describe two exceptions, where logical routers and/or log
 A \fIgateway router\fR is a logical router that is bound to a physical location\[char46] This includes all of the logical patch ports of the logical router, as well as all of the peer logical patch ports on logical switches\[char46] In the OVN Southbound database, the \fBPort_Binding\fR entries for these logical patch ports use the type \fBl3gateway\fR rather than \fBpatch\fR, in order to distinguish that these logical patch ports are bound to a chassis\[char46]
 .PP
 .PP
-When a hypervisor processes a packet on a logical datapath representing a logical switch, and the logical egress port is a \fBl3gateway\fR port representing connectivity to a gateway router, the packet will match a flow in table 32 that sends the packet on a tunnel port to the chassis where the gateway router resides\[char46] This processing in table 32 is done in the same manner as for VIFs\[char46]
+When a hypervisor processes a packet on a logical datapath representing a logical switch, and the logical egress port is a \fBl3gateway\fR port representing connectivity to a gateway router, the packet will match a flow in table 37 that sends the packet on a tunnel port to the chassis where the gateway router resides\[char46] This processing in table 37 is done in the same manner as for VIFs\[char46]
 .ST "Distributed Gateway Ports"
 .PP
 .PP
@@ -672,16 +682,16 @@ In order to support one-to-many SNAT (aka IP masquerading), where multiple logic
 The details of flow restrictions to specific chassis are described in the \fBovn\-northd\fR documentation\[char46]
 .PP
 .PP
-While most of the physical location dependent aspects of distributed gateway ports can be handled by restricting some flows to specific chassis, one additional mechanism is required\[char46] When a packet leaves the ingress pipeline and the logical egress port is the distributed gateway port, one of two different sets of actions is required at table 32:
+While most of the physical location dependent aspects of distributed gateway ports can be handled by restricting some flows to specific chassis, one additional mechanism is required\[char46] When a packet leaves the ingress pipeline and the logical egress port is the distributed gateway port, one of two different sets of actions is required at table 37:
 .RS
 .IP \(bu
-If the packet can be handled locally on the sender\(cqs hypervisor (e\[char46]g\[char46] one-to-one NAT traffic), then the packet should just be resubmitted locally to table 33, in the normal manner for distributed logical patch ports\[char46]
+If the packet can be handled locally on the sender\(cqs hypervisor (e\[char46]g\[char46] one-to-one NAT traffic), then the packet should just be resubmitted locally to table 38, in the normal manner for distributed logical patch ports\[char46]
 .IP \(bu
-However, if the packet needs to be handled on the chassis associated with the distributed gateway port (e\[char46]g\[char46] one-to-many SNAT traffic or non-NAT traffic), then table 32 must send the packet on a tunnel port to that chassis\[char46]
+However, if the packet needs to be handled on the chassis associated with the distributed gateway port (e\[char46]g\[char46] one-to-many SNAT traffic or non-NAT traffic), then table 37 must send the packet on a tunnel port to that chassis\[char46]
 .RE
 .PP
 .PP
-In order to trigger the second set of actions, the \fBchassisredirect\fR type of southbound \fBPort_Binding\fR has been added\[char46] Setting the logical egress port to the type \fBchassisredirect\fR logical port is simply a way to indicate that although the packet is destined for the distributed gateway port, it needs to be redirected to a different chassis\[char46] At table 32, packets with this logical egress port are sent to a specific chassis, in the same way that table 32 directs packets whose logical egress port is a VIF or a type \fBl3gateway\fR port to different chassis\[char46] Once the packet arrives at that chassis, table 33 resets the logical egress port to the value representing the distributed gateway port\[char46] For each distributed gateway port, there is one type \fBchassisredirect\fR port, in addition to the distributed logical patch port representing the distributed gateway port\[char46]
+In order to trigger the second set of actions, the \fBchassisredirect\fR type of southbound \fBPort_Binding\fR has been added\[char46] Setting the logical egress port to the type \fBchassisredirect\fR logical port is simply a way to indicate that although the packet is destined for the distributed gateway port, it needs to be redirected to a different chassis\[char46] At table 37, packets with this logical egress port are sent to a specific chassis, in the same way that table 37 directs packets whose logical egress port is a VIF or a type \fBl3gateway\fR port to different chassis\[char46] Once the packet arrives at that chassis, table 38 resets the logical egress port to the value representing the distributed gateway port\[char46] For each distributed gateway port, there is one type \fBchassisredirect\fR port, in addition to the distributed logical patch port representing the distributed gateway port\[char46]
 .ST "High Availability for Distributed Gateway Ports"
 .PP
 .PP
@@ -726,6 +736,16 @@ Due to the fact that ARP requests and ND NA packets are usually broadcast packet
 .PP
 .PP
 All other ARP and ND packets are flooded in the L2 broadcast domain and to all attached logical patch ports\[char46]
+.ST "VIFs on the logical switch connected by a distributed gateway port"
+.PP
+.PP
+Typically the logical switch connected by a distributed gateway port is for external connectivity, usually to a physical network through a localnet port on the logical switch, or to a remote OVN deployment through OVN Interconnection\[char46] In these cases there is no VIF ports required on the logical switch\[char46]
+.PP
+.PP
+While not very common, it is still possible to create VIF ports on the logical switch connected by a distributed gateway port, but there is a limitation that the logical ports need to reside on the gateway chassis where the distributed gateway port resides to get connectivity to other logical switches through the distributed gateway port\[char46] There is no limitation for the VIFs to connect within the logical switch, or beyond the logical switch through other regular distributed logical router ports\[char46]
+.PP
+.PP
+A special case is when using distributed gateway ports for scalability purpose, as mentioned earlier in this document\[char46] The logical switches connected by distributed gateway ports are not for connectivity but just for regular VIFs\[char46] However, the above limitation usually does not matter because in this use case all the VIFs on the logical switch are located on the same chassis with the distributed gateway port that connects the logical switch\[char46]
 .SS "Multiple localnet logical switches connected to a Logical Router"
 .PP
 .PP
@@ -778,7 +798,7 @@ Although this works, the VM traffic is tunnelled when sent from the compute chas
 To overcome the tunnel encapsulation problem described in the previous section, \fBOVN\fR supports the option of enabling centralized routing for localnet VLAN tagged logical switches\[char46] CMS can configure the option \fBoptions:reside-on-redirect-chassis\fR to \fBtrue\fR for each \fBLogical_Router_Port\fR which connects to the localnet VLAN tagged logical switches\[char46] This causes the gateway chassis (hosting the distributed gateway port) to handle all the routing for these networks, making it centralized\[char46] It will reply to the ARP requests for the logical router port IPs\[char46]
 .PP
 .PP
-If the logical router doesn\(cqt have a distributed gateway port connecting to the localnet logical switch which provides external connectivity, then this option is ignored by \fBOVN\fR\[char46]
+If the logical router doesn\(cqt have a distributed gateway port connecting to the localnet logical switch which provides external connectivity, or if it has more than one distributed gateway ports, then this option is ignored by \fBOVN\fR\[char46]
 .PP
 .PP
 The following happens when a VM sends an east-west traffic which needs to be routed:
@@ -821,6 +841,9 @@ The source chassis receives the packet via a localnet port and sends it to the i
 .PP
 .PP
 As an alternative to \fBreside\-on\-redirect\-chassis\fR, OVN supports VLAN-based redirection\[char46] Whereas \fBreside\-on\-redirect\-chassis\fR centralizes all router functionality, VLAN-based redirection only changes how OVN redirects packets to the gateway chassis\[char46] By setting \fBoptions:redirect\-type\fR to \fBbridged\fR on a distributed gateway port, OVN redirects packets to the gateway chassis using the \fBlocalnet\fR port of the router\(cqs peer logical switch, instead of a tunnel\[char46]
+.PP
+.PP
+If the logical router doesn\(cqt have a distributed gateway port connecting to the localnet logical switch which provides external connectivity, or if it has more than one distributed gateway ports, then this option is ignored by \fBOVN\fR\[char46]
 .PP
 .PP
 Following happens for bridged redirection:
@@ -1073,7 +1096,7 @@ When VXLAN is enabled on any hypervisor in a cluster, datapath and egress port i
 .IP \(bu
 12-bit logical datapath identifier, derived from the \fBtunnel_key\fR column in the OVN Southbound \fBDatapath_Binding\fR table\[char46]
 .IP \(bu
-12-bit logical egress port identifier\[char46] IDs 0 through 32767 have the same meaning as for logical ingress ports\[char46] IDs 32768 through 65535, inclusive, may be assigned to logical multicast groups (see the \fBtunnel_key\fR column in the OVN Southbound \fBMulticast_Group\fR table)\[char46]
+12-bit logical egress port identifier\[char46] IDs 0 through 2047 are used for unicast output ports\[char46] IDs 2048 through 4095, inclusive, may be assigned to logical multicast groups (see the \fBtunnel_key\fR column in the OVN Southbound \fBMulticast_Group\fR table)\[char46] For multicast group tunnel keys, a special mapping scheme is used to internally transform from internal OVN 16-bit keys to 12-bit values before sending packets through a VXLAN tunnel, and back from 12-bit tunnel keys to 16-bit values when receiving packets from a VXLAN tunnel\[char46]
 .IP \(bu
 No logical ingress port identifier\[char46]
 .RE

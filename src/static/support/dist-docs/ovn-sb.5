@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-sb" 5 " DB Schema 20.17.0" "Open vSwitch 21.03.90" "Open vSwitch Manual"
+.TH "ovn-sb" 5 " DB Schema 20.20.0" "Open vSwitch 21.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -582,6 +582,12 @@ string
 \fBactions\fR
 string
 .TQ 3.00in
+\fBtags\fR
+map of string-string pairs
+.TQ 3.00in
+\fBcontroller_meter\fR
+optional string
+.TQ 3.00in
 \fBexternal_ids : stage-name\fR
 optional string
 .TQ 3.00in
@@ -726,7 +732,7 @@ For a one-bit field or predicate, a mention of its name is equivalent to \fB\fIs
 .IP
 Most of the symbols below have integer type\[char46] Only \fBinport\fR and \fBoutport\fR have string type\[char46] \fBinport\fR names a logical port\[char46] Thus, its value is a \fBlogical_port\fR name from the \fBPort_Binding\fR table\[char46] \fBoutport\fR may name a logical port, as \fBinport\fR, or a logical multicast group defined in the \fBMulticast_Group\fR table\[char46] For both symbols, only names within the flow\(cqs logical datapath may be used\[char46]
 .IP
-The \fBreg\fR\fIX\fR symbols are 32-bit integers\[char46] The \fBxxreg\fR\fIX\fR symbols are 128-bit integers, which overlay four of the 32-bit registers: \fBxxreg0\fR overlays \fBreg0\fR through \fBreg3\fR, with \fBreg0\fR supplying the most-significant bits of \fBxxreg0\fR and \fBreg3\fR the least-signficant\[char46] \fBxxreg1\fR similarly overlays \fBreg4\fR through \fBreg7\fR\[char46]
+The \fBreg\fR\fIX\fR symbols are 32-bit integers\[char46] The \fBxxreg\fR\fIX\fR symbols are 128-bit integers, which overlay four of the 32-bit registers: \fBxxreg0\fR overlays \fBreg0\fR through \fBreg3\fR, with \fBreg0\fR supplying the most-significant bits of \fBxxreg0\fR and \fBreg3\fR the least-significant\[char46] \fBxxreg1\fR similarly overlays \fBreg4\fR through \fBreg7\fR\[char46]
 .RS
 .IP \(bu
 \fBreg0\fR\[char46]\[char46]\[char46]\fBreg9\fR
@@ -864,7 +870,7 @@ By default, output to the input port is implicitly dropped, that is, \fBoutput\f
 Executes the given logical datapath \fItable\fR in \fIpipeline\fR as a subroutine\[char46] The default \fItable\fR is just after the current one\[char46] If \fIpipeline\fR is specified, it may be \fBingress\fR or \fBegress\fR; the default \fIpipeline\fR is the one currently executing\[char46] Actions in the both ingress and egress pipeline can use \fBnext\fR to jump across the other pipeline\[char46] Actions in the ingress pipeline should use \fBnext\fR to jump into the specific table of egress pipeline only if it is certain that the packets are local and not tunnelled and wants to skip certain stages in the packet processing\[char46]
 .TP
 \fB\fIfield\fB = \fIconstant\fB;\fR
-Sets data or metadata field \fIfield\fR to constant value \fIconstant\fR, e\[char46]g\[char46] \fBoutport = \(dqvif0\(dq;\fR to set the logical output port\[char46] To set only a subset of bits in a field, specify a subfield for \fIfield\fR or a masked \fIconstant\fR, e\[char46]g\[char46] one may use \fBvlan\[char46]pcp[2] = 1;\fR or \fBvlan\[char46]pcp = 4/4;\fR to set the most sigificant bit of the VLAN PCP\[char46]
+Sets data or metadata field \fIfield\fR to constant value \fIconstant\fR, e\[char46]g\[char46] \fBoutport = \(dqvif0\(dq;\fR to set the logical output port\[char46] To set only a subset of bits in a field, specify a subfield for \fIfield\fR or a masked \fIconstant\fR, e\[char46]g\[char46] one may use \fBvlan\[char46]pcp[2] = 1;\fR or \fBvlan\[char46]pcp = 4/4;\fR to set the most significant bit of the VLAN PCP\[char46]
 .IP
 Assigning to a field with prerequisites implicitly adds those prerequisites to \fBmatch\fR; thus, for example, a flow that sets \fBtcp\[char46]dst\fR applies only to TCP flows, regardless of whether its \fBmatch\fR mentions any TCP field\[char46]
 .IP
@@ -1420,6 +1426,15 @@ This action checks if the packet under consideration is from one of the backend 
 \fB\fIR\fB = ct_snat_to_vip;\fR
 This action sends the packet through the SNAT zone to change the source IP address of the packet to the load balancer VIP if the original destination IP was load balancer VIP and commits the connection\[char46] This action applies successfully only for the hairpinned traffic i\[char46]e if the action \fBchk_lb_hairpin\fR returned success\[char46] This action doesn\(cqt take any arguments and it determines the SNAT IP internally\[char46] The packet is not automatically sent to the next table\[char46] The caller has to execute the \fBnext;\fR action explicitly after this action to advance the packet to the next stage\[char46]
 .RE
+.IP "\fBtags\fR: map of string-string pairs"
+Key-value pairs that provide additional information to help ovn-controller processing the logical flow\[char46] Below are the tags used by ovn-controller\[char46]
+.RS
+.TP
+in_out_port
+In the logical flow\(cqs \(dqmatch\(dq column, if a logical port P is compared with \(dqinport\(dq and the logical flow is on a logical switch ingress pipeline, or if P is compared with \(dqoutport\(dq and the logical flow is on a logical switch egress pipeline, and the expression is combined with other expressions (if any) using the operator &&, then the port P should be added as the value in this tag\[char46] If there are multiple logical ports meeting this criteria, one of them can be added\[char46] ovn-controller uses this information to skip parsing flows that are not needed on the chassis\[char46] Failing to add the tag will affect efficiency, while adding wrong value will affect correctness\[char46]
+.RE
+.IP "\fBcontroller_meter\fR: optional string"
+The name of the meter in table \fBMeter\fR to be used for all packets that the logical flow might send to \fBovn\-controller\fR\[char46]
 .IP "\fBexternal_ids : stage-name\fR: optional string"
 Human-readable name for this flow\(cqs stage in the pipeline\[char46]
 .IP "\fBexternal_ids : stage-hint\fR: optional string, containing an uuid"
@@ -1540,7 +1555,7 @@ The main purpose of a row in this table is provide a physical binding for a logi
 integer, in range 1 to 16,777,215 (must be unique within table)
 .TQ 3.00in
 \fBload_balancers\fR
-set of weak reference to \fBLoad_Balancer\fRs
+set of uuids
 .TQ .25in
 \fIOVN_Northbound Relationship:\fR
 .RS .25in
@@ -1574,8 +1589,8 @@ map of string-string pairs
 .SS "Details:
 .IP "\fBtunnel_key\fR: integer, in range 1 to 16,777,215 (must be unique within table)"
 The tunnel key value to which the logical datapath is bound\[char46] The \fBTunnel Encapsulation\fR section in \fBovn\-architecture\fR(7) describes how tunnel keys are constructed for each supported encapsulation\[char46]
-.IP "\fBload_balancers\fR: set of weak reference to \fBLoad_Balancer\fRs"
-Load balancers associated with the datapath\[char46]
+.IP "\fBload_balancers\fR: set of uuids"
+Not used anymore; kept for backwards compatibility of the schema\[char46]
 .ST "OVN_Northbound Relationship:"
 .PP
 .PP
@@ -1674,9 +1689,6 @@ optional string
 \fBoptions : l3gateway-chassis\fR
 optional string
 .TQ 2.75in
-\fBoptions : nat-addresses\fR
-optional string
-.TQ 2.75in
 \fBnat_addresses\fR
 set of strings
 .RE
@@ -1720,6 +1732,9 @@ optional string
 \fBoptions : requested-chassis\fR
 optional string
 .TQ 2.75in
+\fBoptions : iface-id-ver\fR
+optional string
+.TQ 2.75in
 \fBoptions : qos_max_rate\fR
 optional string
 .TQ 2.75in
@@ -1730,10 +1745,23 @@ optional string
 optional string, containing an integer, in range 1 to 61,440
 .RE
 .TQ .25in
+\fIDistributed Gateway Port Options:\fR
+.RS .25in
+.TQ 2.75in
+\fBoptions : chassis-redirect-port\fR
+optional string
+.RE
+.TQ .25in
 \fIChassis Redirect Options:\fR
 .RS .25in
 .TQ 2.75in
 \fBoptions : distributed-port\fR
+optional string
+.TQ 2.75in
+\fBoptions : redirect-type\fR
+optional string
+.TQ 2.75in
+\fBoptions : always-redirect\fR
 optional string
 .RE
 .TQ .25in
@@ -1773,7 +1801,7 @@ map of string-string pairs
 .IP "\fBdatapath\fR: \fBDatapath_Binding\fR"
 The logical datapath to which the logical port belongs\[char46]
 .IP "\fBlogical_port\fR: string (must be unique within table)"
-A logical port\[char46] For a logical switch port, this is taken from \fBname\fR in the OVN_Northbound database\(cqs \fBLogical_Switch_Port\fR table\[char46] For a logical router port, this is taken from \fBname\fR in the OVN_Northbound database\(cqs \fBLogical_Router_port\fR table\[char46] (This means that logical switch ports and router port names must share names in an OVN deployment\[char46]) OVN does not prescribe a particular format for the logical port ID\[char46]
+A logical port\[char46] For a logical switch port, this is taken from \fBname\fR in the OVN_Northbound database\(cqs \fBLogical_Switch_Port\fR table\[char46] For a logical router port, this is taken from \fBname\fR in the OVN_Northbound database\(cqs \fBLogical_Router_port\fR table\[char46] (This means that logical switch ports and router port names must not share names in an OVN deployment\[char46]) OVN does not prescribe a particular format for the logical port ID\[char46]
 .IP "\fBencap\fR: optional weak reference to \fBEncap\fR"
 Points to supported encapsulation configurations to transmit logical dataplane packets to this chassis\[char46] Each entry is a \fBEncap\fR record that describes the configuration\[char46]
 .IP "\fBchassis\fR: optional weak reference to \fBChassis\fR"
@@ -1811,9 +1839,7 @@ A number that represents the logical port in the key (e\[char46]g\[char46] STT k
 .IP
 The tunnel ID must be unique within the scope of a logical datapath\[char46]
 .IP "\fBmac\fR: set of strings"
-The Ethernet address or addresses used as a source address on the logical port, each in the form \fIxx\fR:\fIxx\fR:\fIxx\fR:\fIxx\fR:\fIxx\fR:\fIxx\fR\[char46] The string \fBunknown\fR is also allowed to indicate that the logical port has an unknown set of (additional) source addresses\[char46]
-.IP
-A VM interface would ordinarily have a single Ethernet address\[char46] A gateway port might initially only have \fBunknown\fR, and then add MAC addresses to the set as it learns new source addresses\[char46]
+This column is a misnomer as it may contain MAC addresses and IP addresses\[char46] It is copied from the \fBaddresses\fR column in the \fBLogical_Switch_Port\fR table in the Northbound database\[char46] It follows the same format as that column\[char46]
 .IP "\fBtype\fR: string"
 A type for this logical port\[char46] Logical ports can be used to model other types of connectivity into an OVN logical switch\[char46] The following types are defined:
 .RS
@@ -1864,8 +1890,6 @@ These options apply to logical ports with \fBtype\fR of \fBl3gateway\fR\[char46]
 The \fBlogical_port\fR in the \fBPort_Binding\fR record for the other side of the \(cql3gateway\(cq port\[char46] The named \fBlogical_port\fR must specify this \fBlogical_port\fR in its own \fBpeer\fR option\[char46] That is, the two \(cql3gateway\(cq logical ports must have reversed \fBlogical_port\fR and \fBpeer\fR values\[char46]
 .IP "\fBoptions : l3gateway-chassis\fR: optional string"
 The \fBchassis\fR in which the port resides\[char46]
-.IP "\fBoptions : nat-addresses\fR: optional string"
-MAC address of the \fBl3gateway\fR port followed by a list of SNAT and DNAT external IP addresses\[char46] This is used to send gratuitous ARPs for SNAT and DNAT external IP addresses via \fBlocalnet\fR\[char46] Example: \fB80:fa:5b:06:72:b7 158\[char46]36\[char46]44\[char46]22 158\[char46]36\[char46]44\[char46]24\fR\[char46] This would result in generation of gratuitous ARPs for IP addresses 158\[char46]36\[char46]44\[char46]22 and 158\[char46]36\[char46]44\[char46]24 with a MAC address of 80:fa:5b:06:72:b7\[char46] This is used in OVS versions prior to 2\[char46]8\[char46]
 .IP "\fBnat_addresses\fR: set of strings"
 MAC address of the \fBl3gateway\fR port followed by a list of SNAT and DNAT external IP addresses\[char46] This is used to send gratuitous ARPs for SNAT and DNAT external IP addresses via \fBlocalnet\fR\[char46] Example: \fB80:fa:5b:06:72:b7 158\[char46]36\[char46]44\[char46]22 158\[char46]36\[char46]44\[char46]24\fR\[char46] This would result in generation of gratuitous ARPs for IP addresses 158\[char46]36\[char46]44\[char46]22 and 158\[char46]36\[char46]44\[char46]24 with a MAC address of 80:fa:5b:06:72:b7\[char46] This is used in OVS version 2\[char46]8 and later versions\[char46]
 .ST "Localnet Options:"
@@ -1914,6 +1938,8 @@ Required\[char46] A logical switch name connected by the VTEP gateway\[char46] M
 These options apply to logical ports with \fBtype\fR having (empty string)
 .IP "\fBoptions : requested-chassis\fR: optional string"
 If set, identifies a specific chassis (by name or hostname) that is allowed to bind this port\[char46] Using this option will prevent thrashing between two chassis trying to bind the same port during a live migration\[char46] It can also prevent similar thrashing due to a mis-configuration, if a port is accidentally created on more than one chassis\[char46]
+.IP "\fBoptions : iface-id-ver\fR: optional string"
+If set, this port will be bound by \fBovn\-controller\fR only if this same key and value is configured in the \fBexternal_ids\fR column in the Open_vSwitch database\(cqs \fBInterface\fR table\[char46]
 .IP "\fBoptions : qos_max_rate\fR: optional string"
 If set, indicates the maximum rate for data sent from this interface, in bit/s\[char46] The traffic will be shaped according to this limit\[char46]
 .IP "\fBoptions : qos_burst\fR: optional string"
@@ -1921,6 +1947,13 @@ If set, indicates the maximum burst size for data sent from this interface, in b
 .IP "\fBoptions : qdisc_queue_id\fR: optional string, containing an integer, in range 1 to 61,440"
 Indicates the queue number on the physical device\[char46] This is same as the \fBqueue_id\fR used in OpenFlow in \fBstruct
 ofp_action_enqueue\fR\[char46]
+.ST "Distributed Gateway Port Options:"
+.PP
+.PP
+.PP
+These options apply to the distributed parent ports of logical ports with \fBtype\fR of \fBchasssisredirect\fR\[char46]
+.IP "\fBoptions : chassis-redirect-port\fR: optional string"
+The name of the chassis redirect port derived from this port if this port is a distributed parent of a chassis redirect port\[char46]
 .ST "Chassis Redirect Options:"
 .PP
 .PP
@@ -1928,6 +1961,10 @@ ofp_action_enqueue\fR\[char46]
 These options apply to logical ports with \fBtype\fR of \fBchassisredirect\fR\[char46]
 .IP "\fBoptions : distributed-port\fR: optional string"
 The name of the distributed port for which this \fBchassisredirect\fR port represents a particular instance\[char46]
+.IP "\fBoptions : redirect-type\fR: optional string"
+The value is copied from the column \fBoptions\fR in the OVN_Northbound database\(cqs \fBLogical_Router_Port\fR table for the distributed parent of this port\[char46]
+.IP "\fBoptions : always-redirect\fR: optional string"
+A boolean option that is set to true if the distributed parent of this chassis redirect port does not need distributed processing\[char46]
 .ST "Nested Containers:"
 .PP
 .PP
@@ -2708,7 +2745,7 @@ string
 optional string, either \fBtcp\fR or \fBudp\fR
 .TQ 2.75in
 \fBport\fR
-integer, in range 0 to 32,767
+integer, in range 0 to 65,535
 .TQ 2.75in
 \fBlogical_port\fR
 string
@@ -2755,7 +2792,7 @@ map of string-string pairs
 IP of the service to be monitored\[char46] Only IPv4 is supported\[char46]
 .IP "\fBprotocol\fR: optional string, either \fBtcp\fR or \fBudp\fR"
 The protocol of the service\[char46]
-.IP "\fBport\fR: integer, in range 0 to 32,767"
+.IP "\fBport\fR: integer, in range 0 to 65,535"
 The TCP or UDP port of the service\[char46]
 .IP "\fBlogical_port\fR: string"
 The VIF of the logical port on which the service is running\[char46] The \fBovn\-controller\fR that binds this \fBlogical_port\fR monitors the service by sending periodic monitor packets\[char46]
