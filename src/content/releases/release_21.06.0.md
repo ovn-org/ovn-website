@@ -18,3 +18,7 @@ In addition to bug fixes, the 21.06.0 release of OVN contains a mix of new featu
 - ct.inv can be disabled for deployments where offloading to smart NICs is desired.
 - Similar to the ovn-nbctl daemon, ovn-sbctl has a daemon mode.
 
+### Documentation
+
+Distribution documentation (aka man pages) specific to this release is
+[available here](https://www.ovn.org/support/dist-docs-branch-21.06/).

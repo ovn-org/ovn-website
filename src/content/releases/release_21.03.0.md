@@ -32,3 +32,8 @@ In addition to bug fixes, the 21.03.0 release of OVN contains a mix of new featu
 - Partial set and partial map updates are used in place of full set replacement in OVSDB operations. In several cases this greatly reduces the size of messages transmitted during OVSDB operations.
 - Rather than pre-programming all possible load balancer hairpin flows, we now use the "learn" action in OVS. This has the potential to greatly reduce the number of flows installed by OVN.
 - Several checks of conntrack fields have been removed. This improves chances of flows being offloadable in certain scenarios.
+
+### Documentation
+
+Distribution documentation (aka man pages) specific to this release is
+[available here](https://www.ovn.org/support/dist-docs-branch-21.03/).
