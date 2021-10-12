@@ -33,6 +33,24 @@ OPTIONS
               the  OVN_SB_DB environment variable is set, its value is used as
               the default. Otherwise, the default is unix:/ovnsb_db.sock.
 
+       --ddlog-record=file
+              This option is for ovn-north-ddlog only. It causes the daemon to
+              record  the  initial database state and later changes to file in
+              the text-based DDlog command format. The ovn_northd_cli  program
+              can  later  replay  these  changes  for debugging purposes. This
+              option has a performance impact. See debugging-ddlog.rst in  the
+              OVN documentation for more details.
+
+       --dry-run
+              Causes   ovn-northd  to  start  paused.  In  the  paused  state,
+              ovn-northd does not apply any changes to the databases, although
+              it  continues  to  monitor  them.  For more information, see the
+              pause command, under Runtime Management Commands below.
+
+              For  ovn-northd-ddlog,  one   could   use   this   option   with
+              --ddlog-record  to  generate  a  replay log without restarting a
+              process or disturbing a running system.
+
        database in the above options must be an OVSDB active or  passive  con‐
        nection method, as described in ovsdb(7).
 
@@ -280,9 +298,11 @@ RUNTIME MANAGEMENT COMMANDS
 
               exit   Causes ovn-northd to gracefully terminate.
 
-              pause  Pauses  the  ovn-northd  operation  from  processing  any
-                     Northbound and Southbound  database  changes.  This  will
-                     also instruct ovn-northd to drop any lock on SB DB.
+              pause  Pauses ovn-northd. When it is paused, ovn-northd receives
+                     changes  from  the  Northbound  and  Southbound  database
+                     changes  as  usual,  but  it does not send any updates. A
+                     paused ovn-northd also drops database locks, which allows
+                     any other non-paused instance of ovn-northd to take over.
 
               resume Resumes  the  ovn-northd  operation to process Northbound
                      and Southbound database  contents  and  generate  logical
@@ -384,6 +404,16 @@ LOGICAL FLOW TABLE STRUCTURE
                      security is not enabled, these advance all  packets  that
                      match the inport.
 
+              ·      For  logical  ports  of type vtep, the above logical flow
+                     will also apply the action REGBIT_FROM_RAMP = 1; to indi‐
+                     cate  that  the packet is coming from a RAMP (controller-
+                     vtep) device. Later pipelines will use  this  information
+                     to skip sending the packet to the conntrack. Packets from
+                     vtep logical ports should go though ingress pipeline only
+                     to  determine the output port and they should not be sub‐
+                     jected to any ACL checks. Egress pipeline will do the ACL
+                     checks.
+
        There  are no flows for disabled logical ports because the default-drop
        behavior of logical flow tables causes packets that ingress  from  them
        to be dropped.
@@ -483,7 +513,7 @@ LOGICAL FLOW TABLE STRUCTURE
               ·      One priority-0 fallback flow that matches all packets and
                      advances to the next table.
 
-     Ingress Table 5:from-lportPre-ACLs
+     Ingress Table 5: from-lport Pre-ACLs
 
        This table prepares flows  for  possible  stateful  ACL  processing  in
        ingress  table  ACLs.  It  contains a priority-0 flow that simply moves
@@ -493,7 +523,15 @@ LOGICAL FLOW TABLE STRUCTURE
        tracker  before  eventually advancing to ingress table ACLs. If special
        ports such as route ports or localnet ports can’t use  ct(),  a  prior‐
        ity-110 flow is added to skip over stateful ACLs. IPv6 Neighbor Discov‐
-       ery and MLD traffic also skips stateful ACLs.
+       ery and MLD traffic also skips  stateful  ACLs.  For  "allow-stateless"
+       ACLs, a flow is added to bypass setting the hint for connection tracker
+       processing.
+
+       This table has a priority-110 flow with the match REGBIT_FROM_RAMP == 1
+       for all logical switch datapaths to resubmit traffic to the next table.
+       REGBIT_FROM_RAMP indicates that packet was received from  vtep  logical
+       ports  and  it  can  be skipped from the stateful ACL processing in the
+       ingress pipeline.
 
        This table also has a priority-110 flow with the match eth.dst == E for
        all logical switch datapaths to move traffic to the next table. Where E
@@ -507,58 +545,86 @@ LOGICAL FLOW TABLE STRUCTURE
        that  simply  moves  traffic  to the next table. Moreover it contains a
        priority-110 flow to move IPv6 Neighbor Discovery and  MLD  traffic  to
        the  next table. If load balancing rules with virtual IP addresses (and
-       ports) are configured in OVN_Northbound database  for  alogical  switch
+       ports) are configured in OVN_Northbound database for a  logical  switch
        datapath, a priority-100 flow is added with the match ip to match on IP
-       packets and sets the action reg0[0] = 1; next; to act as a hint for ta‐
+       packets and sets the action reg0[2] = 1; next; to act as a hint for ta‐
        ble  Pre-stateful  to  send  IP  packets  to the connection tracker for
-       packet de-fragmentation before eventually advancing  to  ingress  table
-       LB.  If controller_event has been enabled and load balancing rules with
-       empty backends have been added in OVN_Northbound, a 130 flow  is  added
-       to trigger ovn-controller events whenever the chassis receives a packet
-       for that particular VIP. If event-elb meter has  been  previously  cre‐
-       ated, it will be associated to the empty_lb logical flow
+       packet de-fragmentation (and to possibly do  DNAT  for  already  estab‐
+       lished  load  balanced  traffic) before eventually advancing to ingress
+       table Stateful. If controller_event has been enabled and load balancing
+       rules with empty backends have been added in OVN_Northbound, a 130 flow
+       is added to trigger ovn-controller events whenever the chassis receives
+       a  packet  for  that particular VIP. If event-elb meter has been previ‐
+       ously created, it will be associated to the empty_lb logical flow
 
-       Prior  to OVN 20.09 we were setting the reg0[0] = 1 only if the IP des‐
-       tination matches the load balancer VIP. However  this  had  few  issues
-       cases  where  a logical switch doesn’t have any ACLs with allow-related
-       action. To understand the issue lets a  take  a  TCP  load  balancer  -
-       10.0.0.10:80=10.0.0.3:80.  If  a  logical  port - p1 with IP - 10.0.0.5
+       Prior to OVN 20.09 we were setting the reg0[0] = 1 only if the IP  des‐
+       tination  matches  the  load  balancer VIP. However this had few issues
+       cases where a logical switch doesn’t have any ACLs  with  allow-related
+       action.  To  understand  the  issue  lets  a take a TCP load balancer -
+       10.0.0.10:80=10.0.0.3:80. If a logical port - p1  with  IP  -  10.0.0.5
        opens a TCP connection with the VIP - 10.0.0.10, then the packet in the
-       ingress  pipeline of ’p1’ is sent to the p1’s conntrack zone id and the
+       ingress pipeline of ’p1’ is sent to the p1’s conntrack zone id and  the
        packet is load balanced to the backend - 10.0.0.3. For the reply packet
-       from  the  backend  lport,  it  is not sent to the conntrack of backend
-       lport’s zone id. This is fine as long as the packet is  valid.  Suppose
-       the  backend lport sends an invalid TCP packet (like incorrect sequence
-       number), the packet gets delivered to the lport ’p1’ without  unDNATing
+       from the backend lport, it is not sent  to  the  conntrack  of  backend
+       lport’s  zone  id. This is fine as long as the packet is valid. Suppose
+       the backend lport sends an invalid TCP packet (like incorrect  sequence
+       number),  the packet gets delivered to the lport ’p1’ without unDNATing
        the packet to the VIP - 10.0.0.10. And this causes the connection to be
        reset by the lport p1’s VIF.
 
        We can’t fix this issue by adding a logical flow to drop ct.inv packets
-       in  the  egress  pipeline  since it will drop all other connections not
-       destined to the load balancers. To fix this  issue,  we  send  all  the
-       packets  to the conntrack in the ingress pipeline if a load balancer is
+       in the egress pipeline since it will drop  all  other  connections  not
+       destined  to  the  load  balancers.  To fix this issue, we send all the
+       packets to the conntrack in the ingress pipeline if a load balancer  is
        configured. We can now add a lflow to drop ct.inv packets.
+
+       This table has a priority-110 flow with the match REGBIT_FROM_RAMP == 1
+       for all logical switch datapaths to resubmit traffic to the next table.
+       REGBIT_FROM_RAMP  indicates  that packet was received from vtep logical
+       ports and it can be skipped from the load balancer  processing  in  the
+       ingress pipeline.
 
        This table also has a priority-110 flow with the match eth.dst == E for
        all logical switch datapaths to move traffic to the next table. Where E
        is the service monitor mac defined in the options:svc_monitor_mac colum
        of NB_Global table.
 
-       This  table also has a priority-110 flow with the match inport == I for
+       This table also has a priority-110 flow with the match inport == I  for
        all logical switch datapaths to move traffic to the next table. Where I
-       is  the  peer  of a logical router port. This flow is added to skip the
+       is the peer of a logical router port. This flow is added  to  skip  the
        connection tracking of packets which enter from logical router datapath
        to logical switch datapath.
 
      Ingress Table 7: Pre-stateful
 
-       This  table prepares flows for all possible stateful processing in next
-       tables. It contains a priority-0 flow that simply moves traffic to  the
-       next table. A priority-100 flow sends the packets to connection tracker
-       based on a hint provided by the  previous  tables  (with  a  match  for
-       reg0[0] == 1) by using the ct_next; action.
+       This table prepares flows for all possible stateful processing in  next
+       tables.  It contains a priority-0 flow that simply moves traffic to the
+       next table.
 
-     Ingress Table 8:from-lportACL hints
+              ·      Priority-120 flows that send the  packets  to  connection
+                     tracker  using  ct_lb;  as the action so that the already
+                     established traffic destined to  the  load  balancer  VIP
+                     gets  DNATted  based  on  a hint provided by the previous
+                     tables (with a match for reg0[2] == 1  and  on  supported
+                     load  balancer  protocols and address families). For IPv4
+                     traffic the flows also load the original  destination  IP
+                     and  transport  port in registers reg1 and reg2. For IPv6
+                     traffic the flows also load the original  destination  IP
+                     and transport port in registers xxreg1 and reg2.
+
+              ·      A  priority-110  flow  sends  the  packets  to connection
+                     tracker based on a hint provided by the  previous  tables
+                     (with  a  match  for  reg0[2]  ==  1) by using the ct_lb;
+                     action. This flow is added to handle the traffic for load
+                     balancer  VIPs  whose protocol is not defined (mainly for
+                     ICMP traffic).
+
+              ·      A priority-100  flow  sends  the  packets  to  connection
+                     tracker  based  on a hint provided by the previous tables
+                     (with a match for reg0[0] == 1)  by  using  the  ct_next;
+                     action.
+
+     Ingress Table 8: from-lport ACL hints
 
        This  table  consists of logical flows that set hints (reg0 bits) to be
        used in the next stage, in the ACL processing table, if  stateful  ACLs
@@ -579,6 +645,10 @@ LOGICAL FLOW TABLE STRUCTURE
                      be committed again with ct_label=1/1.
 
        The table contains the following flows:
+
+              ·      A priority-65535 flow to advance to the next table if the
+                     logical switch has no ACLs configured, otherwise a prior‐
+                     ity-0 flow to advance to the next table.
 
               ·      A priority-7 flow that matches on packets that initiate a
                      new session. This flow sets reg0[7] and reg0[9] and  then
@@ -612,9 +682,7 @@ LOGICAL FLOW TABLE STRUCTURE
                      blocked. This flow sets reg0[10] and then advances to the
                      next table.
 
-              ·      A priority-0 flow to advance to the next table.
-
-     Ingress table 9:from-lportACLs
+     Ingress table 9: from-lport ACLs
 
        Logical flows in this table closely reproduce those in the ACL table in
        the OVN_Northbound database for the from-lport direction. The  priority
@@ -626,11 +694,21 @@ LOGICAL FLOW TABLE STRUCTURE
                      action. If there are any stateful ACLs on this  datapath,
                      then allow ACLs translate to ct_commit; next; (which acts
                      as a hint for the next tables to commit the connection to
-                     conntrack),
+                     conntrack).  In  case  the  ACL  has a label then reg3 is
+                     loaded with the label value and reg0[13] bit is set to  1
+                     (which  acts  as a hint for the next tables to commit the
+                     label to conntrack).
 
-              ·      allow-related  ACLs translate into logical flows with the
-                     ct_commit(ct_label=0/1); next; actions  for  new  connec‐
-                     tions and reg0[1] = 1; next; for existing connections.
+              ·      allow-related ACLs translate into logical flows with  the
+                     ct_commit(ct_label=0/1);  next;  actions  for new connec‐
+                     tions and reg0[1] = 1; next; for existing connections. In
+                     case  the  ACL  has  a label then reg3 is loaded with the
+                     label value and reg0[13] bit is set to 1 (which acts as a
+                     hint  for  the  next  tables  to commit the label to con‐
+                     ntrack).
+
+              ·      allow-stateless ACLs translate into  logical  flows  with
+                     the next; action.
 
               ·      reject   ACLs  translate  into  logical  flows  with  the
                      tcp_reset { output <->  inport;  next(pipeline=egress,ta‐
@@ -645,48 +723,54 @@ LOGICAL FLOW TABLE STRUCTURE
                      was  previously  allowed, but should no longer be allowed
                      due to a policy change.
 
-       This table also contains a priority 0 flow with action next;,  so  that
-       ACLs  allow  packets by default. If the logical datapath has a stateful
-       ACL or a load balancer with VIP configured, the  following  flows  will
-       also be added:
+       This table contains a priority-65535 flow to advance to the next  table
+       if  the  logical  switch has no ACLs configured, otherwise a priority-0
+       flow to advance to the  next  table  so  that  ACLs  allow  packets  by
+       default.
+
+       If  the logical datapath has a stateful ACL or a load balancer with VIP
+       configured, the following flows will also be added:
 
               ·      A priority-1 flow that sets the hint to commit IP traffic
-                     to the connection  tracker  (with  action  reg0[1]  =  1;
-                     next;).  This  is  needed  for  the  default allow policy
+                     to  the  connection  tracker  (with  action  reg0[1] = 1;
+                     next;). This is  needed  for  the  default  allow  policy
                      because, while the initiator’s direction may not have any
-                     stateful  rules,  the  server’s  may  and then its return
+                     stateful rules, the server’s  may  and  then  its  return
                      traffic would not be known and marked as invalid.
 
-              ·      A priority-65535 flow that  allows  any  traffic  in  the
-                     reply  direction for a connection that has been committed
-                     to the connection tracker (i.e., established  flows),  as
+              ·      A  priority-65532  flow  that  allows  any traffic in the
+                     reply direction for a connection that has been  committed
+                     to  the  connection tracker (i.e., established flows), as
                      long as the committed flow does not have ct_label.blocked
-                     set. We only handle traffic in the reply  direction  here
-                     because  we  want all packets going in the request direc‐
-                     tion to still go through the  flows  that  implement  the
-                     currently  defined  policy based on ACLs. If a connection
+                     set.  We  only handle traffic in the reply direction here
+                     because we want all packets going in the  request  direc‐
+                     tion  to  still  go  through the flows that implement the
+                     currently defined policy based on ACLs. If  a  connection
                      is no longer allowed by policy, ct_label.blocked will get
-                     set  and packets in the reply direction will no longer be
+                     set and packets in the reply direction will no longer  be
                      allowed, either.
 
-              ·      A priority-65535 flow that allows  any  traffic  that  is
-                     considered  related to a committed flow in the connection
-                     tracker (e.g., an ICMP Port Unreachable from  a  non-lis‐
-                     tening  UDP port), as long as the committed flow does not
+              ·      A  priority-65532  flow  that  allows any traffic that is
+                     considered related to a committed flow in the  connection
+                     tracker  (e.g.,  an ICMP Port Unreachable from a non-lis‐
+                     tening UDP port), as long as the committed flow does  not
                      have ct_label.blocked set.
 
-              ·      A priority-65535 flow that drops all  traffic  marked  by
+              ·      A  priority-65532  flow  that drops all traffic marked by
                      the connection tracker as invalid.
 
-              ·      A priority-65535 flow that drops all traffic in the reply
+              ·      A priority-65532 flow that drops all traffic in the reply
                      direction with ct_label.blocked set meaning that the con‐
-                     nection  should  no  longer  be  allowed  due to a policy
+                     nection should no longer  be  allowed  due  to  a  policy
                      change. Packets in the request direction are skipped here
                      to let a newly created ACL re-allow this connection.
 
-              ·      A priority-65535 flow that allows IPv6 Neighbor solicita‐
+              ·      A priority-65532 flow that allows IPv6 Neighbor solicita‐
                      tion,  Neighbor  discover,  Router  solicitation,  Router
                      advertisement and MLD packets.
+
+       If the logical datapath has any ACL or a load balancer with VIP config‐
+       ured, the following flow will also be added:
 
               ·      A  priority  34000 logical flow is added for each logical
                      switch datapath with the match eth.dst = E to  allow  the
@@ -695,7 +779,7 @@ LOGICAL FLOW TABLE STRUCTURE
                      defined in the options:svc_monitor_mac colum of NB_Global
                      table.
 
-     Ingress Table 10:from-lportQoS Marking
+     Ingress Table 10: from-lport QoS Marking
 
        Logical flows in this table closely reproduce those in  the  QoS  table
        with  the  action  column  set  in  the OVN_Northbound database for the
@@ -708,7 +792,7 @@ LOGICAL FLOW TABLE STRUCTURE
               ·      One priority-0 fallback flow that matches all packets and
                      advances to the next table.
 
-     Ingress Table 11:from-lportQoS Meter
+     Ingress Table 11: from-lport QoS Meter
 
        Logical  flows  in  this table closely reproduce those in the QoS table
        with the bandwidth column set in the OVN_Northbound  database  for  the
@@ -721,190 +805,171 @@ LOGICAL FLOW TABLE STRUCTURE
               ·      One priority-0 fallback flow that matches all packets and
                      advances to the next table.
 
-     Ingress Table 12: LB
+     Ingress Table 12: Stateful
 
-       It contains a priority-0 flow that simply moves traffic to the next ta‐
-       ble.
-
-       A priority-65535 flow with the match inport == I for all logical switch
-       datapaths to move traffic to the next table. Where I is the peer  of  a
-       logical router port. This flow is added to skip the connection tracking
-       of packets which enter from logical router datapath to  logical  switch
-       datapath.
-
-       For  established connections a priority 65534 flow matches on ct.est &&
-       !ct.rel && !ct.new && !ct.inv and sets an action reg0[2] = 1; next;  to
-       act  as  a  hint  for table Stateful to send packets through connection
-       tracker to NAT the packets. (The packet will automatically  get  DNATed
-       to the same IP address as the first packet in that connection.)
-
-     Ingress Table 13: Stateful
-
-              ·      For  all the configured load balancing rules for a switch
-                     in OVN_Northbound database that includes a L4  port  PORT
-                     of  protocol P and IP address VIP, a priority-120 flow is
-                     added. For IPv4 VIPs , the flow matches ct.new &&  ip  &&
-                     ip4.dst  == VIP && P && P.dst == PORT. For IPv6 VIPs, the
+              ·      For all the configured load balancing rules for a  switch
+                     in  OVN_Northbound  database that includes a L4 port PORT
+                     of protocol P and IP address VIP, a priority-120 flow  is
+                     added.  For  IPv4 VIPs , the flow matches ct.new && ip &&
+                     ip4.dst == VIP && P && P.dst == PORT. For IPv6 VIPs,  the
                      flow matches ct.new && ip && ip6.dst == VIP && P && P.dst
-                     ==  PORT.  The  flow’s action is ct_lb(args) , where args
-                     contains comma separated IP addresses (and optional  port
+                     == PORT. The flow’s action is ct_lb(args)  ,  where  args
+                     contains  comma separated IP addresses (and optional port
                      numbers) to load balance to. The address family of the IP
-                     addresses of args is the same as the  address  family  of
+                     addresses  of  args  is the same as the address family of
                      VIP. If health check is enabled, then args will only con‐
-                     tain those endpoints whose service monitor  status  entry
-                     in  OVN_Southbound db is either online or empty. For IPv4
-                     traffic the flow also loads the original  destination  IP
-                     and  transport  port in registers reg1 and reg2. For IPv6
-                     traffic the flow also loads the original  destination  IP
+                     tain  those  endpoints whose service monitor status entry
+                     in OVN_Southbound db is either online or empty. For  IPv4
+                     traffic  the  flow also loads the original destination IP
+                     and transport port in registers reg1 and reg2.  For  IPv6
+                     traffic  the  flow also loads the original destination IP
                      and transport port in registers xxreg1 and reg2.
 
-              ·      For  all the configured load balancing rules for a switch
-                     in OVN_Northbound  database  that  includes  just  an  IP
-                     address  VIP  to  match on, OVN adds a priority-110 flow.
-                     For IPv4 VIPs, the flow matches ct.new && ip  &&  ip4.dst
-                     ==  VIP.  For IPv6 VIPs, the flow matches ct.new && ip &&
-                     ip6.dst == VIP. The action on this flow  is  ct_lb(args),
-                     where  args  contains comma separated IP addresses of the
-                     same address family as VIP. For  IPv4  traffic  the  flow
+              ·      For all the configured load balancing rules for a  switch
+                     in  OVN_Northbound  database  that  includes  just  an IP
+                     address VIP to match on, OVN adds  a  priority-110  flow.
+                     For  IPv4  VIPs, the flow matches ct.new && ip && ip4.dst
+                     == VIP. For IPv6 VIPs, the flow matches ct.new &&  ip  &&
+                     ip6.dst  ==  VIP. The action on this flow is ct_lb(args),
+                     where args contains comma separated IP addresses  of  the
+                     same  address  family  as  VIP. For IPv4 traffic the flow
                      also loads the original destination IP and transport port
-                     in registers reg1 and reg2. For  IPv6  traffic  the  flow
+                     in  registers  reg1  and  reg2. For IPv6 traffic the flow
                      also loads the original destination IP and transport port
                      in registers xxreg1 and reg2.
 
-              ·      If the load balancer is created with --reject option  and
-                     it  has no active backends, a TCP reset segment (for tcp)
+              ·      If  the load balancer is created with --reject option and
+                     it has no active backends, a TCP reset segment (for  tcp)
                      or an ICMP port unreachable packet (for all other kind of
-                     traffic)  will  be  sent  whenever  an incoming packet is
-                     received  for  this  load-balancer.  Please  note   using
+                     traffic) will be sent  whenever  an  incoming  packet  is
+                     received   for  this  load-balancer.  Please  note  using
                      --reject option will disable empty_lb SB controller event
                      for this load balancer.
 
-              ·      A priority-100 flow commits packets to connection tracker
-                     using ct_commit; next; action based on a hint provided by
-                     the previous tables (with a match for reg0[1] == 1).
+              ·      A  priority 100 flow is added which commits the packet to
+                     the conntrack and sets the most  significant  32-bits  of
+                     ct_label  with  the reg3 value based on the hint provided
+                     by previous tables (with a match  for  reg0[1]  ==  1  &&
+                     reg0[13]  ==  1).  This is used by the ACLs with label to
+                     commit the label value to conntrack.
 
-              ·      Priority-100 flows that send the  packets  to  connection
-                     tracker  using  ct_lb; as the action based on a hint pro‐
-                     vided by the previous tables (with a match for reg0[2] ==
-                     1  and  on  supported load balancer protocols and address
-                     families). For IPv4 traffic the flows also load the orig‐
-                     inal  destination IP and transport port in registers reg1
-                     and reg2. For IPv6 traffic the flows also load the origi‐
-                     nal destination IP and transport port in registers xxreg1
-                     and reg2.
-
-              ·      A priority-0 flow that simply moves traffic to  the  next
-                     table.
-
-     Ingress Table 14: Pre-Hairpin
-
-              ·      If  the  logical  switch has load balancer(s) configured,
-                     then a priority-100 flow is added with the  match  ip  &&
-                     ct.trk  to check if the packet needs to be hairpinned (if
-                     after load  balancing  the  destination  IP  matches  the
-                     source  IP)  or  not  by  executing the actions reg0[6] =
-                     chk_lb_hairpin(); and reg0[12] =  chk_lb_hairpin_reply();
-                     and advances the packet to the next table.
+              ·      For ACLs without label, a second priority-100  flow  com‐
+                     mits packets to connection tracker using ct_commit; next;
+                     action based on a hint provided by  the  previous  tables
+                     (with a match for reg0[1] == 1 && reg0[13] == 0).
 
               ·      A  priority-0  flow that simply moves traffic to the next
                      table.
 
-     Ingress Table 15: Nat-Hairpin
+     Ingress Table 13: Pre-Hairpin
 
               ·      If the logical switch has  load  balancer(s)  configured,
                      then  a  priority-100  flow is added with the match ip &&
-                     ct.new && ct.trk && reg0[6] == 1 which hairpins the traf‐
-                     fic by NATting source IP to the load balancer VIP by exe‐
-                     cuting the action ct_snat_to_vip and advances the  packet
-                     to the next table.
+                     ct.trk to check if the packet needs to be hairpinned  (if
+                     after  load  balancing  the  destination  IP  matches the
+                     source IP) or not by  executing  the  actions  reg0[6]  =
+                     chk_lb_hairpin();  and reg0[12] = chk_lb_hairpin_reply();
+                     and advances the packet to the next table.
+
+              ·      A priority-0 flow that simply moves traffic to  the  next
+                     table.
+
+     Ingress Table 14: Nat-Hairpin
 
               ·      If  the  logical  switch has load balancer(s) configured,
                      then a priority-100 flow is added with the  match  ip  &&
-                     ct.est && ct.trk && reg0[6] == 1 which hairpins the traf‐
+                     ct.new && ct.trk && reg0[6] == 1 which hairpins the traf‐
                      fic by NATting source IP to the load balancer VIP by exe‐
-                     cuting  the action ct_snat and advances the packet to the
-                     next table.
-
-              ·      If the logical switch has  load  balancer(s)  configured,
-                     then  a  priority-90  flow  is added with the match ip &&
-                     reg0[12] == 1 which matches on the replies of  hairpinned
-                     traffic  (i.e.,  destination  IP is VIP, source IP is the
-                     backend IP and source L4 port is backend port for L4 load
-                     balancers)  and  executes ct_snat and advances the packet
+                     cuting  the action ct_snat_to_vip and advances the packet
                      to the next table.
 
-              ·      A priority-0 flow that simply moves traffic to  the  next
+              ·      If the logical switch has  load  balancer(s)  configured,
+                     then  a  priority-100  flow is added with the match ip &&
+                     ct.est && ct.trk && reg0[6] == 1 which hairpins the traf‐
+                     fic by NATting source IP to the load balancer VIP by exe‐
+                     cuting the action ct_snat and advances the packet to  the
+                     next table.
+
+              ·      If  the  logical  switch has load balancer(s) configured,
+                     then a priority-90 flow is added with  the  match  ip  &&
+                     reg0[12]  == 1 which matches on the replies of hairpinned
+                     traffic (i.e., destination IP is VIP, source  IP  is  the
+                     backend IP and source L4 port is backend port for L4 load
+                     balancers) and executes ct_snat and advances  the  packet
+                     to the next table.
+
+              ·      A  priority-0  flow that simply moves traffic to the next
                      table.
 
-     Ingress Table 16: Hairpin
+     Ingress Table 15: Hairpin
 
-              ·      A  priority-1  flow that hairpins traffic matched by non-
-                     default flows in the Pre-Hairpin  table.  Hairpinning  is
-                     done  at L2, Ethernet addresses are swapped and the pack‐
+              ·      A priority-1 flow that hairpins traffic matched  by  non-
+                     default  flows  in  the Pre-Hairpin table. Hairpinning is
+                     done at L2, Ethernet addresses are swapped and the  pack‐
                      ets are looped back on the input port.
 
-              ·      A priority-0 flow that simply moves traffic to  the  next
+              ·      A  priority-0  flow that simply moves traffic to the next
                      table.
 
-     Ingress Table 17: ARP/ND responder
+     Ingress Table 16: ARP/ND responder
 
-       This  table  implements  ARP/ND responder in a logical switch for known
+       This table implements ARP/ND responder in a logical  switch  for  known
        IPs. The advantage of the ARP responder flow is to limit ARP broadcasts
        by locally responding to ARP requests without the need to send to other
        hypervisors. One common case is when the inport is a logical port asso‐
        ciated with a VIF and the broadcast is responded to on the local hyper‐
-       visor rather than broadcast across the whole network and  responded  to
+       visor  rather  than broadcast across the whole network and responded to
        by the destination VM. This behavior is proxy ARP.
 
-       ARP  requests  arrive  from  VMs  from  a logical switch inport of type
-       default. For this case, the logical switch proxy ARP rules can  be  for
-       other  VMs  or logical router ports. Logical switch proxy ARP rules may
-       be programmed both for mac binding of IP  addresses  on  other  logical
-       switch  VIF  ports  (which are of the default logical switch port type,
+       ARP requests arrive from VMs from  a  logical  switch  inport  of  type
+       default.  For  this case, the logical switch proxy ARP rules can be for
+       other VMs or logical router ports. Logical switch proxy ARP  rules  may
+       be  programmed  both  for  mac binding of IP addresses on other logical
+       switch VIF ports (which are of the default logical  switch  port  type,
        representing connectivity to VMs or containers), and for mac binding of
-       IP  addresses  on  logical switch router type ports, representing their
-       logical router port peers. In order to support proxy  ARP  for  logical
-       router  ports,  an  IP address must be configured on the logical switch
-       router type port, with the same value as the peer logical router  port.
+       IP addresses on logical switch router type  ports,  representing  their
+       logical  router  port  peers. In order to support proxy ARP for logical
+       router ports, an IP address must be configured on  the  logical  switch
+       router  type port, with the same value as the peer logical router port.
        The configured MAC addresses must match as well. When a VM sends an ARP
-       request for a distributed logical router port and if  the  peer  router
-       type  port  of  the attached logical switch does not have an IP address
-       configured, the ARP request will be broadcast on  the  logical  switch.
+       request  for  a  distributed logical router port and if the peer router
+       type port of the attached logical switch does not have  an  IP  address
+       configured,  the  ARP  request will be broadcast on the logical switch.
        One of the copies of the ARP request will go through the logical switch
-       router type port to the logical  router  datapath,  where  the  logical
-       router  ARP  responder will generate a reply. The MAC binding of a dis‐
-       tributed logical router, once learned by an associated VM, is used  for
-       all  that VM’s communication needing routing. Hence, the action of a VM
-       re-arping for the mac binding of the  logical  router  port  should  be
+       router  type  port  to  the  logical router datapath, where the logical
+       router ARP responder will generate a reply. The MAC binding of  a  dis‐
+       tributed  logical router, once learned by an associated VM, is used for
+       all that VM’s communication needing routing. Hence, the action of a  VM
+       re-arping  for  the  mac  binding  of the logical router port should be
        rare.
 
-       Logical  switch  ARP  responder  proxy  ARP  rules can also be hit when
-       receiving ARP requests externally on a L2 gateway port. In  this  case,
-       the  hypervisor acting as an L2 gateway, responds to the ARP request on
+       Logical switch ARP responder proxy ARP  rules  can  also  be  hit  when
+       receiving  ARP  requests externally on a L2 gateway port. In this case,
+       the hypervisor acting as an L2 gateway, responds to the ARP request  on
        behalf of a destination VM.
 
-       Note that ARP requests received from localnet or vtep  logical  inports
+       Note  that  ARP requests received from localnet or vtep logical inports
        can either go directly to VMs, in which case the VM responds or can hit
-       an ARP responder for a logical router port if the  packet  is  used  to
+       an  ARP  responder  for  a logical router port if the packet is used to
        resolve a logical router port next hop address. In either case, logical
-       switch ARP responder rules will not be hit. It contains  these  logical
+       switch  ARP  responder rules will not be hit. It contains these logical
        flows:
 
               ·      Priority-100 flows to skip the ARP responder if inport is
-                     of type localnet or vtep and  advances  directly  to  the
-                     next  table.  ARP requests sent to localnet or vtep ports
+                     of  type  localnet  or  vtep and advances directly to the
+                     next table. ARP requests sent to localnet or  vtep  ports
                      can be received by multiple hypervisors. Now, because the
                      same mac binding rules are downloaded to all hypervisors,
-                     each of the multiple hypervisors will respond. This  will
-                     confuse  L2  learning  on the source of the ARP requests.
+                     each  of the multiple hypervisors will respond. This will
+                     confuse L2 learning on the source of  the  ARP  requests.
                      ARP requests received on an inport of type router are not
-                     expected  to  hit any logical switch ARP responder flows.
-                     However, no skip flows are installed for  these  packets,
-                     as  there would be some additional flow cost for this and
+                     expected to hit any logical switch ARP  responder  flows.
+                     However,  no  skip flows are installed for these packets,
+                     as there would be some additional flow cost for this  and
                      the value appears limited.
 
-              ·      If inport V is of type virtual adds a priority-100  logi‐
-                     cal  flow  for  each P configured in the options:virtual-
+              ·      If  inport V is of type virtual adds a priority-100 logi‐
+                     cal flow for each P configured  in  the  options:virtual-
                      parents column with the match
 
                      inport == P && && ((arp.op == 1 && arp.spa == VIP && arp.tpa == VIP) || (arp.op == 2 && arp.spa == VIP))
@@ -917,12 +982,12 @@ LOGICAL FLOW TABLE STRUCTURE
 
                      and advances the packet to the next table.
 
-                     Where VIP is the virtual  ip  configured  in  the  column
+                     Where  VIP  is  the  virtual  ip configured in the column
                      options:virtual-ip.
 
-              ·      Priority-50  flows  that match ARP requests to each known
-                     IP address A of every logical switch  port,  and  respond
-                     with  ARP  replies  directly  with corresponding Ethernet
+              ·      Priority-50 flows that match ARP requests to  each  known
+                     IP  address  A  of every logical switch port, and respond
+                     with ARP replies  directly  with  corresponding  Ethernet
                      address E:
 
                      eth.dst = eth.src;
@@ -937,16 +1002,22 @@ LOGICAL FLOW TABLE STRUCTURE
                      output;
 
 
-                     These flows are omitted for  logical  ports  (other  than
-                     router  ports  or  localport ports) that are down (unless
-                     ignore_lsp_down is configured as true in  options  column
+                     These  flows  are  omitted  for logical ports (other than
+                     router ports or localport ports) that  are  down  (unless
+                     ignore_lsp_down  is  configured as true in options column
                      of NB_Global table of the Northbound database), for logi‐
-                     cal ports of type virtual  and  for  logical  ports  with
-                     ’unknown’ address set.
+                     cal  ports  of  type  virtual,  for  logical  ports  with
+                     ’unknown’ address set and for logical ports of a  logical
+                     switch configured with other_config:vlan-passthru=true.
 
-              ·      Priority-50  flows  that match IPv6 ND neighbor solicita‐
-                     tions to each known IP address A (and A’s solicited  node
-                     address)  of  every  logical  switch  port except of type
+                     The  above  ARP responder flows are added for the list of
+                     IPv4 addresses if defined in options:arp_proxy column  of
+                     Logical_Switch_Port  table  for  logical  switch ports of
+                     type router.
+
+              ·      Priority-50 flows that match IPv6 ND  neighbor  solicita‐
+                     tions  to each known IP address A (and A’s solicited node
+                     address) of every logical  switch  port  except  of  type
                      router, and respond with neighbor advertisements directly
                      with corresponding Ethernet address E:
 
@@ -961,9 +1032,9 @@ LOGICAL FLOW TABLE STRUCTURE
                      };
 
 
-                     Priority-50  flows  that match IPv6 ND neighbor solicita‐
-                     tions to each known IP address A (and A’s solicited  node
-                     address)  of  logical  switch  port  of  type router, and
+                     Priority-50 flows that match IPv6 ND  neighbor  solicita‐
+                     tions  to each known IP address A (and A’s solicited node
+                     address) of logical  switch  port  of  type  router,  and
                      respond with neighbor advertisements directly with corre‐
                      sponding Ethernet address E:
 
@@ -978,35 +1049,35 @@ LOGICAL FLOW TABLE STRUCTURE
                      };
 
 
-                     These  flows  are  omitted  for logical ports (other than
-                     router ports or localport ports) that  are  down  (unless
-                     ignore_lsp_down  is  configured as true in options column
+                     These flows are omitted for  logical  ports  (other  than
+                     router  ports  or  localport ports) that are down (unless
+                     ignore_lsp_down is configured as true in  options  column
                      of NB_Global table of the Northbound database), for logi‐
-                     cal  ports  of  type  virtual  and for logical ports with
+                     cal ports of type virtual  and  for  logical  ports  with
                      ’unknown’ address set.
 
-              ·      Priority-100 flows with match criteria like the  ARP  and
-                     ND  flows above, except that they only match packets from
-                     the inport that owns the IP addresses in  question,  with
-                     action  next;.  These flows prevent OVN from replying to,
-                     for example, an ARP request emitted by a VM for  its  own
-                     IP  address.  A  VM  only  makes  this kind of request to
-                     attempt to detect a duplicate IP address  assignment,  so
+              ·      Priority-100  flows  with match criteria like the ARP and
+                     ND flows above, except that they only match packets  from
+                     the  inport  that owns the IP addresses in question, with
+                     action next;. These flows prevent OVN from  replying  to,
+                     for  example,  an ARP request emitted by a VM for its own
+                     IP address. A VM only  makes  this  kind  of  request  to
+                     attempt  to  detect a duplicate IP address assignment, so
                      sending a reply will prevent the VM from accepting the IP
                      address that it owns.
 
-                     In place of next;, it would be reasonable  to  use  drop;
+                     In  place  of  next;, it would be reasonable to use drop;
                      for the flows’ actions. If everything is working as it is
-                     configured, then this would produce  equivalent  results,
+                     configured,  then  this would produce equivalent results,
                      since no host should reply to the request. But ARPing for
-                     one’s own IP address is  intended  to  detect  situations
-                     where  the network is not working as configured, so drop‐
+                     one’s  own  IP  address  is intended to detect situations
+                     where the network is not working as configured, so  drop‐
                      ping the request would frustrate that intent.
 
-              ·      For each SVC_MON_SRC_IP  defined  in  the  value  of  the
-                     ip_port_mappings:ENDPOINT_IP  column of Load_Balancer ta‐
-                     ble, priority-110 logical flow is added  with  the  match
-                     arp.tpa  ==  SVC_MON_SRC_IP && && arp.op == 1 and applies
+              ·      For  each  SVC_MON_SRC_IP  defined  in  the  value of the
+                     ip_port_mappings:ENDPOINT_IP column of Load_Balancer  ta‐
+                     ble,  priority-110  logical  flow is added with the match
+                     arp.tpa == SVC_MON_SRC_IP && && arp.op == 1  and  applies
                      the action
 
                      eth.dst = eth.src;
@@ -1021,20 +1092,20 @@ LOGICAL FLOW TABLE STRUCTURE
                      output;
 
 
-                     where E is the service monitor source mac defined in  the
-                     options:svc_monitor_mac  column  in  the NB_Global table.
+                     where  E is the service monitor source mac defined in the
+                     options:svc_monitor_mac column in  the  NB_Global  table.
                      This mac is used as the source mac in the service monitor
                      packets for the load balancer endpoint IP health checks.
 
-                     SVC_MON_SRC_IP  is  used  as the source ip in the service
-                     monitor IPv4 packets for the load  balancer  endpoint  IP
+                     SVC_MON_SRC_IP is used as the source ip  in  the  service
+                     monitor  IPv4  packets  for the load balancer endpoint IP
                      health checks.
 
-                     These  flows  are  required if an ARP request is sent for
+                     These flows are required if an ARP request  is  sent  for
                      the IP SVC_MON_SRC_IP.
 
-              ·      For each VIP configured in the table  Forwarding_Group  a
-                     priority-50  logical flow is added with the match arp.tpa
+              ·      For  each  VIP configured in the table Forwarding_Group a
+                     priority-50 logical flow is added with the match  arp.tpa
                      == vip && && arp.op == 1
                       and applies the action
 
@@ -1050,69 +1121,69 @@ LOGICAL FLOW TABLE STRUCTURE
                      output;
 
 
-                     where E is the forwarding  group’s  mac  defined  in  the
+                     where  E  is  the  forwarding  group’s mac defined in the
                      vmac.
 
                      A is used as either the destination ip for load balancing
-                     traffic to child ports or as nexthop to hosts behind  the
+                     traffic  to child ports or as nexthop to hosts behind the
                      child ports.
 
-                     These  flows are required to respond to an ARP request if
+                     These flows are required to respond to an ARP request  if
                      an ARP request is sent for the IP vip.
 
               ·      One priority-0 fallback flow that matches all packets and
                      advances to the next table.
 
-     Ingress Table 18: DHCP option processing
+     Ingress Table 17: DHCP option processing
 
-       This  table adds the DHCPv4 options to a DHCPv4 packet from the logical
-       ports configured with IPv4 address(es) and DHCPv4  options,  and  simi‐
-       larly  for  DHCPv6  options. This table also adds flows for the logical
+       This table adds the DHCPv4 options to a DHCPv4 packet from the  logical
+       ports  configured  with  IPv4 address(es) and DHCPv4 options, and simi‐
+       larly for DHCPv6 options. This table also adds flows  for  the  logical
        ports of type external.
 
-              ·      A priority-100 logical flow is added  for  these  logical
+              ·      A  priority-100  logical  flow is added for these logical
                      ports which matches the IPv4 packet with udp.src = 68 and
-                     udp.dst = 67 and applies  the  action  put_dhcp_opts  and
+                     udp.dst  =  67  and  applies the action put_dhcp_opts and
                      advances the packet to the next table.
 
                      reg0[3] = put_dhcp_opts(offer_ip = ip, options...);
                      next;
 
 
-                     For  DHCPDISCOVER  and  DHCPREQUEST,  this transforms the
-                     packet into a DHCP reply, adds the DHCP offer IP  ip  and
-                     options  to  the  packet,  and stores 1 into reg0[3]. For
-                     other kinds of packets, it just stores  0  into  reg0[3].
+                     For DHCPDISCOVER and  DHCPREQUEST,  this  transforms  the
+                     packet  into  a DHCP reply, adds the DHCP offer IP ip and
+                     options to the packet, and stores  1  into  reg0[3].  For
+                     other  kinds  of  packets, it just stores 0 into reg0[3].
                      Either way, it continues to the next table.
 
-              ·      A  priority-100  logical  flow is added for these logical
-                     ports which matches the IPv6 packet with  udp.src  =  546
-                     and  udp.dst = 547 and applies the action put_dhcpv6_opts
+              ·      A priority-100 logical flow is added  for  these  logical
+                     ports  which  matches  the IPv6 packet with udp.src = 546
+                     and udp.dst = 547 and applies the action  put_dhcpv6_opts
                      and advances the packet to the next table.
 
                      reg0[3] = put_dhcpv6_opts(ia_addr = ip, options...);
                      next;
 
 
-                     For DHCPv6 Solicit/Request/Confirm packets,  this  trans‐
-                     forms  the packet into a DHCPv6 Advertise/Reply, adds the
-                     DHCPv6 offer IP ip and options to the packet, and  stores
-                     1  into  reg0[3].  For  other  kinds  of packets, it just
-                     stores 0 into reg0[3]. Either way, it  continues  to  the
+                     For  DHCPv6  Solicit/Request/Confirm packets, this trans‐
+                     forms the packet into a DHCPv6 Advertise/Reply, adds  the
+                     DHCPv6  offer IP ip and options to the packet, and stores
+                     1 into reg0[3]. For  other  kinds  of  packets,  it  just
+                     stores  0  into  reg0[3]. Either way, it continues to the
                      next table.
 
               ·      A priority-0 flow that matches all packets to advances to
                      table 16.
 
-     Ingress Table 19: DHCP responses
+     Ingress Table 18: DHCP responses
 
-       This table implements DHCP responder for the DHCP replies generated  by
+       This  table implements DHCP responder for the DHCP replies generated by
        the previous table.
 
-              ·      A  priority  100  logical  flow  is added for the logical
-                     ports configured with DHCPv4 options which  matches  IPv4
+              ·      A priority 100 logical flow  is  added  for  the  logical
+                     ports  configured  with DHCPv4 options which matches IPv4
                      packets with udp.src == 68 && udp.dst == 67 && reg0[3] ==
-                     1 and responds back to the inport  after  applying  these
+                     1  and  responds  back to the inport after applying these
                      actions. If reg0[3] is set to 1, it means that the action
                      put_dhcp_opts was successful.
 
@@ -1126,16 +1197,16 @@ LOGICAL FLOW TABLE STRUCTURE
                      output;
 
 
-                     where E is the server MAC address and  S  is  the  server
-                     IPv4  address  defined  in  the DHCPv4 options. Note that
+                     where  E  is  the  server MAC address and S is the server
+                     IPv4 address defined in the  DHCPv4  options.  Note  that
                      ip4.dst field is handled by put_dhcp_opts.
 
-                     (This terminates ingress packet  processing;  the  packet
+                     (This  terminates  ingress  packet processing; the packet
                      does not go to the next ingress table.)
 
-              ·      A  priority  100  logical  flow  is added for the logical
-                     ports configured with DHCPv6 options which  matches  IPv6
-                     packets  with udp.src == 546 && udp.dst == 547 && reg0[3]
+              ·      A priority 100 logical flow  is  added  for  the  logical
+                     ports  configured  with DHCPv6 options which matches IPv6
+                     packets with udp.src == 546 && udp.dst == 547 &&  reg0[3]
                      == 1 and responds back to the inport after applying these
                      actions. If reg0[3] is set to 1, it means that the action
                      put_dhcpv6_opts was successful.
@@ -1151,46 +1222,46 @@ LOGICAL FLOW TABLE STRUCTURE
                      output;
 
 
-                     where E is the server MAC address and  S  is  the  server
-                     IPv6  LLA address generated from the server_id defined in
-                     the DHCPv6 options and A is the IPv6 address  defined  in
+                     where  E  is  the  server MAC address and S is the server
+                     IPv6 LLA address generated from the server_id defined  in
+                     the  DHCPv6  options and A is the IPv6 address defined in
                      the logical port’s addresses column.
 
-                     (This  terminates  packet processing; the packet does not
+                     (This terminates packet processing; the packet  does  not
                      go on the next ingress table.)
 
               ·      A priority-0 flow that matches all packets to advances to
                      table 17.
 
-     Ingress Table 20 DNS Lookup
+     Ingress Table 19 DNS Lookup
 
-       This  table  looks  up  and resolves the DNS names to the corresponding
+       This table looks up and resolves the DNS  names  to  the  corresponding
        configured IP address(es).
 
               ·      A priority-100 logical flow for each logical switch data‐
-                     path  if it is configured with DNS records, which matches
-                     the IPv4 and IPv6 packets with udp.dst = 53  and  applies
+                     path if it is configured with DNS records, which  matches
+                     the  IPv4  and IPv6 packets with udp.dst = 53 and applies
                      the action dns_lookup and advances the packet to the next
                      table.
 
                      reg0[4] = dns_lookup(); next;
 
 
-                     For valid DNS packets, this transforms the packet into  a
-                     DNS  reply  if the DNS name can be resolved, and stores 1
+                     For  valid DNS packets, this transforms the packet into a
+                     DNS reply if the DNS name can be resolved, and  stores  1
                      into reg0[4]. For failed DNS resolution or other kinds of
-                     packets,  it  just  stores 0 into reg0[4]. Either way, it
+                     packets, it just stores 0 into reg0[4].  Either  way,  it
                      continues to the next table.
 
-     Ingress Table 21 DNS Responses
+     Ingress Table 20 DNS Responses
 
-       This table implements DNS responder for the DNS  replies  generated  by
+       This  table  implements  DNS responder for the DNS replies generated by
        the previous table.
 
               ·      A priority-100 logical flow for each logical switch data‐
-                     path if it is configured with DNS records, which  matches
+                     path  if it is configured with DNS records, which matches
                      the IPv4 and IPv6 packets with udp.dst = 53 && reg0[4] ==
-                     1 and responds back to the inport  after  applying  these
+                     1  and  responds  back to the inport after applying these
                      actions. If reg0[4] is set to 1, it means that the action
                      dns_lookup was successful.
 
@@ -1203,97 +1274,104 @@ LOGICAL FLOW TABLE STRUCTURE
                      output;
 
 
-                     (This terminates ingress packet  processing;  the  packet
+                     (This  terminates  ingress  packet processing; the packet
                      does not go to the next ingress table.)
 
-     Ingress table 22 External ports
+     Ingress table 21 External ports
 
-       Traffic  from  the  external  logical  ports enter the ingress datapath
+       Traffic from the external logical  ports  enter  the  ingress  datapath
        pipeline via the localnet port. This table adds the below logical flows
        to handle the traffic from these ports.
 
-              ·      A  priority-100  flow  is added for each external logical
-                     port which doesn’t  reside  on  a  chassis  to  drop  the
-                     ARP/IPv6  NS  request to the router IP(s) (of the logical
+              ·      A priority-100 flow is added for  each  external  logical
+                     port  which  doesn’t  reside  on  a  chassis  to drop the
+                     ARP/IPv6 NS request to the router IP(s) (of  the  logical
                      switch) which matches on the inport of the external logi‐
-                     cal  port and the valid eth.src address(es) of the exter‐
+                     cal port and the valid eth.src address(es) of the  exter‐
                      nal logical port.
 
-                     This flow guarantees  that  the  ARP/NS  request  to  the
+                     This  flow  guarantees  that  the  ARP/NS  request to the
                      router IP address from the external ports is responded by
-                     only the chassis which has claimed these external  ports.
+                     only  the chassis which has claimed these external ports.
                      All the other chassis, drops these packets.
 
-                     A  priority-100  flow  is added for each external logical
+                     A priority-100 flow is added for  each  external  logical
                      port which doesn’t reside on a chassis to drop any packet
-                     destined  to  the  router  mac - with the match inport ==
-                     external && eth.src == E && eth.dst  ==  R  &&  !is_chas‐
+                     destined to the router mac - with  the  match  inport  ==
+                     external  &&  eth.src  ==  E && eth.dst == R && !is_chas‐
                      sis_resident("external") where E is the external port mac
                      and R is the router port mac.
 
               ·      A priority-0 flow that matches all packets to advances to
                      table 20.
 
-     Ingress Table 23 Destination Lookup
+     Ingress Table 22 Destination Lookup
 
-       This  table  implements  switching  behavior. It contains these logical
+       This table implements switching behavior.  It  contains  these  logical
        flows:
 
-              ·      A priority-110 flow with the match eth.src == E  for  all
-                     logical  switch  datapaths  and  applies  the action han‐
+              ·      A  priority-110  flow with the match eth.src == E for all
+                     logical switch datapaths  and  applies  the  action  han‐
                      dle_svc_check(inport). Where E is the service monitor mac
                      defined in the options:svc_monitor_mac colum of NB_Global
                      table.
 
-              ·      A priority-100 flow that punts all  IGMP/MLD  packets  to
-                     ovn-controller  if  multicast  snooping is enabled on the
+              ·      A  priority-100  flow  that punts all IGMP/MLD packets to
+                     ovn-controller if multicast snooping is  enabled  on  the
                      logical switch. The flow also forwards the IGMP/MLD pack‐
                      ets  to  the  MC_MROUTER_STATIC  multicast  group,  which
                      ovn-northd populates with all the logical ports that have
                      options :mcast_flood_reports=’true’.
 
-              ·      Priority-90  flows  that  forward registered IP multicast
-                     traffic to their  corresponding  multicast  group,  which
-                     ovn-northd  creates  based  on learnt IGMP_Group entries.
-                     The flows also forward packets  to  the  MC_MROUTER_FLOOD
-                     multicast  group, which ovn-nortdh populates with all the
-                     logical ports that are connected to logical routers  with
+              ·      Priority-90 flows that forward  registered  IP  multicast
+                     traffic  to  their  corresponding  multicast group, which
+                     ovn-northd creates based on  learnt  IGMP_Group  entries.
+                     The  flows  also  forward packets to the MC_MROUTER_FLOOD
+                     multicast group, which ovn-nortdh populates with all  the
+                     logical  ports that are connected to logical routers with
                      options:mcast_relay=’true’.
 
               ·      A priority-85 flow that forwards all IP multicast traffic
-                     destined to 224.0.0.X to the  MC_FLOOD  multicast  group,
+                     destined  to  224.0.0.X  to the MC_FLOOD multicast group,
                      which  ovn-northd  populates  with  all  enabled  logical
                      ports.
 
               ·      A priority-85 flow that forwards all IP multicast traffic
-                     destined  to reserved multicast IPv6 addresses (RFC 4291,
-                     2.7.1, e.g., Solicited-Node multicast)  to  the  MC_FLOOD
-                     multicast  group,  which  ovn-northd  populates  with all
+                     destined to reserved multicast IPv6 addresses (RFC  4291,
+                     2.7.1,  e.g.,  Solicited-Node  multicast) to the MC_FLOOD
+                     multicast group,  which  ovn-northd  populates  with  all
                      enabled logical ports.
 
               ·      A priority-80 flow that forwards all unregistered IP mul‐
-                     ticast  traffic  to  the MC_STATIC multicast group, which
+                     ticast traffic to the MC_STATIC  multicast  group,  which
                      ovn-northd populates with all the logical ports that have
-                     options   :mcast_flood=’true’.  The  flow  also  forwards
+                     options  :mcast_flood=’true’.  The  flow  also   forwards
                      unregistered IP multicast traffic to the MC_MROUTER_FLOOD
-                     multicast  group, which ovn-northd populates with all the
-                     logical ports connected  to  logical  routers  that  have
+                     multicast group, which ovn-northd populates with all  the
+                     logical  ports  connected  to  logical  routers that have
                      options :mcast_relay=’true’.
 
-              ·      A  priority-80 flow that drops all unregistered IP multi‐
+              ·      A priority-80 flow that drops all unregistered IP  multi‐
                      cast  traffic  if  other_config  :mcast_snoop=’true’  and
                      other_config  :mcast_flood_unregistered=’false’  and  the
-                     switch is not connected to  a  logical  router  that  has
-                     options  :mcast_relay=’true’  and the switch doesn’t have
+                     switch  is  not  connected  to  a logical router that has
+                     options :mcast_relay=’true’ and the switch  doesn’t  have
                      any logical port with options :mcast_flood=’true’.
 
-              ·      Priority-80 flows for  each  IP  address/VIP/NAT  address
-                     owned  by  a  router  port connected to the switch. These
-                     flows match ARP requests and ND packets for the  specific
-                     IP  addresses.  Matched packets are forwarded only to the
-                     router that owns the IP address and  to  the  MC_FLOOD_L2
-                     multicast  group  which  contains  all non-router logical
+              ·      Priority-80  flows  for  each  IP address/VIP/NAT address
+                     owned by a router port connected  to  the  switch.  These
+                     flows  match ARP requests and ND packets for the specific
+                     IP addresses. Matched packets are forwarded only  to  the
+                     router  that  owns  the IP address and to the MC_FLOOD_L2
+                     multicast group which  contains  all  non-router  logical
                      ports.
+
+              ·      Priority-90  flows  for  each  IP address/VIP/NAT address
+                     configured outside its owning router port’s subnet. These
+                     flows  match ARP requests and ND packets for the specific
+                     IP  addresses.  Matched  packets  are  forwarded  to  the
+                     MC_FLOOD  multicast  group  which  contains all connected
+                     logical ports.
 
               ·      Priority-75 flows for each port connected  to  a  logical
                      router  matching  self originated ARP request/ND packets.
@@ -1382,16 +1460,18 @@ LOGICAL FLOW TABLE STRUCTURE
        flow  that simply moves traffic to the next table. Moreover it contains
        a priority-110 flow to move IPv6 Neighbor Discovery traffic to the next
        table.  If  any  load  balancing rules exist for the datapath, a prior‐
-       ity-100 flow is added with a match of ip and action  of  reg0[0]  =  1;
+       ity-100 flow is added with a match of ip and action  of  reg0[2]  =  1;
        next; to act as a hint for table Pre-stateful to send IP packets to the
-       connection tracker for packet de-fragmentation.
+       connection tracker for packet de-fragmentation and  possibly  DNAT  the
+       destination  VIP  to  one  of the selected backend for already commited
+       load balanced traffic.
 
        This table also has a priority-110 flow with the match eth.src == E for
        all logical switch datapaths to move traffic to the next table. Where E
        is the service monitor mac defined in the options:svc_monitor_mac colum
        of NB_Global table.
 
-     Egress Table 1:to-lportPre-ACLs
+     Egress Table 1: to-lport Pre-ACLs
 
        This is similar to ingress table Pre-ACLs except for to-lport traffic.
 
@@ -1408,75 +1488,88 @@ LOGICAL FLOW TABLE STRUCTURE
 
      Egress Table 2: Pre-stateful
 
-       This is similar to ingress table Pre-stateful.
+       This is similar to ingress table  Pre-stateful.  This  table  adds  the
+       below 3 logical flows.
 
-     Egress Table 3: LB
+              ·      A  Priority-120  flow that send the packets to connection
+                     tracker using ct_lb; as the action so  that  the  already
+                     established traffic gets unDNATted from the backend IP to
+                     the load balancer VIP based on a  hint  provided  by  the
+                     previous  tables  with  a  match for reg0[2] == 1. If the
+                     packet was not DNATted earlier, then ct_lb functions like
+                     ct_next.
 
-       This is similar to ingress table LB.
+              ·      A  priority-100  flow  sends  the  packets  to connection
+                     tracker based on a hint provided by the  previous  tables
+                     (with  a  match  for  reg0[0] == 1) by using the ct_next;
+                     action.
 
-     Egress Table 4:from-lportACL hints
+              ·      A priority-0 flow that matches all packets to advance  to
+                     the next table.
+
+     Egress Table 3: from-lport ACL hints
 
        This is similar to ingress table ACL hints.
 
-     Egress Table 5:to-lportACLs
+     Egress Table 4: to-lport ACLs
 
        This is similar to ingress table ACLs except for to-lport ACLs.
 
        In addition, the following flows are added.
 
-              ·      A priority 34000 logical flow is added for  each  logical
+              ·      A  priority  34000 logical flow is added for each logical
                      port which has DHCPv4 options defined to allow the DHCPv4
-                     reply packet and which  has  DHCPv6  options  defined  to
-                     allow  the DHCPv6 reply packet from the Ingress Table 16:
+                     reply  packet  and  which  has  DHCPv6 options defined to
+                     allow the DHCPv6 reply packet from the Ingress Table  16:
                      DHCP responses.
 
-              ·      A priority 34000 logical flow is added for  each  logical
-                     switch  datapath  configured  with  DNS  records with the
+              ·      A  priority  34000 logical flow is added for each logical
+                     switch datapath configured  with  DNS  records  with  the
                      match udp.dst = 53 to allow the DNS reply packet from the
                      Ingress Table 18: DNS responses.
 
-              ·      A  priority  34000 logical flow is added for each logical
-                     switch datapath with the match eth.src = E to  allow  the
-                     service  monitor  request  packet  generated  by ovn-con‐
+              ·      A priority 34000 logical flow is added for  each  logical
+                     switch  datapath  with the match eth.src = E to allow the
+                     service monitor  request  packet  generated  by  ovn-con‐
                      troller with the action next, where E is the service mon‐
-                     itor  mac defined in the options:svc_monitor_mac colum of
+                     itor mac defined in the options:svc_monitor_mac colum  of
                      NB_Global table.
 
-     Egress Table 6:to-lportQoS Marking
+     Egress Table 5: to-lport QoS Marking
 
-       This is similar to ingress table  QoS  marking  except  they  apply  to
+       This  is  similar  to  ingress  table  QoS marking except they apply to
        to-lport QoS rules.
 
-     Egress Table 7:to-lportQoS Meter
+     Egress Table 6: to-lport QoS Meter
 
-       This  is  similar  to  ingress  table  QoS  meter  except they apply to
+       This is similar to  ingress  table  QoS  meter  except  they  apply  to
        to-lport QoS rules.
 
-     Egress Table 8: Stateful
+     Egress Table 7: Stateful
 
-       This is similar to ingress table Stateful  except  that  there  are  no
+       This  is  similar  to  ingress  table Stateful except that there are no
        rules added for load balancing new connections.
 
-     Egress Table 9: Egress Port Security - IP
+     Egress Table 8: Egress Port Security - IP
 
-       This  is similar to the port security logic in table Ingress Port Secu‐
+       This is similar to the port security logic in table Ingress Port  Secu‐
        rity - IP except that outport, eth.dst, ip4.dst and ip6.dst are checked
        instead of inport, eth.src, ip4.src and ip6.src
 
-     Egress Table 10: Egress Port Security - L2
+     Egress Table 9: Egress Port Security - L2
 
-       This  is  similar  to  the ingress port security logic in ingress table
-       Admission Control and Ingress Port Security - L2,  but  with  important
+       This is similar to the ingress port security  logic  in  ingress  table
+       Admission  Control  and  Ingress Port Security - L2, but with important
        differences. Most obviously, outport and eth.dst are checked instead of
-       inport and eth.src. Second, packets directed to broadcast or  multicast
-       eth.dst  are always accepted instead of being subject to the port secu‐
-       rity rules; this  is  implemented  through  a  priority-100  flow  that
+       inport  and eth.src. Second, packets directed to broadcast or multicast
+       eth.dst are always accepted instead of being subject to the port  secu‐
+       rity  rules;  this  is  implemented  through  a  priority-100 flow that
        matches on eth.mcast with action output;. Moreover, to ensure that even
-       broadcast and multicast packets are not delivered to  disabled  logical
-       ports,  a priority-150 flow for each disabled logical outport overrides
-       the priority-100 flow with a drop; action. Finally if  egress  qos  has
-       been  enabled  on a localnet port, the outgoing queue id is set through
-       set_queue action. Please remember to mark  the  corresponding  physical
+       broadcast  and  multicast packets are not delivered to disabled logical
+       ports, a priority-150 flow for each disabled logical outport  overrides
+       the  priority-100  flow  with a drop; action. Finally if egress qos has
+       been enabled on a localnet port, the outgoing queue id is  set  through
+       set_queue  action.  Please  remember to mark the corresponding physical
        interface with ovn-egress-iface set to true in external_ids
 
    Logical Router Datapaths
@@ -1485,46 +1578,52 @@ LOGICAL FLOW TABLE STRUCTURE
 
      Ingress Table 0: L2 Admission Control
 
-       This table drops packets that the router shouldn’t see at all based  on
+       This  table drops packets that the router shouldn’t see at all based on
        their Ethernet headers. It contains the following flows:
 
               ·      Priority-100 flows to drop packets with VLAN tags or mul‐
                      ticast Ethernet source addresses.
 
               ·      For each enabled router port P with Ethernet address E, a
-                     priority-50  flow  that matches inport == P && (eth.mcast
+                     priority-50 flow that matches inport == P  &&  (eth.mcast
                      || eth.dst == E), stores the router port ethernet address
-                     and  advances  to next table, with action xreg0[0..47]=E;
+                     and advances to next table, with  action  xreg0[0..47]=E;
                      next;.
 
-                     For the gateway port  on  a  distributed  logical  router
-                     (where  one of the logical router ports specifies a gate‐
-                     way chassis), the above flow matching  eth.dst  ==  E  is
+                     For  the  gateway  port  on  a distributed logical router
+                     (where one of the logical router ports specifies a  gate‐
+                     way  chassis),  the  above  flow matching eth.dst == E is
                      only programmed on the gateway port instance on the gate‐
                      way chassis.
 
-              ·      For each dnat_and_snat NAT rule on a  distributed  router
-                     that  specifies  an external Ethernet address E, a prior‐
-                     ity-50 flow that matches inport == GW &&  eth.dst  ==  E,
-                     where  GW is the logical router gateway port, with action
+                     For  a  distributed  logical router or for gateway router
+                     where the port is configured with options:gateway_mtu the
+                     action   of   the   above   flow   is   modified   adding
+                     check_pkt_larger in order to mark the packet setting REG‐
+                     BIT_PKT_LARGER if the size is greater than the MTU.
+
+              ·      For  each  dnat_and_snat NAT rule on a distributed router
+                     that specifies an external Ethernet address E,  a  prior‐
+                     ity-50  flow  that  matches inport == GW && eth.dst == E,
+                     where GW is the logical router gateway port, with  action
                      xreg0[0..47]=E; next;.
 
                      This flow is only programmed on the gateway port instance
-                     on  the  chassis  where the logical_port specified in the
+                     on the chassis where the logical_port  specified  in  the
                      NAT rule resides.
 
        Other packets are implicitly dropped.
 
      Ingress Table 1: Neighbor lookup
 
-       For ARP and IPv6 Neighbor Discovery packets, this table looks into  the
-       MAC_Binding  records  to  determine if OVN needs to learn the mac bind‐
+       For  ARP and IPv6 Neighbor Discovery packets, this table looks into the
+       MAC_Binding records to determine if OVN needs to learn  the  mac  bind‐
        ings. Following flows are added:
 
-              ·      For each router port P that  owns  IP  address  A,  which
-                     belongs  to  subnet S with prefix length L, if the option
-                     always_learn_from_arp_request is true for this router,  a
-                     priority-100  flow  is added which matches inport == P &&
+              ·      For  each  router  port  P  that owns IP address A, which
+                     belongs to subnet S with prefix length L, if  the  option
+                     always_learn_from_arp_request  is true for this router, a
+                     priority-100 flow is added which matches inport ==  P  &&
                      arp.spa == S/L && arp.op == 1 (ARP request) with the fol‐
                      lowing actions:
 
@@ -1536,7 +1635,7 @@ LOGICAL FLOW TABLE STRUCTURE
                      following two flows are added.
 
                      A priority-110 flow is added which matches inport == P &&
-                     arp.spa  ==  S/L  &&  arp.tpa  ==  A  && arp.op == 1 (ARP
+                     arp.spa == S/L && arp.tpa  ==  A  &&  arp.op  ==  1  (ARP
                      request) with the following actions:
 
                      reg9[2] = lookup_arp(inport, arp.spa, arp.sha);
@@ -1553,12 +1652,12 @@ LOGICAL FLOW TABLE STRUCTURE
                      next;
 
 
-                     If the logical router port P  is  a  distributed  gateway
-                     router  port,  additional match is_chassis_resident(cr-P)
+                     If  the  logical  router  port P is a distributed gateway
+                     router port, additional  match  is_chassis_resident(cr-P)
                      is added for all these flows.
 
-              ·      A priority-100 flow which matches on  ARP  reply  packets
-                     and     applies     the    actions    if    the    option
+              ·      A  priority-100  flow  which matches on ARP reply packets
+                     and    applies    the    actions    if     the     option
                      always_learn_from_arp_request is true:
 
                      reg9[2] = lookup_arp(inport, arp.spa, arp.sha);
@@ -1573,8 +1672,8 @@ LOGICAL FLOW TABLE STRUCTURE
                      next;
 
 
-              ·      A  priority-100  flow which matches on IPv6 Neighbor Dis‐
-                     covery advertisement packet and applies  the  actions  if
+              ·      A priority-100 flow which matches on IPv6  Neighbor  Dis‐
+                     covery  advertisement  packet  and applies the actions if
                      the option always_learn_from_arp_request is true:
 
                      reg9[2] = lookup_nd(inport, nd.target, nd.tll);
@@ -1589,7 +1688,7 @@ LOGICAL FLOW TABLE STRUCTURE
                      next;
 
 
-              ·      A priority-100 flow which matches on IPv6  Neighbor  Dis‐
+              ·      A  priority-100  flow which matches on IPv6 Neighbor Dis‐
                      covery solicitation packet and applies the actions if the
                      option always_learn_from_arp_request is true:
 
@@ -1605,102 +1704,136 @@ LOGICAL FLOW TABLE STRUCTURE
                      next;
 
 
-              ·      A  priority-0  fallback flow that matches all packets and
-                     applies the action  reg9[2]  =  1;  next;  advancing  the
+              ·      A priority-0 fallback flow that matches all  packets  and
+                     applies  the  action  reg9[2]  =  1;  next; advancing the
                      packet to the next table.
 
      Ingress Table 2: Neighbor learning
 
-       This  table  adds flows to learn the mac bindings from the ARP and IPv6
-       Neighbor Solicitation/Advertisement packets if it is  needed  according
+       This table adds flows to learn the mac bindings from the ARP  and  IPv6
+       Neighbor  Solicitation/Advertisement  packets if it is needed according
        to the lookup results from the previous stage.
 
        reg9[2] will be 1 if the lookup_arp/lookup_nd in the previous table was
-       successful or skipped, meaning no need to learn mac  binding  from  the
+       successful  or  skipped,  meaning no need to learn mac binding from the
        packet.
 
        reg9[3] will be 1 if the lookup_arp_ip/lookup_nd_ip in the previous ta‐
-       ble was successful or skipped, meaning it is ok to  learn  mac  binding
+       ble  was  successful  or skipped, meaning it is ok to learn mac binding
        from the packet (if reg9[2] is 0).
 
-              ·      A  priority-100  flow  with  the  match  reg9[2]  == 1 ||
+              ·      A priority-100 flow  with  the  match  reg9[2]  ==  1  ||
                      reg9[3] == 0 and advances the packet to the next table as
                      there is no need to learn the neighbor.
 
-              ·      A  priority-90  flow  with  the match arp and applies the
+              ·      A priority-90 flow with the match  arp  and  applies  the
                      action put_arp(inport, arp.spa, arp.sha); next;
 
-              ·      A priority-90 flow with the match nd_na and  applies  the
+              ·      A  priority-90  flow with the match nd_na and applies the
                      action put_nd(inport, nd.target, nd.tll); next;
 
-              ·      A  priority-90  flow with the match nd_ns and applies the
+              ·      A priority-90 flow with the match nd_ns and  applies  the
                      action put_nd(inport, ip6.src, nd.sll); next;
 
      Ingress Table 3: IP Input
 
        This table is the core of the logical router datapath functionality. It
-       contains  the following flows to implement very basic IP host function‐
+       contains the following flows to implement very basic IP host  function‐
        ality.
 
-              ·      For each NAT entry of a distributed logical router  (with
-                     distributed  gateway  router port) of type snat, a prior‐
-                     ity-120 flow with the match inport == P && ip4.src  ==  A
-                     advances  the packet to the next pipeline, where P is the
-                     distributed logical router port and A is the  external_ip
-                     set  in  the  NAT  entry.  If  A is an IPv6 address, then
+              ·      For  distributed  logical routers or gateway routers with
+                     gateway port configured  with  options:gateway_mtu  to  a
+                     valid  integer  value, a priority-150 flow with the match
+                     inport == LRP && REGBIT_PKT_LARGER && REGBIT_EGRESS_LOOP‐
+                     BACK  ==  0,  where  LRP  is  the logical router port and
+                     applies the following action for ipv4  and  ipv6  respec‐
+                     tively:
+
+                     icmp4 {
+                         icmp4.type = 3; /* Destination Unreachable. */
+                         icmp4.code = 4;  /* Frag Needed and DF was Set. */
+                         icmp4.frag_mtu = M;
+                         eth.dst = E;
+                         ip4.dst = ip4.src;
+                         ip4.src = I;
+                         ip.ttl = 255;
+                         REGBIT_EGRESS_LOOPBACK = 1;
+                         REGBIT_PKT_LARGER 0;
+                         next(pipeline=ingress, table=0);
+                     };
+                     icmp6 {
+                         icmp6.type = 2;
+                         icmp6.code = 0;
+                         icmp6.frag_mtu = M;
+                         eth.dst = E;
+                         ip6.dst = ip6.src;
+                         ip6.src = I;
+                         ip.ttl = 255;
+                         REGBIT_EGRESS_LOOPBACK = 1;
+                         REGBIT_PKT_LARGER 0;
+                         next(pipeline=ingress, table=0);
+                     };
+
+
+              ·      For  each NAT entry of a distributed logical router (with
+                     distributed gateway router port) of type snat,  a  prior‐
+                     ity-120  flow  with the match inport == P && ip4.src == A
+                     advances the packet to the next pipeline, where P is  the
+                     distributed  logical router port and A is the external_ip
+                     set in the NAT entry. If  A  is  an  IPv6  address,  then
                      ip6.src is used for the match.
 
-                     The above flow is required to handle the routing  of  the
+                     The  above  flow is required to handle the routing of the
                      East/west NAT traffic.
 
-              ·      For  each  BFD  port the two following priority-110 flows
+              ·      For each BFD port the two  following  priority-110  flows
                      are added to manage BFD traffic:
 
-                     ·      if ip4.src or ip6.src is any IP address  owned  by
-                            the  router  port and udp.dst == 3784 , the packet
+                     ·      if  ip4.src  or ip6.src is any IP address owned by
+                            the router port and udp.dst == 3784 ,  the  packet
                             is advanced to the next pipeline stage.
 
-                     ·      if ip4.dst or ip6.dst is any IP address  owned  by
-                            the  router  port  and  udp.dst == 3784 , the han‐
+                     ·      if  ip4.dst  or ip6.dst is any IP address owned by
+                            the router port and udp.dst ==  3784  ,  the  han‐
                             dle_bfd_msg action is executed.
 
-              ·      L3 admission control: A priority-100 flow  drops  packets
+              ·      L3  admission  control: A priority-100 flow drops packets
                      that match any of the following:
 
                      ·      ip4.src[28..31] == 0xe (multicast source)
 
                      ·      ip4.src == 255.255.255.255 (broadcast source)
 
-                     ·      ip4.src  ==  127.0.0.0/8 || ip4.dst == 127.0.0.0/8
+                     ·      ip4.src == 127.0.0.0/8 || ip4.dst  ==  127.0.0.0/8
                             (localhost source or destination)
 
                      ·      ip4.src == 0.0.0.0/8 || ip4.dst == 0.0.0.0/8 (zero
                             network source or destination)
 
-                     ·      ip4.src  or ip6.src is any IP address owned by the
-                            router, unless the packet was recirculated due  to
-                            egress    loopback    as    indicated    by   REG‐
+                     ·      ip4.src or ip6.src is any IP address owned by  the
+                            router,  unless the packet was recirculated due to
+                            egress   loopback    as    indicated    by    REG‐
                             BIT_EGRESS_LOOPBACK.
 
                      ·      ip4.src is the broadcast address of any IP network
                             known to the router.
 
-              ·      A  priority-100 flow parses DHCPv6 replies from IPv6 pre‐
-                     fix delegation routers (udp.src  ==  547  &&  udp.dst  ==
+              ·      A priority-100 flow parses DHCPv6 replies from IPv6  pre‐
+                     fix  delegation  routers  (udp.src  ==  547 && udp.dst ==
                      546). The handle_dhcpv6_reply is used to send IPv6 prefix
                      delegation messages to the delegation router.
 
-              ·      ICMP echo reply. These flows reply to ICMP echo  requests
-                     received  for  the  router’s  IP  address. Let A be an IP
-                     address owned by a router port. Then, for each A that  is
+              ·      ICMP  echo reply. These flows reply to ICMP echo requests
+                     received for the router’s IP address.  Let  A  be  an  IP
+                     address  owned by a router port. Then, for each A that is
                      an IPv4 address, a priority-90 flow matches on ip4.dst ==
-                     A and icmp4.type == 8  &&  icmp4.code  ==  0  (ICMP  echo
-                     request).  For  each  A that is an IPv6 address, a prior‐
+                     A  and  icmp4.type  ==  8  &&  icmp4.code == 0 (ICMP echo
+                     request). For each A that is an IPv6  address,  a  prior‐
                      ity-90 flow matches on ip6.dst == A and icmp6.type == 128
                      && icmp6.code == 0 (ICMPv6 echo request). The port of the
-                     router that receives the echo request  does  not  matter.
-                     Also,  the  ip.ttl  of  the  echo  request  packet is not
-                     checked, so it complies with RFC 1812,  section  4.2.2.9.
+                     router  that  receives  the echo request does not matter.
+                     Also, the ip.ttl  of  the  echo  request  packet  is  not
+                     checked,  so  it complies with RFC 1812, section 4.2.2.9.
                      Flows for ICMPv4 echo requests use the following actions:
 
                      ip4.dst <-> ip4.src;
@@ -1724,10 +1857,10 @@ LOGICAL FLOW TABLE STRUCTURE
                      These flows reply to ARP requests for the router’s own IP
                      address.  The  ARP  requests  are  handled  only  if  the
                      requestor’s IP belongs to the same subnets of the logical
-                     router port. For each router port P that owns IP  address
-                     A,  which  belongs  to subnet S with prefix length L, and
-                     Ethernet address E, a priority-90 flow matches inport  ==
-                     P  &&  arp.spa == S/L && arp.op == 1 && arp.tpa == A (ARP
+                     router  port. For each router port P that owns IP address
+                     A, which belongs to subnet S with prefix  length  L,  and
+                     Ethernet  address E, a priority-90 flow matches inport ==
+                     P && arp.spa == S/L && arp.op == 1 && arp.tpa ==  A  (ARP
                      request) with the following actions:
 
                      eth.dst = eth.src;
@@ -1742,30 +1875,30 @@ LOGICAL FLOW TABLE STRUCTURE
                      output;
 
 
-                     For the gateway port  on  a  distributed  logical  router
-                     (where  one of the logical router ports specifies a gate‐
-                     way chassis), the above flows are only programmed on  the
+                     For  the  gateway  port  on  a distributed logical router
+                     (where one of the logical router ports specifies a  gate‐
+                     way  chassis), the above flows are only programmed on the
                      gateway port instance on the gateway chassis. This behav‐
                      ior avoids generation of multiple ARP responses from dif‐
                      ferent chassis, and allows upstream MAC learning to point
                      to the gateway chassis.
 
                      For the logical router port with the option reside-on-re‐
-                     direct-chassis  set  (which  is  centralized),  the above
+                     direct-chassis set  (which  is  centralized),  the  above
                      flows are only programmed on the gateway port instance on
                      the gateway chassis (if the logical router has a distrib‐
-                     uted gateway port). This behavior  avoids  generation  of
+                     uted  gateway  port).  This behavior avoids generation of
                      multiple ARP responses from different chassis, and allows
                      upstream MAC learning to point to the gateway chassis.
 
-              ·      Reply to IPv6 Neighbor Solicitations. These  flows  reply
-                     to  Neighbor  Solicitation  requests for the router’s own
-                     IPv6 address and populate the logical router’s mac  bind‐
+              ·      Reply  to  IPv6 Neighbor Solicitations. These flows reply
+                     to Neighbor Solicitation requests for  the  router’s  own
+                     IPv6  address and populate the logical router’s mac bind‐
                      ing table.
 
                      For  each  router  port  P  that  owns  IPv6  address  A,
-                     solicited node address S, and Ethernet address E, a  pri‐
-                     ority-90  flow matches inport == P && nd_ns && ip6.dst ==
+                     solicited  node address S, and Ethernet address E, a pri‐
+                     ority-90 flow matches inport == P && nd_ns && ip6.dst  ==
                      {A, E} && nd.target == A with the following actions:
 
                      nd_na_router {
@@ -1779,23 +1912,23 @@ LOGICAL FLOW TABLE STRUCTURE
                      };
 
 
-                     For the gateway port  on  a  distributed  logical  router
-                     (where  one of the logical router ports specifies a gate‐
-                     way chassis), the above flows replying to  IPv6  Neighbor
-                     Solicitations  are  only  programmed  on the gateway port
-                     instance on the gateway  chassis.  This  behavior  avoids
-                     generation  of  multiple  replies from different chassis,
-                     and allows upstream MAC learning to point to the  gateway
+                     For  the  gateway  port  on  a distributed logical router
+                     (where one of the logical router ports specifies a  gate‐
+                     way  chassis),  the above flows replying to IPv6 Neighbor
+                     Solicitations are only programmed  on  the  gateway  port
+                     instance  on  the  gateway  chassis. This behavior avoids
+                     generation of multiple replies  from  different  chassis,
+                     and  allows upstream MAC learning to point to the gateway
                      chassis.
 
               ·      These flows reply to ARP requests or IPv6 neighbor solic‐
-                     itation for the virtual IP addresses  configured  in  the
+                     itation  for  the  virtual IP addresses configured in the
                      router for NAT (both DNAT and SNAT) or load balancing.
 
-                     IPv4:  For  a  configured  NAT  (both  DNAT  and SNAT) IP
-                     address or a load balancer IPv4 VIP A,  for  each  router
-                     port  P  with  Ethernet  address  E,  a  priority-90 flow
-                     matches arp.op == 1 && arp.tpa == A  (ARP  request)  with
+                     IPv4: For a  configured  NAT  (both  DNAT  and  SNAT)  IP
+                     address  or  a  load balancer IPv4 VIP A, for each router
+                     port P  with  Ethernet  address  E,  a  priority-90  flow
+                     matches  arp.op  ==  1 && arp.tpa == A (ARP request) with
                      the following actions:
 
                      eth.dst = eth.src;
@@ -1803,25 +1936,24 @@ LOGICAL FLOW TABLE STRUCTURE
                      arp.op = 2; /* ARP reply. */
                      arp.tha = arp.sha;
                      arp.sha = xreg0[0..47];
-                     arp.tpa = arp.spa;
-                     arp.spa = A;
+                     arp.tpa <-> arp.spa;
                      outport = inport;
                      flags.loopback = 1;
                      output;
 
 
-                     IPv4:  For a configured load balancer IPv4 VIP, a similar
+                     IPv4: For a configured load balancer IPv4 VIP, a  similar
                      flow is added with the additional match inport == P.
 
-                     If the router port P  is  a  distributed  gateway  router
-                     port,  then  the  is_chassis_resident(P) is also added in
+                     If  the  router  port  P  is a distributed gateway router
+                     port, then the is_chassis_resident(P) is  also  added  in
                      the match condition for the load balancer IPv4 VIP A.
 
-                     IPv6: For a  configured  NAT  (both  DNAT  and  SNAT)  IP
-                     address  or  a  load  balancer IPv6 VIP A, solicited node
-                     address S, for each router port P with  Ethernet  address
-                     E,  a  priority-90  flow  matches inport == P && nd_ns &&
-                     ip6.dst == {A, S} && nd.target == A  with  the  following
+                     IPv6:  For  a  configured  NAT  (both  DNAT  and SNAT) IP
+                     address or a load balancer IPv6  VIP  A,  solicited  node
+                     address  S,  for each router port P with Ethernet address
+                     E, a priority-90 flow matches inport ==  P  &&  nd_ns  &&
+                     ip6.dst  ==  {A,  S} && nd.target == A with the following
                      actions:
 
                      eth.dst = eth.src;
@@ -1836,32 +1968,32 @@ LOGICAL FLOW TABLE STRUCTURE
                      }
 
 
-                     If  the  router  port  P  is a distributed gateway router
-                     port, then the is_chassis_resident(P) is  also  added  in
+                     If the router port P  is  a  distributed  gateway  router
+                     port,  then  the  is_chassis_resident(P) is also added in
                      the match condition for the load balancer IPv6 VIP A.
 
                      For the gateway port on a distributed logical router with
-                     NAT (where one of the logical router  ports  specifies  a
+                     NAT  (where  one  of the logical router ports specifies a
                      gateway chassis):
 
                      ·      If the corresponding NAT rule cannot be handled in
-                            a distributed manner, then a priority-92  flow  is
-                            programmed  on  the  gateway  port instance on the
-                            gateway chassis. A priority-91 drop flow  is  pro‐
-                            grammed  on the other chassis when ARP requests/NS
-                            packets are received on  the  gateway  port.  This
-                            behavior   avoids   generation   of  multiple  ARP
-                            responses  from  different  chassis,  and   allows
-                            upstream  MAC  learning  to  point  to the gateway
+                            a  distributed  manner, then a priority-92 flow is
+                            programmed on the gateway  port  instance  on  the
+                            gateway  chassis.  A priority-91 drop flow is pro‐
+                            grammed on the other chassis when ARP  requests/NS
+                            packets  are  received  on  the gateway port. This
+                            behavior  avoids  generation   of   multiple   ARP
+                            responses   from  different  chassis,  and  allows
+                            upstream MAC learning  to  point  to  the  gateway
                             chassis.
 
-                     ·      If the corresponding NAT rule can be handled in  a
-                            distributed  manner,  then  this flow is only pro‐
-                            grammed on the gateway  port  instance  where  the
+                     ·      If  the corresponding NAT rule can be handled in a
+                            distributed manner, then this flow  is  only  pro‐
+                            grammed  on  the  gateway  port instance where the
                             logical_port specified in the NAT rule resides.
 
-                            Some  of  the actions are different for this case,
-                            using the external_mac specified in the  NAT  rule
+                            Some of the actions are different for  this  case,
+                            using  the  external_mac specified in the NAT rule
                             rather than the gateway port’s Ethernet address E:
 
                             eth.src = external_mac;
@@ -1874,78 +2006,78 @@ LOGICAL FLOW TABLE STRUCTURE
                             nd.tll = external_mac;
 
 
-                            This  behavior  avoids  generation of multiple ARP
-                            responses  from  different  chassis,  and   allows
-                            upstream  MAC  learning  to  point  to the correct
+                            This behavior avoids generation  of  multiple  ARP
+                            responses   from  different  chassis,  and  allows
+                            upstream MAC learning  to  point  to  the  correct
                             chassis.
 
-              ·      Priority-85 flows which drops the ARP and  IPv6  Neighbor
+              ·      Priority-85  flows  which drops the ARP and IPv6 Neighbor
                      Discovery packets.
 
               ·      A priority-84 flow explicitly allows IPv6 multicast traf‐
-                     fic that is supposed to reach the router pipeline  (i.e.,
+                     fic  that is supposed to reach the router pipeline (i.e.,
                      router solicitation and router advertisement packets).
 
-              ·      A  priority-83 flow explicitly drops IPv6 multicast traf‐
+              ·      A priority-83 flow explicitly drops IPv6 multicast  traf‐
                      fic that is destined to reserved multicast groups.
 
-              ·      A  priority-82  flow  allows  IP  multicast  traffic   if
+              ·      A   priority-82  flow  allows  IP  multicast  traffic  if
                      options:mcast_relay=’true’, otherwise drops it.
 
-              ·      UDP  port  unreachable.  Priority-80  flows generate ICMP
-                     port unreachable  messages  in  reply  to  UDP  datagrams
-                     directed  to  the router’s IP address, except in the spe‐
+              ·      UDP port unreachable.  Priority-80  flows  generate  ICMP
+                     port  unreachable  messages  in  reply  to  UDP datagrams
+                     directed to the router’s IP address, except in  the  spe‐
                      cial case of gateways, which accept traffic directed to a
                      router IP for load balancing and NAT purposes.
-
-                     These  flows  should  not match IP fragments with nonzero
-                     offset.
-
-              ·      TCP reset. Priority-80 flows generate TCP reset  messages
-                     in  reply  to  TCP  datagrams directed to the router’s IP
-                     address, except in the special case  of  gateways,  which
-                     accept traffic directed to a router IP for load balancing
-                     and NAT purposes.
 
                      These flows should not match IP  fragments  with  nonzero
                      offset.
 
-              ·      Protocol or address unreachable. Priority-70 flows gener‐
-                     ate ICMP protocol or  address  unreachable  messages  for
-                     IPv4  and  IPv6 respectively in reply to packets directed
-                     to the router’s IP address on  IP  protocols  other  than
-                     UDP,  TCP,  and ICMP, except in the special case of gate‐
-                     ways, which accept traffic directed to a  router  IP  for
-                     load balancing purposes.
+              ·      TCP  reset. Priority-80 flows generate TCP reset messages
+                     in reply to TCP datagrams directed  to  the  router’s  IP
+                     address,  except  in  the special case of gateways, which
+                     accept traffic directed to a router IP for load balancing
+                     and NAT purposes.
 
                      These  flows  should  not match IP fragments with nonzero
                      offset.
 
-              ·      Drop other IP traffic to this router.  These  flows  drop
-                     any  other  traffic  destined  to  an  IP address of this
-                     router that is not already handled by one  of  the  flows
-                     above,  which  amounts to ICMP (other than echo requests)
+              ·      Protocol or address unreachable. Priority-70 flows gener‐
+                     ate  ICMP  protocol  or  address unreachable messages for
+                     IPv4 and IPv6 respectively in reply to  packets  directed
+                     to  the  router’s  IP  address on IP protocols other than
+                     UDP, TCP, and ICMP, except in the special case  of  gate‐
+                     ways,  which  accept  traffic directed to a router IP for
+                     load balancing purposes.
+
+                     These flows should not match IP  fragments  with  nonzero
+                     offset.
+
+              ·      Drop  other  IP  traffic to this router. These flows drop
+                     any other traffic destined  to  an  IP  address  of  this
+                     router  that  is  not already handled by one of the flows
+                     above, which amounts to ICMP (other than  echo  requests)
                      and fragments with nonzero offsets. For each IP address A
-                     owned  by  the router, a priority-60 flow matches ip4.dst
-                     == A or ip6.dst == A and drops the traffic. An  exception
-                     is  made  and  the  above flow is not added if the router
-                     port’s own IP address is used  to  SNAT  packets  passing
+                     owned by the router, a priority-60 flow  matches  ip4.dst
+                     ==  A or ip6.dst == A and drops the traffic. An exception
+                     is made and the above flow is not  added  if  the  router
+                     port’s  own  IP  address  is used to SNAT packets passing
                      through that router.
 
        The flows above handle all of the traffic that might be directed to the
-       router itself. The following flows (with lower priorities)  handle  the
+       router  itself.  The following flows (with lower priorities) handle the
        remaining traffic, potentially for forwarding:
 
-              ·      Drop  Ethernet  local  broadcast. A priority-50 flow with
-                     match eth.bcast drops traffic destined to the local  Eth‐
+              ·      Drop Ethernet local broadcast. A  priority-50  flow  with
+                     match  eth.bcast drops traffic destined to the local Eth‐
                      ernet  broadcast  address.  By  definition  this  traffic
                      should not be forwarded.
 
-              ·      ICMP time exceeded. For each  router  port  P,  whose  IP
-                     address  is  A, a priority-40 flow with match inport == P
-                     && ip.ttl == {0, 1}  &&  !ip.later_frag  matches  packets
+              ·      ICMP  time  exceeded.  For  each  router port P, whose IP
+                     address is A, a priority-40 flow with match inport  ==  P
+                     &&  ip.ttl  ==  {0,  1} && !ip.later_frag matches packets
                      whose TTL has expired, with the following actions to send
-                     an ICMP time exceeded reply for  IPv4  and  IPv6  respec‐
+                     an  ICMP  time  exceeded  reply for IPv4 and IPv6 respec‐
                      tively:
 
                      icmp4 {
@@ -1966,31 +2098,110 @@ LOGICAL FLOW TABLE STRUCTURE
                      };
 
 
-              ·      TTL  discard. A priority-30 flow with match ip.ttl == {0,
-                     1} and actions drop; drops other packets  whose  TTL  has
+              ·      TTL discard. A priority-30 flow with match ip.ttl ==  {0,
+                     1}  and  actions  drop; drops other packets whose TTL has
                      expired, that should not receive a ICMP error reply (i.e.
                      fragments with nonzero offset).
 
-              ·      Next table. A priority-0 flows  match  all  packets  that
-                     aren’t  already  handled  and  uses actions next; to feed
+              ·      Next  table.  A  priority-0  flows match all packets that
+                     aren’t already handled and uses  actions  next;  to  feed
                      them to the next table.
 
-     Ingress Table 4: DEFRAG
+     Ingress Table 4: UNSNAT
+
+       This  is  for  already  established connections’ reverse traffic. i.e.,
+       SNAT has already been done in egress pipeline and now  the  packet  has
+       entered the ingress pipeline as part of a reply. It is unSNATted here.
+
+       Ingress Table 4: UNSNAT on Gateway and Distributed Routers
+
+              ·      If the Router (Gateway or Distributed) is configured with
+                     load balancers, then below lflows are added:
+
+                     For each IPv4 address A defined as load balancer VIP with
+                     the  protocol  P  (and the protocol port T if defined) is
+                     also present as an external_ip in the NAT table, a prior‐
+                     ity-120  logical  flow  is  added  with  the match ip4 &&
+                     ip4.dst == A && P with the action next;  to  advance  the
+                     packet to the next table. If the load balancer has proto‐
+                     col port B defined, then the match also has P.dst == B.
+
+                     The above flows are also added for IPv6 load balancers.
+
+       Ingress Table 4: UNSNAT on Gateway Routers
+
+              ·      If the Gateway router has been configured to  force  SNAT
+                     any  previously DNATted packets to B, a priority-110 flow
+                     matches ip && ip4.dst == B or ip && ip6.dst == B with  an
+                     action ct_snat; .
+
+                     If    the    Gateway    router    is    configured   with
+                     lb_force_snat_ip=router_ip then for every logical  router
+                     port  P attached to the Gateway router with the router ip
+                     B, a priority-110 flow is added with the match inport  ==
+                     P  && ip4.dst == B or inport == P && ip6.dst == B with an
+                     action ct_snat; .
+
+                     If the Gateway router has been configured to  force  SNAT
+                     any previously load-balanced packets to B, a priority-100
+                     flow matches ip && ip4.dst == B or ip  &&  ip6.dst  ==  B
+                     with an action ct_snat; .
+
+                     For  each  NAT  configuration in the OVN Northbound data‐
+                     base, that asks to change the  source  IP  address  of  a
+                     packet  from  A  to  B,  a priority-90 flow matches ip &&
+                     ip4.dst == B or  ip  &&  ip6.dst  ==  B  with  an  action
+                     ct_snat;  .  If the NAT rule is of type dnat_and_snat and
+                     has stateless=true in the options, then the action  would
+                     be ip4/6.dst= (B).
+
+                     A priority-0 logical flow with match 1 has actions next;.
+
+       Ingress Table 4: UNSNAT on Distributed Routers
+
+              ·      For  each  configuration  in the OVN Northbound database,
+                     that asks to change the source IP  address  of  a  packet
+                     from A to B, a priority-100 flow matches ip && ip4.dst ==
+                     B && inport == GW or ip && ip6.dst == B && inport  ==  GW
+                     where  GW  is  the  logical  router gateway port, with an
+                     action ct_snat;. If the NAT rule is of type dnat_and_snat
+                     and  has  stateless=true  in the options, then the action
+                     would be ip4/6.dst= (B).
+
+                     If the NAT rule cannot be handled in a  distributed  man‐
+                     ner,  then the priority-100 flow above is only programmed
+                     on the gateway chassis.
+
+                     A priority-0 logical flow with match 1 has actions next;.
+
+     Ingress Table 5: DEFRAG
 
        This is to send packets to connection tracker for tracking and  defrag‐
        mentation.  It  contains a priority-0 flow that simply moves traffic to
        the next table.
 
-       If load balancing rules with virtual IP addresses (and ports) are  con‐
-       figured in OVN_Northbound database for a Gateway router, a priority-100
-       flow is added for each configured virtual IP address VIP. For IPv4 VIPs
-       the  flow matches ip && ip4.dst == VIP. For IPv6 VIPs, the flow matches
-       ip && ip6.dst == VIP. The flow uses the  action  ct_next;  to  send  IP
-       packets  to  the  connection  tracker  for  packet de-fragmentation and
-       tracking before sending it to the next table.
+       If load balancing rules with only virtual IP addresses  are  configured
+       in OVN_Northbound database for a Gateway router, a priority-100 flow is
+       added for each configured virtual IP address VIP.  For  IPv4  VIPs  the
+       flow  matches  ip && ip4.dst == VIP. For IPv6 VIPs, the flow matches ip
+       && ip6.dst == VIP. The flow applies the action reg0 = VIP; ct_dnat; (or
+       xxreg0  for  IPv6)  to  send  IP  packets to the connection tracker for
+       packet de-fragmentation and to dnat the destination IP for the  commit‐
+       ted connection before sending it to the next table.
+
+       If load balancing rules with virtual IP addresses and ports are config‐
+       ured in OVN_Northbound database for a Gateway  router,  a  priority-110
+       flow  is  added  for  each  configured virtual IP address VIP, protocol
+       PROTO and port PORT. For IPv4 VIPs the flow matches ip  &&  ip4.dst  ==
+       VIP  &&  PROTO && PROTO.dst == PORT. For IPv6 VIPs, the flow matches ip
+       && ip6.dst == VIP && PROTO && PROTO.dst == PORT. The flow  applies  the
+       action  reg0  =  VIP; reg9[16..31] = PROTO.dst; ct_dnat; (or xxreg0 for
+       IPv6) to send IP packets to the connection tracker for packet  de-frag‐
+       mentation  and  to dnat the destination IP for the committed connection
+       before sending it to the next table.
 
        If ECMP routes with symmetric reply are configured  in  the  OVN_North‐
-       bound  database  for a gateway router, a priority-100 flow is added for
+       bound  database  for a gateway router, a priority-300 flow is added for
        each router port on which symmetric replies are configured. The  match‐
        ing  logic for these ports essentially reverses the configured logic of
        the ECMP route. So for instance, a route  with  a  destination  routing
@@ -1999,185 +2210,133 @@ LOGICAL FLOW TABLE STRUCTURE
        the  connection tracker for packet de-fragmentation and tracking before
        sending it to the next table.
 
-     Ingress Table 5: UNSNAT
-
-       This is for already established  connections’  reverse  traffic.  i.e.,
-       SNAT  has  already  been done in egress pipeline and now the packet has
-       entered the ingress pipeline as part of a reply. It is unSNATted here.
-
-       Ingress Table 5: UNSNAT on Gateway and Distributed Routers
-
-              ·      If the Router (Gateway or Distributed) is configured with
-                     load balancers, then below lflows are added:
-
-                     For each IPv4 address A defined as load balancer VIP with
-                     the protocol P (and the protocol port T  if  defined)  is
-                     also present as an external_ip in the NAT table, a prior‐
-                     ity-120 logical flow is  added  with  the  match  ip4  &&
-                     ip4.dst  ==  A  && P with the action next; to advance the
-                     packet to the next table. If the load balancer has proto‐
-                     col port B defined, then the match also has P.dst == B.
-
-                     The above flows are also added for IPv6 load balancers.
-
-       Ingress Table 5: UNSNAT on Gateway Routers
-
-              ·      If  the  Gateway router has been configured to force SNAT
-                     any previously DNATted packets to B, a priority-110  flow
-                     matches  ip && ip4.dst == B or ip && ip6.dst == B with an
-                     action ct_snat; .
-
-                     If   the    Gateway    router    is    configured    with
-                     lb_force_snat_ip=router_ip  then for every logical router
-                     port P attached to the Gateway router with the router  ip
-                     B,  a priority-110 flow is added with the match inport ==
-                     P && ip4.dst == B or inport == P && ip6.dst == B with  an
-                     action ct_snat; .
-
-                     If  the  Gateway router has been configured to force SNAT
-                     any previously load-balanced packets to B, a priority-100
-                     flow  matches  ip  &&  ip4.dst == B or ip && ip6.dst == B
-                     with an action ct_snat; .
-
-                     For each NAT configuration in the  OVN  Northbound  data‐
-                     base,  that  asks  to  change  the source IP address of a
-                     packet from A to B, a  priority-90  flow  matches  ip  &&
-                     ip4.dst  ==  B  or  ip  &&  ip6.dst  ==  B with an action
-                     ct_snat; . If the NAT rule is of type  dnat_and_snat  and
-                     has  stateless=true in the options, then the action would
-                     be ip4/6.dst= (B).
-
-                     A priority-0 logical flow with match 1 has actions next;.
-
-       Ingress Table 5: UNSNAT on Distributed Routers
-
-              ·      For each configuration in the  OVN  Northbound  database,
-                     that  asks  to  change  the source IP address of a packet
-                     from A to B, a priority-100 flow matches ip && ip4.dst ==
-                     B  &&  inport == GW or ip && ip6.dst == B && inport == GW
-                     where GW is the logical  router  gateway  port,  with  an
-                     action ct_snat;. If the NAT rule is of type dnat_and_snat
-                     and has stateless=true in the options,  then  the  action
-                     would be ip4/6.dst= (B).
-
-                     If  the  NAT rule cannot be handled in a distributed man‐
-                     ner, then the priority-100 flow above is only  programmed
-                     on the gateway chassis.
-
-                     A priority-0 logical flow with match 1 has actions next;.
-
      Ingress Table 6: DNAT
 
        Packets enter the pipeline with destination IP address that needs to be
-       DNATted from a virtual IP address to a real IP address. Packets in  the
+       DNATted  from a virtual IP address to a real IP address. Packets in the
        reverse direction needs to be unDNATed.
 
        Ingress Table 6: Load balancing DNAT rules
 
-       Following  load  balancing  DNAT  flows are added for Gateway router or
-       Router with gateway port. These flows are programmed only on the  gate‐
-       way  chassis. These flows do not get programmed for load balancers with
+       Following load balancing DNAT flows are added  for  Gateway  router  or
+       Router  with gateway port. These flows are programmed only on the gate‐
+       way chassis. These flows do not get programmed for load balancers  with
        IPv6 VIPs.
 
-              ·      If controller_event has been enabled for all the  config‐
-                     ured  load balancing rules for a Gateway router or Router
-                     with gateway port in OVN_Northbound  database  that  does
-                     not  have  configured  backends,  a  priority-130 flow is
+              ·      If  controller_event has been enabled for all the config‐
+                     ured load balancing rules for a Gateway router or  Router
+                     with  gateway  port  in OVN_Northbound database that does
+                     not have configured  backends,  a  priority-130  flow  is
                      added to trigger ovn-controller events whenever the chas‐
                      sis  receives  a  packet  for  that  particular  VIP.  If
-                     event-elb meter has been previously created, it  will  be
+                     event-elb  meter  has been previously created, it will be
                      associated to the empty_lb logical flow
 
               ·      For all the configured load balancing rules for a Gateway
-                     router or Router  with  gateway  port  in  OVN_Northbound
-                     database  that  includes a L4 port PORT of protocol P and
-                     IPv4 or  IPv6  address  VIP,  a  priority-120  flow  that
-                     matches  on  ct.new && ip && ip4.dst == VIP && P && P.dst
-                     == PORT
-                      (ip6.dst == VIP in the IPv6  case)  with  an  action  of
-                     ct_lb(args),  where args contains comma separated IPv4 or
-                     IPv6 addresses (and optional port numbers) to  load  bal‐
-                     ance  to.  If  the router is configured to force SNAT any
-                     load-balanced packets, the above action will be  replaced
-                     by flags.force_snat_for_lb = 1; ct_lb(args);. If the load
-                     balancing rule is configured with skip_snat set to  true,
-                     the     above     action     will    be    replaced    by
-                     flags.skip_snat_for_lb = 1; ct_lb(args);. If health check
-                     is  enabled,  then args will only contain those endpoints
-                     whose service monitor status entry in  OVN_Southbound  db
-                     is either online or empty.
+                     router  or  Router  with  gateway  port in OVN_Northbound
+                     database that includes a L4 port PORT of protocol  P  and
+                     IPv4  or  IPv6  address  VIP,  a  priority-120  flow that
+                     matches  on  ct.new  &&  ip  &&  reg0  ==  VIP  &&  P  &&
+                     reg9[16..31]  ==   PORT  (xxreg0 == VIP in the IPv6 case)
+                     with an action of ct_lb(args), where args contains  comma
+                     separated  IPv4 or IPv6 addresses (and optional port num‐
+                     bers) to load balance to. If the router is configured  to
+                     force  SNAT  any  load-balanced packets, the above action
+                     will  be  replaced  by   flags.force_snat_for_lb   =   1;
+                     ct_lb(args);.  If  the  load balancing rule is configured
+                     with skip_snat set to true,  the  above  action  will  be
+                     replaced  by flags.skip_snat_for_lb = 1; ct_lb(args);. If
+                     health check is enabled,  then  args  will  only  contain
+                     those  endpoints  whose  service  monitor status entry in
+                     OVN_Southbound db is either online or empty.
+
+                     The previous table lr_in_defrag sets  the  register  reg0
+                     (or  xxreg0  for IPv6) and does ct_dnat. Hence for estab‐
+                     lished traffic, this table just advances  the  packet  to
+                     the next stage.
 
               ·      For  all the configured load balancing rules for a router
                      in OVN_Northbound database that includes a L4  port  PORT
                      of  protocol  P  and  IPv4  or IPv6 address VIP, a prior‐
-                     ity-120 flow that matches on ct.est && ip &&  ip4.dst  ==
-                     VIP && P && P.dst == PORT
-                      (ip6.dst  ==  VIP  in  the  IPv6 case) with an action of
-                     ct_dnat;. If the router is configured to force  SNAT  any
-                     load-balanced  packets, the above action will be replaced
-                     by flags.force_snat_for_lb = 1;  ct_dnat;.  If  the  load
-                     balancing  rule is configured with skip_snat set to true,
-                     the    above    action    will     be     replaced     by
-                     flags.skip_snat_for_lb = 1; ct_dnat;.
+                     ity-120 flow that matches on ct.est && ip4 && reg0 == VIP
+                     &&  P  && reg9[16..31] ==  PORT (ip6 and xxreg0 == VIP in
+                     the IPv6 case) with an action of next;. If the router  is
+                     configured  to  force SNAT any load-balanced packets, the
+                     above action will be replaced by  flags.force_snat_for_lb
+                     = 1; next;. If the load balancing rule is configured with
+                     skip_snat set to true, the above action will be  replaced
+                     by flags.skip_snat_for_lb = 1; next;.
 
-              ·      For  all the configured load balancing rules for a router
-                     in OVN_Northbound  database  that  includes  just  an  IP
-                     address VIP to match on, a priority-110 flow that matches
-                     on ct.new && ip && ip4.dst == VIP (ip6.dst == VIP in  the
-                     IPv6 case) with an action of ct_lb(args), where args con‐
-                     tains comma separated IPv4  or  IPv6  addresses.  If  the
-                     router  is  configured  to  force  SNAT any load-balanced
-                     packets,  the  above   action   will   be   replaced   by
-                     flags.force_snat_for_lb  =  1;  ct_lb(args);. If the load
-                     balancing rule is configured with skip_snat set to  true,
-                     the     above     action     will    be    replaced    by
-                     flags.skip_snat_for_lb = 1; ct_lb(args);.
+                     The  previous  table  lr_in_defrag sets the register reg0
+                     (or xxreg0 for IPv6) and does ct_dnat. Hence  for  estab‐
+                     lished  traffic,  this  table just advances the packet to
+                     the next stage.
 
               ·      For all the configured load balancing rules for a  router
                      in  OVN_Northbound  database  that  includes  just  an IP
                      address VIP to match on, a priority-110 flow that matches
-                     on  ct.est  &&  ip  && ip4.dst == VIP (or ip6.dst == VIP)
-                     with an action of ct_dnat;. If the router  is  configured
-                     to force SNAT any load-balanced packets, the above action
-                     will  be  replaced  by   flags.force_snat_for_lb   =   1;
-                     ct_dnat;.  If  the load balancing rule is configured with
-                     skip_snat set to true, the above action will be  replaced
-                     by flags.skip_snat_for_lb = 1; ct_dnat;.
+                     on ct.new && ip4 && reg0 == VIP (ip6 and xxreg0 == VIP in
+                     the IPv6 case) with an action of ct_lb(args), where  args
+                     contains  comma  separated IPv4 or IPv6 addresses. If the
+                     router is configured  to  force  SNAT  any  load-balanced
+                     packets,   the   above   action   will   be  replaced  by
+                     flags.force_snat_for_lb = 1; ct_lb(args);.  If  the  load
+                     balancing  rule is configured with skip_snat set to true,
+                     the    above    action    will     be     replaced     by
+                     flags.skip_snat_for_lb = 1; ct_lb(args);.
 
-              ·      If  the load balancer is created with --reject option and
-                     it has no active backends, a TCP reset segment (for  tcp)
+                     The  previous  table  lr_in_defrag sets the register reg0
+                     (or xxreg0 for IPv6) and does ct_dnat. Hence  for  estab‐
+                     lished  traffic,  this  table just advances the packet to
+                     the next stage.
+
+              ·      For all the configured load balancing rules for a  router
+                     in  OVN_Northbound  database  that  includes  just  an IP
+                     address VIP to match on, a priority-110 flow that matches
+                     on  ct.est  &&  ip4  && reg0 == VIP (or ip6 and xxreg0 ==
+                     VIP) with an action of next;. If the router is configured
+                     to force SNAT any load-balanced packets, the above action
+                     will be replaced by flags.force_snat_for_lb =  1;  next;.
+                     If  the  load balancing rule is configured with skip_snat
+                     set to  true,  the  above  action  will  be  replaced  by
+                     flags.skip_snat_for_lb = 1; next;.
+
+                     The  previous  table  lr_in_defrag sets the register reg0
+                     (or xxreg0 for IPv6) and does ct_dnat. Hence  for  estab‐
+                     lished  traffic,  this  table just advances the packet to
+                     the next stage.
+
+              ·      If the load balancer is created with --reject option  and
+                     it  has no active backends, a TCP reset segment (for tcp)
                      or an ICMP port unreachable packet (for all other kind of
-                     traffic) will be sent  whenever  an  incoming  packet  is
-                     received   for  this  load-balancer.  Please  note  using
+                     traffic)  will  be  sent  whenever  an incoming packet is
+                     received  for  this  load-balancer.  Please  note   using
                      --reject option will disable empty_lb SB controller event
                      for this load balancer.
 
        Ingress Table 6: DNAT on Gateway Routers
 
-              ·      For  each  configuration  in the OVN Northbound database,
-                     that asks to change  the  destination  IP  address  of  a
-                     packet  from  A  to  B, a priority-100 flow matches ip &&
-                     ip4.dst == A or  ip  &&  ip6.dst  ==  A  with  an  action
+              ·      For each configuration in the  OVN  Northbound  database,
+                     that  asks  to  change  the  destination  IP address of a
+                     packet from A to B, a priority-100  flow  matches  ip  &&
+                     ip4.dst  ==  A  or  ip  &&  ip6.dst  ==  A with an action
                      flags.loopback = 1; ct_dnat(B);. If the Gateway router is
-                     configured to force SNAT any  DNATed  packet,  the  above
+                     configured  to  force  SNAT  any DNATed packet, the above
                      action will be replaced by flags.force_snat_for_dnat = 1;
-                     flags.loopback = 1; ct_dnat(B);. If the NAT  rule  is  of
+                     flags.loopback  =  1;  ct_dnat(B);. If the NAT rule is of
                      type dnat_and_snat and has stateless=true in the options,
                      then the action would be ip4/6.dst= (B).
 
-                     If the NAT  rule  has  allowed_ext_ips  configured,  then
+                     If  the  NAT  rule  has  allowed_ext_ips configured, then
                      there is an additional match ip4.src == allowed_ext_ips .
-                     Similarly,  for  IPV6,  match   would   be   ip6.src   ==
+                     Similarly,   for   IPV6,   match   would  be  ip6.src  ==
                      allowed_ext_ips.
 
-                     If  the  NAT rule has exempted_ext_ips set, then there is
-                     an additional flow configured at priority 101.  The  flow
+                     If the NAT rule has exempted_ext_ips set, then  there  is
+                     an  additional  flow configured at priority 101. The flow
                      matches if source ip is an exempted_ext_ip and the action
                      is next; . This flow is used to bypass the ct_dnat action
                      for a packet originating from exempted_ext_ips.
-
-              ·      For  all  IP  packets  of a Gateway router, a priority-50
-                     flow with an action flags.loopback = 1; ct_dnat;.
 
               ·      A priority-0 logical flow with match 1 has actions next;.
 
@@ -2570,7 +2729,11 @@ LOGICAL FLOW TABLE STRUCTURE
                      port,  E  is  the  Ethernet  address if set in the exter‐
                      nal_mac column of NAT table for  of  type  dnat_and_snat,
                      otherwise the Ethernet address of the distributed logical
-                     router port.
+                     router port. Note that if the external_ip is not within a
+                     subnet  on  the owning logical router, then OVN will only
+                     create ARP resolution flows if the  options:add_route  is
+                     set  to  true. Otherwise, no ARP resolution flows will be
+                     added.
 
                      For IPv6 NAT entries, same flows are added, but using the
                      register xxreg0 for the match.
@@ -2614,11 +2777,11 @@ LOGICAL FLOW TABLE STRUCTURE
 
      Ingress Table 15: Check packet length
 
-       For distributed logical routers with distributed gateway  port  config‐
-       ured with options:gateway_mtu to a valid integer value, this table adds
-       a priority-50 logical flow with the match ip4  &&  outport  ==  GW_PORT
-       where  GW_PORT  is  the distributed gateway router port and applies the
-       action check_pkt_larger and advances the packet to the next table.
+       For distributed logical routers or gateway routers  with  gateway  port
+       configured  with options:gateway_mtu to a valid integer value, this ta‐
+       ble adds a priority-50 logical flow with the match outport  ==  GW_PORT
+       where  GW_PORT  is  the  gateway  router  port  and  applies the action
+       check_pkt_larger and advances the packet to the next table.
 
        REGBIT_PKT_LARGER = check_pkt_larger(L); next;
 
@@ -2632,13 +2795,13 @@ LOGICAL FLOW TABLE STRUCTURE
 
      Ingress Table 16: Handle larger packets
 
-       For  distributed  logical routers with distributed gateway port config‐
-       ured with options:gateway_mtu to a valid integer value, this table adds
-       the  following  priority-50  logical  flow for each logical router port
-       with  the  match  inport  ==  LRP  &&  outport  ==  GW_PORT   &&   REG‐
-       BIT_PKT_LARGER, where LRP is the logical router port and GW_PORT is the
-       distributed gateway router port and applies the  following  action  for
-       ipv4 and ipv6 respectively:
+       For  distributed  logical  routers or gateway routers with gateway port
+       configured with options:gateway_mtu to a valid integer value, this  ta‐
+       ble  adds  the  following  priority-150  logical  flow for each logical
+       router port with the match inport == LRP && outport == GW_PORT &&  REG‐
+       BIT_PKT_LARGER  &&  !REGBIT_EGRESS_LOOPBACK,  where  LRP is the logical
+       router port and GW_PORT is the gateway port and applies  the  following
+       action for ipv4 and ipv6 respectively:
 
        icmp4 {
            icmp4.type = 3; /* Destination Unreachable. */
@@ -2649,6 +2812,7 @@ LOGICAL FLOW TABLE STRUCTURE
            ip4.src = I;
            ip.ttl = 255;
            REGBIT_EGRESS_LOOPBACK = 1;
+           REGBIT_PKT_LARGER = 0;
            next(pipeline=ingress, table=0);
        };
        icmp6 {
@@ -2660,6 +2824,7 @@ LOGICAL FLOW TABLE STRUCTURE
            ip6.src = I;
            ip.ttl = 255;
            REGBIT_EGRESS_LOOPBACK = 1;
+           REGBIT_PKT_LARGER = 0;
            next(pipeline=ingress, table=0);
        };
 
@@ -2677,10 +2842,10 @@ LOGICAL FLOW TABLE STRUCTURE
 
      Ingress Table 17: Gateway Redirect
 
-       For distributed logical routers where one of the logical  router  ports
-       specifies  a  gateway  chassis, this table redirects certain packets to
-       the distributed gateway port instance on the gateway chassis. This  ta‐
-       ble has the following flows:
+       For distributed logical routers where one or more of the logical router
+       ports specifies a gateway chassis, this table redirects certain packets
+       to the distributed gateway port instances  on  the  gateway  chassises.
+       This table has the following flows:
 
               ·      For each NAT rule in the OVN Northbound database that can
                      be handled in a distributed manner, a priority-100  logi‐
@@ -2691,9 +2856,14 @@ LOGICAL FLOW TABLE STRUCTURE
                      locally  setting  reg1  to C and eth.src to D, where C is
                      NAT external ip and D is NAT external mac.
 
-              ·      A priority-50 logical flow with match outport ==  GW  has
-                     actions  outport  =  CR;  next;,  where GW is the logical
-                     router distributed gateway  port  and  CR  is  the  chas‐
+              ·      For each NAT rule in the OVN Northbound database that can
+                     be handled in a distributed manner, a priority-80 logical
+                     flow with drop action if the NAT logical port is  a  vir‐
+                     tual port not claimed by any chassis yet.
+
+              ·      A  priority-50  logical flow with match outport == GW has
+                     actions outport = CR; next;,  where  GW  is  the  logical
+                     router  distributed  gateway  port  and  CR  is the chas‐
                      sisredirect port representing the instance of the logical
                      router distributed gateway port on the gateway chassis.
 
@@ -2701,8 +2871,8 @@ LOGICAL FLOW TABLE STRUCTURE
 
      Ingress Table 18: ARP Request
 
-       In the common case where the Ethernet destination  has  been  resolved,
-       this  table outputs the packet. Otherwise, it composes and sends an ARP
+       In  the  common  case where the Ethernet destination has been resolved,
+       this table outputs the packet. Otherwise, it composes and sends an  ARP
        or IPv6 Neighbor Solicitation request. It holds the following flows:
 
               ·      Unknown MAC address. A priority-100 flow for IPv4 packets
@@ -2718,10 +2888,10 @@ LOGICAL FLOW TABLE STRUCTURE
                      };
 
 
-                     Unknown MAC address. For each IPv6 static  route  associ‐
-                     ated  with  the  router  with the nexthop IP: G, a prior‐
-                     ity-200 flow for  IPv6  packets  with  match  eth.dst  ==
-                     00:00:00:00:00:00  &&  xxreg0  ==  G  with  the following
+                     Unknown  MAC  address. For each IPv6 static route associ‐
+                     ated with the router with the nexthop  IP:  G,  a  prior‐
+                     ity-200  flow  for  IPv6  packets  with  match eth.dst ==
+                     00:00:00:00:00:00 &&  xxreg0  ==  G  with  the  following
                      actions is added:
 
                      nd_ns {
@@ -2733,7 +2903,7 @@ LOGICAL FLOW TABLE STRUCTURE
 
 
                      Where E is the multicast mac derived from the Gateway IP,
-                     I  is  the solicited-node multicast address corresponding
+                     I is the solicited-node multicast  address  corresponding
                      to the target address G.
 
                      Unknown MAC address. A priority-100 flow for IPv6 packets
@@ -2746,23 +2916,22 @@ LOGICAL FLOW TABLE STRUCTURE
                      };
 
 
-                     (Ingress table IP Routing initialized reg1  with  the  IP
-                     address  owned  by outport and (xx)reg0 with the next-hop
+                     (Ingress  table  IP  Routing initialized reg1 with the IP
+                     address owned by outport and (xx)reg0 with  the  next-hop
                      IP address)
 
-                     The IP packet that triggers the ARP/IPv6  NS  request  is
+                     The  IP  packet  that triggers the ARP/IPv6 NS request is
                      dropped.
 
-              ·      Known  MAC  address.  A  priority-0 flow with match 1 has
+              ·      Known MAC address. A priority-0 flow  with  match  1  has
                      actions output;.
 
      Egress Table 0: UNDNAT
 
-       This is for already established  connections’  reverse  traffic.  i.e.,
-       DNAT  has  already been done in ingress pipeline and now the packet has
-       entered the egress pipeline as part of a reply. For NAT on  a  distrib‐
-       uted router, it is unDNATted here. For Gateway routers, the unDNAT pro‐
-       cessing is carried out in the ingress DNAT table.
+       This  is  for  already  established connections’ reverse traffic. i.e.,
+       DNAT has already been done in ingress pipeline and now the  packet  has
+       entered  the  egress  pipeline as part of a reply. This traffic is unD‐
+       NATed here.
 
               ·      For all the configured load balancing rules for a  router
                      with   gateway   port  in  OVN_Northbound  database  that
@@ -2798,9 +2967,21 @@ LOGICAL FLOW TABLE STRUCTURE
                      A  in  the NAT rule. This allows upstream MAC learning to
                      point to the correct chassis.
 
+              ·      For all IP packets, a priority-50  flow  with  an  action
+                     flags.loopback = 1; ct_dnat;.
+
               ·      A priority-0 logical flow with match 1 has actions next;.
 
-     Egress Table 1: SNAT
+     Egress Table 1: Post UNDNAT
+
+              ·      A  priority-50  logical  flow  is  added that commits any
+                     untracked flows from the  previous  table  lr_out_undnat.
+                     This flow matches on ct.new && ip with action ct_commit {
+                     } ; next; .
+
+              ·      A priority-0 logical flow with match 1 has actions next;.
+
+     Egress Table 2: SNAT
 
        Packets that are configured to be SNATed get their  source  IP  address
        changed based on the configuration in the OVN Northbound database.
@@ -2811,7 +2992,7 @@ LOGICAL FLOW TABLE STRUCTURE
                      tion packet (for nd_ns action) we don’t want  the  packet
                      to go throught conntrack.
 
-       Egress Table 1: SNAT on Gateway Routers
+       Egress Table 2: SNAT on Gateway Routers
 
               ·      If  the Gateway router in the OVN Northbound database has
                      been configured to force SNAT a  packet  (that  has  been
@@ -2871,7 +3052,7 @@ LOGICAL FLOW TABLE STRUCTURE
 
               ·      A priority-0 logical flow with match 1 has actions next;.
 
-       Egress Table 1: SNAT on Distributed Routers
+       Egress Table 2: SNAT on Distributed Routers
 
               ·      For each configuration in the  OVN  Northbound  database,
                      that  asks  to  change  the source IP address of a packet
@@ -2910,7 +3091,7 @@ LOGICAL FLOW TABLE STRUCTURE
 
               ·      A priority-0 logical flow with match 1 has actions next;.
 
-     Egress Table 2: Egress Loopback
+     Egress Table 3: Egress Loopback
 
        For  distributed  logical routers where one of the logical router ports
        specifies a gateway chassis.
@@ -2957,7 +3138,7 @@ LOGICAL FLOW TABLE STRUCTURE
 
               ·      A priority-0 logical flow with match 1 has actions next;.
 
-     Egress Table 3: Delivery
+     Egress Table 4: Delivery
 
        Packets that reach this table are ready for delivery. It contains:
 
@@ -2971,4 +3152,4 @@ LOGICAL FLOW TABLE STRUCTURE
 
 
 
-OVN 21.03.90                      ovn-northd                     ovn-northd(8)
+OVN 21.09.90                      ovn-northd                     ovn-northd(8)

@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nb" 5 " DB Schema 5.31.0" "Open vSwitch 21.03.90" "Open vSwitch Manual"
+.TH "ovn-nb" 5 " DB Schema 5.33.1" "Open vSwitch 21.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -43,6 +43,9 @@ Purpose
 \fBNB_Global\fR
 Northbound configuration
 .TQ 1in
+\fBCopp\fR
+Control plane protection
+.TQ 1in
 \fBLogical_Switch\fR
 L2 logical switch
 .TQ 1in
@@ -60,6 +63,9 @@ Port Groups
 .TQ 1in
 \fBLoad_Balancer\fR
 load balancer
+.TQ 1in
+\fBLoad_Balancer_Group\fR
+load balancer group
 .TQ 1in
 \fBLoad_Balancer_Health_Check\fR
 load balancer
@@ -197,6 +203,9 @@ optional string
 .TQ 2.75in
 \fBoptions : ignore_lsp_down\fR
 optional string
+.TQ 2.75in
+\fBoptions : use_ct_inv_match\fR
+optional string
 .TQ .25in
 \fIOptions for configuring interconnection route advertisement:\fR
 .RS .25in
@@ -319,7 +328,9 @@ Parallel computation is enabled only if the system has 4 or more cores/threads a
 .IP
 The default value is \fBfalse\fR\[char46]
 .IP "\fBoptions : ignore_lsp_down\fR: optional string"
-If set to false, ARP/ND reply flows for logical switch ports will be installed only if the port is up, i\[char46]e\[char46] claimed by a Chassis\[char46] If set to true, these flows are installed regardless of the status of the port, which can result in a situation that ARP request to an IP is resolved even before the relevant VM/container is running\[char46] For environments where this is not an issue, setting it to \fBtrue\fR can reduce the load and latency of the control plane\[char46] The default value is \fBfalse\fR\[char46]
+If set to false, ARP/ND reply flows for logical switch ports will be installed only if the port is up, i\[char46]e\[char46] claimed by a Chassis\[char46] If set to true, these flows are installed regardless of the status of the port, which can result in a situation that ARP request to an IP is resolved even before the relevant VM/container is running\[char46] For environments where this is not an issue, setting it to \fBtrue\fR can reduce the load and latency of the control plane\[char46] The default value is \fBtrue\fR\[char46]
+.IP "\fBoptions : use_ct_inv_match\fR: optional string"
+If set to false, \fBovn\-northd\fR will not use the \fBct\[char46]inv\fR field in any of the logical flow matches\[char46] The default value is true\[char46] If the NIC supports offloading OVS datapath flows but doesn\(cqt support offloading ct_state \fBinv\fR flag, then the datapath flows matching on this flag (either \fB+inv\fR or \fB\-inv\fR) will not be offloaded\[char46] CMS should consider setting \fBuse_ct_inv_match\fR to \fBfalse\fR in such cases\[char46] This results in a side effect of the invalid packets getting delivered to the destination VIF, which otherwise would have been dropped by \fBOVN\fR\[char46]
 .ST "Options for configuring interconnection route advertisement:"
 .PP
 .PP
@@ -362,6 +373,94 @@ Tunnel encryption configuration\[char46] If this column is set to be true, all O
 .IP "\fBoptions : max_tunid\fR: optional string"
 The maximum supported tunnel ID\[char46] Depends on types of encapsulation enabled in the cluster\[char46]
 .bp
+.SH "Copp TABLE"
+.PP
+.PP
+.PP
+This table is used to define control plane protection policies, i\[char46]e\[char46], associate entries from table \fBMeter\fR to control protocol names\[char46]
+.SS "Summary:
+.TQ 3.00in
+\fBmeters : arp\fR
+optional string
+.TQ 3.00in
+\fBmeters : arp-resolve\fR
+optional string
+.TQ 3.00in
+\fBmeters : dhcpv4-opts\fR
+optional string
+.TQ 3.00in
+\fBmeters : dhcpv6-opts\fR
+optional string
+.TQ 3.00in
+\fBmeters : dns\fR
+optional string
+.TQ 3.00in
+\fBmeters : event-elb\fR
+optional string
+.TQ 3.00in
+\fBmeters : icmp4-error\fR
+optional string
+.TQ 3.00in
+\fBmeters : icmp6-error\fR
+optional string
+.TQ 3.00in
+\fBmeters : igmp\fR
+optional string
+.TQ 3.00in
+\fBmeters : nd-na\fR
+optional string
+.TQ 3.00in
+\fBmeters : nd-ns\fR
+optional string
+.TQ 3.00in
+\fBmeters : nd-ns-resolve\fR
+optional string
+.TQ 3.00in
+\fBmeters : nd-ra-opts\fR
+optional string
+.TQ 3.00in
+\fBmeters : tcp-reset\fR
+optional string
+.TQ 3.00in
+\fBmeters : bfd\fR
+optional string
+.TQ 3.00in
+\fBmeters : reject\fR
+optional string
+.SS "Details:
+.IP "\fBmeters : arp\fR: optional string"
+Rate limiting meter for ARP packets (request/reply) used for learning neighbors\[char46]
+.IP "\fBmeters : arp-resolve\fR: optional string"
+Rate limiting meter for packets that require resolving the next-hop (through ARP)\[char46]
+.IP "\fBmeters : dhcpv4-opts\fR: optional string"
+Rate limiting meter for packets that require adding DHCPv4 options\[char46]
+.IP "\fBmeters : dhcpv6-opts\fR: optional string"
+Rate limiting meter for packets that require adding DHCPv6 options\[char46]
+.IP "\fBmeters : dns\fR: optional string"
+Rate limiting meter for DNS query packets that need to be replied to\[char46]
+.IP "\fBmeters : event-elb\fR: optional string"
+Rate limiting meter for empty load balancer events\[char46]
+.IP "\fBmeters : icmp4-error\fR: optional string"
+Rate limiting meter for packets that require replying with an ICMP error\[char46]
+.IP "\fBmeters : icmp6-error\fR: optional string"
+Rate limiting meter for packets that require replying with an ICMPv6 error\[char46]
+.IP "\fBmeters : igmp\fR: optional string"
+Rate limiting meter for IGMP packets\[char46]
+.IP "\fBmeters : nd-na\fR: optional string"
+Rate limiting meter for ND neighbor advertisement packets used for learning neighbors\[char46]
+.IP "\fBmeters : nd-ns\fR: optional string"
+Rate limiting meter for ND neighbor solicitation packets used for learning neighbors\[char46]
+.IP "\fBmeters : nd-ns-resolve\fR: optional string"
+Rate limiting meter for packets that require resolving the next-hop (through ND)\[char46]
+.IP "\fBmeters : nd-ra-opts\fR: optional string"
+Rate limiting meter for packets that require adding ND router advertisement options\[char46]
+.IP "\fBmeters : tcp-reset\fR: optional string"
+Rate limiting meter for packets that require replying with TCP RST packet\[char46]
+.IP "\fBmeters : bfd\fR: optional string"
+Rate limiting meter for BFD packets\[char46]
+.IP "\fBmeters : reject\fR: optional string"
+Rate limiting meter for packets that trigger a reject action
+.bp
 .SH "Logical_Switch TABLE"
 .PP
 .PP
@@ -377,6 +476,9 @@ set of \fBLogical_Switch_Port\fRs
 .TQ 3.00in
 \fBload_balancer\fR
 set of weak reference to \fBLoad_Balancer\fRs
+.TQ 3.00in
+\fBload_balancer_group\fR
+set of \fBLoad_Balancer_Group\fRs
 .TQ 3.00in
 \fBacls\fR
 set of \fBACL\fRs
@@ -463,6 +565,9 @@ optional string
 \fBother_config : requested-tnl-key\fR
 optional string, containing an integer, in range 1 to 16,777,215
 .RE
+.TQ 3.00in
+\fBcopp\fR
+optional weak reference to \fBCopp\fR
 .TQ .25in
 \fIOther options:\fR
 .RS .25in
@@ -483,7 +588,9 @@ The logical ports connected to the logical switch\[char46]
 .IP
 It is an error for multiple logical switches to include the same logical port\[char46]
 .IP "\fBload_balancer\fR: set of weak reference to \fBLoad_Balancer\fRs"
-Load balance a virtual ip address to a set of logical port endpoint ip addresses\[char46]
+Set of load balancers associated to this logical switch\[char46]
+.IP "\fBload_balancer_group\fR: set of \fBLoad_Balancer_Group\fRs"
+Set of load balancers groups associated to this logical switch\[char46]
 .IP "\fBacls\fR: set of \fBACL\fRs"
 Access control rules that apply to packets within the logical switch\[char46]
 .IP "\fBqos_rules\fR: set of \fBQoS\fRes"
@@ -575,6 +682,8 @@ The \fBname\fR of corresponding transit switch in \fBOVN_IC_Northbound\fR databa
 .PP
 .IP "\fBother_config : requested-tnl-key\fR: optional string, containing an integer, in range 1 to 16,777,215"
 Configures the datapath tunnel key for the logical switch\[char46] Usually this is not needed because \fBovn\-northd\fR will assign an unique key for each datapath by itself\[char46] However, if it is configured, \fBovn\-northd\fR honors the configured value\[char46] The typical use case is for interconnection: the tunnel keys for transit switches need to be unique globally, so they are maintained in the global \fBOVN_IC_Southbound\fR database, and \fBovn\-ic\fR simply syncs the value from \fBOVN_IC_Southbound\fR through this config\[char46]
+.IP "\fBcopp\fR: optional weak reference to \fBCopp\fR"
+The control plane protection policy from table \fBCopp\fR used for metering packets sent to \fBovn\-controller\fR from ports of this logical switch\[char46]
 .ST "Other options:"
 .PP
 .IP "\fBother_config : vlan-passthru\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
@@ -615,6 +724,9 @@ optional string
 .TQ 2.50in
 \fBoptions : nat-addresses\fR
 optional string
+.TQ 2.50in
+\fBoptions : arp_proxy\fR
+optional string
 .RE
 .TQ .25in
 \fIOptions for localnet ports:\fR
@@ -653,10 +765,16 @@ optional string
 \fBoptions : requested-chassis\fR
 optional string
 .TQ 2.50in
+\fBoptions : iface-id-ver\fR
+optional string
+.TQ 2.50in
 \fBoptions : qos_max_rate\fR
 optional string
 .TQ 2.50in
 \fBoptions : qos_burst\fR
+optional string
+.TQ 2.50in
+\fBoptions : hostname\fR
 optional string
 .RE
 .TQ .25in
@@ -838,6 +956,8 @@ Example: \fB80:fa:5b:06:72:b7 158\[char46]36\[char46]44\[char46]22
 .IP
 This form of \fBoptions:nat-addresses\fR is only valid for logical switch ports where \fBoptions:router-port\fR is the name of a port on a gateway router\[char46]
 .RE
+.IP "\fBoptions : arp_proxy\fR: optional string"
+Optional\[char46] A list of IPv4 addresses that this logical switch \fBrouter\fR port will reply to ARP requests\[char46] Example: \fB169\[char46]254\[char46]239\[char46]254 169\[char46]254\[char46]239\[char46]2\fR\[char46] The \fBoptions:router-port\fR\(cqs logical router should have a route to forward packets sent to configured proxy ARP IPs to an appropriate destination\[char46]
 .ST "Options for localnet ports:"
 .PP
 .PP
@@ -872,10 +992,14 @@ Required\[char46] A logical switch name connected by the VTEP gateway\[char46]
 These options apply to logical ports with \fBtype\fR having (empty string)
 .IP "\fBoptions : requested-chassis\fR: optional string"
 If set, identifies a specific chassis (by name or hostname) that is allowed to bind this port\[char46] Using this option will prevent thrashing between two chassis trying to bind the same port during a live migration\[char46] It can also prevent similar thrashing due to a mis-configuration, if a port is accidentally created on more than one chassis\[char46]
+.IP "\fBoptions : iface-id-ver\fR: optional string"
+If set, this port will be bound by \fBovn\-controller\fR only if this same key and value is configured in the \fBexternal_ids\fR column in the Open_vSwitch database\(cqs \fBInterface\fR table\[char46]
 .IP "\fBoptions : qos_max_rate\fR: optional string"
 If set, indicates the maximum rate for data sent from this interface, in bit/s\[char46] The traffic will be shaped according to this limit\[char46]
 .IP "\fBoptions : qos_burst\fR: optional string"
 If set, indicates the maximum burst size for data sent from this interface, in bits\[char46]
+.IP "\fBoptions : hostname\fR: optional string"
+If set, indicates the DHCPv4 option \(dqHostname\(dq (option code 12) associated for this Logical Switch Port\[char46] If DHCPv4 is enabled for this Logical Switch Port, hostname dhcp option will be included in DHCP reply\[char46]
 .ST "Virtual port Options:"
 .PP
 .PP
@@ -1213,6 +1337,9 @@ optional string
 .TQ 2.75in
 \fBoptions : skip_snat\fR
 optional string
+.TQ 2.75in
+\fBoptions : add_route\fR
+optional string
 .RE
 .SS "Details:
 .IP "\fBname\fR: string"
@@ -1255,7 +1382,27 @@ If the load balancer is created with \fB\-\-reject\fR option and it has no activ
 .IP "\fBoptions : hairpin_snat_ip\fR: optional string"
 IP to be used as source IP for packets that have been hair-pinned after load balancing\[char46] The default behavior when the option is not set is to use the load balancer VIP as source IP\[char46] This option may have exactly one IPv4 and/or one IPv6 address on it, separated by a space character\[char46]
 .IP "\fBoptions : skip_snat\fR: optional string"
-If the load balancing rule is configured with \fBskip_snat\fR option, the force_snat_for_lb option configured for the router pipeline will not be applied for this load balancer\[char46]
+If the load balancing rule is configured with \fBskip_snat\fR option, the option lb_force_snat_ip configured for the logical router that references this load balancer will not be applied for this load balancer\[char46]
+.IP "\fBoptions : add_route\fR: optional string"
+If set to \fBtrue\fR, then neighbor routers will have logical flows added that will allow for routing to the VIP IP\[char46] It also will have ARP resolution logical flows added\[char46] By setting this option, it means there is no reason to create a \fBLogical_Router_Static_Route\fR from neighbor routers to this NAT address\[char46] It also means that no ARP request is required for neighbor routers to learn the IP-MAC mapping for this VIP IP\[char46] For more information about what flows are added for IP routes, please see the \fBovn\-northd\fR manpage section on IP Routing\[char46]
+.bp
+.SH "Load_Balancer_Group TABLE"
+.PP
+.PP
+.PP
+Each row represents a logical grouping of load balancers\[char46] It is up to the CMS to decide the criteria on which load balancers are grouped together\[char46] To simplify configuration and to optimize its processing load balancers that must be associated to the same set of logical switches and/or logical routers should be grouped together\[char46]
+.SS "Summary:
+.TQ 3.00in
+\fBname\fR
+string (must be unique within table)
+.TQ 3.00in
+\fBload_balancer\fR
+set of weak reference to \fBLoad_Balancer\fRs
+.SS "Details:
+.IP "\fBname\fR: string (must be unique within table)"
+A name for the load balancer group\[char46] This name has no special meaning or purpose other than to provide convenience for human interaction with the ovn-nb database\[char46]
+.IP "\fBload_balancer\fR: set of weak reference to \fBLoad_Balancer\fRs"
+A set of load balancers\[char46]
 .bp
 .SH "Load_Balancer_Health_Check TABLE"
 .PP
@@ -1314,6 +1461,9 @@ See \fBExternal IDs\fR at the beginning of this document\[char46]
 Each row in this table represents one ACL rule for a logical switch or a port group that points to it through its \fBacls\fR column\[char46] The \fBaction\fR column for the highest-\fBpriority\fR matching row in this table determines a packet\(cqs treatment\[char46] If no row matches, packets are allowed by default\[char46] (Default-deny treatment is possible: add a rule with \fBpriority\fR 0, \fB1\fR as \fBmatch\fR, and \fBdeny\fR as \fBaction\fR\[char46])
 .SS "Summary:
 .TQ 3.00in
+\fBlabel\fR
+integer, in range 0 to 4,294,967,295
+.TQ 3.00in
 \fBpriority\fR
 integer, in range 0 to 32,767
 .TQ 3.00in
@@ -1324,7 +1474,7 @@ string, either \fBfrom\-lport\fR or \fBto\-lport\fR
 string
 .TQ 3.00in
 \fBaction\fR
-string, one of \fBallow\-related\fR, \fBallow\fR, \fBdrop\fR, or \fBreject\fR
+string, one of \fBallow\-related\fR, \fBallow\-stateless\fR, \fBallow\fR, \fBdrop\fR, or \fBreject\fR
 .TQ .25in
 \fILogging:\fR
 .RS .25in
@@ -1349,10 +1499,14 @@ optional string
 map of string-string pairs
 .RE
 .SS "Details:
+.IP "\fBlabel\fR: integer, in range 0 to 4,294,967,295"
+Associates an identifier with the ACL\[char46] The same value will be written to corresponding connection tracker entry\[char46] The value should be a valid 32-bit unsigned integer\[char46] This value can help in debugging from connection tracker side\[char46] For example, through this \(dqlabel\(dq we can backtrack to the ACL rule which is causing a \(dqleaked\(dq connection\[char46] Connection tracker entries are created only for allowed connections so the label is valid only for allow and allow-related actions\[char46]
 .IP "\fBpriority\fR: integer, in range 0 to 32,767"
 The ACL rule\(cqs priority\[char46] Rules with numerically higher priority take precedence over those with lower\[char46] If two ACL rules with the same priority both match, then the one actually applied to a packet is undefined\[char46]
 .IP
 Return traffic from an \fBallow\-related\fR flow is always allowed and cannot be changed through an ACL\[char46]
+.IP
+\fBallow\-stateless\fR flows always take precedence before stateful ACLs, regardless of their priority\[char46] (Both \fBallow\fR and \fBallow\-related\fR ACLs can be stateful\[char46])
 .IP "\fBdirection\fR: string, either \fBfrom\-lport\fR or \fBto\-lport\fR"
 Direction of the traffic to which this rule should apply:
 .RS
@@ -1367,11 +1521,13 @@ The packets that the ACL should match, in the same expression language used for 
 By default all traffic is allowed\[char46] When writing a more restrictive policy, it is important to remember to allow flows such as ARP and IPv6 neighbor discovery packets\[char46]
 .IP
 Note that you can not create an ACL matching on a port with type=router or type=localnet\[char46]
-.IP "\fBaction\fR: string, one of \fBallow\-related\fR, \fBallow\fR, \fBdrop\fR, or \fBreject\fR"
+.IP "\fBaction\fR: string, one of \fBallow\-related\fR, \fBallow\-stateless\fR, \fBallow\fR, \fBdrop\fR, or \fBreject\fR"
 The action to take when the ACL rule matches:
 .RS
 .IP \(bu
-\fBallow\fR: Forward the packet\[char46]
+\fBallow\-stateless\fR: Always forward the packet in stateless manner, omitting connection tracking mechanism, regardless of other rules defined for the switch\[char46] May require defining additional rules for inbound replies\[char46] For example, if you define a rule to allow outgoing TCP traffic directed to an IP address, then you probably also want to define another rule to allow incoming TCP traffic coming from this same IP address\[char46]
+.IP \(bu
+\fBallow\fR: Forward the packet\[char46] It will also send the packets through connection tracking when \fBallow\-related\fR rules exist on the logical switch\[char46] Otherwise, it\(cqs equivalent to \fBallow\-stateless\fR\[char46]
 .IP \(bu
 \fBallow\-related\fR: Forward the packet and related traffic (e\[char46]g\[char46] inbound replies to an outbound connection)\[char46]
 .IP \(bu
@@ -1423,6 +1579,9 @@ set of \fBNAT\fRs
 .TQ 3.00in
 \fBload_balancer\fR
 set of weak reference to \fBLoad_Balancer\fRs
+.TQ 3.00in
+\fBload_balancer_group\fR
+set of \fBLoad_Balancer_Group\fRs
 .TQ .25in
 \fINaming:\fR
 .RS .25in
@@ -1433,6 +1592,9 @@ string
 \fBexternal_ids : neutron:router_name\fR
 optional string
 .RE
+.TQ 3.00in
+\fBcopp\fR
+optional weak reference to \fBCopp\fR
 .TQ .25in
 \fIOptions:\fR
 .RS .25in
@@ -1478,9 +1640,11 @@ Zero or more routing policies for the router\[char46]
 .IP "\fBenabled\fR: optional boolean"
 This column is used to administratively set router state\[char46] If this column is empty or is set to \fBtrue\fR, the router is enabled\[char46] If this column is set to \fBfalse\fR, the router is disabled\[char46] A disabled router has all ingress and egress traffic dropped\[char46]
 .IP "\fBnat\fR: set of \fBNAT\fRs"
-One or more NAT rules for the router\[char46] NAT rules only work on Gateway routers, and on distributed routers with logical gateway ports\[char46]
+One or more NAT rules for the router\[char46] NAT rules only work on Gateway routers, and on distributed routers with one and only one distributed gateway port\[char46]
 .IP "\fBload_balancer\fR: set of weak reference to \fBLoad_Balancer\fRs"
-Load balance a virtual ip address to a set of logical port ip addresses\[char46] Load balancer rules only work on the Gateway routers or routers with distributed gateway ports\[char46]
+Set of load balancers associated to this logical router\[char46] Load balancer Load balancer rules only work on the Gateway routers or routers with one and only one distributed gateway port\[char46]
+.IP "\fBload_balancer_group\fR: set of \fBLoad_Balancer_Group\fRs"
+Set of load balancers groups associated to this logical router\[char46]
 .ST "Naming:"
 .PP
 .PP
@@ -1493,6 +1657,8 @@ These columns provide names for the logical router\[char46] From OVN\(cqs perspe
 A name for the logical router\[char46]
 .IP "\fBexternal_ids : neutron:router_name\fR: optional string"
 Another name for the logical router\[char46]
+.IP "\fBcopp\fR: optional weak reference to \fBCopp\fR"
+The control plane protection policy from table \fBCopp\fR used for metering packets sent to \fBovn\-controller\fR from logical ports of this router\[char46]
 .ST "Options:"
 .PP
 .PP
@@ -1513,7 +1679,7 @@ If it is configured with the value \fBrouter_ip\fR, then the load balanced packe
 .IP "\fBoptions : mcast_relay\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 Enables/disables IP multicast relay between logical switches connected to the logical router\[char46] Default: False\[char46]
 .IP "\fBoptions : dynamic_neigh_routers\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
-If set to \fBtrue\fR, the router will resolve neighbor routers\(cq MAC addresses only by dynamic ARP/ND, instead of prepopulating static mappings for all neighbor routers in the ARP/ND Resolution stage\[char46] This reduces number of flows, but requires ARP/ND messages to resolve the IP-MAC bindings when needed\[char46] It is \fBfalse\fR by default\[char46] It is recommended to set to \fBtrue\fR when a large number of logical routers are connected to the same logical switch but most of them never need to send traffic between each other\[char46]
+If set to \fBtrue\fR, the router will resolve neighbor routers\(cq MAC addresses only by dynamic ARP/ND, instead of prepopulating static mappings for all neighbor routers in the ARP/ND Resolution stage\[char46] This reduces number of flows, but requires ARP/ND messages to resolve the IP-MAC bindings when needed\[char46] It is \fBfalse\fR by default\[char46] It is recommended to set to \fBtrue\fR when a large number of logical routers are connected to the same logical switch but most of them never need to send traffic between each other\[char46] By default, ovn-northd does not create mappings to NAT and load balancer addresess\[char46] However, for NAT and load balancer addresses that have the \fBadd_route\fR option added, ovn-northd will create logical flows that map NAT and load balancer IP addresses to the appropriate MAC address\[char46] Setting \fIdynamic_neigh_routers\fR to \fBtrue\fR will prevent the automatic creation of these logical flows\[char46]
 .IP "\fBoptions : always_learn_from_arp_request\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 This option controls the behavior when handling IPv4 ARP requests or IPv6 ND-NS packets - whether a dynamic neighbor (MAC binding) entry is added/updated\[char46]
 .IP
@@ -1769,7 +1935,10 @@ This column is used to administratively set port state\[char46] If this column i
 Gateways, as documented under \fBGateways\fR in the OVN architecture guide, provide limited connectivity between logical networks and physical ones\[char46] OVN support multiple kinds of gateways\[char46] The \fBLogical_Router_Port\fR table can be used two different ways to configure \fIdistributed gateway ports\fR, which are one kind of gateway\[char46] These two forms of configuration exist for historical reasons\[char46] Both of them produce the same kind of OVN southbound records and the same behavior in practice\[char46]
 .PP
 .PP
-If either of these are set, this logical router port represents a distributed gateway port that connects this router to a logical switch with a \fBlocalnet\fR port or a connection to another OVN deployment\[char46] There may be at most one such logical router port on each logical router\[char46]
+If either of these are set, this logical router port represents a distributed gateway port that connects this router to a logical switch with a \fBlocalnet\fR port or a connection to another OVN deployment\[char46]
+.PP
+.PP
+Also mentioned in the OVN architecture guide, distributed gateway ports can also be used for scalability reasons in deployments where logical switches are dedicated to chassises rather than distributed\[char46]
 .PP
 .PP
 The preferred way to configure a gateway is \fBha_chassis_group\fR, but \fBgateway_chassis\fR is also supported for backward compatibility\[char46] Only one of these should be set at a time on a given LRP, since they configure the same features\[char46]
@@ -1778,7 +1947,10 @@ The preferred way to configure a gateway is \fBha_chassis_group\fR, but \fBgatew
 Even when a gateway is configured, the logical router port still effectively resides on each chassis\[char46] However, due to the implications of the use of L2 learning in the physical network, as well as the need to support advanced features such as one-to-many NAT (aka IP masquerading), a subset of the logical router processing is handled in a centralized manner on the gateway chassis\[char46]
 .PP
 .PP
-When more than one gateway chassis is specified, OVN only uses one at a time\[char46] OVN can rely on OVS BFD implementation to monitor gateway connectivity, preferring the highest-priority gateway that is online\[char46] Priorities are specified in the \fBpriority\fR column of \fBGateway_Chassis\fR or \fBHA_Chassis\fR\[char46]
+There can be more than one distributed gateway ports configured on each logical router, each connecting to different L2 segments\[char46] However, features such as NAT and load-balancer are not supported on logical routers with more than one distributed gateway ports\[char46]
+.PP
+.PP
+For each distributed gateway port, it may have more than one gateway chassises\[char46] When more than one gateway chassis is specified, OVN only uses one at a time\[char46] OVN can rely on OVS BFD implementation to monitor gateway connectivity, preferring the highest-priority gateway that is online\[char46] Priorities are specified in the \fBpriority\fR column of \fBGateway_Chassis\fR or \fBHA_Chassis\fR\[char46]
 .PP
 .PP
 \fBovn\-northd\fR programs the \fBexternal_mac\fR rules specified in the LRP\(cqs LR into the peer logical switch\(cqs destination lookup on the chassis where the \fBlogical_port\fR resides\[char46] In addition, the logical router\(cqs MAC address is automatically programmed in the peer logical switch\(cqs destination lookup flow on the gateway chasssis\[char46] If it is desired to generate gratuitous ARPs for NAT addresses, then set the peer LSP\(cqs \fBoptions:nat-addresses\fR to \fBrouter\fR\[char46]
@@ -1806,13 +1978,13 @@ Without this option, traffic between the gateway chassis and other chassis is en
 .IP
 This option may usefully be set only on logical router ports that connect a distributed logical router to a logical switch with VIFs\[char46] It should not be set on a distributed gateway port\[char46]
 .IP
-OVN honors this option only if the logical router has a distributed gateway port and if the LRP\(cqs peer switch has a \fBlocalnet\fR port\[char46]
+OVN honors this option only if the logical router has one and only one distributed gateway port and if the LRP\(cqs peer switch has a \fBlocalnet\fR port\[char46]
 .IP "\fBoptions : redirect-type\fR: optional string, either \fBbridged\fR or \fBoverlay\fR"
 If set to \fBbridged\fR on a distributed gateway port, this option causes OVN to redirect packets to the gateway chassis over a \fBlocalnet\fR port instead of a tunnel\[char46] The relevant chassis must share a \fBlocalnet\fR port\[char46]
 .IP
 This feature requires the administrator or the CMS to configure each participating chassis with a unique Ethernet address for the logical router by setting \fBovn\-chassis\-mac\-mappings\fR in the Open vSwitch database, for use by \fBovn\-controller\fR\[char46]
 .IP
-Setting this option to \fBoverlay\fR or leaving it unset has no effect\[char46] This option may usefully be set only on a distributed gateway port\[char46] It is otherwise ignored\[char46]
+Setting this option to \fBoverlay\fR or leaving it unset has no effect\[char46] This option may usefully be set only on a distributed gateway port when there is one and only one distributed gateway port on the logical router\[char46] It is otherwise ignored\[char46]
 .IP "\fBipv6_prefix\fR: set of strings"
 This column contains IPv6 prefix obtained by prefix delegation router according to RFC 3633
 .ST "ipv6_ra_configs:"
@@ -1958,7 +2130,7 @@ If it is specified, this setting describes the policy used to make routing decis
 .IP
 If not specified, the default is \fBdst\-ip\fR\[char46]
 .IP "\fBnexthop\fR: string"
-Nexthop IP address for this route\[char46] Nexthop IP address should be the IP address of a connected router port or the IP address of a logical port\[char46]
+Nexthop IP address for this route\[char46] Nexthop IP address should be the IP address of a connected router port or the IP address of a logical port or can be set to \fBdiscard\fR for dropping packets which match the given route\[char46]
 .IP "\fBoutput_port\fR: optional string"
 The name of the \fBLogical_Router_Port\fR via which the packet needs to be sent out\[char46] This is optional and when not specified, OVN will automatically figure this out based on the \fBnexthop\fR\[char46] When this is specified and there are multiple IP addresses on the router port and none of them are in the same subnet of \fBnexthop\fR, OVN chooses the first IP address as the one via which the \fBnexthop\fR is reachable\[char46]
 .IP "\fBbfd\fR: optional weak reference to \fBBFD\fR"
@@ -1974,7 +2146,7 @@ See \fBExternal IDs\fR at the beginning of this document\[char46]
 .IP "\fBoptions\fR: map of string-string pairs"
 This column provides general key/value settings\[char46] The supported options are described individually below\[char46]
 .IP "\fBoptions : ecmp_symmetric_reply\fR: optional string"
-It true, then new traffic that arrives over this route will have its reply traffic bypass ECMP route selection and will be sent out this route instead\[char46] Note that this option overrides any rules set in the \fBLogical_Router_policy\fR table\[char46] This option only works on gateway routers (routers that have \fBoptions:chassis\fR set)\[char46]
+If true, then new traffic that arrives over this route will have its reply traffic bypass ECMP route selection and will be sent out this route instead\[char46] Note that this option overrides any rules set in the \fBLogical_Router_policy\fR table\[char46] This option only works on gateway routers (routers that have \fBoptions:chassis\fR set)\[char46]
 .bp
 .SH "Logical_Router_Policy TABLE"
 .PP
@@ -2072,6 +2244,9 @@ optional \fBAddress_Set\fR
 .TQ 3.00in
 \fBoptions : stateless\fR
 optional string
+.TQ 3.00in
+\fBoptions : add_route\fR
+optional string
 .TQ .25in
 \fICommon Columns:\fR
 .RS .25in
@@ -2126,6 +2301,8 @@ If there are NAT rules in a logical router with overlapping IP prefixes (includi
 \fIallowed_ext_ips\fR and \fIexempted_ext_ips\fR are mutually exclusive to each other\[char46] If both Address Sets are set for a rule, then the NAT rule is not considered\[char46]
 .IP "\fBoptions : stateless\fR: optional string"
 Indicates if a dnat_and_snat rule should lead to connection tracking state or not\[char46]
+.IP "\fBoptions : add_route\fR: optional string"
+If set to \fBtrue\fR, then neighbor routers will have logical flows added that will allow for routing to the NAT address\[char46] It also will have ARP resolution logical flows added\[char46] By setting this option, it means there is no reason to create a \fBLogical_Router_Static_Route\fR from neighbor routers to this NAT address\[char46] It also means that no ARP request is required for neighbor routers to learn the IP-MAC mapping for this NAT address\[char46] This option only applies to NATs of type \fBdnat\fR and \fBdnat_and_snat\fR\[char46] For more information about what flows are added for IP routes, please see the \fBovn\-northd\fR manpage section on IP Routing\[char46]
 .ST "Common Columns:"
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
@@ -2257,6 +2434,9 @@ optional string
 optional string
 .TQ 2.50in
 \fBoptions : tftp_server_address\fR
+optional string
+.TQ 2.50in
+\fBoptions : hostname\fR
 optional string
 .TQ 2.50in
 \fBoptions : domain_name\fR
@@ -2420,6 +2600,8 @@ The DHCPv4 option code for this option is 67\[char46] This option is used to ide
 The DHCPv4 option code for this option is 210\[char46] In PXELINUX\(cq case this option is used to set a common path prefix, instead of deriving it from the bootfile name\[char46]
 .IP "\fBoptions : tftp_server_address\fR: optional string"
 The DHCPv4 option code for this option is 150\[char46] The option contains one or more IPv4 addresses that the client MAY use\[char46] This option is Cisco proprietary, the IEEE standard that matches with this requirement is option 66 (tftp_server)\[char46]
+.IP "\fBoptions : hostname\fR: optional string"
+The DHCPv4 option code for this option is 12\[char46] If set, indicates the DHCPv4 option \(dqHostname\(dq\[char46] Alternatively, this option can be configured in \fBoptions:hostname\fR column in table \fBLogical_Switch_Port\fR\[char46] If Hostname option value is set in both conflicting \fBLogical_Switch_Port\fR and \fBDHCP_Options\fR tables, \fBLogical_Switch_Port\fR takes precedence\[char46]
 .IP "\fBoptions : domain_name\fR: optional string"
 The DHCPv4 option code for this option is 15\[char46] This option specifies the domain name that client should use when resolving hostnames via the Domain Name System\[char46]
 .IP "\fBoptions : bootfile_name_alt\fR: optional string"
@@ -2661,9 +2843,11 @@ map of string-string pairs
 map of string-string pairs
 .SS "Details:
 .IP "\fBrecords\fR: map of string-string pairs"
-Key-value pair of DNS records with \fBDNS query name\fR as the key and value as a string of IP address(es) separated by comma or space\[char46]
+Key-value pair of DNS records with \fBDNS query name\fR as the key and value as a string of IP address(es) separated by comma or space\[char46] For PTR requests, the key-value pair can be \fBReverse IPv4 address\[char46]in\-addr\[char46]arpa\fR and the value \fBDNS domain name\fR\[char46] For IPv6 addresses, the key has to be \fBReverse IPv6 address\[char46]ip6\[char46]arpa\fR\[char46]
 .IP
 \fBExample: \fR \(dqvm1\[char46]ovn\[char46]org\(dq = \(dq10\[char46]0\[char46]0\[char46]4 aef0::4\(dq
+.IP
+\fBExample: \fR \(dq4\[char46]0\[char46]0\[char46]10\[char46]in-addr\[char46]arpa\(dq = \(dqvm1\[char46]ovn\[char46]org\(dq
 .IP "\fBexternal_ids\fR: map of string-string pairs"
 See \fBExternal IDs\fR at the beginning of this document\[char46]
 .bp
