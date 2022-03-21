@@ -584,23 +584,29 @@ COMMANDS
 
               [--type={switch | port-group}] [--log] [--meter=meter] [--sever‐
               ity=severity]   [--name=name]   [--label=label]    [--may-exist]
-              acl-add entity direction priority match verdict
-                     Adds  the  specified  ACL  to  entity.  direction must be
+              [--apply-after-lb]  acl-add entity direction priority match ver‐
+              dict
+                     Adds the specified  ACL  to  entity.  direction  must  be
                      either from-lport or to-lport. priority must be between 0
-                     and  32767,  inclusive.  A full description of the fields
-                     are in ovn-nb(5). If --may-exist is specified,  adding  a
-                     duplicated  ACL  succeeds  but the ACL is not really cre‐
-                     ated.  Without  --may-exist,  adding  a  duplicated   ACL
+                     and 32767, inclusive. A full description  of  the  fields
+                     are  in  ovn-nb(5). If --may-exist is specified, adding a
+                     duplicated ACL succeeds but the ACL is  not  really  cre‐
+                     ated.   Without  --may-exist,  adding  a  duplicated  ACL
                      results in error.
 
-                     The  --log option enables packet logging for the ACL. The
-                     options --severity and  --name  specify  a  severity  and
+                     The --log option enables packet logging for the ACL.  The
+                     options  --severity  and  --name  specify  a severity and
                      name, respectively, for log entries (and also enable log‐
-                     ging). The  severity  must  be  one  of  alert,  warning,
-                     notice,  info,  or debug. If a severity is not specified,
-                     the default is info. The --meter=meter option is used  to
-                     rate-limit  packet  logging.  The  meter argument names a
+                     ging).  The  severity  must  be  one  of  alert, warning,
+                     notice, info, or debug. If a severity is  not  specified,
+                     the  default is info. The --meter=meter option is used to
+                     rate-limit packet logging. The  meter  argument  names  a
                      meter configured by meter-add.
+
+                     The  --apply-after-lb  option sets apply-after-lb=true in
+                     the options column of the ACL table. As the  option  name
+                     suggests,  the  ACL  will  be  applied  after the logical
+                     switch load balancer stage.
 
               [--type={switch | port-group}] acl-del entity [direction [prior‐
               ity match]]
@@ -1253,35 +1259,28 @@ COMMANDS
 
               ·      BFD
 
-              ls-copp-add switch proto meter
-                     Adds  the  control  proto  to meter mapping to the switch
-                     control plane protection policy. If no policy exists yet,
-                     it  creates  one. If a mapping already existed for proto,
-                     this will overwrite it.
+              copp-add name proto meter
+                     Adds  the  control  proto to meter mapping to the control
+                     plane protection policy name. If no policy exists yet, it
+                     creates one. If a mapping already existed for proto, this
+                     will overwrite it.
 
-              ls-copp-del switch [proto]
-                     Removes the control proto mapping from the switch control
+              copp-del name [proto]
+                     Removes the control proto mapping for  the  name  control
                      plane  protection  policy. If proto is not specified, the
                      whole control plane protection policy is destroyed.
 
-              ls-copp-list switch
+              copp-list name
                      Display the current control plane protection  policy  for
-                     switch.
+                     name.
 
-              lr-copp-add router proto meter
-                     Adds  the  control  proto  to meter mapping to the router
-                     control plane protection policy. If no policy exists yet,
-                     it  creates  one. If a mapping already existed for proto,
-                     this will overwrite it.
+              ls-copp-add name switch
+                     Adds the control plane protection policy name to the log‐
+                     ical switch switch.
 
-              lr-copp-del router [proto]
-                     Removes the control proto mapping from the router control
-                     plane  protection  policy. If proto is not specified, the
-                     whole control plane protection policy is destroyed.
-
-              lr-copp-list router
-                     Display the current control plane protection  policy  for
-                     router.
+              lr-copp-add name router
+                     Adds the control plane protection policy name to the log‐
+                     ical router router.
 
    Synchronization Commands
        sync   Ordinarily, --wait=sb or --wait=hv only waits for changes by the
@@ -1663,4 +1662,4 @@ SEE ALSO
 
 
 
-OVN 21.09.90                       ovn-nbctl                      ovn-nbctl(8)
+OVN 22.03.90                       ovn-nbctl                      ovn-nbctl(8)

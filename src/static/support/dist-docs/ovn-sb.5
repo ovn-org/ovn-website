@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-sb" 5 " DB Schema 20.20.0" "Open vSwitch 21.09.90" "Open vSwitch Manual"
+.TH "ovn-sb" 5 " DB Schema 20.21.0" "Open vSwitch 22.03.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -941,6 +941,20 @@ Note that if you want processing to continue in the next table, you must execute
 .IP
 \fBct_snat(\fIIP\fB)\fR sends the packet through the SNAT zone to change the source IP address of the packet to the one provided inside the parenthesis and commits the connection\[char46] The packet is then automatically sent to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
 .TP
+\fBct_dnat_in_czone;\fR
+.TQ .5in
+\fBct_dnat_in_czone(\fIIP\fB);\fR
+\fBct_dnat_in_czone\fR sends the packet through the common NAT zone (used for both DNAT and SNAT) in connection tracking table to unDNAT any packet that was DNATed in the opposite direction\[char46] The packet is then automatically sent to to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
+.IP
+\fBct_dnat_in_czone(\fIIP\fB)\fR sends the packet through the common NAT zone to change the destination IP address of the packet to the one provided inside the parentheses and commits the connection\[char46] The packet is then automatically sent to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
+.TP
+\fBct_snat_in_czone;\fR
+.TQ .5in
+\fBct_snat_in_czone(\fIIP\fB);\fR
+\fBct_snat_in_czone\fR sends the packet through the common NAT zone to unSNAT any packet that was SNATed in the opposite direction\[char46] The packet is automatically sent to the next tables as if followed by the \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
+.IP
+\fBct_snat_in_czone(\fIIP\fB)\fR sends the packet\e through the common NAT zone to change the source IP address of the packet to the one provided inside the parenthesis and commits the connection\[char46] The packet is then automatically sent to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
+.TP
 \fBct_clear;\fR
 Clears connection tracking state\[char46]
 .TP
@@ -1668,6 +1682,9 @@ set of strings
 .TQ 2.75in
 \fBtype\fR
 string
+.TQ 2.75in
+\fBrequested_chassis\fR
+optional weak reference to \fBChassis\fR
 .RE
 .TQ .25in
 \fIPatch Options:\fR
@@ -1871,6 +1888,8 @@ A logical port that represents a particular instance, bound to a specific chassi
 \fBvirtual\fR
 Represents a logical port with an \fBvirtual ip\fR\[char46] This \fBvirtual ip\fR can be configured on a logical port (which is refered as virtual parent)\[char46]
 .RE
+.IP "\fBrequested_chassis\fR: optional weak reference to \fBChassis\fR"
+This column exists so that the ovn-controller can effectively monitor all \fBPort_Binding\fR records destined for it, and is a supplement to the \fBoptions:requested-chassis\fR option\[char46] The option is still required so that the ovn-controller can check the CMS intent when the chassis pointed to does not currently exist, which for example occurs when the ovn-controller is stopped without passing the \-restart argument\[char46] This column must be a \fBChassis\fR record\[char46] This is populated by \fBovn\-northd\fR when the \fBoptions:requested-chassis\fR is defined and contains a string matching the name or hostname of an existing chassis\[char46]
 .ST "Patch Options:"
 .PP
 .PP
@@ -1993,7 +2012,7 @@ For a logical switch port, \fBovn\-northd\fR does not currently set this key\[ch
 .IP "\fBexternal_ids\fR: map of string-string pairs"
 See \fBExternal IDs\fR at the beginning of this document\[char46]
 .IP
-The \fBovn\-northd\fR program populates this column with all entries into the \fBexternal_ids\fR column of the \fBLogical_Switch_Port\fR table of the \fBOVN_Northbound\fR database\[char46]
+The \fBovn\-northd\fR program populates this column with all entries into the \fBexternal_ids\fR column of the \fBLogical_Switch_Port\fR and \fBLogical_Router_Port\fR tables of the \fBOVN_Northbound\fR database\[char46]
 .bp
 .SH "MAC_Binding TABLE"
 .PP
