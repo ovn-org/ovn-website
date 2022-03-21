@@ -371,6 +371,7 @@ Copp TABLE
        associate entries from table Meter to control protocol names.
 
    Summary:
+       name                          string (must be unique within table)
        meters : arp                  optional string
        meters : arp-resolve          optional string
        meters : dhcpv4-opts          optional string
@@ -387,8 +388,12 @@ Copp TABLE
        meters : tcp-reset            optional string
        meters : bfd                  optional string
        meters : reject               optional string
+       external_ids                  map of string-string pairs
 
    Details:
+       name: string (must be unique within table)
+              CoPP name.
+
        meters : arp: optional string
               Rate limiting meter for ARP  packets  (request/reply)  used  for
               learning neighbors.
@@ -448,6 +453,9 @@ Copp TABLE
 
        meters : reject: optional string
               Rate limiting meter for packets that trigger a reject action
+
+       external_ids: map of string-string pairs
+              See External IDs at the beginning of this document.
 
 Logical_Switch TABLE
        Each row represents one L2 logical switch.
@@ -731,6 +739,8 @@ Logical_Switch_Port TABLE
          Options for router ports:
             options : router-port    optional string
             options : nat-addresses  optional string
+            options : exclude-lb-vips-from-garp
+                                     optional string
             options : arp_proxy      optional string
          Options for localnet ports:
             options : network_name   optional string
@@ -751,6 +761,11 @@ Logical_Switch_Port TABLE
             options : qos_max_rate   optional string
             options : qos_burst      optional string
             options : hostname       optional string
+            VIF Plugging Options:
+              options : vif-plug-type
+                                     optional string
+              options : vif-plug-mtu-request
+                                     optional string
          Virtual port Options:
             options : virtual-ip     optional string
             options : virtual-parents
@@ -939,6 +954,13 @@ Logical_Switch_Port TABLE
                      ical switch ports where options:router-port is  the  name
                      of a port on a gateway router.
 
+       options : exclude-lb-vips-from-garp: optional string
+              If  options:nat-addresses is set to router, Gratuitous ARPs will
+              be sent for all SNAT and DNAT external IP addresses  defined  on
+              the    options:router-port’s    logical    router,   using   the
+              options:router-port’s MAC  address,  not  cosidering  configured
+              load balancers.
+
        options : arp_proxy: optional string
               Optional.  A  list  of  IPv4  addresses that this logical switch
               router port will reply to ARP requests. Example: 169.254.239.254
@@ -1016,6 +1038,24 @@ Logical_Switch_Port TABLE
               associated  for  this  Logical Switch Port. If DHCPv4 is enabled
               for this Logical Switch  Port,  hostname  dhcp  option  will  be
               included in DHCP reply.
+
+     VIF Plugging Options:
+
+       options : vif-plug-type: optional string
+              If  set,  OVN  will  attempt to perform plugging of this VIF. In
+              order to get this port plugged by the OVN controller,  OVN  must
+              be  built with support for VIF plugging. The default behavior is
+              for the CMS to do the VIF plugging. Each VIF plug provider  have
+              their own options namespaced by name, for example "vif-plug:rep‐
+              resentor:key". Please refer to the VIF plug provider  documenta‐
+              tion  located  in  Documentation/topics/vif-plug-providers/  for
+              more information.
+
+       options : vif-plug-mtu-request: optional string
+              Requested MTU for plugged interfaces.  When  set  the  OVN  con‐
+              troller  will  fill  the  mtu_request column of the Open vSwitch
+              database’s Interface table. This in turn will make OVS  vswitchd
+              update the MTU of the linked interface.
 
      Virtual port Options:
 
@@ -1695,6 +1735,8 @@ ACL TABLE
        match                         string
        action                        string,     one     of     allow-related,
                                      allow-stateless, allow, drop, or reject
+       options:
+         options : apply-after-lb    optional string
        Logging:
          log                         boolean
          name                        optional string, at  most  63  characters
@@ -1703,6 +1745,9 @@ ACL TABLE
                                      info, notice, or warning
          meter                       optional string
        Common Columns:
+         options                     map of string-string pairs
+         ACL configuration options:
+            options : log-related    optional string
          external_ids                map of string-string pairs
 
    Details:
@@ -1781,6 +1826,27 @@ ACL TABLE
                      ICMPv4/ICMPv6     unreachable     message    for    other
                      IPv4/IPv6-based protocols.
 
+     options:
+
+       ACLs options.
+
+       options : apply-after-lb: optional string
+              If set to true, the ACL will be  applied  after  load  balancing
+              stage. Supported only for from-lport direction.
+
+              The  main use case of this option is to support ACLs matching on
+              the destination IP address of the packet for the backend IPs  of
+              load balancers.
+
+              OVN  will  apply the from-lport ACLs in two stages. ACLs without
+              this option apply-after-lb set, will be applied before the  load
+              balancer  stage  and  ACLs  with this option set will be applied
+              after the load balancer stage.  The  priorities  are  indepedent
+              between  these  stages  and may not be obvious to the CMS. Hence
+              CMS should be extra careful when using this  option  and  should
+              carefully  evaluate  the  priorities  of  all  the  ACLs and the
+              default deny/allow ACLs if any.
+
      Logging:
 
        These columns control whether and how OVN logs packets  that  match  an
@@ -1814,6 +1880,25 @@ ACL TABLE
 
      Common Columns:
 
+       options: map of string-string pairs
+              This  column  provides general key/value settings. The supported
+              options are described individually below.
+
+     ACL configuration options:
+
+       options : log-related: optional string
+              If set to true, then log when reply or related traffic is admit‐
+              ted  from  a stateful ACL. In order for this option to function,
+              the log option must be set to true and a label must be set,  and
+              it  must  be  unique to the ACL. The label is necessary as it is
+              the only means to associate the reply traffic with  the  ACL  to
+              which  it  belongs.  It  must be unique, because otherwise it is
+              ambiguous which ACL will be matched. Note:  If  this  option  is
+              enabled,  an extra flow is installed in order to log the related
+              traffic. Therefore, if this is enabled on  all  ACLs,  then  the
+              total  number  of flows necessary to log the ACL traffic is dou‐
+              bled, compared to if this option is not enabled.
+
        external_ids: map of string-string pairs
               See External IDs at the beginning of this document.
 
@@ -1844,9 +1929,9 @@ Logical_Router TABLE
          options : always_learn_from_arp_request
                                      optional string, either true or false
          options : requested-tnl-key
-                                     optional  string,  containing an integer,
+                                     optional string, containing  an  integer,
                                      in range 1 to 16,777,215
-         options : snat-ct-zone      optional string, containing  an  integer,
+         options : snat-ct-zone      optional  string,  containing an integer,
                                      in range 0 to 65,535
        Common Columns:
          external_ids                map of string-string pairs
@@ -1862,18 +1947,18 @@ Logical_Router TABLE
               Zero or more routing policies for the router.
 
        enabled: optional boolean
-              This  column  is  used  to administratively set router state. If
-              this column is empty or is set to true, the router  is  enabled.
-              If  this  column is set to false, the router is disabled. A dis‐
+              This column is used to administratively  set  router  state.  If
+              this  column  is empty or is set to true, the router is enabled.
+              If this column is set to false, the router is disabled.  A  dis‐
               abled router has all ingress and egress traffic dropped.
 
        nat: set of NATs
-              One or more NAT rules for the router. NAT  rules  only  work  on
-              Gateway  routers,  and  on distributed routers with one and only
+              One  or  more  NAT  rules for the router. NAT rules only work on
+              Gateway routers, and on distributed routers with  one  and  only
               one distributed gateway port.
 
        load_balancer: set of weak reference to Load_Balancers
-              Set of load balancers associated to this  logical  router.  Load
+              Set  of  load  balancers associated to this logical router. Load
               balancer Load balancer rules only work on the Gateway routers or
               routers with one and only one distributed gateway port.
 
@@ -1884,14 +1969,14 @@ Logical_Router TABLE
 
        These columns provide names for the logical router. From OVN’s perspec‐
        tive, these names have no special meaning or purpose other than to pro‐
-       vide convenience for human interaction with  the  northbound  database.
-       There  is no requirement for the name to be unique. (For a unique iden‐
+       vide  convenience  for  human interaction with the northbound database.
+       There is no requirement for the name to be unique. (For a unique  iden‐
        tifier for a logical router, use its row UUID.)
 
        (Originally, name was intended to serve the purpose of a human-friendly
-       name,  but the Neutron integration used it to uniquely identify its own
-       router object, in the format neutron-uuid. Later  on,  Neutron  started
-       propagating   the  friendly  name  of  a  router  as  external_ids:neu‐
+       name, but the Neutron integration used it to uniquely identify its  own
+       router  object,  in  the format neutron-uuid. Later on, Neutron started
+       propagating  the  friendly  name  of  a  router  as   external_ids:neu‐
        tron:router_name. Perhaps this can be cleaned up someday.)
 
        name: string
@@ -1901,8 +1986,8 @@ Logical_Router TABLE
               Another name for the logical router.
 
        copp: optional weak reference to Copp
-              The control plane protection policy from  table  Copp  used  for
-              metering  packets  sent  to ovn-controller from logical ports of
+              The  control  plane  protection  policy from table Copp used for
+              metering packets sent to ovn-controller from  logical  ports  of
               this router.
 
      Options:
@@ -1911,25 +1996,25 @@ Logical_Router TABLE
 
        options : chassis: optional string
               If set, indicates that the logical router in question is a Gate‐
-              way  router  (which is centralized) and resides in the set chas‐
-              sis. The same value is also used by ovn-controller  to  uniquely
+              way router (which is centralized) and resides in the  set  chas‐
+              sis.  The  same value is also used by ovn-controller to uniquely
               identify the chassis in the OVN deployment and comes from exter‐
-              nal_ids:system-id in  the  Open_vSwitch  table  of  Open_vSwitch
+              nal_ids:system-id  in  the  Open_vSwitch  table  of Open_vSwitch
               database.
 
               The Gateway router can only be connected to a distributed router
-              via a switch if SNAT and DNAT are to be configured in the  Gate‐
+              via  a switch if SNAT and DNAT are to be configured in the Gate‐
               way router.
 
        options : dnat_force_snat_ip: optional string
-              If  set,  indicates a set of IP addresses to use to force SNAT a
-              packet that has already been DNATed in the gateway router.  When
-              multiple  gateway  routers  are  configured, a packet can poten‐
-              tially enter any of the gateway router, get DNATted and  eventu‐
+              If set, indicates a set of IP addresses to use to force  SNAT  a
+              packet  that has already been DNATed in the gateway router. When
+              multiple gateway routers are configured,  a  packet  can  poten‐
+              tially  enter any of the gateway router, get DNATted and eventu‐
               ally reach the logical switch port. For the return traffic to go
-              back to the same gateway  router  (for  unDNATing),  the  packet
+              back  to  the  same  gateway  router (for unDNATing), the packet
               needs a SNAT in the first place. This can be achieved by setting
-              the above option with a gateway specific set  of  IP  addresses.
+              the  above  option  with a gateway specific set of IP addresses.
               This option may have exactly one IPv4 and/or one IPv6 address on
               it, separated by a a space.
 
@@ -1937,74 +2022,74 @@ Logical_Router TABLE
               If set, this option can take two possible type of values. Either
               a set of IP addresses or the string value - router_ip.
 
-              If  a set of IP addresses are configured, it indicates to use to
-              force SNAT a packet that has already been load-balanced  in  the
-              gateway  router. When multiple gateway routers are configured, a
-              packet can potentially enter any of  the  gateway  routers,  get
-              DNATted  as  part of the load-balancing and eventually reach the
-              logical switch port. For the return traffic to go  back  to  the
-              same  gateway router (for unDNATing), the packet needs a SNAT in
-              the first place. This can  be  achieved  by  setting  the  above
-              option  with a gateway specific set of IP addresses. This option
-              may have exactly one IPv4 and/or one IPv6 address on  it,  sepa‐
+              If a set of IP addresses are configured, it indicates to use  to
+              force  SNAT  a packet that has already been load-balanced in the
+              gateway router. When multiple gateway routers are configured,  a
+              packet  can  potentially  enter  any of the gateway routers, get
+              DNATted as part of the load-balancing and eventually  reach  the
+              logical  switch  port.  For the return traffic to go back to the
+              same gateway router (for unDNATing), the packet needs a SNAT  in
+              the  first  place.  This  can  be  achieved by setting the above
+              option with a gateway specific set of IP addresses. This  option
+              may  have  exactly one IPv4 and/or one IPv6 address on it, sepa‐
               rated by a space character.
 
               If it is configured with the value router_ip, then the load bal‐
-              anced packet is SNATed with the IP of router port  (attached  to
+              anced  packet  is SNATed with the IP of router port (attached to
               the gateway router) selected as the destination after taking the
               routing decision.
 
        options : mcast_relay: optional string, either true or false
-              Enables/disables IP multicast  relay  between  logical  switches
+              Enables/disables  IP  multicast  relay  between logical switches
               connected to the logical router. Default: False.
 
        options : dynamic_neigh_routers: optional string, either true or false
-              If  set  to  true, the router will resolve neighbor routers’ MAC
-              addresses only  by  dynamic  ARP/ND,  instead  of  prepopulating
-              static  mappings  for all neighbor routers in the ARP/ND Resolu‐
-              tion stage. This reduces number of flows,  but  requires  ARP/ND
+              If set to true, the router will resolve  neighbor  routers’  MAC
+              addresses  only  by  dynamic  ARP/ND,  instead  of prepopulating
+              static mappings for all neighbor routers in the  ARP/ND  Resolu‐
+              tion  stage.  This  reduces number of flows, but requires ARP/ND
               messages to resolve the IP-MAC bindings when needed. It is false
               by default. It is recommended to set to true when a large number
-              of  logical routers are connected to the same logical switch but
-              most of them never need to send traffic between each  other.  By
-              default,  ovn-northd  does  not  create mappings to NAT and load
+              of logical routers are connected to the same logical switch  but
+              most  of  them never need to send traffic between each other. By
+              default, ovn-northd does not create mappings  to  NAT  and  load
               balancer addresess. However, for NAT and load balancer addresses
-              that  have  the  add_route  option added, ovn-northd will create
+              that have the add_route option  added,  ovn-northd  will  create
               logical flows that map NAT and load balancer IP addresses to the
-              appropriate  MAC  address. Setting dynamic_neigh_routers to true
+              appropriate MAC address. Setting dynamic_neigh_routers  to  true
               will prevent the automatic creation of these logical flows.
 
-       options : always_learn_from_arp_request: optional string,  either  true
+       options  :  always_learn_from_arp_request: optional string, either true
        or false
               This  option  controls  the  behavior  when  handling  IPv4  ARP
               requests or IPv6 ND-NS packets - whether a dynamic neighbor (MAC
               binding) entry is added/updated.
 
-              true  -  Always learn the MAC-IP binding, and add/update the MAC
+              true - Always learn the MAC-IP binding, and add/update  the  MAC
               binding entry.
 
-              false - If there is a MAC binding for that IP  and  the  MAC  is
-              different,  or, if TPA of ARP request belongs to any router port
-              on this router, then update/add that MAC-IP binding.  Otherwise,
+              false  -  If  there  is a MAC binding for that IP and the MAC is
+              different, or, if TPA of ARP request belongs to any router  port
+              on  this router, then update/add that MAC-IP binding. Otherwise,
               don’t update/add entries.
 
-              It  is true by default. It is recommended to set to false when a
-              large number of logical routers are connected to the same  logi‐
-              cal  switch  but most of them never need to send traffic between
+              It is true by default. It is recommended to set to false when  a
+              large  number of logical routers are connected to the same logi‐
+              cal switch but most of them never need to send  traffic  between
               each other, to reduce the size of the MAC binding table.
 
        options : requested-tnl-key: optional string, containing an integer, in
        range 1 to 16,777,215
-              Configures  the datapath tunnel key for the logical router. This
-              is not needed because ovn-northd will assign an unique  key  for
-              each   datapath   by  itself.  However,  if  it  is  configured,
+              Configures the datapath tunnel key for the logical router.  This
+              is  not  needed because ovn-northd will assign an unique key for
+              each  datapath  by  itself.  However,  if  it   is   configured,
               ovn-northd honors the configured value.
 
-       options : snat-ct-zone: optional  string,  containing  an  integer,  in
+       options  :  snat-ct-zone:  optional  string,  containing an integer, in
        range 0 to 65,535
               Use the requested conntrack zone for SNAT with this router. This
-              can be useful if egress traffic from the host running OVN  comes
-              from  both  OVN  and  other sources. This way, OVN and the other
+              can  be useful if egress traffic from the host running OVN comes
+              from both OVN and other sources. This way,  OVN  and  the  other
               sources can make use of the same conntrack zone.
 
      Common Columns:
@@ -2013,55 +2098,55 @@ Logical_Router TABLE
               See External IDs at the beginning of this document.
 
 QoS TABLE
-       Each row in this table represents one QoS rule  for  a  logical  switch
-       that  points  to  it through its qos_rules column. Two types of QoS are
+       Each  row  in  this  table represents one QoS rule for a logical switch
+       that points to it through its qos_rules column. Two types  of  QoS  are
        supported: DSCP marking and metering. A match with the highest-priority
-       will  have  QoS  applied to it. If the action column is specified, then
-       matching packets will have DSCP marking applied. If the bandwdith  col‐
-       umn  is  specified,  then  matching packets will have metering applied.
+       will have QoS applied to it. If the action column  is  specified,  then
+       matching  packets will have DSCP marking applied. If the bandwdith col‐
+       umn is specified, then matching packets  will  have  metering  applied.
        action and bandwdith are not exclusive, so both marking and metering by
-       defined  for  the  same  QoS entry. If no row matches, packets will not
+       defined for the same QoS entry. If no row  matches,  packets  will  not
        have any QoS applied.
 
    Summary:
        priority                      integer, in range 0 to 32,767
        direction                     string, either from-lport or to-lport
        match                         string
-       action                        map of string-integer pairs, key must  be
+       action                        map  of string-integer pairs, key must be
                                      dscp, value in range 0 to 63
-       bandwidth                     map  of  string-integer pairs, key either
+       bandwidth                     map of string-integer pairs,  key  either
                                      burst  or  rate,  value  in  range  1  to
                                      4,294,967,295
        external_ids                  map of string-string pairs
 
    Details:
        priority: integer, in range 0 to 32,767
-              The  QoS rule’s priority. Rules with numerically higher priority
+              The QoS rule’s priority. Rules with numerically higher  priority
               take precedence over those with lower. If two QoS rules with the
-              same  priority  both  match,  then the one actually applied to a
+              same priority both match, then the one  actually  applied  to  a
               packet is undefined.
 
        direction: string, either from-lport or to-lport
-              The value of this field is similar to  ACL  column  in  the  OVN
+              The  value  of  this  field  is similar to ACL column in the OVN
               Northbound database’s ACL table.
 
        match: string
               The packets that the QoS rules should match, in the same expres‐
-              sion language used for the match column in  the  OVN  Southbound
-              database’s  Logical_Flow table. The outport logical port is only
-              available in the to-lport direction (the inport is available  in
+              sion  language  used  for the match column in the OVN Southbound
+              database’s Logical_Flow table. The outport logical port is  only
+              available  in the to-lport direction (the inport is available in
               both directions).
 
        action: map of string-integer pairs, key must be dscp, value in range 0
        to 63
               When specified, matching flows will have DSCP marking applied.
 
-              ·      dscp: The value of this action should be in the range  of
+              ·      dscp:  The value of this action should be in the range of
                      0 to 63 (inclusive).
 
        bandwidth: map of string-integer pairs, key either burst or rate, value
        in range 1 to 4,294,967,295
-              When specified, matching packets will  have  bandwidth  metering
+              When  specified,  matching  packets will have bandwidth metering
               applied. Traffic over the limit will be dropped.
 
               ·      rate: The value of rate limit in kbps.
@@ -2073,7 +2158,7 @@ QoS TABLE
               See External IDs at the beginning of this document.
 
 Meter TABLE
-       Each row in this table represents a meter that can be used for  QoS  or
+       Each  row  in this table represents a meter that can be used for QoS or
        rate-limiting.
 
    Summary:
@@ -2087,26 +2172,26 @@ Meter TABLE
        name: string (must be unique within table)
               A name for this meter.
 
-              Names  that  begin  with "__" (two underscores) are reserved for
+              Names that begin with "__" (two underscores)  are  reserved  for
               OVN internal use and should not be added manually.
 
        unit: string, either kbps or pktps
-              The unit for rate and burst_rate parameters in the bands  entry.
-              kbps  specifies kilobits per second, and pktps specifies packets
+              The  unit for rate and burst_rate parameters in the bands entry.
+              kbps specifies kilobits per second, and pktps specifies  packets
               per second.
 
        bands: set of 1 or more Meter_Bands
               The bands associated with this meter. Each band specifies a rate
-              above  which  the band is to take the action action. If multiple
-              bands’ rates are exceeded, then the band with the  highest  rate
+              above which the band is to take the action action.  If  multiple
+              bands’  rates  are exceeded, then the band with the highest rate
               among the exceeded bands is selected.
 
        fair: optional boolean
-              This  column is used to further describe the desired behavior of
+              This column is used to further describe the desired behavior  of
               the meter when there are multiple references to it. If this col‐
-              umn  is empty or is set to false, the rate will be shared across
-              all rows that refer to the same  Meter  name.  Conversely,  when
-              this  column is set to true, each user of the same Meter will be
+              umn is empty or is set to false, the rate will be shared  across
+              all  rows  that  refer  to the same Meter name. Conversely, when
+              this column is set to true, each user of the same Meter will  be
               rate-limited on its own.
 
        external_ids: map of string-string pairs
@@ -2114,7 +2199,7 @@ Meter TABLE
 
 Meter_Band TABLE
        Each row in this table represents a meter band which specifies the rate
-       above  which  the  configured action should be applied. These bands are
+       above which the configured action should be applied.  These  bands  are
        referenced by the bands column in the Meter table.
 
    Summary:
@@ -2130,13 +2215,13 @@ Meter_Band TABLE
 
        rate: integer, in range 1 to 4,294,967,295
               The rate limit for this band, in kilobits per second or bits per
-              second, depending on whether the parent Meter entry’s unit  col‐
+              second,  depending on whether the parent Meter entry’s unit col‐
               umn specified kbps or pktps.
 
        burst_size: integer, in range 0 to 4,294,967,295
-              The  maximum  burst allowed for the band in kilobits or packets,
-              depending on whether kbps or pktps was selected  in  the  parent
-              Meter  entry’s  unit  column. If the size is zero, the switch is
+              The maximum burst allowed for the band in kilobits  or  packets,
+              depending  on  whether  kbps or pktps was selected in the parent
+              Meter entry’s unit column. If the size is zero,  the  switch  is
               free to select some reasonable value depending on its configura‐
               tion.
 
@@ -2146,7 +2231,7 @@ Meter_Band TABLE
 Logical_Router_Port TABLE
        A port within an L3 logical router.
 
-       Exactly  one  Logical_Router  row must reference a given logical router
+       Exactly one Logical_Router row must reference a  given  logical  router
        port.
 
    Summary:
@@ -2160,7 +2245,7 @@ Logical_Router_Port TABLE
          Options for Physical VLAN MTU Issues:
             options : reside-on-redirect-chassis
                                      optional string, either true or false
-            options : redirect-type  optional string, either bridged or  over‐
+            options : redirect-type  optional  string, either bridged or over‐
                                      lay
        ipv6_prefix                   set of strings
        ipv6_ra_configs:
@@ -2182,11 +2267,16 @@ Logical_Router_Port TABLE
        Options:
          options : mcast_flood       optional string, either true or false
          options : requested-tnl-key
-                                     optional  string,  containing an integer,
+                                     optional string, containing  an  integer,
                                      in range 1 to 32,767
          options : prefix_delegation
                                      optional string, either true or false
          options : prefix            optional string, either true or false
+         options : route_table       optional string
+         options : gateway_mtu       optional  string,  containing an integer,
+                                     in range 68 to 65,535
+         options : gateway_mtu_bypass
+                                     optional string
        Attachment:
          peer                        optional string
        Common Columns:
@@ -2446,27 +2536,49 @@ Logical_Router_Port TABLE
               If set to true, this  interface  will  receive  an  IPv6  prefix
               according to RFC3663
 
+       options : route_table: optional string
+              Designates  lookup  Logical_Router_Static_Routes  with specified
+              route_table value. Routes to directly  connected  networks  from
+              same  Logical  Router  and routes without route_table option set
+              have higher priority than routes with route_table option set.
+
+       options : gateway_mtu: optional string, containing an integer, in range
+       68 to 65,535
+              If  set, logical flows will be added to router pipeline to check
+              packet length. If packet length is greater than the  value  set,
+              ICMPv4  type  3  (Destination Unreachable) code 4 (Fragmentation
+              Needed and Don’t Fragment was Set) or ICMPv6 type 2 (Packet  Too
+              Big) code 0 (no route to destination) packets will be generated.
+              This allows for Path MTU Discovery.
+
+       options : gateway_mtu_bypass: optional string
+              When configured, represents a  match  expression,  in  the  same
+              expression  language used for the match column in the OVN South‐
+              bound  database’s  Logical_Flow  table.  Packets  matching  this
+              expression  will  bypass the length check configured through the
+              options:gateway_mtu option.
+
      Attachment:
 
        A given router port serves one of two purposes:
 
               ·      To attach a logical switch to a logical router. A logical
-                     router port of this type is  referenced  by  exactly  one
-                     Logical_Switch_Port  of type router. The value of name is
-                     set  as  router-port   in   column   options   of   Logi‐
+                     router  port  of  this  type is referenced by exactly one
+                     Logical_Switch_Port of type router. The value of name  is
+                     set   as   router-port   in   column   options  of  Logi‐
                      cal_Switch_Port. In this case peer column is empty.
 
               ·      To connect one logical router to another. This requires a
                      pair of logical router ports, each connected to a differ‐
-                     ent  router.  Each  router port in the pair specifies the
+                     ent router. Each router port in the  pair  specifies  the
                      other in its peer column. No Logical_Switch refers to the
                      router port.
 
        peer: optional string
-              For  a  router  port  used  to connect two logical routers, this
+              For a router port used to  connect  two  logical  routers,  this
               identifies the other router port in the pair by name.
 
-              For a router port attached to a logical switch, this  column  is
+              For  a  router port attached to a logical switch, this column is
               empty.
 
      Common Columns:
@@ -2474,15 +2586,19 @@ Logical_Router_Port TABLE
        external_ids: map of string-string pairs
               See External IDs at the beginning of this document.
 
+              The ovn-northd program copies all these pairs  into  the  exter‐
+              nal_ids column of the Port_Binding table in OVN_Southbound data‐
+              base.
+
 Logical_Router_Static_Route TABLE
        Each record represents a static route.
 
-       When  multiple  routes match a packet, the longest-prefix match is cho‐
-       sen. For a given prefix length, a dst-ip  route  is  preferred  over  a
+       When multiple routes match a packet, the longest-prefix match  is  cho‐
+       sen.  For  a  given  prefix  length, a dst-ip route is preferred over a
        src-ip route.
 
-       When  there  are ECMP routes, i.e. multiple routes with same prefix and
-       policy, one of them will be selected based on the  5-tuple  hashing  of
+       When there are ECMP routes, i.e. multiple routes with same  prefix  and
+       policy,  one  of  them will be selected based on the 5-tuple hashing of
        the packet header.
 
    Summary:
@@ -2491,6 +2607,7 @@ Logical_Router_Static_Route TABLE
        nexthop                       string
        output_port                   optional string
        bfd                           optional weak reference to BFD
+       route_table                   string
        external_ids : ic-learned-route
                                      optional string
        Common Columns:
@@ -2499,41 +2616,56 @@ Logical_Router_Static_Route TABLE
          options                     map of string-string pairs
          options : ecmp_symmetric_reply
                                      optional string
+         options : origin            optional string
 
    Details:
        ip_prefix: string
               IP prefix of this route (e.g. 192.168.100.0/24).
 
        policy: optional string, either dst-ip or src-ip
-              If  it  is  specified, this setting describes the policy used to
-              make routing decisions. This setting must be one of the  follow‐
+              If it is specified, this setting describes the  policy  used  to
+              make  routing decisions. This setting must be one of the follow‐
               ing strings:
 
-              ·      src-ip:  This policy sends the packet to the nexthop when
+              ·      src-ip: This policy sends the packet to the nexthop  when
                      the packet’s source IP address matches ip_prefix.
 
-              ·      dst-ip: This policy sends the packet to the nexthop  when
+              ·      dst-ip:  This policy sends the packet to the nexthop when
                      the packet’s destination IP address matches ip_prefix.
 
               If not specified, the default is dst-ip.
 
        nexthop: string
-              Nexthop  IP address for this route. Nexthop IP address should be
+              Nexthop IP address for this route. Nexthop IP address should  be
               the IP address of a connected router port or the IP address of a
               logical port or can be set to discard for dropping packets which
               match the given route.
 
        output_port: optional string
-              The name of the Logical_Router_Port via which the  packet  needs
-              to  be  sent  out.  This is optional and when not specified, OVN
-              will automatically figure this out based on  the  nexthop.  When
-              this  is  specified  and  there are multiple IP addresses on the
-              router port and none of them are in the same subnet of  nexthop,
-              OVN  chooses  the first IP address as the one via which the nex‐
+              The  name  of the Logical_Router_Port via which the packet needs
+              to be sent out. This is optional and  when  not  specified,  OVN
+              will  automatically  figure  this out based on the nexthop. When
+              this is specified and there are multiple  IP  addresses  on  the
+              router  port and none of them are in the same subnet of nexthop,
+              OVN chooses the first IP address as the one via which  the  nex‐
               thop is reachable.
 
        bfd: optional weak reference to BFD
               Reference to BFD row if the route has associated a BFD session
+
+       route_table: string
+              Any  string to place route to separate routing table. If Logical
+              Router Port has configured value  in  options:route_table  other
+              than  empty  string,  OVN  performs route lookup for all packets
+              entering Logical Router ingress pipeline from this port  in  the
+              following manner:
+
+              ·      1.  First  lookup  among  "global" routes: routes without
+                     route_table value set and routes  to  directly  connected
+                     networks.
+
+              ·      2.  Next  lookup among routes with same route_table value
+                     as specified in LRP’s options:route_table field.
 
        external_ids : ic-learned-route: optional string
               ovn-ic populates this key if  the  route  is  learned  from  the
@@ -2559,6 +2691,19 @@ Logical_Router_Static_Route TABLE
               rules  set  in the Logical_Router_policy table. This option only
               works on gateway  routers  (routers  that  have  options:chassis
               set).
+
+       options : origin: optional string
+              In case ovn-interconnection has been learned this route, it will
+              have its origin set: either "connected" or "static". This key is
+              supposed  to  be  written only by ovn-ic daemon. ovn-northd then
+              checks  this  value  when  generating   Logical   Flows.   Logi‐
+              cal_Router_Static_Route  records with same ip_prefix within same
+              Logical Router will have next lookup order based on  origin  key
+              value:
+
+              1.  connected
+
+              2.  static
 
 Logical_Router_Policy TABLE
        Each  row  in  this  table  represents one routing policy for a logical
@@ -3568,4 +3713,4 @@ BFD TABLE
 
 
 
-Open vSwitch 21.09.90           DB Schema 5.33.1                     ovn-nb(5)
+Open vSwitch 22.03.90           DB Schema 6.1.0                      ovn-nb(5)

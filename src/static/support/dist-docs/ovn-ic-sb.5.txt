@@ -287,8 +287,10 @@ Route TABLE
        Core Features:
          transit_switch              string
          availability_zone           Availability_Zone
+         route_table                 string
          ip_prefix                   string
          nexthop                     string
+         origin                      string, either connected or static
        Common Columns:
          external_ids                map of string-string pairs
 
@@ -302,11 +304,33 @@ Route TABLE
        availability_zone: Availability_Zone
               The availability zone that has advertised the route.
 
+       route_table: string
+              Route  table  within  which  this route was created. Empty value
+              means <main> routing table.
+
+              Routes for directly-connected networks will be learned to <main>
+              routing  table and if Logical Routers have more than one Transit
+              Switch, which interconnects them, directly-connected routes will
+              be  added  via  each  transit switch port and configured as ECMP
+              routes.
+
+              Static routes within route tables will be advertised and learned
+              only  if  interconnecting  transit  switch’s LRPs will have same
+              value in options:route_table as NB route_table or ICSB route_ta‐
+              ble value respectively.
+
        ip_prefix: string
               IP prefix of this route (e.g. 192.168.100.0/24).
 
        nexthop: string
               Nexthop IP address for this route.
+
+       origin: string, either connected or static
+              Can  be one of connected or static. Routes to directly-connected
+              subnets - LRP’s CIDRs are inserted to OVN IC  SB  DB  with  con‐
+              nected  value in origin. Static routes are inserted to OVN IC SB
+              DB with static value. Next when route is learned to  another  AZ
+              NB DB by ovn-ic, route origin is synced to options:origin.
 
      Common Columns:
 
@@ -576,4 +600,4 @@ SSL TABLE
 
 
 
-Open vSwitch 21.09.90           DB Schema 1.0.0                   ovn-ic-sb(5)
+Open vSwitch 22.03.90           DB Schema 1.1.0                   ovn-ic-sb(5)

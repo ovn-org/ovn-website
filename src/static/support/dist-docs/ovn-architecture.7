@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-architecture" 7 "OVN Architecture" "OVN 21\[char46]09\[char46]90" "OVN Manual"
+.TH "ovn-architecture" 7 "OVN Architecture" "OVN 22\[char46]03\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -43,7 +43,7 @@ We generally speak of ``the\(cq\(cq CMS, but one can imagine scenarios in which 
 .IP \(bu
 An OVN Database physical or virtual node (or, eventually, cluster) installed in a central location\[char46]
 .IP \(bu
-One or more (usually many) \fIhypervisors\fR\[char46] Hypervisors must run Open vSwitch and implement the interface described in \fBDocumentation/topics/integration\[char46]rst\fR in the OVN source tree\[char46] Any hypervisor platform supported by Open vSwitch is acceptable\[char46]
+One or more (usually many) \fIhypervisors\fR\[char46] Hypervisors must run Open vSwitch and implement the interface described in \fBDocumentation/topics/integration\[char46]rst\fR in the Open vSwitch source tree\[char46] Any hypervisor platform supported by Open vSwitch is acceptable\[char46]
 .IP \(bu
 Zero or more \fIgateways\fR\[char46] A gateway extends a tunnel-based logical network into a physical network by bidirectionally forwarding packets between tunnels and a physical Ethernet port\[char46] This allows non-virtualized machines to participate in logical networks\[char46] A gateway may be a physical host, a virtual machine, or an ASIC-based hardware switch that supports the \fBvtep\fR(5) schema\[char46]
 .IP
@@ -182,7 +182,8 @@ Each chassis in an OVN deployment must be configured with an Open vSwitch bridge
 .IP \(bu
 On any chassis, tunnel ports that OVN uses to maintain logical network connectivity\[char46] \fBovn\-controller\fR adds, updates, and removes these tunnel ports\[char46]
 .IP \(bu
-On a hypervisor, any VIFs that are to be attached to logical networks\[char46] The hypervisor itself, or the integration between Open vSwitch and the hypervisor (described in \fBDocumentation/topics/integration\[char46]rst\fR) takes care of this\[char46] (This is not part of OVN or new to OVN; this is pre-existing integration work that has already been done on hypervisors that support OVS\[char46])
+On a hypervisor, any VIFs that are to be attached to logical networks\[char46] For instances connected through software emulated ports such as TUN/TAP or VETH pairs, the hypervisor itself will normally create ports and plug them into the integration bridge\[char46] For instances connected through representor ports, typically used with hardware offload, the \fBovn\-controller\fR may on CMS direction consult a VIF plug provider for representor port lookup and plug them into the integration bridge (please refer to \fBDocumentation/topics/vif\-plug\-providers/vif\-plug\-providers\[char46]rst
+\fR for more information)\[char46] In both cases the conventions described in \fBDocumentation/topics/integration\[char46]rst\fR in the Open vSwitch source tree is followed to ensure mapping between OVN logical port and VIF\[char46] (This is pre-existing integration work that has already been done on hypervisors that support OVS\[char46])
 .IP \(bu
 On a gateway, the physical port used for logical network connectivity\[char46] System startup scripts add this port to the bridge prior to starting \fBovn\-controller\fR\[char46] This can be a patch port to another bridge, instead of a physical port, in more sophisticated setups\[char46]
 .RE
@@ -454,7 +455,7 @@ The CMS plugin updates the OVN Northbound database to include the new VIF, by ad
 .IP 4. .4in
 On every hypervisor, \fBovn\-controller\fR receives the \fBLogical_Flow\fR table updates that \fBovn\-northd\fR made in the previous step\[char46] As long as the VM that owns the VIF is powered off, \fBovn\-controller\fR cannot do much; it cannot, for example, arrange to send packets to or receive packets from the VIF, because the VIF does not actually exist anywhere\[char46]
 .IP 5. .4in
-Eventually, a user powers on the VM that owns the VIF\[char46] On the hypervisor where the VM is powered on, the integration between the hypervisor and Open vSwitch (described in \fBDocumentation/topics/integration\[char46]rst\fR) adds the VIF to the OVN integration bridge and stores \fIvif-id\fR in \fBexternal_ids\fR:\fBiface\-id\fR to indicate that the interface is an instantiation of the new VIF\[char46] (None of this code is new in OVN; this is pre-existing integration work that has already been done on hypervisors that support OVS\[char46])
+Eventually, a user powers on the VM that owns the VIF\[char46] On the hypervisor where the VM is powered on, the integration between the hypervisor and Open vSwitch (described in \fBDocumentation/topics/integration\[char46]rst\fR in the Open vSwitch source tree) adds the VIF to the OVN integration bridge and stores \fIvif-id\fR in \fBexternal_ids\fR:\fBiface\-id\fR to indicate that the interface is an instantiation of the new VIF\[char46] (None of this code is new in OVN; this is pre-existing integration work that has already been done on hypervisors that support OVS\[char46])
 .IP 6. .4in
 On the hypervisor where the VM is powered on, \fBovn\-controller\fR notices \fBexternal_ids\fR:\fBiface\-id\fR in the new Interface\[char46] In response, in the OVN Southbound DB, it updates the \fBBinding\fR table\(cqs \fBchassis\fR column for the row that links the logical port from \fBexternal_ids\fR:\fB
 iface\-id\fR to the hypervisor\[char46] Afterward, \fBovn\-controller\fR updates the local hypervisor\(cqs OpenFlow tables so that packets to and from the VIF are properly handled\[char46]

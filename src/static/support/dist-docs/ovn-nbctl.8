@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nbctl" 8 "ovn-nbctl" "OVN 21\[char46]09\[char46]90" "OVN Manual"
+.TH "ovn-nbctl" 8 "ovn-nbctl" "OVN 22\[char46]03\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -400,10 +400,12 @@ Lists all existing switches on standard output, one per line\[char46]
 These commands operates on ACL objects for a given \fIentity\fR\[char46] The \fIentity\fR can be either a logical switch or a port group\[char46] The \fIentity\fR can be specified as uuid or name\[char46] The \fB\-\-type\fR option can be used to specify the type of the \fIentity\fR, in case both a logical switch and a port groups exist with the same name specified for \fIentity\fR\[char46] \fBtype\fR must be either \fBswitch\fR or \fBport\-group\fR\[char46]
 .RS
 .TP
-[\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] [\fB\-\-log\fR] [\fB\-\-meter=\fR\fImeter\fR] [\fB\-\-severity=\fR\fIseverity\fR] [\fB\-\-name=\fR\fIname\fR] [\fB\-\-label=\fR\fIlabel\fR] [\fB\-\-may\-exist\fR] \fBacl\-add\fR \fIentity\fR \fIdirection\fR \fIpriority\fR \fImatch\fR \fIverdict\fR
+[\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] [\fB\-\-log\fR] [\fB\-\-meter=\fR\fImeter\fR] [\fB\-\-severity=\fR\fIseverity\fR] [\fB\-\-name=\fR\fIname\fR] [\fB\-\-label=\fR\fIlabel\fR] [\fB\-\-may\-exist\fR] [\fB\-\-apply\-after\-lb\fR] \fBacl\-add\fR \fIentity\fR \fIdirection\fR \fIpriority\fR \fImatch\fR \fIverdict\fR
 Adds the specified ACL to \fIentity\fR\[char46] \fIdirection\fR must be either \fBfrom\-lport\fR or \fBto\-lport\fR\[char46] \fIpriority\fR must be between \fB0\fR and \fB32767\fR, inclusive\[char46] A full description of the fields are in \fBovn\-nb\fR(5)\[char46] If \fB\-\-may\-exist\fR is specified, adding a duplicated ACL succeeds but the ACL is not really created\[char46] Without \fB\-\-may\-exist\fR, adding a duplicated ACL results in error\[char46]
 .IP
 The \fB\-\-log\fR option enables packet logging for the ACL\[char46] The options \fB\-\-severity\fR and \fB\-\-name\fR specify a severity and name, respectively, for log entries (and also enable logging)\[char46] The severity must be one of \fBalert\fR, \fBwarning\fR, \fBnotice\fR, \fBinfo\fR, or \fBdebug\fR\[char46] If a severity is not specified, the default is \fBinfo\fR\[char46] The \fB\-\-meter=\fImeter\fB\fR option is used to rate-limit packet logging\[char46] The \fImeter\fR argument names a meter configured by \fBmeter\-add\fR\[char46]
+.IP
+The \fB\-\-apply\-after\-lb\fR option sets \fBapply\-after\-lb=true\fR in the \fBoptions\fR column of the \fBACL\fR table\[char46] As the option name suggests, the ACL will be applied after the logical switch load balancer stage\[char46]
 .TP
 [\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] \fBacl\-del\fR \fIentity\fR [\fIdirection\fR [\fIpriority\fR \fImatch\fR]]
 Deletes ACLs from \fIentity\fR\[char46] If only \fIentity\fR is supplied, all the ACLs from the \fIentity\fR are deleted\[char46] If \fIdirection\fR is also specified, then all the flows in that direction will be deleted from the \fIentity\fR\[char46] If all the fields are given, then a single flow that matches all the fields will be deleted\[char46]
@@ -803,23 +805,20 @@ BFD
 .RE
 .RS
 .TP
-\fBls\-copp\-add\fR \fIswitch\fR \fIproto\fR \fImeter\fR
-Adds the control \fBproto\fR to \fBmeter\fR mapping to the \fBswitch\fR control plane protection policy\[char46] If no policy exists yet, it creates one\[char46] If a mapping already existed for \fBproto\fR, this will overwrite it\[char46]
+\fBcopp\-add\fR \fIname\fR \fIproto\fR \fImeter\fR
+Adds the control \fBproto\fR to \fBmeter\fR mapping to the control plane protection policy \fBname\fR\[char46] If no policy exists yet, it creates one\[char46] If a mapping already existed for \fBproto\fR, this will overwrite it\[char46]
 .TP
-\fBls\-copp\-del\fR \fIswitch\fR [\fIproto\fR]
-Removes the control \fBproto\fR mapping from the \fBswitch\fR control plane protection policy\[char46] If \fBproto\fR is not specified, the whole control plane protection policy is destroyed\[char46]
+\fBcopp\-del\fR \fIname\fR [\fIproto\fR]
+Removes the control \fBproto\fR mapping for the \fBname\fR control plane protection policy\[char46] If \fBproto\fR is not specified, the whole control plane protection policy is destroyed\[char46]
 .TP
-\fBls\-copp\-list\fR \fIswitch\fR
-Display the current control plane protection policy for \fBswitch\fR\[char46]
+\fBcopp\-list\fR \fIname\fR
+Display the current control plane protection policy for \fBname\fR\[char46]
 .TP
-\fBlr\-copp\-add\fR \fIrouter\fR \fIproto\fR \fImeter\fR
-Adds the control \fBproto\fR to \fBmeter\fR mapping to the \fBrouter\fR control plane protection policy\[char46] If no policy exists yet, it creates one\[char46] If a mapping already existed for \fBproto\fR, this will overwrite it\[char46]
+\fBls\-copp\-add\fR \fIname\fR \fIswitch\fR
+Adds the control plane protection policy \fBname\fR to the logical switch \fBswitch\fR\[char46]
 .TP
-\fBlr\-copp\-del\fR \fIrouter\fR [\fIproto\fR]
-Removes the control \fBproto\fR mapping from the \fBrouter\fR control plane protection policy\[char46] If \fBproto\fR is not specified, the whole control plane protection policy is destroyed\[char46]
-.TP
-\fBlr\-copp\-list\fR \fIrouter\fR
-Display the current control plane protection policy for \fBrouter\fR\[char46]
+\fBlr\-copp\-add\fR \fIname\fR \fIrouter\fR
+Adds the control plane protection policy \fBname\fR to the logical router \fBrouter\fR\[char46]
 .RE
 .SS "Synchronization Commands"
 .TP

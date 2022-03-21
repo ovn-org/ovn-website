@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nb" 5 " DB Schema 5.33.1" "Open vSwitch 21.09.90" "Open vSwitch Manual"
+.TH "ovn-nb" 5 " DB Schema 6.1.0" "Open vSwitch 22.03.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -380,6 +380,9 @@ The maximum supported tunnel ID\[char46] Depends on types of encapsulation enabl
 This table is used to define control plane protection policies, i\[char46]e\[char46], associate entries from table \fBMeter\fR to control protocol names\[char46]
 .SS "Summary:
 .TQ 3.00in
+\fBname\fR
+string (must be unique within table)
+.TQ 3.00in
 \fBmeters : arp\fR
 optional string
 .TQ 3.00in
@@ -427,7 +430,12 @@ optional string
 .TQ 3.00in
 \fBmeters : reject\fR
 optional string
+.TQ 3.00in
+\fBexternal_ids\fR
+map of string-string pairs
 .SS "Details:
+.IP "\fBname\fR: string (must be unique within table)"
+CoPP name\[char46]
 .IP "\fBmeters : arp\fR: optional string"
 Rate limiting meter for ARP packets (request/reply) used for learning neighbors\[char46]
 .IP "\fBmeters : arp-resolve\fR: optional string"
@@ -460,6 +468,8 @@ Rate limiting meter for packets that require replying with TCP RST packet\[char4
 Rate limiting meter for BFD packets\[char46]
 .IP "\fBmeters : reject\fR: optional string"
 Rate limiting meter for packets that trigger a reject action
+.IP "\fBexternal_ids\fR: map of string-string pairs"
+See \fBExternal IDs\fR at the beginning of this document\[char46]
 .bp
 .SH "Logical_Switch TABLE"
 .PP
@@ -725,6 +735,9 @@ optional string
 \fBoptions : nat-addresses\fR
 optional string
 .TQ 2.50in
+\fBoptions : exclude-lb-vips-from-garp\fR
+optional string
+.TQ 2.50in
 \fBoptions : arp_proxy\fR
 optional string
 .RE
@@ -776,6 +789,16 @@ optional string
 .TQ 2.50in
 \fBoptions : hostname\fR
 optional string
+.TQ .25in
+\fIVIF Plugging Options:\fR
+.RS .25in
+.TQ 2.25in
+\fBoptions : vif-plug-type\fR
+optional string
+.TQ 2.25in
+\fBoptions : vif-plug-mtu-request\fR
+optional string
+.RE
 .RE
 .TQ .25in
 \fIVirtual port Options:\fR
@@ -956,6 +979,8 @@ Example: \fB80:fa:5b:06:72:b7 158\[char46]36\[char46]44\[char46]22
 .IP
 This form of \fBoptions:nat-addresses\fR is only valid for logical switch ports where \fBoptions:router-port\fR is the name of a port on a gateway router\[char46]
 .RE
+.IP "\fBoptions : exclude-lb-vips-from-garp\fR: optional string"
+If \fBoptions:nat-addresses\fR is set to \fBrouter\fR, Gratuitous ARPs will be sent for all SNAT and DNAT external IP addresses defined on the \fBoptions:router-port\fR\(cqs logical router, using the \fBoptions:router-port\fR\(cqs MAC address, not cosidering configured load balancers\[char46]
 .IP "\fBoptions : arp_proxy\fR: optional string"
 Optional\[char46] A list of IPv4 addresses that this logical switch \fBrouter\fR port will reply to ARP requests\[char46] Example: \fB169\[char46]254\[char46]239\[char46]254 169\[char46]254\[char46]239\[char46]2\fR\[char46] The \fBoptions:router-port\fR\(cqs logical router should have a route to forward packets sent to configured proxy ARP IPs to an appropriate destination\[char46]
 .ST "Options for localnet ports:"
@@ -1000,6 +1025,12 @@ If set, indicates the maximum rate for data sent from this interface, in bit/s\[
 If set, indicates the maximum burst size for data sent from this interface, in bits\[char46]
 .IP "\fBoptions : hostname\fR: optional string"
 If set, indicates the DHCPv4 option \(dqHostname\(dq (option code 12) associated for this Logical Switch Port\[char46] If DHCPv4 is enabled for this Logical Switch Port, hostname dhcp option will be included in DHCP reply\[char46]
+.ST "VIF Plugging Options:"
+.PP
+.IP "\fBoptions : vif-plug-type\fR: optional string"
+If set, OVN will attempt to perform plugging of this VIF\[char46] In order to get this port plugged by the OVN controller, OVN must be built with support for VIF plugging\[char46] The default behavior is for the CMS to do the VIF plugging\[char46] Each VIF plug provider have their own options namespaced by name, for example \(dqvif-plug:representor:key\(dq\[char46] Please refer to the VIF plug provider documentation located in Documentation/topics/vif-plug-providers/ for more information\[char46]
+.IP "\fBoptions : vif-plug-mtu-request\fR: optional string"
+Requested MTU for plugged interfaces\[char46] When set the OVN controller will fill the \fBmtu_request\fR column of the Open vSwitch database\(cqs \fBInterface\fR table\[char46] This in turn will make OVS vswitchd update the MTU of the linked interface\[char46]
 .ST "Virtual port Options:"
 .PP
 .PP
@@ -1476,6 +1507,13 @@ string
 \fBaction\fR
 string, one of \fBallow\-related\fR, \fBallow\-stateless\fR, \fBallow\fR, \fBdrop\fR, or \fBreject\fR
 .TQ .25in
+\fIoptions:\fR
+.RS .25in
+.TQ 2.75in
+\fBoptions : apply-after-lb\fR
+optional string
+.RE
+.TQ .25in
 \fILogging:\fR
 .RS .25in
 .TQ 2.75in
@@ -1494,6 +1532,16 @@ optional string
 .TQ .25in
 \fICommon Columns:\fR
 .RS .25in
+.TQ 2.75in
+\fBoptions\fR
+map of string-string pairs
+.TQ .25in
+\fIACL configuration options:\fR
+.RS .25in
+.TQ 2.50in
+\fBoptions : log-related\fR
+optional string
+.RE
 .TQ 2.75in
 \fBexternal_ids\fR
 map of string-string pairs
@@ -1535,6 +1583,17 @@ The action to take when the ACL rule matches:
 .IP \(bu
 \fBreject\fR: Drop the packet, replying with a RST for TCP or ICMPv4/ICMPv6 unreachable message for other IPv4/IPv6-based protocols\[char46]
 .RE
+.ST "options:"
+.PP
+.PP
+.PP
+ACLs options\[char46]
+.IP "\fBoptions : apply-after-lb\fR: optional string"
+If set to true, the ACL will be applied after load balancing stage\[char46] Supported only for \fBfrom\-lport\fR direction\[char46]
+.IP
+The main use case of this option is to support ACLs matching on the destination IP address of the packet for the backend IPs of load balancers\[char46]
+.IP
+\fBOVN\fR will apply the \fBfrom\-lport\fR ACLs in two stages\[char46] ACLs without this option \fBapply\-after\-lb\fR set, will be applied before the load balancer stage and ACLs with this option set will be applied after the load balancer stage\[char46] The priorities are indepedent between these stages and may not be obvious to the CMS\[char46] Hence CMS should be extra careful when using this option and should carefully evaluate the priorities of all the ACLs and the default deny/allow ACLs if any\[char46]
 .ST "Logging:"
 .PP
 .PP
@@ -1552,6 +1611,12 @@ The severity of the ACL\[char46] The severity levels match those of syslog, in d
 The name of a meter to rate-limit log messages for the ACL\[char46] The string must match the \fBname\fR column of a row in the \fBMeter\fR table\[char46] By default, log messages are not rate-limited\[char46] In order to ensure that the same \fBMeter\fR rate limits multiple ACL logs separately, set the \fBfair\fR column\[char46]
 .ST "Common Columns:"
 .PP
+.IP "\fBoptions\fR: map of string-string pairs"
+This column provides general key/value settings\[char46] The supported options are described individually below\[char46]
+.ST "ACL configuration options:"
+.PP
+.IP "\fBoptions : log-related\fR: optional string"
+If set to \fBtrue\fR, then log when reply or related traffic is admitted from a stateful ACL\[char46] In order for this option to function, the \fBlog\fR option must be set to \fBtrue\fR and a \fBlabel\fR must be set, and it must be unique to the ACL\[char46] The label is necessary as it is the only means to associate the reply traffic with the ACL to which it belongs\[char46] It must be unique, because otherwise it is ambiguous which ACL will be matched\[char46] Note: If this option is enabled, an extra flow is installed in order to log the related traffic\[char46] Therefore, if this is enabled on all ACLs, then the total number of flows necessary to log the ACL traffic is doubled, compared to if this option is not enabled\[char46]
 .IP "\fBexternal_ids\fR: map of string-string pairs"
 See \fBExternal IDs\fR at the beginning of this document\[char46]
 .bp
@@ -1898,6 +1963,15 @@ optional string, either \fBtrue\fR or \fBfalse\fR
 .TQ 2.75in
 \fBoptions : prefix\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 2.75in
+\fBoptions : route_table\fR
+optional string
+.TQ 2.75in
+\fBoptions : gateway_mtu\fR
+optional string, containing an integer, in range 68 to 65,535
+.TQ 2.75in
+\fBoptions : gateway_mtu_bypass\fR
+optional string
 .RE
 .TQ .25in
 \fIAttachment:\fR
@@ -2049,6 +2123,12 @@ Configures the port binding tunnel key for the port\[char46] Usually this is not
 If set to \fBtrue\fR, enable IPv6 prefix delegation state machine on this logical router port (RFC3633)\[char46] IPv6 prefix delegation is available just on a gateway router or on a gateway router port\[char46]
 .IP "\fBoptions : prefix\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 If set to \fBtrue\fR, this interface will receive an IPv6 prefix according to RFC3663
+.IP "\fBoptions : route_table\fR: optional string"
+Designates lookup Logical_Router_Static_Routes with specified \fBroute_table\fR value\[char46] Routes to directly connected networks from same Logical Router and routes without \fBroute_table\fR option set have higher priority than routes with \fBroute_table\fR option set\[char46]
+.IP "\fBoptions : gateway_mtu\fR: optional string, containing an integer, in range 68 to 65,535"
+If set, logical flows will be added to router pipeline to check packet length\[char46] If packet length is greater than the value set, ICMPv4 type 3 (Destination Unreachable) code 4 (Fragmentation Needed and Don\(cqt Fragment was Set) or ICMPv6 type 2 (Packet Too Big) code 0 (no route to destination) packets will be generated\[char46] This allows for Path MTU Discovery\[char46]
+.IP "\fBoptions : gateway_mtu_bypass\fR: optional string"
+When configured, represents a match expression, in the same expression language used for the \fBmatch\fR column in the OVN Southbound database\(cqs \fBLogical_Flow\fR table\[char46] Packets matching this expression will bypass the length check configured through the \fBoptions:gateway_mtu\fR option\[char46]
 .ST "Attachment:"
 .PP
 .PP
@@ -2068,6 +2148,8 @@ For a router port attached to a logical switch, this column is empty\[char46]
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
 See \fBExternal IDs\fR at the beginning of this document\[char46]
+.IP
+The \fBovn\-northd\fR program copies all these pairs into the \fBexternal_ids\fR column of the \fBPort_Binding\fR table in \fBOVN_Southbound\fR database\[char46]
 .bp
 .SH "Logical_Router_Static_Route TABLE"
 .PP
@@ -2097,6 +2179,9 @@ optional string
 \fBbfd\fR
 optional weak reference to \fBBFD\fR
 .TQ 3.00in
+\fBroute_table\fR
+string
+.TQ 3.00in
 \fBexternal_ids : ic-learned-route\fR
 optional string
 .TQ .25in
@@ -2114,6 +2199,9 @@ map of string-string pairs
 map of string-string pairs
 .TQ 2.75in
 \fBoptions : ecmp_symmetric_reply\fR
+optional string
+.TQ 2.75in
+\fBoptions : origin\fR
 optional string
 .RE
 .SS "Details:
@@ -2135,6 +2223,14 @@ Nexthop IP address for this route\[char46] Nexthop IP address should be the IP a
 The name of the \fBLogical_Router_Port\fR via which the packet needs to be sent out\[char46] This is optional and when not specified, OVN will automatically figure this out based on the \fBnexthop\fR\[char46] When this is specified and there are multiple IP addresses on the router port and none of them are in the same subnet of \fBnexthop\fR, OVN chooses the first IP address as the one via which the \fBnexthop\fR is reachable\[char46]
 .IP "\fBbfd\fR: optional weak reference to \fBBFD\fR"
 Reference to \fBBFD\fR row if the route has associated a BFD session
+.IP "\fBroute_table\fR: string"
+Any string to place route to separate routing table\[char46] If Logical Router Port has configured value in \fBoptions:route_table\fR other than empty string, OVN performs route lookup for all packets entering Logical Router ingress pipeline from this port in the following manner:
+.RS
+.IP \(bu
+1\[char46] First lookup among \(dqglobal\(dq routes: routes without \fBroute_table\fR value set and routes to directly connected networks\[char46]
+.IP \(bu
+2\[char46] Next lookup among routes with same \fBroute_table\fR value as specified in LRP\(cqs options:route_table field\[char46]
+.RE
 .IP "\fBexternal_ids : ic-learned-route\fR: optional string"
 \fBovn\-ic\fR populates this key if the route is learned from the global \fBOVN_IC_Southbound\fR database\[char46] In this case the value will be set to the uuid of the row in \fBRoute\fR table of the \fBOVN_IC_Southbound\fR database\[char46]
 .ST "Common Columns:"
@@ -2147,6 +2243,14 @@ See \fBExternal IDs\fR at the beginning of this document\[char46]
 This column provides general key/value settings\[char46] The supported options are described individually below\[char46]
 .IP "\fBoptions : ecmp_symmetric_reply\fR: optional string"
 If true, then new traffic that arrives over this route will have its reply traffic bypass ECMP route selection and will be sent out this route instead\[char46] Note that this option overrides any rules set in the \fBLogical_Router_policy\fR table\[char46] This option only works on gateway routers (routers that have \fBoptions:chassis\fR set)\[char46]
+.IP "\fBoptions : origin\fR: optional string"
+In case ovn-interconnection has been learned this route, it will have its origin set: either \(dqconnected\(dq or \(dqstatic\(dq\[char46] This key is supposed to be written only by \fBovn\-ic\fR daemon\[char46] ovn-northd then checks this value when generating Logical Flows\[char46] \fBLogical_Router_Static_Route\fR records with same \fBip_prefix\fR within same Logical Router will have next lookup order based on \fBorigin\fR key value:
+.RS
+.IP 1. .4in
+connected
+.IP 2. .4in
+static
+.RE
 .bp
 .SH "Logical_Router_Policy TABLE"
 .PP

@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-ic-sb" 5 " DB Schema 1.0.0" "Open vSwitch 21.09.90" "Open vSwitch Manual"
+.TH "ovn-ic-sb" 5 " DB Schema 1.1.0" "Open vSwitch 22.03.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -326,11 +326,17 @@ string
 \fBavailability_zone\fR
 \fBAvailability_Zone\fR
 .TQ 2.75in
+\fBroute_table\fR
+string
+.TQ 2.75in
 \fBip_prefix\fR
 string
 .TQ 2.75in
 \fBnexthop\fR
 string
+.TQ 2.75in
+\fBorigin\fR
+string, either \fBconnected\fR or \fBstatic\fR
 .RE
 .TQ .25in
 \fICommon Columns:\fR
@@ -346,10 +352,18 @@ map of string-string pairs
 The name of the transit switch, upon which the route is advertised\[char46]
 .IP "\fBavailability_zone\fR: \fBAvailability_Zone\fR"
 The availability zone that has advertised the route\[char46]
+.IP "\fBroute_table\fR: string"
+Route table within which this route was created\[char46] Empty value means \fI<main>\fR routing table\[char46]
+.IP
+Routes for directly-connected networks will be learned to \fI<main>\fR routing table and if Logical Routers have more than one Transit Switch, which interconnects them, directly-connected routes will be added via each transit switch port and configured as ECMP routes\[char46]
+.IP
+Static routes within route tables will be advertised and learned only if interconnecting transit switch\(cqs LRPs will have same value in \fBoptions:route_table\fR as NB \fBroute_table\fR or ICSB \fBroute_table\fR value respectively\[char46]
 .IP "\fBip_prefix\fR: string"
 IP prefix of this route (e\[char46]g\[char46] 192\[char46]168\[char46]100\[char46]0/24)\[char46]
 .IP "\fBnexthop\fR: string"
 Nexthop IP address for this route\[char46]
+.IP "\fBorigin\fR: string, either \fBconnected\fR or \fBstatic\fR"
+Can be one of \fBconnected\fR or \fBstatic\fR\[char46] Routes to directly-connected subnets - LRP\(cqs CIDRs are inserted to OVN IC SB DB with \fBconnected\fR value in \fBorigin\fR\[char46] Static routes are inserted to OVN IC SB DB with \fBstatic\fR value\[char46] Next when route is learned to another AZ NB DB by ovn-ic, route origin is synced to \fBoptions:origin\fR\[char46]
 .ST "Common Columns:"
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
