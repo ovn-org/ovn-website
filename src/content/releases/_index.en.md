@@ -11,16 +11,17 @@ located [here](https://github.com/ovn-org/ovn/blob/master/Documentation/internal
 
 | Series | Release | Release Date | Release Notes |
 | ------ | ------- | ------------ | ------------- |
-| OVN 21.09 | [OVN 21.09.0](https://github.com/ovn-org/ovn/releases/tag/v21.09.0) | 04 Oct 2021 | [Release 21.09.0](release_21.09.0) |
-| OVN 21.06 | [OVN 21.06.0](https://github.com/ovn-org/ovn/releases/tag/v21.06.0) | 18 Jun 2021 | [Release 21.06.0](release_21.06.0) |
-| OVN 21.03 | [OVN 21.03.0](https://github.com/ovn-org/ovn/releases/tag/v21.03.0) | 12 Mar 2021 | [Release 21.03.0](release_21.03.0) |
-| OVN 20.12 | [OVN 20.12.0](https://github.com/ovn-org/ovn/releases/tag/v20.12.0) | 18 Dec 2020 | [Release 20.12.0](release_20.12.0) |
-| OVN 20.09 | [OVN 20.09.0](https://github.com/ovn-org/ovn/releases/tag/v20.09.0) | 29 Sep 2020 | [Release 20.09.0](release_20.09.0) |
-| OVN 20.06 | [OVN 20.06.2](https://github.com/ovn-org/ovn/releases/tag/v20.06.2) | 21 Aug 2020 |                                    |
-|           | [OVN 20.06.1](https://github.com/ovn-org/ovn/releases/tag/v20.06.1) | 08 Jul 2020 |                                    |
-|           | [OVN 20.06.0](https://github.com/ovn-org/ovn/releases/tag/v20.06.0) | 09 Jun 2020 |                                    |
-| OVN 20.03 | [OVN 20.03.1](https://github.com/ovn-org/ovn/releases/tag/v20.03.1) | 11 Jun 2020 |                                    |
-|           | [OVN 20.03.0](https://github.com/ovn-org/ovn/releases/tag/v20.03.0) | 02 Mar 2020 |                                    |
+| OVN 22.03 | [OVN 22.03.0 (LTS)](https://github.com/ovn-org/ovn/releases/tag/v22.03.0) | 11 Mar 2022 | [Release 22.03.0](release_22.03.0) |
+| OVN 21.09 | [OVN 21.09.0](https://github.com/ovn-org/ovn/releases/tag/v21.09.0)       | 04 Oct 2021 | [Release 21.09.0](release_21.09.0) |
+| OVN 21.06 | [OVN 21.06.0](https://github.com/ovn-org/ovn/releases/tag/v21.06.0)       | 18 Jun 2021 | [Release 21.06.0](release_21.06.0) |
+| OVN 21.03 | [OVN 21.03.0](https://github.com/ovn-org/ovn/releases/tag/v21.03.0)       | 12 Mar 2021 | [Release 21.03.0](release_21.03.0) |
+| OVN 20.12 | [OVN 20.12.0](https://github.com/ovn-org/ovn/releases/tag/v20.12.0)       | 18 Dec 2020 | [Release 20.12.0](release_20.12.0) |
+| OVN 20.09 | [OVN 20.09.0](https://github.com/ovn-org/ovn/releases/tag/v20.09.0)       | 29 Sep 2020 | [Release 20.09.0](release_20.09.0) |
+| OVN 20.06 | [OVN 20.06.2](https://github.com/ovn-org/ovn/releases/tag/v20.06.2)       | 21 Aug 2020 |                                    |
+|           | [OVN 20.06.1](https://github.com/ovn-org/ovn/releases/tag/v20.06.1)       | 08 Jul 2020 |                                    |
+|           | [OVN 20.06.0](https://github.com/ovn-org/ovn/releases/tag/v20.06.0)       | 09 Jun 2020 |                                    |
+| OVN 20.03 | [OVN 20.03.1](https://github.com/ovn-org/ovn/releases/tag/v20.03.1)       | 11 Jun 2020 |                                    |
+|           | [OVN 20.03.0](https://github.com/ovn-org/ovn/releases/tag/v20.03.0)       | 02 Mar 2020 |                                    |
 
 Prior to the 20.03 series, OVN was included as part of the Open vSwitch project.
 To get versions prior to 20.03.0, please retrieve them from the Open vSwitch
