@@ -11,7 +11,9 @@ located [here](https://github.com/ovn-org/ovn/blob/master/Documentation/internal
 
 | Series | Release | Release Date | Release Notes |
 | ------ | ------- | ------------ | ------------- |
-| OVN 22.03 | [OVN 22.03.0 (LTS)](https://github.com/ovn-org/ovn/releases/tag/v22.03.0) | 11 Mar 2022 | [Release 22.03.0](release_22.03.0) |
+| OVN 22.06 | [OVN 22.06.0](https://github.com/ovn-org/ovn/releases/tag/v22.06.0)       | 03 Jun 2022 | [Release 22.06.0](release_22.06.0) |
+| OVN 22.03 | [OVN 22.03.1 (LTS)](https://github.com/ovn-org/ovn/releases/tag/v22.03.1) | 03 Jun 2022 | [Release 22.03.0](release_22.03.0) |
+| OVN 21.12 | [OVN 21.12.2](https://github.com/ovn-org/ovn/releases/tag/v21.12.2)       | 03 Jun 2022 | N/A                                |
 | OVN 21.09 | [OVN 21.09.0](https://github.com/ovn-org/ovn/releases/tag/v21.09.0)       | 04 Oct 2021 | [Release 21.09.0](release_21.09.0) |
 | OVN 21.06 | [OVN 21.06.0](https://github.com/ovn-org/ovn/releases/tag/v21.06.0)       | 18 Jun 2021 | [Release 21.06.0](release_21.06.0) |
 | OVN 21.03 | [OVN 21.03.0](https://github.com/ovn-org/ovn/releases/tag/v21.03.0)       | 12 Mar 2021 | [Release 21.03.0](release_21.03.0) |
