@@ -39,7 +39,7 @@ We have weekly IRC meetings you can participate in:
 IRC meeting every Thu 1715 UTC in **#openvswitch** on [irc.libera.chat](https://libera.chat) 
 
 {{% notice info %}}
-Until recently, OVN code lived within the Open vSwitch codebase. OVN was
-recently [split](https://github.com/openvswitch/ovs/commit/f3e24610ea18eb873dc860f1710432e9aacd27fd)
-into its [own repo](https://github.com/ovn-org/ovn).
+OVN code used to live within the Open vSwitch codebase. It was
+[split](https://github.com/openvswitch/ovs/commit/f3e24610ea18eb873dc860f1710432e9aacd27fd)
+into its [own repo](https://github.com/ovn-org/ovn) in 2019.
 {{% /notice %}}
