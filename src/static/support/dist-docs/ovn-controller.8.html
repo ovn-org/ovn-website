@@ -298,7 +298,13 @@ ovn-controller(8)                 OVN Manual                 ovn-controller(8)
                      directly supported. Users have two options: either  first
                      gracefully  stop  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  or  manually delete the
                      stale <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> and <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>P</b><b>r</b><b>i</b><b>v</b><b>a</b><b>t</b><b>e</b> records after  changing
-                     the <b>s</b><b>y</b><b>s</b><b>t</b><b>e</b><b>m</b><b>-</b><b>i</b><b>d</b>.
+                     the  <b>s</b><b>y</b><b>s</b><b>t</b><b>e</b><b>m</b><b>-</b><b>i</b><b>d</b>.  Note  that  the chassis name can also be
+                     provided via the <b>s</b><b>y</b><b>s</b><b>t</b><b>e</b><b>m</b><b>-</b><b>i</b><b>d</b><b>-</b><b>o</b><b>v</b><b>e</b><b>r</b><b>r</b><b>i</b><b>d</b><b>e</b> file in the local OVN
+                     "etc"  directory  or  via the <b>-</b><b>n</b> command-line option. The
+                     following precedence is  used:  first,  the  command-line
+                     option  is  read;  if not present, the <b>s</b><b>y</b><b>s</b><b>t</b><b>e</b><b>m</b><b>-</b><b>i</b><b>d</b><b>-</b><b>o</b><b>v</b><b>e</b><b>r</b><b>r</b><b>i</b><b>d</b><b>e</b>
+                     file is read; if not present, then the name configured in
+                     the database is used.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>h</b><b>o</b><b>s</b><b>t</b><b>n</b><b>a</b><b>m</b><b>e</b>
                      The hostname to use in the Chassis table.
@@ -308,7 +314,11 @@ ovn-controller(8)                 OVN Manual                 ovn-controller(8)
                      attached. The default is <b>b</b><b>r</b><b>-</b><b>i</b><b>n</b><b>t</b>. If this bridge does  not
                      exist  when  ovn-controller  starts,  it  will be created
                      automatically with the default configuration suggested in
-                     <b>o</b><b>v</b><b>n</b><b>-</b><b>a</b><b>r</b><b>c</b><b>h</b><b>i</b><b>t</b><b>e</b><b>c</b><b>t</b><b>u</b><b>r</b><b>e</b>(7).
+                     <b>o</b><b>v</b><b>n</b><b>-</b><b>a</b><b>r</b><b>c</b><b>h</b><b>i</b><b>t</b><b>e</b><b>c</b><b>t</b><b>u</b><b>r</b><b>e</b>(7).  When  more than one controllers are
+                     running on the same  host,  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>-</b><b>C</b><b>H</b><b>A</b><b>S</b><b>‐</b>
+                     <b>S</b><b>I</b><b>S</b><b>_</b><b>N</b><b>A</b><b>M</b><b>E</b>  should  be  set for each of them, pointing to a
+                     unique bridge. This  is  required  to  avoid  controllers
+                     stepping on each others’ feet.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>-</b><b>d</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>-</b><b>t</b><b>y</b><b>p</b><b>e</b>
                      This configuration is optional. If set, then the datapath
@@ -372,6 +382,11 @@ ovn-controller(8)                 OVN Manual                 ovn-controller(8)
                      this  node  using encapsulation types specified by <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>‐</b>
                      <b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>e</b><b>n</b><b>c</b><b>a</b><b>p</b><b>-</b><b>t</b><b>y</b><b>p</b><b>e</b>.
 
+              <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>e</b><b>n</b><b>c</b><b>a</b><b>p</b><b>-</b><b>d</b><b>f</b><b>_</b><b>d</b><b>e</b><b>f</b><b>a</b><b>u</b><b>l</b><b>t</b>
+                     indicates the DF flag handling of the  encapulation.  Set
+                     to <b>t</b><b>r</b><b>u</b><b>e</b> to set the DF flag for new data paths or <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b> to
+                     clear the DF flag.
+
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>-</b><b>m</b><b>a</b><b>p</b><b>p</b><b>i</b><b>n</b><b>g</b><b>s</b>
                      A list of key-value pairs that  map  a  physical  network
                      name  to a local ovs bridge that provides connectivity to
@@ -432,193 +447,243 @@ ovn-controller(8)                 OVN Manual                 ovn-controller(8)
                      and  local  Open  vSwitch  database  changes. The default
                      value is considered false if this option is not defined.
 
+              <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>o</b><b>f</b><b>c</b><b>t</b><b>r</b><b>l</b><b>-</b><b>w</b><b>a</b><b>i</b><b>t</b><b>-</b><b>b</b><b>e</b><b>f</b><b>o</b><b>r</b><b>e</b><b>-</b><b>c</b><b>l</b><b>e</b><b>a</b><b>r</b>
+                     The time, in milliseconds, to wait before clearing  flows
+                     in  OVS  after  OpenFlow  connection/reconnection  during
+                     <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> initialization. The purpose of  this  wait
+                     is  to  give  time  for <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> to compute the new
+                     flows before clearing existing ones, to avoid data  plane
+                     down  time during <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> restart/upgrade at large
+                     scale environments where recomputing the flows takes more
+                     than  a  few  seconds or even longer. It is difficult for
+                     <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> to determine when the new flows  computing
+                     is  completed, because of the dynamics in the cloud envi‐
+                     ronments, which is why this configuration is provided for
+                     users to adjust based on the scale of the environment. By
+                     default, it is 0, which  means  clearing  existing  flows
+                     without waiting. Not setting the value, or setting it too
+                     small,  may  result  in  data  plane  down  time   during
+                     upgrade/restart,  while  setting it too big may result in
+                     unnecessary extra control plane latency of  applying  new
+                     changes  of  CMS during upgrade/restart. In most cases, a
+                     slightly bigger value is not harmful, because  the  extra
+                     control  plane latency happens only once during the Open‐
+                     Flow connection. To get a reasonable range of  the  value
+                     setting, it is recommended to run the below commands on a
+                     node in the target environment and then set this configu‐
+                     ration  to twice the value of <b>M</b><b>a</b><b>x</b><b>i</b><b>m</b><b>u</b><b>m</b> shown in the output
+                     of the second command.
+
+                     ·      <b>o</b><b>v</b><b>n</b><b>-</b><b>a</b><b>p</b><b>p</b><b>c</b><b>t</b><b>l</b> <b>-</b><b>t</b> <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> <b>i</b><b>n</b><b>c</b><b>-</b><b>e</b><b>n</b><b>g</b><b>i</b><b>n</b><b>e</b><b>/</b><b>r</b><b>e</b><b>c</b><b>o</b><b>m</b><b>p</b><b>u</b><b>t</b><b>e</b>
+
+                     ·      <b>o</b><b>v</b><b>n</b><b>-</b><b>a</b><b>p</b><b>p</b><b>c</b><b>t</b><b>l</b>   <b>-</b><b>t</b>   <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>    <b>s</b><b>t</b><b>o</b><b>p</b><b>w</b><b>a</b><b>t</b><b>c</b><b>h</b><b>/</b><b>s</b><b>h</b><b>o</b><b>w</b>
+                            <b>f</b><b>l</b><b>o</b><b>w</b><b>-</b><b>g</b><b>e</b><b>n</b><b>e</b><b>r</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b>
+
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>e</b><b>n</b><b>a</b><b>b</b><b>l</b><b>e</b><b>-</b><b>l</b><b>f</b><b>l</b><b>o</b><b>w</b><b>-</b><b>c</b><b>a</b><b>c</b><b>h</b><b>e</b>
                      The  boolean  flag  indicates  if  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  should
-                     enable/disable  the  logical flow in-memory cache it uses
+                     enable/disable the logical flow in-memory cache  it  uses
                      when processing Southbound database logical flow changes.
                      By default caching is enabled.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>l</b><b>i</b><b>m</b><b>i</b><b>t</b><b>-</b><b>l</b><b>f</b><b>l</b><b>o</b><b>w</b><b>-</b><b>c</b><b>a</b><b>c</b><b>h</b><b>e</b>
-                     When  used, this configuration value determines the maxi‐
-                     mum number of logical flow cache  entries  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>
-                     may  create  when  the  logical flow cache is enabled. By
+                     When used, this configuration value determines the  maxi‐
+                     mum  number  of logical flow cache entries <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>
+                     may create when the logical flow  cache  is  enabled.  By
                      default the size of the cache is unlimited.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>m</b><b>e</b><b>m</b><b>l</b><b>i</b><b>m</b><b>i</b><b>t</b><b>-</b><b>l</b><b>f</b><b>l</b><b>o</b><b>w</b><b>-</b><b>c</b><b>a</b><b>c</b><b>h</b><b>e</b><b>-</b><b>k</b><b>b</b>
-                     When used, this configuration value determines the  maxi‐
+                     When  used, this configuration value determines the maxi‐
                      mum size of the logical flow cache (in KB) <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>
-                     may create when the logical flow  cache  is  enabled.  By
+                     may  create  when  the  logical flow cache is enabled. By
                      default the size of the cache is unlimited.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>t</b><b>r</b><b>i</b><b>m</b><b>-</b><b>l</b><b>i</b><b>m</b><b>i</b><b>t</b><b>-</b><b>l</b><b>f</b><b>l</b><b>o</b><b>w</b><b>-</b><b>c</b><b>a</b><b>c</b><b>h</b><b>e</b>
                      When used, this configuration value sets the minimum num‐
-                     ber of entries in the logical flow  cache  starting  with
-                     which  automatic memory trimming is performed. By default
+                     ber  of  entries  in the logical flow cache starting with
+                     which automatic memory trimming is performed. By  default
                      this is set to 10000 entries.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>t</b><b>r</b><b>i</b><b>m</b><b>-</b><b>w</b><b>m</b><b>a</b><b>r</b><b>k</b><b>-</b><b>p</b><b>e</b><b>r</b><b>c</b><b>-</b><b>l</b><b>f</b><b>l</b><b>o</b><b>w</b><b>-</b><b>c</b><b>a</b><b>c</b><b>h</b><b>e</b>
-                     When used, this configuration value sets  the  percentage
-                     from  the high watermark number of entries in the logical
-                     flow cache under which automatic memory trimming is  per‐
-                     formed.  E.g., if the trim watermark percentage is set to
+                     When  used,  this configuration value sets the percentage
+                     from the high watermark number of entries in the  logical
+                     flow  cache under which automatic memory trimming is per‐
+                     formed. E.g., if the trim watermark percentage is set  to
                      50%, automatic memory trimming happens only when the num‐
-                     ber  of entries in the logical flow cache gets reduced to
-                     less than half of the last measured  high  watermark.  By
+                     ber of entries in the logical flow cache gets reduced  to
+                     less  than  half  of the last measured high watermark. By
                      default this is set to 50.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>t</b><b>r</b><b>i</b><b>m</b><b>-</b><b>t</b><b>i</b><b>m</b><b>e</b><b>o</b><b>u</b><b>t</b><b>-</b><b>m</b><b>s</b>
-                     When  used,  this configuration value specifies the time,
+                     When used, this configuration value specifies  the  time,
                      in milliseconds, since the last logical flow cache opera‐
-                     tion  after which <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> performs memory trimming
+                     tion after which <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> performs memory  trimming
                      regardless of how many entries there are in the cache. By
                      default this is set to 30000 (30 seconds).
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>s</b><b>e</b><b>t</b><b>-</b><b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>-</b><b>i</b><b>p</b>
-                     The  boolean flag indicates if <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> when create
-                     tunnel ports should set <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> parameter. Can be  hepl‐
-                     ful  to  pin source outer IP for the tunnel when multiple
+                     The boolean flag indicates if <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> when  create
+                     tunnel  ports should set <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> parameter. Can be hepl‐
+                     ful to pin source outer IP for the tunnel  when  multiple
                      interfaces are used on the host for overlay traffic.
 
-       <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> reads the following values from the  <b>O</b><b>p</b><b>e</b><b>n</b><b>_</b><b>v</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b>  data‐
+       Most  of  configuration options listed above can also be set for a par‐
+       ticular chassis name (see  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>s</b><b>y</b><b>s</b><b>t</b><b>e</b><b>m</b><b>-</b><b>i</b><b>d</b>   for  more  informa‐
+       tion).  This  can  be achieved by setting <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>-</b><b>[</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>]</b>
+       instead   of   <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b>.    For    example,    set    <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>‐</b>
+       <b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>e</b><b>n</b><b>c</b><b>a</b><b>p</b><b>-</b><b>i</b><b>p</b><b>-</b><b>o</b><b>t</b><b>h</b><b>e</b><b>r</b><b>h</b><b>v</b>  to  use  a  particular IP address for the
+       controller instance named <b>o</b><b>t</b><b>h</b><b>e</b><b>r</b><b>h</b><b>v</b>. Name specific configuration  options
+       always override any global options set in the database.
+
+       Chassis-specific configuration options in the database plus the ability
+       to configure the chassis name to use via the <b>s</b><b>y</b><b>s</b><b>t</b><b>e</b><b>m</b><b>-</b><b>i</b><b>d</b><b>-</b><b>o</b><b>v</b><b>e</b><b>r</b><b>r</b><b>i</b><b>d</b><b>e</b> file or
+       command  line  allows  to  run  multiple  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> instances with
+       unique chassis names on the same host using the same <b>v</b><b>s</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>d</b> instance.
+       This  may  be useful when running a hybrid setup with more than one CMS
+       managing ports on the host, or to use different datapath types  on  the
+       same  host. Note that this ability is highly experimental and has known
+       limitations (for example, stateful ACLs are not supported). Use at your
+       own risk.
+
+       <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  reads  the following values from the <b>O</b><b>p</b><b>e</b><b>n</b><b>_</b><b>v</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> data‐
        base of the local OVS instance:
 
               <b>d</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>-</b><b>t</b><b>y</b><b>p</b><b>e</b> from <b>B</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b> table
-                     This  value is read from local OVS integration bridge row
-                     of <b>B</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b> table and populated  in  <b>o</b><b>t</b><b>h</b><b>e</b><b>r</b><b>_</b><b>c</b><b>o</b><b>n</b><b>f</b><b>i</b><b>g</b><b>:</b><b>d</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>-</b>
+                     This value is read from local OVS integration bridge  row
+                     of  <b>B</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b>  table and populated in <b>o</b><b>t</b><b>h</b><b>e</b><b>r</b><b>_</b><b>c</b><b>o</b><b>n</b><b>f</b><b>i</b><b>g</b><b>:</b><b>d</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>-</b>
                      <b>t</b><b>y</b><b>p</b><b>e</b> of the <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> table in the OVN_Southbound database.
 
               <b>i</b><b>f</b><b>a</b><b>c</b><b>e</b><b>-</b><b>t</b><b>y</b><b>p</b><b>e</b><b>s</b> from <b>O</b><b>p</b><b>e</b><b>n</b><b>_</b><b>v</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> table
-                     This  value  is  populated in <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>i</b><b>f</b><b>a</b><b>c</b><b>e</b><b>-</b><b>t</b><b>y</b><b>p</b><b>e</b><b>s</b> of
+                     This value is populated  in  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>i</b><b>f</b><b>a</b><b>c</b><b>e</b><b>-</b><b>t</b><b>y</b><b>p</b><b>e</b><b>s</b>  of
                      the <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> table in the OVN_Southbound database.
 
-              <b>p</b><b>r</b><b>i</b><b>v</b><b>a</b><b>t</b><b>e</b><b>_</b><b>k</b><b>e</b><b>y</b>, <b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b><b>c</b><b>a</b><b>t</b><b>e</b>, <b>c</b><b>a</b><b>_</b><b>c</b><b>e</b><b>r</b><b>t</b>,  and  <b>b</b><b>o</b><b>o</b><b>t</b><b>s</b><b>t</b><b>r</b><b>a</b><b>p</b><b>_</b><b>c</b><b>a</b><b>_</b><b>c</b><b>e</b><b>r</b><b>t</b>  from
+              <b>p</b><b>r</b><b>i</b><b>v</b><b>a</b><b>t</b><b>e</b><b>_</b><b>k</b><b>e</b><b>y</b>,  <b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b><b>c</b><b>a</b><b>t</b><b>e</b>,  <b>c</b><b>a</b><b>_</b><b>c</b><b>e</b><b>r</b><b>t</b>,  and <b>b</b><b>o</b><b>o</b><b>t</b><b>s</b><b>t</b><b>r</b><b>a</b><b>p</b><b>_</b><b>c</b><b>a</b><b>_</b><b>c</b><b>e</b><b>r</b><b>t</b> from
               <b>S</b><b>S</b><b>L</b> table
-                     These  values provide the SSL configuration used for con‐
+                     These values provide the SSL configuration used for  con‐
                      necting to the OVN southbound database server when an SSL
-                     connection     type     is    configured    via    <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>‐</b>
-                     <b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>r</b><b>e</b><b>m</b><b>o</b><b>t</b><b>e</b>. Note that this SSL configuration  can
+                     connection    type    is    configured     via     <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>‐</b>
+                     <b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>r</b><b>e</b><b>m</b><b>o</b><b>t</b><b>e</b>.  Note that this SSL configuration can
                      also be provided via command-line options, the configura‐
                      tion  in  the  database  takes  precedence  if  both  are
                      present.
 
 <b>O</b><b>P</b><b>E</b><b>N</b> <b>V</b><b>S</b><b>W</b><b>I</b><b>T</b><b>C</b><b>H</b> <b>D</b><b>A</b><b>T</b><b>A</b><b>B</b><b>A</b><b>S</b><b>E</b> <b>U</b><b>S</b><b>A</b><b>G</b><b>E</b>
-       <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  uses  a number of <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b> keys in the Open vSwitch
-       database to keep track of ports and interfaces. For  proper  operation,
+       <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> uses a number of <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b> keys in the  Open  vSwitch
+       database  to  keep track of ports and interfaces. For proper operation,
        users should not change or clear these keys:
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>-</b><b>i</b><b>d</b> in the <b>P</b><b>o</b><b>r</b><b>t</b> table
-                     The  presence of this key identifies a tunnel port within
-                     the integration bridge as one created  by  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>
+                     The presence of this key identifies a tunnel port  within
+                     the  integration  bridge as one created by <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>
                      to reach a remote chassis. Its value is the chassis ID of
                      the remote chassis.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>c</b><b>t</b><b>-</b><b>z</b><b>o</b><b>n</b><b>e</b><b>-</b><b>*</b> in the <b>B</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b> table
-                     Logical ports and gateway routers are assigned a  connec‐
-                     tion  tracking  zone  by <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> for stateful ser‐
-                     vices. To keep state across restarts  of  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>,
-                     these  keys are stored in the integration bridge’s Bridge
+                     Logical  ports and gateway routers are assigned a connec‐
+                     tion tracking zone by <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  for  stateful  ser‐
+                     vices.  To  keep state across restarts of <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>,
+                     these keys are stored in the integration bridge’s  Bridge
                      table. The name contains a prefix of <b>c</b><b>t</b><b>-</b><b>z</b><b>o</b><b>n</b><b>e</b><b>-</b> followed by
-                     the  name  of  the  logical port or gateway router’s zone
-                     key. The value for this key identifies the zone used  for
+                     the name of the logical port  or  gateway  router’s  zone
+                     key.  The value for this key identifies the zone used for
                      this port.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>n</b><b>e</b><b>t</b><b>-</b><b>p</b><b>o</b><b>r</b><b>t</b> in the <b>P</b><b>o</b><b>r</b><b>t</b> table
-                     The  presence  of this key identifies a patch port as one
-                     created by  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  to  connect  the  integration
+                     The presence of this key identifies a patch port  as  one
+                     created  by  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  to  connect  the integration
                      bridge and another bridge to implement a <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>n</b><b>e</b><b>t</b> logical
                      port. Its value is the name of the logical port with <b>t</b><b>y</b><b>p</b><b>e</b>
-                     set  to  <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>n</b><b>e</b><b>t</b>  that  the  port implements. See <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>‐</b>
+                     set to <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>n</b><b>e</b><b>t</b> that  the  port  implements.  See  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>‐</b>
                      <b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>-</b><b>m</b><b>a</b><b>p</b><b>p</b><b>i</b><b>n</b><b>g</b><b>s</b>, above, for more information.
 
-                     Each <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>n</b><b>e</b><b>t</b> logical port is implemented as  a  pair  of
+                     Each  <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>n</b><b>e</b><b>t</b>  logical  port is implemented as a pair of
                      patch ports, one in the integration bridge, one in a dif‐
                      ferent  bridge,  with  the  same  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>‐</b>
                      <b>n</b><b>e</b><b>t</b><b>-</b><b>p</b><b>o</b><b>r</b><b>t</b> value.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>l</b><b>2</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b><b>-</b><b>p</b><b>o</b><b>r</b><b>t</b> in the <b>P</b><b>o</b><b>r</b><b>t</b> table
-                     The  presence  of this key identifies a patch port as one
-                     created by  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  to  connect  the  integration
-                     bridge  and another bridge to implement a <b>l</b><b>2</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b> logi‐
-                     cal port. Its value is the name of the logical port  with
-                     <b>t</b><b>y</b><b>p</b><b>e</b>  set  to  <b>l</b><b>2</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b>  that  the  port implements. See
-                     <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>-</b><b>m</b><b>a</b><b>p</b><b>p</b><b>i</b><b>n</b><b>g</b><b>s</b>, above, for more  infor‐
+                     The presence of this key identifies a patch port  as  one
+                     created  by  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  to  connect  the integration
+                     bridge and another bridge to implement a <b>l</b><b>2</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b>  logi‐
+                     cal  port. Its value is the name of the logical port with
+                     <b>t</b><b>y</b><b>p</b><b>e</b> set to  <b>l</b><b>2</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b>  that  the  port  implements.  See
+                     <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>-</b><b>m</b><b>a</b><b>p</b><b>p</b><b>i</b><b>n</b><b>g</b><b>s</b>,  above, for more infor‐
                      mation.
 
-                     Each  <b>l</b><b>2</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b>  logical port is implemented as a pair of
+                     Each <b>l</b><b>2</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b> logical port is implemented as a  pair  of
                      patch ports, one in the integration bridge, one in a dif‐
-                     ferent  bridge,  with  the  same <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>l</b><b>2</b><b>g</b><b>a</b><b>t</b><b>e</b><b>‐</b>
+                     ferent bridge,  with  the  same  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>l</b><b>2</b><b>g</b><b>a</b><b>t</b><b>e</b><b>‐</b>
                      <b>w</b><b>a</b><b>y</b><b>-</b><b>p</b><b>o</b><b>r</b><b>t</b> value.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>-</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>l</b><b>3</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b><b>-</b><b>p</b><b>o</b><b>r</b><b>t</b> in the <b>P</b><b>o</b><b>r</b><b>t</b> table
-                     This key identifies  a  patch  port  as  one  created  by
+                     This  key  identifies  a  patch  port  as  one created by
                      <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> to implement a <b>l</b><b>3</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b> logical port. Its
-                     value is the name of the logical port with  type  set  to
-                     <b>l</b><b>3</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b>.  This patch port is similar to the OVN logical
-                     patch port, except that <b>l</b><b>3</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b> port can only be  bound
-                     to a paticular chassis.
+                     value  is  the  name of the logical port with type set to
+                     <b>l</b><b>3</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b>. This patch port is similar to the OVN  logical
+                     patch  port, except that <b>l</b><b>3</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b> port can only be bound
+                     to a particular chassis.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>-</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>-</b><b>p</b><b>a</b><b>t</b><b>c</b><b>h</b><b>-</b><b>p</b><b>o</b><b>r</b><b>t</b> in the <b>P</b><b>o</b><b>r</b><b>t</b> table
-                     This  key  identifies  a  patch  port  as  one created by
-                     <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> to implement an  OVN  logical  patch  port
-                     within  the  integration bridge. Its value is the name of
+                     This key identifies  a  patch  port  as  one  created  by
+                     <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  to  implement  an  OVN logical patch port
+                     within the integration bridge. Its value is the  name  of
                      the OVN logical patch port that it implements.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>-</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>s</b><b>t</b><b>a</b><b>r</b><b>t</b><b>u</b><b>p</b><b>-</b><b>t</b><b>s</b> in the <b>B</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b> table
-                     This key represents the timestamp  (in  milliseconds)  at
+                     This  key  represents  the timestamp (in milliseconds) at
                      which <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> process was started.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>-</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>b</b><b>-</b><b>c</b><b>f</b><b>g</b> in the <b>B</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b> table
                      This   key   represents   the   last   known   <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>‐</b>
-                     <b>b</b><b>o</b><b>u</b><b>n</b><b>d</b><b>.</b><b>S</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b><b>.</b><b>n</b><b>b</b><b>_</b><b>c</b><b>f</b><b>g</b> value for  which  all  flows  have
+                     <b>b</b><b>o</b><b>u</b><b>n</b><b>d</b><b>.</b><b>S</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b><b>.</b><b>n</b><b>b</b><b>_</b><b>c</b><b>f</b><b>g</b>  value  for  which  all flows have
                      been successfully installed in OVS.
 
               <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>-</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>b</b><b>-</b><b>c</b><b>f</b><b>g</b><b>-</b><b>t</b><b>s</b> in the <b>B</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b> table
-                     This  key  represents  the timestamp (in milliseconds) of
-                     the last known <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b><b>.</b><b>S</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b><b>.</b><b>n</b><b>b</b><b>_</b><b>c</b><b>f</b><b>g</b> value  for
+                     This key represents the timestamp  (in  milliseconds)  of
+                     the  last known <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b><b>.</b><b>S</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b><b>.</b><b>n</b><b>b</b><b>_</b><b>c</b><b>f</b><b>g</b> value for
                      which all flows have been successfully installed in OVS.
 
-              <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>n</b><b>s</b><b>t</b><b>a</b><b>l</b><b>l</b><b>e</b><b>d</b>  and <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>n</b><b>s</b><b>t</b><b>a</b><b>l</b><b>l</b><b>e</b><b>d</b><b>-</b><b>t</b><b>s</b> in
+              <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>n</b><b>s</b><b>t</b><b>a</b><b>l</b><b>l</b><b>e</b><b>d</b> and <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>n</b><b>s</b><b>t</b><b>a</b><b>l</b><b>l</b><b>e</b><b>d</b><b>-</b><b>t</b><b>s</b>  in
               the <b>I</b><b>n</b><b>t</b><b>e</b><b>r</b><b>f</b><b>a</b><b>c</b><b>e</b> table
                      This key is set after all openflow operations correspond‐
-                     ing  to  the  OVS  interface  have been processed by ovs-
-                     vswitchd. At the same time a timestamp,  in  milliseconds
-                     since     the     epoch,     is    stored    in    <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>‐</b>
+                     ing to the OVS interface  have  been  processed  by  ovs-
+                     vswitchd.  At  the same time a timestamp, in milliseconds
+                     since    the    epoch,    is     stored     in     <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>‐</b>
                      <b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>n</b><b>s</b><b>t</b><b>a</b><b>l</b><b>l</b><b>e</b><b>d</b><b>-</b><b>t</b><b>s</b>.
 
 <b>O</b><b>V</b><b>N</b> <b>S</b><b>O</b><b>U</b><b>T</b><b>H</b><b>B</b><b>O</b><b>U</b><b>N</b><b>D</b> <b>D</b><b>A</b><b>T</b><b>A</b><b>B</b><b>A</b><b>S</b><b>E</b> <b>U</b><b>S</b><b>A</b><b>G</b><b>E</b>
-       <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> reads from much of the <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database to  guide
+       <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  reads from much of the <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database to guide
        its operation. <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> also writes to the following tables:
 
               <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>
-                     Upon  startup, <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> creates a row in this table
-                     to represent its own chassis. Upon graceful  termination,
-                     e.g.  with  <b>o</b><b>v</b><b>s</b><b>-</b><b>a</b><b>p</b><b>p</b><b>c</b><b>t</b><b>l</b>  <b>-</b><b>t</b>  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  <b>e</b><b>x</b><b>i</b><b>t</b> (but not
+                     Upon startup, <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> creates a row in this  table
+                     to  represent its own chassis. Upon graceful termination,
+                     e.g. with <b>o</b><b>v</b><b>s</b><b>-</b><b>a</b><b>p</b><b>p</b><b>c</b><b>t</b><b>l</b>  <b>-</b><b>t</b>  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  <b>e</b><b>x</b><b>i</b><b>t</b>  (but  not
                      <b>S</b><b>I</b><b>G</b><b>T</b><b>E</b><b>R</b><b>M</b>), <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> removes its row.
 
-              <b>E</b><b>n</b><b>c</b><b>a</b><b>p</b>  Upon startup, <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> creates a  row  or  rows  in
-                     this  table  that  represent the tunnel encapsulations by
-                     which its chassis can be reached, and points its  <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>
-                     row  to  them.  Upon graceful termination, <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>
+              <b>E</b><b>n</b><b>c</b><b>a</b><b>p</b>  Upon  startup,  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  creates  a row or rows in
+                     this table that represent the  tunnel  encapsulations  by
+                     which  its chassis can be reached, and points its <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>
+                     row to them. Upon  graceful  termination,  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>
                      removes these rows.
 
               <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>
-                     At runtime, <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> sets the  <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>  columns  of
-                     ports  that  are  resident on its chassis to point to its
-                     <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> row, and, conversely, clears the  <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>  column
-                     of  ports that point to its <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> row but are no longer
-                     resident on its chassis. The <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> column  has  a  weak
-                     reference  type,  so when <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> gracefully exits
+                     At  runtime,  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  sets the <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> columns of
+                     ports that are resident on its chassis to  point  to  its
+                     <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>  row,  and, conversely, clears the <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> column
+                     of ports that point to its <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> row but are no  longer
+                     resident  on  its  chassis. The <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> column has a weak
+                     reference type, so when <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  gracefully  exits
                      and removes its <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> row, the database server automat‐
                      ically clears any remaining references to that row.
 
               <b>M</b><b>A</b><b>C</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>
-                     At  runtime, <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> updates the <b>M</b><b>A</b><b>C</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> table
-                     as instructed by  <b>p</b><b>u</b><b>t</b><b>_</b><b>a</b><b>r</b><b>p</b>  and  <b>p</b><b>u</b><b>t</b><b>_</b><b>n</b><b>d</b>  logical  actions.
-                     These  changes  persist  beyond  the lifetime of <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>‐</b>
+                     At runtime, <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> updates the <b>M</b><b>A</b><b>C</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>  table
+                     as  instructed  by  <b>p</b><b>u</b><b>t</b><b>_</b><b>a</b><b>r</b><b>p</b>  and  <b>p</b><b>u</b><b>t</b><b>_</b><b>n</b><b>d</b> logical actions.
+                     These changes persist beyond  the  lifetime  of  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>‐</b>
                      <b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>.
 
 <b>R</b><b>U</b><b>N</b><b>T</b><b>I</b><b>M</b><b>E</b> <b>M</b><b>A</b><b>N</b><b>A</b><b>G</b><b>E</b><b>M</b><b>E</b><b>N</b><b>T</b> <b>C</b><b>O</b><b>M</b><b>M</b><b>A</b><b>N</b><b>D</b><b>S</b>
-       <b>o</b><b>v</b><b>s</b><b>-</b><b>a</b><b>p</b><b>p</b><b>c</b><b>t</b><b>l</b> can send commands to a running <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  process.  The
+       <b>o</b><b>v</b><b>s</b><b>-</b><b>a</b><b>p</b><b>p</b><b>c</b><b>t</b><b>l</b>  can  send commands to a running <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> process. The
        currently supported commands are described below.
 
               <b>e</b><b>x</b><b>i</b><b>t</b>   Causes <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> to gracefully terminate.
@@ -634,15 +699,15 @@ ovn-controller(8)                 OVN Manual                 ovn-controller(8)
                      Lists each group table entry and its local group id.
 
               <b>i</b><b>n</b><b>j</b><b>e</b><b>c</b><b>t</b><b>-</b><b>p</b><b>k</b><b>t</b> <u>m</u><u>i</u><u>c</u><u>r</u><u>o</u><u>f</u><u>l</u><u>o</u><u>w</u>
-                     Injects  <u>m</u><u>i</u><u>c</u><u>r</u><u>o</u><u>f</u><u>l</u><u>o</u><u>w</u>  into  the  connected   Open   vSwitch
-                     instance.  <u>m</u><u>i</u><u>c</u><u>r</u><u>o</u><u>f</u><u>l</u><u>o</u><u>w</u> must contain an ingress logical port
-                     (<b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> argument) that is present  on  the  Open  vSwitch
+                     Injects   <u>m</u><u>i</u><u>c</u><u>r</u><u>o</u><u>f</u><u>l</u><u>o</u><u>w</u>   into  the  connected  Open  vSwitch
+                     instance. <u>m</u><u>i</u><u>c</u><u>r</u><u>o</u><u>f</u><u>l</u><u>o</u><u>w</u> must contain an ingress logical  port
+                     (<b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b>  argument)  that  is  present on the Open vSwitch
                      instance.
 
-                     The  <u>m</u><u>i</u><u>c</u><u>r</u><u>o</u><u>f</u><u>l</u><u>o</u><u>w</u>  argument  describes the packet whose for‐
+                     The <u>m</u><u>i</u><u>c</u><u>r</u><u>o</u><u>f</u><u>l</u><u>o</u><u>w</u> argument describes the  packet  whose  for‐
                      warding is to be simulated, in the syntax of an OVN logi‐
-                     cal  expression,  as  described  in <b>o</b><b>v</b><b>n</b><b>-</b><b>s</b><b>b</b>(5), to express
-                     constraints. The parser  understands  prerequisites;  for
+                     cal expression, as described  in  <b>o</b><b>v</b><b>n</b><b>-</b><b>s</b><b>b</b>(5),  to  express
+                     constraints.  The  parser  understands prerequisites; for
                      example, if the expression refers to <b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b>, there is no
                      need to explicitly state <b>i</b><b>p</b><b>4</b> or <b>e</b><b>t</b><b>h</b><b>.</b><b>t</b><b>y</b><b>p</b><b>e</b> <b>=</b><b>=</b> <b>0</b><b>x</b><b>8</b><b>0</b><b>0</b>.
 
@@ -650,33 +715,33 @@ ovn-controller(8)                 OVN Manual                 ovn-controller(8)
                      Show OVN SBDB connection status for the chassis.
 
               <b>r</b><b>e</b><b>c</b><b>o</b><b>m</b><b>p</b><b>u</b><b>t</b><b>e</b>
-                     Trigger a full compute iteration in <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  based
-                     on  the contents of the Southbound database and local OVS
+                     Trigger  a full compute iteration in <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> based
+                     on the contents of the Southbound database and local  OVS
                      database.
 
-                     This command is intended to use only in the  event  of  a
-                     bug  in  the  incremental  processing  engine in <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>‐</b>
+                     This  command  is  intended to use only in the event of a
+                     bug in the  incremental  processing  engine  in  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>‐</b>
                      <b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> to avoid inconsistent states. It should therefore
                      be used with care as full recomputes are cpu intensive.
 
               <b>s</b><b>b</b><b>-</b><b>c</b><b>l</b><b>u</b><b>s</b><b>t</b><b>e</b><b>r</b><b>-</b><b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>-</b><b>r</b><b>e</b><b>s</b><b>e</b><b>t</b>
-                     Reset  southbound  database cluster status when databases
+                     Reset southbound database cluster status  when  databases
                      are destroyed and rebuilt.
 
-                     If all databases in a clustered southbound  database  are
+                     If  all  databases in a clustered southbound database are
                      removed from disk, then the stored index of all databases
-                     will be reset to zero. This will cause ovn-controller  to
-                     be  unable  to  read or write to the southbound database,
-                     because it will always detect the data as stale. In  such
-                     a  case,  run  this  command  so that ovn-controller will
-                     reset its local index so that it can  interact  with  the
+                     will  be reset to zero. This will cause ovn-controller to
+                     be unable to read or write to  the  southbound  database,
+                     because  it will always detect the data as stale. In such
+                     a case, run this  command  so  that  ovn-controller  will
+                     reset  its  local  index so that it can interact with the
                      southbound database again.
 
               <b>d</b><b>e</b><b>b</b><b>u</b><b>g</b><b>/</b><b>d</b><b>e</b><b>l</b><b>a</b><b>y</b><b>-</b><b>n</b><b>b</b><b>-</b><b>c</b><b>f</b><b>g</b><b>-</b><b>r</b><b>e</b><b>p</b><b>o</b><b>r</b><b>t</b> <u>s</u><u>e</u><u>c</u><u>o</u><u>n</u><u>d</u><u>s</u>
                      This command is used to delay ovn-controller updating the
-                     <b>n</b><b>b</b><b>_</b><b>c</b><b>f</b><b>g</b> back to <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database.  This  is  useful
-                     when  <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>b</b><b>c</b><b>t</b><b>l</b>  <b>-</b><b>-</b><b>w</b><b>a</b><b>i</b><b>t</b><b>=</b><b>h</b><b>v</b>  is used to measure end-to-end
-                     latency in a large scale  environment.  See  <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>b</b><b>c</b><b>t</b><b>l</b>(8)
+                     <b>n</b><b>b</b><b>_</b><b>c</b><b>f</b><b>g</b>  back  to  <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database. This is useful
+                     when <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>b</b><b>c</b><b>t</b><b>l</b> <b>-</b><b>-</b><b>w</b><b>a</b><b>i</b><b>t</b><b>=</b><b>h</b><b>v</b> is used  to  measure  end-to-end
+                     latency  in  a  large scale environment. See <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>b</b><b>c</b><b>t</b><b>l</b>(8)
                      for more details.
 
               <b>l</b><b>f</b><b>l</b><b>o</b><b>w</b><b>-</b><b>c</b><b>a</b><b>c</b><b>h</b><b>e</b><b>/</b><b>f</b><b>l</b><b>u</b><b>s</b><b>h</b>
@@ -687,7 +752,7 @@ ovn-controller(8)                 OVN Manual                 ovn-controller(8)
                      per cache type entry counts.
 
               <b>i</b><b>n</b><b>c</b><b>-</b><b>e</b><b>n</b><b>g</b><b>i</b><b>n</b><b>e</b><b>/</b><b>s</b><b>h</b><b>o</b><b>w</b><b>-</b><b>s</b><b>t</b><b>a</b><b>t</b><b>s</b>
-                     Display <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> engine counters. For  each  engine
+                     Display  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  engine counters. For each engine
                      node the following counters have been added:
 
                      ·      <b>r</b><b>e</b><b>c</b><b>o</b><b>m</b><b>p</b><b>u</b><b>t</b><b>e</b>
@@ -696,10 +761,15 @@ ovn-controller(8)                 OVN Manual                 ovn-controller(8)
 
                      ·      <b>a</b><b>b</b><b>o</b><b>r</b><b>t</b>
 
+              <b>i</b><b>n</b><b>c</b><b>-</b><b>e</b><b>n</b><b>g</b><b>i</b><b>n</b><b>e</b><b>/</b><b>s</b><b>h</b><b>o</b><b>w</b><b>-</b><b>s</b><b>t</b><b>a</b><b>t</b><b>s</b> <u>e</u><u>n</u><u>g</u><u>i</u><u>n</u><u>e</u><b>_</b><u>n</u><u>o</u><u>d</u><u>e</u><b>_</b><u>n</u><u>a</u><u>m</u><u>e</u> <u>c</u><u>o</u><u>u</u><u>n</u><u>t</u><u>e</u><u>r</u><b>_</b><u>n</u><u>a</u><u>m</u><u>e</u>
+                     Display the  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  engine  counter(s)  for  the
+                     specified  <u>e</u><u>n</u><u>g</u><u>i</u><u>n</u><u>e</u><b>_</b><u>n</u><u>o</u><u>d</u><u>e</u><b>_</b><u>n</u><u>a</u><u>m</u><u>e</u>. <u>c</u><u>o</u><u>u</u><u>n</u><u>t</u><u>e</u><u>r</u><b>_</b><u>n</u><u>a</u><u>m</u><u>e</u> is optional and
+                     can be one of <b>r</b><b>e</b><b>c</b><b>o</b><b>m</b><b>p</b><b>u</b><b>t</b><b>e</b>, <b>c</b><b>o</b><b>m</b><b>p</b><b>u</b><b>t</b><b>e</b> or <b>a</b><b>b</b><b>o</b><b>r</b><b>t</b>.
+
               <b>i</b><b>n</b><b>c</b><b>-</b><b>e</b><b>n</b><b>g</b><b>i</b><b>n</b><b>e</b><b>/</b><b>c</b><b>l</b><b>e</b><b>a</b><b>r</b><b>-</b><b>s</b><b>t</b><b>a</b><b>t</b><b>s</b>
                      Reset <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> engine counters.
 
 
 
-OVN 22.03.90                    ovn-controller               ovn-controller(8)
+OVN 22.12.90                    ovn-controller               ovn-controller(8)
 </pre></body></html>

@@ -163,8 +163,8 @@ OPTIONS
                    a new order before the first connection attempt.  The  fol‐
                    lowing retries, if any, will follow the same new order. The
                    default behavior is to make sure  clients  of  a  clustered
-                   database  can  distribute  evenly  to  all memembers of the
-                   cluster. With --no-shuffle-remotes, ovn-nbctl will use  the
+                   database  can distribute evenly to all members of the clus‐
+                   ter. With  --no-shuffle-remotes,  ovn-nbctl  will  use  the
                    original  order  specified in the connection string to con‐
                    nect. This allows user  to  specify  the  preferred  order,
                    which is particularly useful for testing.
@@ -646,7 +646,7 @@ COMMANDS
               then a single  flow  that  matches  the  given  fields  will  be
               deleted.
 
-              If  switch  and uuid are supplied, then the QoS rule with sepci‐
+              If  switch  and uuid are supplied, then the QoS rule with speci‐
               fied uuid is deleted.
 
        qos-list switch
@@ -832,6 +832,12 @@ COMMANDS
 
        lsp-get-ls port
               Get the logical switch which the port belongs to.
+
+       lsp-attach-mirror port m
+              Attaches the mirror m to the logical port port.
+
+       lsp-dettach-mirror port m
+              Detaches the mirror m from the logical port port.
 
    Forwarding Group Commands
        [--liveness]fwd-group-add group switch vip vmac ports
@@ -1022,7 +1028,7 @@ COMMANDS
               match  are  also  specified, then all the polices that match the
               conditions will be deleted from the logical router.
 
-              If router and uuid are supplied, then the policy with  sepcified
+              If router and uuid are supplied, then the policy with  specified
               uuid  is  deleted. It is an error if uuid does not exist, unless
               --if-exists is specified.
 
@@ -1030,8 +1036,8 @@ COMMANDS
               Lists the polices on router.
 
    NAT Commands
-       [--may-exist] [--stateless]lr-nat-add  router  type  external_ip  logi‐
-       cal_ip [logical_port external_mac]
+       [--may-exist]  [--stateless]  [--gateway_port=GATEWAY_PORT]  lr-nat-add
+       router type external_ip logical_ip [logical_port external_mac]
               Adds  the specified NAT to router. The type must be one of snat,
               dnat, or dnat_and_snat. The external_ip is an IPv4 address.  The
               logical_ip  is  an  IPv4 network (e.g 192.168.1.0/24) or an IPv4
@@ -1039,13 +1045,21 @@ COMMANDS
               when  router  is  a  distributed  router  (rather than a gateway
               router) and type is dnat_and_snat. The logical_port is the  name
               of an existing logical switch port where the logical_ip resides.
-              The external_mac is an Ethernet address. The --stateless
+              The external_mac is an Ethernet address.
 
               When --stateless is specified then it implies that  we  will  be
               not  use connection tracker, i.e internal ip and external ip are
               1:1 mapped. This implies that --stateless is applicable only  to
               dnat_and_snat  type  NAT  rules. An external ip with --stateless
               NAT cannot be shared with any other NAT rule.
+
+              --gateway-port option allows specifying the distributed  gateway
+              port  of  router  where  the NAT rule needs to be applied. GATE‐
+              WAY_PORT should reference a Logical_Router_Port row  that  is  a
+              distributed  gateway  port  of  router. When router has multiple
+              distributed gateway ports and the  gateway  port  for  this  NAT
+              can’t  be  inferred  from the external_ip, it is an error to not
+              specify the GATEWAY_PORT.
 
               When type is dnat, the externally visible IP address external_ip
               is DNATted to the IP address logical_ip in the logical space.
@@ -1069,22 +1083,28 @@ COMMANDS
               external_mac.
 
               It  is  an error if a NAT already exists with the same values of
-              router, type, external_ip, and logical_ip, unless --may-exist is
-              specified.  When --may-exist, logical_port, and external_mac are
-              all specified, the existing values of  logical_port  and  exter‐
+              router, type, external_ip, logical_ip and GATEWAY_PORT (in  case
+              of  multiple  distributed  gateway ports), unless --may-exist is
+              specified. When --may-exist, logical_port, and external_mac  are
+              all  specified,  the  existing values of logical_port and exter‐
               nal_mac are overwritten.
 
-       [--if-exists] lr-nat-del router [type [ip]]
-              Deletes  NATs  from  router. If only router is supplied, all the
+       [--if-exists] lr-nat-del router [type [ip] [gateway_port]]
+              Deletes NATs from router. If only router is  supplied,  all  the
               NATs from the logical router are deleted. If type is also speci‐
               fied, then all the NATs that match the type will be deleted from
-              the logical router. If all the fields are given, then  a  single
-              NAT  rule that matches all the fields will be deleted. When type
-              is snat, the ip should be  logical_ip.  When  type  is  dnat  or
-              dnat_and_snat, the ip shoud be external_ip.
+              the  logical  router. If ip is also specified without specifying
+              gateway_port, then all the NATs that match the type and ip  will
+              be deleted from the logical router. If gateway_port is specified
+              without specifying ip, then all the NATs that match the type and
+              gateway_port will be deleted from the logical router. If all the
+              fields are given, then a single NAT rule that  matches  all  the
+              fields will be deleted. When type is snat, the ip should be log‐
+              ical_ip. When type is dnat or dnat_and_snat, the  ip  should  be
+              external_ip.
 
-              It  is  an error if ip is specified and there is no matching NAT
-              entry, unless --if-exists is specified.
+              It  is  an  error  if both ip and gateway_port are specified and
+              there is no matching NAT entry, unless --if-exists is specified.
 
        lr-nat-list router
               Lists the NATs on router.
@@ -1281,6 +1301,26 @@ COMMANDS
               lr-copp-add name router
                      Adds the control plane protection policy name to the log‐
                      ical router router.
+
+   Mirror commands
+       mirror-add m type index filter dest
+              Creates  a  new  mirror in the Mirror table with the name m with
+              the below mandatory arguments.
+
+              type specifies the mirror type - gre or erspan.
+
+              index specifies the tunnel index value (which is an integer).
+
+              filter specifies the mirror source selection. Can be  from-lport
+              or to-lport.
+
+              dest specifies the mirror destination IP (v4 or v6).
+
+       mirror-del m
+              Deletes the mirror m.
+
+       mirror-list
+              Lists the mirrors.
 
    Synchronization Commands
        sync   Ordinarily, --wait=sb or --wait=hv only waits for changes by the
@@ -1564,7 +1604,7 @@ COMMANDS
                      exist. With --if-exists, this  command  does  nothing  if
                      record does not exist.
 
-              [--id=@name] create table column[:key]=value...
+              [--id=(@name|uuid)] create table column[:key]=value...
                      Creates a new record in table and sets the initial values
                      of each column. Columns not explicitly set  will  receive
                      their default values. Outputs the UUID of the new row.
@@ -1574,69 +1614,72 @@ COMMANDS
                      invocation  in  contexts  where  a UUID is expected. Such
                      references may precede or follow the create command.
 
+                     If a valid uuid is specified, then it is used as the UUID
+                     of the new row.
+
                      Caution (ovs-vsctl as example)
-                            Records in the Open vSwitch database are  signifi‐
-                            cant  only  when  they  can be reached directly or
+                            Records  in the Open vSwitch database are signifi‐
+                            cant only when they can  be  reached  directly  or
                             indirectly from the Open_vSwitch table. Except for
-                            records  in  the QoS or Queue tables, records that
-                            are not reachable from the Open_vSwitch table  are
+                            records in the QoS or Queue tables,  records  that
+                            are  not reachable from the Open_vSwitch table are
                             automatically  deleted  from  the  database.  This
-                            deletion happens immediately, without waiting  for
-                            additional  ovs-vsctl  commands  or other database
+                            deletion  happens immediately, without waiting for
+                            additional ovs-vsctl commands  or  other  database
                             activity. Thus, a create command must generally be
                             accompanied by additional commands within the same
-                            ovs-vsctl invocation to add a chain of  references
-                            to  the  newly  created  record from the top-level
-                            Open_vSwitch record. The  EXAMPLES  section  gives
+                            ovs-vsctl  invocation to add a chain of references
+                            to the newly created  record  from  the  top-level
+                            Open_vSwitch  record.  The  EXAMPLES section gives
                             some examples that show how to do this.
 
               [--if-exists] destroy table record...
-                     Deletes   each   specified   record  from  table.  Unless
+                     Deletes  each  specified  record   from   table.   Unless
                      --if-exists is specified, each records must exist.
 
               --all destroy table
                      Deletes all records from the table.
 
                      Caution (ovs-vsctl as example)
-                            The destroy command is only useful for records  in
-                            the  QoS  or Queue tables. Records in other tables
-                            are automatically deleted from the  database  when
-                            they  become unreachable from the Open_vSwitch ta‐
-                            ble. This means that deleting the  last  reference
-                            to  a record is sufficient for deleting the record
-                            itself. For records in these  tables,  destroy  is
-                            silently  ignored.  See the EXAMPLES section below
+                            The  destroy command is only useful for records in
+                            the QoS or Queue tables. Records in  other  tables
+                            are  automatically  deleted from the database when
+                            they become unreachable from the Open_vSwitch  ta‐
+                            ble.  This  means that deleting the last reference
+                            to a record is sufficient for deleting the  record
+                            itself.  For  records  in these tables, destroy is
+                            silently ignored. See the EXAMPLES  section  below
                             for more information.
 
               wait-until table record [column[:key]=value]...
-                     Waits until table contains a record  named  record  whose
+                     Waits  until  table  contains a record named record whose
                      column equals value or, if key is specified, whose column
-                     contains a key with the  specified  value.  This  command
-                     supports  the  same operators and semantics described for
+                     contains  a  key  with  the specified value. This command
+                     supports the same operators and semantics  described  for
                      the find command above.
 
-                     If no column[:key]=value arguments are given,  this  com‐
-                     mand  waits  only  until  record exists. If more than one
-                     such argument is given, the command waits  until  all  of
+                     If  no  column[:key]=value arguments are given, this com‐
+                     mand waits only until record exists.  If  more  than  one
+                     such  argument  is  given, the command waits until all of
                      them are satisfied.
 
                      Caution (ovs-vsctl as example)
-                            Usually  wait-until should be placed at the begin‐
-                            ning of a set of ovs-vsctl commands. For  example,
-                            wait-until  bridge  br0  --  get  bridge br0 data‐
+                            Usually wait-until should be placed at the  begin‐
+                            ning  of a set of ovs-vsctl commands. For example,
+                            wait-until bridge br0  --  get  bridge  br0  data‐
                             path_id waits until a bridge named br0 is created,
-                            then  prints  its  datapath_id column, whereas get
-                            bridge br0 datapath_id --  wait-until  bridge  br0
-                            will  abort  if  no  bridge  named br0 exists when
+                            then prints its datapath_id  column,  whereas  get
+                            bridge  br0  datapath_id  -- wait-until bridge br0
+                            will abort if no  bridge  named  br0  exists  when
                             ovs-vsctl initially connects to the database.
 
-                     Consider specifying --timeout=0 along with  --wait-until,
-                     to  prevent ovs-vsctl from terminating after waiting only
+                     Consider  specifying --timeout=0 along with --wait-until,
+                     to prevent ovs-vsctl from terminating after waiting  only
                      at most 5 seconds.
 
               comment [arg]...
-                     This command has no effect on behavior, but any  database
-                     log  record  created by the command will include the com‐
+                     This  command has no effect on behavior, but any database
+                     log record created by the command will include  the  com‐
                      mand and its arguments.
 
 ENVIRONMENT
@@ -1645,11 +1688,11 @@ ENVIRONMENT
               server process. See Daemon Mode, above, for more information.
 
        OVN_NBCTL_OPTIONS
-              If  set,  a set of options for ovn-nbctl to apply automatically,
+              If set, a set of options for ovn-nbctl to  apply  automatically,
               in the same form as on the command line.
 
        OVN_NB_DB
-              If set, the default database to contact when the --db option  is
+              If  set, the default database to contact when the --db option is
               not used.
 
 EXIT STATUS
@@ -1662,4 +1705,4 @@ SEE ALSO
 
 
 
-OVN 22.03.90                       ovn-nbctl                      ovn-nbctl(8)
+OVN 22.12.90                       ovn-nbctl                      ovn-nbctl(8)

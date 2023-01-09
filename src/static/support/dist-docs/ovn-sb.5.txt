@@ -123,6 +123,7 @@ TABLE SUMMARY
                  Logical Datapath Groups
        Multicast_Group
                  Logical Port Multicast Groups
+       Mirror    Mirror Entry
        Meter     Meter entry
        Meter_Band
                  Band for meter entries
@@ -161,6 +162,10 @@ TABLE SUMMARY
                  Load_Balancer configuration.
        BFD       BFD configuration.
        FDB       Port to MAC bindings
+       Static_MAC_Binding
+                 IP to MAC bindings
+       Chassis_Template_Var
+                 Chassis_Template_Var configuration.
 
 SB_Global TABLE
        Southbound  configuration  for  an  OVN  system.  This  table must have
@@ -180,6 +185,13 @@ SB_Global TABLE
                                      optional string
             options : bfd-min-tx     optional string
             options : bfd-mult       optional string
+            options : debug_drop_domain_id
+                                     optional string
+            options : debug_drop_collector_set
+                                     optional string
+         Options for configuring Load Balancers:
+            options : lb_hairpin_use_ct_mark
+                                     optional string
        Connection Options:
          connections                 set of Connections
          ssl                         optional SSL
@@ -233,6 +245,39 @@ SB_Global TABLE
        options : bfd-mult: optional string
               BFD  option  mult  value  to  use when configuring BFD on tunnel
               interfaces.
+
+       options : debug_drop_domain_id: optional string
+              If set to a 8-bit number and if debug_drop_collector_set is also
+              configured,  ovn-controller  will  add  a sample action to every
+              flow that does not come from a  logical  flow  that  contains  a
+              ’drop’  action.  The  8  most  significant  bits of the observa‐
+              tion_domain_id  field   will   be   those   specified   in   the
+              debug_drop_domain_id.  The  24  least  significant  bits  of the
+              observation_domain_id field will be zero.
+
+              The observation_point_id will be set to the OpenFlow table  num‐
+              ber.
+
+       options : debug_drop_collector_set: optional string
+              If  set  to  a  32-bit  number  ovn-controller will add a sample
+              action to every flow that does not come from a logical flow that
+              contains a ’drop’ action. The sample action will have the speci‐
+              fied collector_set_id. The value must match that  of  the  local
+              OVS configuration as described in ovs-actions(7).
+
+     Options for configuring Load Balancers:
+
+       These  options  apply  when  ovn-controller  configures  load  balancer
+       related flows.
+
+       options : lb_hairpin_use_ct_mark: optional string
+              By default this option is turned on (even if not present in  the
+              database)  unless  its  value  is  explicitly set to false. This
+              value is automatically set to false by  ovn-northd  when  action
+              ct_lb_mark  cannot  be  used  for new load balancer sessions and
+              action ct_lb will be used  instead.  ovn-controller  then  knows
+              that  it  should  check  ct_label.natted to detect load balanced
+              traffic.
 
      Connection Options:
 
@@ -905,6 +950,8 @@ Logical_Flow TABLE
 
               ·      arp.op arp.spa arp.tpa arp.sha arp.tha
 
+              ·      rarp.op rarp.spa rarp.tpa rarp.sha rarp.tha
+
               ·      tcp.src tcp.dst tcp.flags
 
               ·      udp.src udp.dst
@@ -976,6 +1023,8 @@ Logical_Flow TABLE
               ·      ip.first_frag expands to ip.is_frag && !ip.later_frag
 
               ·      arp expands to eth.type == 0x806
+
+              ·      rarp expands to eth.type == 0x8035
 
               ·      nd expands to icmp6.type == {135, 136} && icmp6.code == 0
                      && ip.ttl == 255
@@ -1101,32 +1150,39 @@ Logical_Flow TABLE
                    exchanged instead of copied. Both field1  and  field2  must
                    modifiable.
 
+              push(field);
+                   Push the value of field to the stack top.
+
+              pop(field);
+                   Pop  the stack top and store the value to field, which must
+                   be modifiable.
+
               ip.ttl--;
                    Decrements the IPv4 or IPv6 TTL. If this would make the TTL
-                   zero or negative, then processing of the packet  halts;  no
-                   further  actions  are  processed.  (To properly handle such
+                   zero  or  negative, then processing of the packet halts; no
+                   further actions are processed.  (To  properly  handle  such
                    cases, a higher-priority flow should match on ip.ttl == {0,
                    1};.)
 
                    Prerequisite: ip
 
               ct_next;
-                   Apply   connection   tracking  to  the  flow,  initializing
-                   ct_state for matching in later tables. Automatically  moves
+                   Apply  connection  tracking  to  the   flow,   initializing
+                   ct_state  for matching in later tables. Automatically moves
                    on to the next table, as if followed by next.
 
-                   As  a  side  effect,  IP  fragments will be reassembled for
+                   As a side effect, IP  fragments  will  be  reassembled  for
                    matching. If a fragmented packet is output, then it will be
-                   sent  with  any overlapping fragments squashed. The connec‐
-                   tion tracking state is scoped by the logical port when  the
-                   action  is used in a flow for a logical switch, so overlap‐
+                   sent with any overlapping fragments squashed.  The  connec‐
+                   tion  tracking state is scoped by the logical port when the
+                   action is used in a flow for a logical switch, so  overlap‐
                    ping addresses may be used. To allow traffic related to the
                    matched flow, execute ct_commit . Connection tracking state
-                   is scoped by the logical topology when the action  is  used
+                   is  scoped  by the logical topology when the action is used
                    in a flow for a router.
 
-                   It  is  possible  to  have actions follow ct_next, but they
-                   will not have access to any of its side-effects and is  not
+                   It is possible to have actions  follow  ct_next,  but  they
+                   will  not have access to any of its side-effects and is not
                    generally useful.
 
               ct_commit { };
@@ -1135,84 +1191,84 @@ Logical_Flow TABLE
               ct_commit { ct_mark=value[/mask]; ct_label=value[/mask]; };
                    Commit the flow to the connection tracking entry associated
                    with   it   by   a   previous   call   to   ct_next.   When
-                   ct_mark=value[/mask]  and/or ct_label=value[/mask] are sup‐
-                   plied, ct_mark and/or ct_label will be set  to  the  values
+                   ct_mark=value[/mask] and/or ct_label=value[/mask] are  sup‐
+                   plied,  ct_mark  and/or  ct_label will be set to the values
                    indicated by value[/mask] on the connection tracking entry.
                    ct_mark is a 32-bit field. ct_label is a 128-bit field. The
                    value[/mask] should be specified in hex string if more than
                    64bits are to be used. Registers and other named fields can
-                   be  used  for  value.  ct_mark  and  ct_label  may  be sub-
+                   be used  for  value.  ct_mark  and  ct_label  may  be  sub-
                    addressed in order to have specific bits set.
 
-                   Note that if you want processing to continue  in  the  next
-                   table,  you  must  execute the next action after ct_commit.
-                   You may also leave out next which  will  commit  connection
-                   tracking  state,  and  then  drop the packet. This could be
-                   useful for setting ct_mark on a connection  tracking  entry
+                   Note  that  if  you want processing to continue in the next
+                   table, you must execute the next  action  after  ct_commit.
+                   You  may  also  leave out next which will commit connection
+                   tracking state, and then drop the  packet.  This  could  be
+                   useful  for  setting ct_mark on a connection tracking entry
                    before dropping a packet, for example.
 
               ct_dnat;
               ct_dnat(IP);
-                   ct_dnat  sends  the packet through the DNAT zone in connec‐
+                   ct_dnat sends the packet through the DNAT zone  in  connec‐
                    tion tracking table to unDNAT any packet that was DNATed in
-                   the  opposite  direction.  The packet is then automatically
-                   sent to to the next tables as if followed by next;  action.
-                   The  next  tables will see the changes in the packet caused
+                   the opposite direction. The packet  is  then  automatically
+                   sent  to to the next tables as if followed by next; action.
+                   The next tables will see the changes in the  packet  caused
                    by the connection tracker.
 
-                   ct_dnat(IP) sends the  packet  through  the  DNAT  zone  to
-                   change  the destination IP address of the packet to the one
+                   ct_dnat(IP)  sends  the  packet  through  the  DNAT zone to
+                   change the destination IP address of the packet to the  one
                    provided inside the parentheses and commits the connection.
-                   The packet is then automatically sent to the next tables as
-                   if followed by next; action. The next tables will  see  the
-                   changes in the packet caused by the connection tracker.
-
-              ct_snat;
-              ct_snat(IP);
-                   ct_snat  sends  the  packet through the SNAT zone to unSNAT
-                   any packet that was SNATed in the opposite  direction.  The
-                   packet  is automatically sent to the next tables as if fol‐
-                   lowed by the next; action. The next  tables  will  see  the
-                   changes in the packet caused by the connection tracker.
-
-                   ct_snat(IP)  sends  the  packet  through  the  SNAT zone to
-                   change the source IP address of the packet to the one  pro‐
-                   vided  inside  the  parenthesis and commits the connection.
                    The packet is then automatically sent to the next tables as
                    if  followed  by next; action. The next tables will see the
                    changes in the packet caused by the connection tracker.
 
+              ct_snat;
+              ct_snat(IP);
+                   ct_snat sends the packet through the SNAT  zone  to  unSNAT
+                   any  packet  that was SNATed in the opposite direction. The
+                   packet is automatically sent to the next tables as if  fol‐
+                   lowed  by  the  next;  action. The next tables will see the
+                   changes in the packet caused by the connection tracker.
+
+                   ct_snat(IP) sends the  packet  through  the  SNAT  zone  to
+                   change  the source IP address of the packet to the one pro‐
+                   vided inside the parenthesis and  commits  the  connection.
+                   The packet is then automatically sent to the next tables as
+                   if followed by next; action. The next tables will  see  the
+                   changes in the packet caused by the connection tracker.
+
               ct_dnat_in_czone;
               ct_dnat_in_czone(IP);
-                   ct_dnat_in_czone sends the packet through  the  common  NAT
-                   zone  (used  for both DNAT and SNAT) in connection tracking
-                   table to unDNAT any packet that was DNATed in the  opposite
-                   direction.  The packet is then automatically sent to to the
+                   ct_dnat_in_czone  sends  the  packet through the common NAT
+                   zone (used for both DNAT and SNAT) in  connection  tracking
+                   table  to unDNAT any packet that was DNATed in the opposite
+                   direction. The packet is then automatically sent to to  the
                    next tables as if followed by next; action. The next tables
                    will see the changes in the packet caused by the connection
                    tracker.
 
-                   ct_dnat_in_czone(IP) sends the packet  through  the  common
+                   ct_dnat_in_czone(IP)  sends  the  packet through the common
                    NAT zone to change the destination IP address of the packet
-                   to the one provided inside the parentheses and commits  the
-                   connection.  The  packet  is then automatically sent to the
+                   to  the one provided inside the parentheses and commits the
+                   connection. The packet is then automatically  sent  to  the
                    next tables as if followed by next; action. The next tables
                    will see the changes in the packet caused by the connection
                    tracker.
 
               ct_snat_in_czone;
               ct_snat_in_czone(IP);
-                   ct_snat_in_czone sends the packet through  the  common  NAT
-                   zone  to  unSNAT any packet that was SNATed in the opposite
-                   direction. The packet is automatically  sent  to  the  next
-                   tables  as if followed by the next; action. The next tables
+                   ct_snat_in_czone  sends  the  packet through the common NAT
+                   zone to unSNAT any packet that was SNATed in  the  opposite
+                   direction.  The  packet  is  automatically sent to the next
+                   tables as if followed by the next; action. The next  tables
                    will see the changes in the packet caused by the connection
                    tracker.
 
-                   ct_snat_in_czone(IP)  sends  the packet\ through the common
-                   NAT zone to change the source IP address of the  packet  to
-                   the  one  provided  inside  the parenthesis and commits the
-                   connection. The packet is then automatically  sent  to  the
+                   ct_snat_in_czone(IP) sends the packet\ through  the  common
+                   NAT  zone  to change the source IP address of the packet to
+                   the one provided inside the  parenthesis  and  commits  the
+                   connection.  The  packet  is then automatically sent to the
                    next tables as if followed by next; action. The next tables
                    will see the changes in the packet caused by the connection
                    tracker.
@@ -1220,23 +1276,30 @@ Logical_Flow TABLE
               ct_clear;
                    Clears connection tracking state.
 
+              ct_commit_nat;
+                   Applies NAT and commits the connection to the CT. Automati‐
+                   cally  moves  on to the next table, as if followed by next.
+                   This is very useful for connections  that  are  in  related
+                   state  for  already existing connections and allows the NAT
+                   to be applied to them as well.
+
               clone { action; ... };
-                   Makes  a  copy  of  the packet being processed and executes
-                   each action  on  the  copy.  Actions  following  the  clone
-                   action,  if  any, apply to the original, unmodified packet.
-                   This can be used as a  way  to  ``save  and  restore’’  the
-                   packet  around  a  set  of  actions  that may modify it and
+                   Makes a copy of the packet  being  processed  and  executes
+                   each  action  on  the  copy.  Actions  following  the clone
+                   action, if any, apply to the original,  unmodified  packet.
+                   This  can  be  used  as  a  way to ``save and restore’’ the
+                   packet around a set of  actions  that  may  modify  it  and
                    should not persist.
 
               arp { action; ... };
-                   Temporarily replaces the IPv4 packet being processed by  an
-                   ARP  packet  and  executes  each  nested  action on the ARP
-                   packet. Actions following the arp action, if any, apply  to
+                   Temporarily  replaces the IPv4 packet being processed by an
+                   ARP packet and executes  each  nested  action  on  the  ARP
+                   packet.  Actions following the arp action, if any, apply to
                    the original, unmodified packet.
 
-                   The  ARP packet that this action operates on is initialized
+                   The ARP packet that this action operates on is  initialized
                    based on the IPv4 packet being processed, as follows. These
-                   are  default  values  that the nested actions will probably
+                   are default values that the nested  actions  will  probably
                    want to change:
 
                    ·      eth.src unchanged
@@ -1255,48 +1318,48 @@ Logical_Flow TABLE
 
                    ·      arp.tpa copied from ip4.dst
 
-                   The ARP packet has the same VLAN header, if any, as the  IP
+                   The  ARP packet has the same VLAN header, if any, as the IP
                    packet it replaces.
 
                    Prerequisite: ip4
 
               get_arp(P, A);
-                   Parameters:  logical port string field P, 32-bit IP address
+                   Parameters: logical port string field P, 32-bit IP  address
                    field A.
 
-                   Looks up A in P’s mac binding table. If an entry is  found,
-                   stores  its  Ethernet  address in eth.dst, otherwise stores
+                   Looks  up A in P’s mac binding table. If an entry is found,
+                   stores its Ethernet address in  eth.dst,  otherwise  stores
                    00:00:00:00:00:00 in eth.dst.
 
                    Example: get_arp(outport, ip4.dst);
 
               put_arp(P, A, E);
-                   Parameters: logical port string field P, 32-bit IP  address
+                   Parameters:  logical port string field P, 32-bit IP address
                    field A, 48-bit Ethernet address field E.
 
-                   Adds  or updates the entry for IP address A in logical port
+                   Adds or updates the entry for IP address A in logical  port
                    P’s mac binding table, setting its Ethernet address to E.
 
                    Example: put_arp(inport, arp.spa, arp.sha);
 
               R = lookup_arp(P, A, M);
-                   Parameters: logical port string field P, 32-bit IP  address
+                   Parameters:  logical port string field P, 32-bit IP address
                    field A, 48-bit MAC address field M.
 
                    Result: stored to a 1-bit subfield R.
 
-                   Looks  up  A and M in P’s mac binding table. If an entry is
+                   Looks up A and M in P’s mac binding table. If an  entry  is
                    found, stores 1 in the 1-bit subfield R, else 0.
 
                    Example: reg0[0] = lookup_arp(inport, arp.spa, arp.sha);
 
               R = lookup_arp_ip(P, A);
-                   Parameters: logical port string field P, 32-bit IP  address
+                   Parameters:  logical port string field P, 32-bit IP address
                    field A.
 
                    Result: stored to a 1-bit subfield R.
 
-                   Looks  up A in P’s mac binding table. If an entry is found,
+                   Looks up A in P’s mac binding table. If an entry is  found,
                    stores 1 in the 1-bit subfield R, else 0.
 
                    Example: reg0[0] = lookup_arp_ip(inport, arp.spa);
@@ -1304,7 +1367,7 @@ Logical_Flow TABLE
               P = get_fdb(A);
                    Parameters:48-bit MAC address field A.
 
-                   Looks up A in fdb table. If an entry is found,  stores  the
+                   Looks  up  A in fdb table. If an entry is found, stores the
                    logical port key to the out parameter P.
 
                    Example: outport = get_fdb(eth.src);
@@ -1324,20 +1387,20 @@ Logical_Flow TABLE
 
                    Result: stored to a 1-bit subfield R.
 
-                   Looks up A in fdb table. If an entry is found and  the  the
+                   Looks  up  A in fdb table. If an entry is found and the the
                    logical port key is P, P, stores 1 in the 1-bit subfield R,
                    else 0.
 
                    Example: reg0[0] = lookup_fdb(inport, eth.src);
 
               nd_ns { action; ... };
-                   Temporarily replaces the IPv6 packet being processed by  an
-                   IPv6  Neighbor Solicitation packet and executes each nested
-                   action on the IPv6 NS packet. Actions following  the  nd_ns
+                   Temporarily  replaces the IPv6 packet being processed by an
+                   IPv6 Neighbor Solicitation packet and executes each  nested
+                   action  on  the IPv6 NS packet. Actions following the nd_ns
                    action, if any, apply to the original, unmodified packet.
 
                    The IPv6 NS packet that this action operates on is initial‐
-                   ized based on the IPv6 packet being processed, as  follows.
+                   ized  based on the IPv6 packet being processed, as follows.
                    These are default values that the nested actions will prob‐
                    ably want to change:
 
@@ -1361,45 +1424,11 @@ Logical_Flow TABLE
                    Prerequisite: ip6
 
               nd_na { action; ... };
-                   Temporarily  replaces the IPv6 neighbor solicitation packet
-                   being processed by  an  IPv6  neighbor  advertisement  (NA)
-                   packet  and  executes  each nested action on the NA packet.
-                   Actions following the nd_na action, if any,  apply  to  the
+                   Temporarily replaces the IPv6 neighbor solicitation  packet
+                   being  processed  by  an  IPv6  neighbor advertisement (NA)
+                   packet and executes each nested action on  the  NA  packet.
+                   Actions  following  the  nd_na action, if any, apply to the
                    original, unmodified packet.
-
-                   The  NA  packet that this action operates on is initialized
-                   based on the IPv6 packet being processed, as follows. These
-                   are  default  values  that the nested actions will probably
-                   want to change:
-
-                   ·      eth.dst exchanged with eth.src
-
-                   ·      eth.type = 0x86dd
-
-                   ·      ip6.dst copied from ip6.src
-
-                   ·      ip6.src copied from nd.target
-
-                   ·      icmp6.type = 136 (Neighbor Advertisement)
-
-                   ·      nd.target unchanged
-
-                   ·      nd.sll = 00:00:00:00:00:00
-
-                   ·      nd.tll copied from eth.dst
-
-                   The ND packet has the same VLAN header, if any, as the IPv6
-                   packet it replaces.
-
-                   Prerequisite: nd_ns
-
-              nd_na_router { action; ... };
-                   Temporarily  replaces the IPv6 neighbor solicitation packet
-                   being processed by  an  IPv6  neighbor  advertisement  (NA)
-                   packet,  sets  ND_NSO_ROUTER  in the RSO flags and executes
-                   each nested action on the NA packet. Actions following  the
-                   nd_na_router action, if any, apply to the original, unmodi‐
-                   fied packet.
 
                    The NA packet that this action operates on  is  initialized
                    based on the IPv6 packet being processed, as follows. These
@@ -1427,21 +1456,55 @@ Logical_Flow TABLE
 
                    Prerequisite: nd_ns
 
+              nd_na_router { action; ... };
+                   Temporarily replaces the IPv6 neighbor solicitation  packet
+                   being  processed  by  an  IPv6  neighbor advertisement (NA)
+                   packet, sets ND_NSO_ROUTER in the RSO  flags  and  executes
+                   each  nested action on the NA packet. Actions following the
+                   nd_na_router action, if any, apply to the original, unmodi‐
+                   fied packet.
+
+                   The  NA  packet that this action operates on is initialized
+                   based on the IPv6 packet being processed, as follows. These
+                   are  default  values  that the nested actions will probably
+                   want to change:
+
+                   ·      eth.dst exchanged with eth.src
+
+                   ·      eth.type = 0x86dd
+
+                   ·      ip6.dst copied from ip6.src
+
+                   ·      ip6.src copied from nd.target
+
+                   ·      icmp6.type = 136 (Neighbor Advertisement)
+
+                   ·      nd.target unchanged
+
+                   ·      nd.sll = 00:00:00:00:00:00
+
+                   ·      nd.tll copied from eth.dst
+
+                   The ND packet has the same VLAN header, if any, as the IPv6
+                   packet it replaces.
+
+                   Prerequisite: nd_ns
+
               get_nd(P, A);
-                   Parameters: logical  port  string  field  P,  128-bit  IPv6
+                   Parameters:  logical  port  string  field  P,  128-bit IPv6
                    address field A.
 
-                   Looks  up A in P’s mac binding table. If an entry is found,
-                   stores its Ethernet address in  eth.dst,  otherwise  stores
+                   Looks up A in P’s mac binding table. If an entry is  found,
+                   stores  its  Ethernet  address in eth.dst, otherwise stores
                    00:00:00:00:00:00 in eth.dst.
 
                    Example: get_nd(outport, ip6.dst);
 
               put_nd(P, A, E);
-                   Parameters:  logical  port  string  field  P,  128-bit IPv6
+                   Parameters: logical  port  string  field  P,  128-bit  IPv6
                    address field A, 48-bit Ethernet address field E.
 
-                   Adds or updates the entry for IPv6  address  A  in  logical
+                   Adds  or  updates  the  entry for IPv6 address A in logical
                    port P’s mac binding table, setting its Ethernet address to
                    E.
 
@@ -1453,7 +1516,7 @@ Logical_Flow TABLE
 
                    Result: stored to a 1-bit subfield R.
 
-                   Looks  up  A and M in P’s mac binding table. If an entry is
+                   Looks up A and M in P’s mac binding table. If an  entry  is
                    found, stores 1 in the 1-bit subfield R, else 0.
 
                    Example: reg0[0] = lookup_nd(inport, ip6.src, eth.src);
@@ -1464,7 +1527,7 @@ Logical_Flow TABLE
 
                    Result: stored to a 1-bit subfield R.
 
-                   Looks  up A in P’s mac binding table. If an entry is found,
+                   Looks up A in P’s mac binding table. If an entry is  found,
                    stores 1 in the 1-bit subfield R, else 0.
 
                    Example: reg0[0] = lookup_nd_ip(inport, ip6.src);
@@ -1477,17 +1540,17 @@ Logical_Flow TABLE
 
                    Valid only in the ingress pipeline.
 
-                   When  this  action  is  applied  to  a  DHCP request packet
+                   When this action  is  applied  to  a  DHCP  request  packet
                    (DHCPDISCOVER or DHCPREQUEST), it changes the packet into a
-                   DHCP  reply  (DHCPOFFER or DHCPACK, respectively), replaces
-                   the options by those specified as parameters, and stores  1
+                   DHCP reply (DHCPOFFER or DHCPACK,  respectively),  replaces
+                   the  options by those specified as parameters, and stores 1
                    in R.
 
-                   When  this action is applied to a non-DHCP packet or a DHCP
-                   packet that is not DHCPDISCOVER or DHCPREQUEST,  it  leaves
+                   When this action is applied to a non-DHCP packet or a  DHCP
+                   packet  that  is not DHCPDISCOVER or DHCPREQUEST, it leaves
                    the packet unchanged and stores 0 in R.
 
-                   The  contents  of  the  DHCP_Option  table control the DHCP
+                   The contents of the  DHCP_Option  table  control  the  DHCP
                    option names and values that this action supports.
 
                    Example: reg0[0] = put_dhcp_opts(offerip = 10.0.0.2, router
@@ -1501,58 +1564,74 @@ Logical_Flow TABLE
 
                    Valid only in the ingress pipeline.
 
-                   When this action is applied to a DHCPv6 request packet,  it
-                   changes  the  packet  into  a  DHCPv6  reply,  replaces the
-                   options by those specified as parameters, and stores  1  in
+                   When  this action is applied to a DHCPv6 request packet, it
+                   changes the  packet  into  a  DHCPv6  reply,  replaces  the
+                   options  by  those specified as parameters, and stores 1 in
                    R.
 
-                   When  this  action  is applied to a non-DHCPv6 packet or an
-                   invalid DHCPv6  request  packet  ,  it  leaves  the  packet
+                   When this action is applied to a non-DHCPv6  packet  or  an
+                   invalid  DHCPv6  request  packet  ,  it  leaves  the packet
                    unchanged and stores 0 in R.
 
                    The contents of the DHCPv6_Options table control the DHCPv6
                    option names and values that this action supports.
 
-                   Example:  reg0[3]  =  put_dhcpv6_opts(ia_addr  =   aef0::4,
-                   server_id                =               00:00:00:00:10:02,
+                   Example:   reg0[3]  =  put_dhcpv6_opts(ia_addr  =  aef0::4,
+                   server_id               =                00:00:00:00:10:02,
                    dns_server={ae70::1,ae70::2});
 
               set_queue(queue_number);
-                   Parameters: Queue number queue_number, in the  range  0  to
+                   Parameters:  Queue  number  queue_number, in the range 0 to
                    61440.
 
-                   This  is  a  logical  equivalent  of the OpenFlow set_queue
+                   This is a logical  equivalent  of  the  OpenFlow  set_queue
                    action. It affects packets that egress a hypervisor through
-                   a  physical interface. For nonzero queue_number, it config‐
-                   ures packet queuing to match the  settings  configured  for
-                   the   Port_Binding   with  options:qdisc_queue_id  matching
-                   queue_number. When queue_number is zero, it resets  queuing
+                   a physical interface. For nonzero queue_number, it  config‐
+                   ures  packet  queuing  to match the settings configured for
+                   the  Port_Binding  with   options:qdisc_queue_id   matching
+                   queue_number.  When queue_number is zero, it resets queuing
                    to the default strategy.
 
                    Example: set_queue(10);
 
               ct_lb;
-              ct_lb(ip[:port]...);
-                   With one or more arguments, ct_lb commits the packet to the
-                   connection tracking table and DNATs the  packet’s  destina‐
-                   tion  IP  address (and port) to the IP address or addresses
-                   (and optional ports) specified in the string.  If  multiple
+              ct_lb(backends=ip[:port][,...][;
+              hash_fields=field1,field2,...][; ct_flag]);
+                   With  arguments, ct_lb commits the packet to the connection
+                   tracking  table  and  DNATs  the  packet’s  destination  IP
+                   address  (and  port)  to  the  IP address or addresses (and
+                   optional ports) specified  in  the  backends.  If  multiple
                    comma-separated  IP  addresses are specified, each is given
-                   equal weight for picking the DNAT address. Processing auto‐
-                   matically  moves  on  to  the  next table, as if next; were
-                   specified, and later tables act on the packet  as  modified
-                   by  the  connection  tracker.  Connection tracking state is
-                   scoped by the logical port when the action  is  used  in  a
-                   flow  for a logical switch, so overlapping addresses may be
-                   used. Connection tracking state is scoped  by  the  logical
-                   topology when the action is used in a flow for a router.
+                   equal weight for picking  the  DNAT  address.  By  default,
+                   dp_hash is used as the OpenFlow group selection method, but
+                   if hash_fields is specified, hash is used as the  selection
+                   method,  and the fields listed are used as the hash fields.
+                   The  ct_flag  field  represents  one  of  supported   flag:
+                   skip_snat  or  force_snat,  this  flag  will  be  stored in
+                   ct_label register.
 
                    Without arguments, ct_lb sends the packet to the connection
                    tracking table to NAT the packets. If the packet is part of
-                   an  established connection that was previously committed to
-                   the connection tracker via ct_lb(...),  it  will  automati‐
+                   an established connection that was previously committed  to
+                   the  connection  tracker  via ct_lb(...), it will automati‐
                    cally get DNATed to the same IP address as the first packet
                    in that connection.
+
+                   Processing  automatically moves on to the next table, as if
+                   next; were specified, and later tables act on the packet as
+                   modified  by  the  connection  tracker. Connection tracking
+                   state is scoped by the logical port when the action is used
+                   in  a  flow  for a logical switch, so overlapping addresses
+                   may be used. Connection tracking state  is  scoped  by  the
+                   logical  topology  when  the action is used in a flow for a
+                   router.
+
+              ct_lb_mark;
+              ct_lb_mark(backends=ip[:port][,...][;
+              hash_fields=field1,field2,...][; ct_flag]);
+                   Same  as  ct_lb,  except that it internally uses ct_mark to
+                   store the NAT flag, while ct_lb uses ct_label for the  same
+                   purpose.
 
               R = dns_lookup();
                    Parameters: No parameters.
@@ -1561,18 +1640,18 @@ Logical_Flow TABLE
 
                    Valid only in the ingress pipeline.
 
-                   When this action is applied to a valid DNS request  (a  UDP
-                   packet  typically  directed  to  port  53),  it attempts to
-                   resolve the query using the contents of the DNS  table.  If
-                   it  is  successful,  it changes the packet into a DNS reply
-                   and stores 1 in R. If the action is applied  to  a  non-DNS
-                   packet,  an  invalid  DNS  request  packet,  or a valid DNS
-                   request for which the DNS table does not supply an  answer,
+                   When  this  action is applied to a valid DNS request (a UDP
+                   packet typically directed  to  port  53),  it  attempts  to
+                   resolve  the  query using the contents of the DNS table. If
+                   it is successful, it changes the packet into  a  DNS  reply
+                   and  stores  1  in R. If the action is applied to a non-DNS
+                   packet, an invalid DNS  request  packet,  or  a  valid  DNS
+                   request  for which the DNS table does not supply an answer,
                    it leaves the packet unchanged and stores 0 in R.
 
-                   Regardless  of success, the action does not make any of the
+                   Regardless of success, the action does not make any of  the
                    changes to the flow that are necessary to direct the packet
-                   back  to  the requester. The logical pipeline can implement
+                   back to the requester. The logical pipeline  can  implement
                    this behavior with matches and actions in later tables.
 
                    Example: reg0[3] = dns_lookup();
@@ -1580,21 +1659,21 @@ Logical_Flow TABLE
                    Prerequisite: udp
 
               R = put_nd_ra_opts(D1 = V1, D2 = V2, ..., Dn = Vn);
-                   Parameters: The  following  IPv6  ND  Router  Advertisement
+                   Parameters:  The  following  IPv6  ND  Router Advertisement
                    option/value pairs as defined in RFC 4861.
 
                    ·      addr_mode
 
                           Mandatory parameter which specifies the address mode
-                          flag to be set in the RA  flag  options  field.  The
-                          value  of  this option is a string and the following
-                          values can be defined -  "slaac",  "dhcpv6_stateful"
+                          flag  to  be  set  in the RA flag options field. The
+                          value of this option is a string and  the  following
+                          values  can  be defined - "slaac", "dhcpv6_stateful"
                           and "dhcpv6_stateless".
 
                    ·      slla
 
-                          Mandatory  parameter  which specifies the link-layer
-                          address of  the  interface  from  which  the  Router
+                          Mandatory parameter which specifies  the  link-layer
+                          address  of  the  interface  from  which  the Router
                           Advertisement is sent.
 
                    ·      mtu
@@ -1603,23 +1682,23 @@ Logical_Flow TABLE
 
                    ·      prefix
 
-                          Optional  parameter which should be specified if the
+                          Optional parameter which should be specified if  the
                           addr_mode  is  "slaac"  or  "dhcpv6_stateless".  The
-                          value  should  be  an IPv6 prefix which will be used
-                          for  stateless  IPv6  address  configuration.   This
+                          value should be an IPv6 prefix which  will  be  used
+                          for   stateless  IPv6  address  configuration.  This
                           option can be defined multiple times.
 
                    Result: stored to a 1-bit subfield R.
 
                    Valid only in the ingress pipeline.
 
-                   When  this action is applied to an IPv6 Router solicitation
-                   request packet, it changes the packet into an  IPv6  Router
-                   Advertisement  reply  and adds the options specified in the
+                   When this action is applied to an IPv6 Router  solicitation
+                   request  packet,  it changes the packet into an IPv6 Router
+                   Advertisement reply and adds the options specified  in  the
                    parameters, and stores 1 in R.
 
-                   When this action is applied to a non-IPv6 Router  solicita‐
-                   tion  packet  or an invalid IPv6 request packet , it leaves
+                   When  this action is applied to a non-IPv6 Router solicita‐
+                   tion packet or an invalid IPv6 request packet ,  it  leaves
                    the packet unchanged and stores 0 in R.
 
                    Example: reg0[3] = put_nd_ra_opts(addr_mode = "slaac", slla
@@ -1627,7 +1706,7 @@ Logical_Flow TABLE
 
               set_meter(rate);
               set_meter(rate, burst);
-                   Parameters:  rate  limit int field rate in kbps, burst rate
+                   Parameters: rate limit int field rate in kbps,  burst  rate
                    limits int field burst in kbps.
 
                    This action sets the rate limit for a flow.
@@ -1639,68 +1718,68 @@ Logical_Flow TABLE
 
                    Result: stored to a 1-bit subfield R.
 
-                   This   is   a   logical   equivalent   of   the    OpenFlow
-                   check_pkt_larger  action.  If the packet is larger than the
+                   This    is   a   logical   equivalent   of   the   OpenFlow
+                   check_pkt_larger action. If the packet is larger  than  the
                    length specified in L, it stores 1 in the subfield R.
 
                    Example: reg0[6] = check_pkt_larger(1000);
 
               log(key=value, ...);
-                     Causes ovn-controller to log the packet  on  the  chassis
+                     Causes  ovn-controller  to  log the packet on the chassis
                      that processes it. Packet logging currently uses the same
                      logging mechanism as other Open vSwitch and OVN messages,
-                     which  means  that  whether and where log messages appear
-                     depends on the local logging configuration  that  can  be
+                     which means that whether and where  log  messages  appear
+                     depends  on  the  local logging configuration that can be
                      configured with ovs-appctl, etc.
 
-                     The  log  action takes zero or more of the following key-
+                     The log action takes zero or more of the  following  key-
                      value pair arguments that control what is logged:
 
                      name=string
-                            An optional name for the ACL. The string  is  cur‐
+                            An  optional  name for the ACL. The string is cur‐
                             rently limited to 64 bytes.
 
                      severity=level
-                            Indicates  the severity of the event. The level is
-                            one of following  (from  more  to  less  serious):
-                            alert,  warning,  notice,  info,  or  debug.  If a
+                            Indicates the severity of the event. The level  is
+                            one  of  following  (from  more  to less serious):
+                            alert, warning,  notice,  info,  or  debug.  If  a
                             severity is not provided, the default is info.
 
                      verdict=value
-                            The verdict for packets  matching  the  flow.  The
+                            The  verdict  for  packets  matching the flow. The
                             value must be one of allow, deny, or reject.
 
                      meter=string
-                            An  optional  rate-limiting meter to be applied to
+                            An optional rate-limiting meter to be  applied  to
                             the logs. The string should reference a name entry
-                            from  the  Meter table. The only meter action that
+                            from the Meter table. The only meter  action  that
                             is appropriate is drop.
 
               fwd_group(liveness=bool, childports=port, ...);
-                     Parameters: optional  liveness,  either  true  or  false,
-                     defaulting  to  false; childports, a comma-delimited list
+                     Parameters:  optional  liveness,  either  true  or false,
+                     defaulting to false; childports, a  comma-delimited  list
                      of strings denoting logical ports to load balance across.
 
                      Load balance traffic to one or more child ports in a log‐
                      ical switch. ovn-controller translates the fwd_group into
                      an OpenFlow group with one bucket for each child port. If
                      liveness=true is specified, it also integrates the bucket
-                     selection with BFD status on the tunnel interface  corre‐
+                     selection  with BFD status on the tunnel interface corre‐
                      sponding to child port.
 
                      Example: fwd_group(liveness=true, childports="p1", "p2");
 
               icmp4 { action; ... };
               icmp4_error { action; ... };
-                   Temporarily  replaces the IPv4 packet being processed by an
+                   Temporarily replaces the IPv4 packet being processed by  an
                    ICMPv4 packet and executes each nested action on the ICMPv4
-                   packet.  Actions  following these actions, if any, apply to
+                   packet. Actions following these actions, if any,  apply  to
                    the original, unmodified packet.
 
-                   The ICMPv4 packet that these actions operates  on  is  ini‐
-                   tialized  based on the IPv4 packet being processed, as fol‐
+                   The  ICMPv4  packet  that these actions operates on is ini‐
+                   tialized based on the IPv4 packet being processed, as  fol‐
                    lows. These are default values that the nested actions will
-                   probably  want  to  change.  Ethernet  and  IPv4 fields not
+                   probably want to  change.  Ethernet  and  IPv4  fields  not
                    listed here are not changed:
 
                    ·      ip.proto = 1 (ICMPv4)
@@ -1713,25 +1792,25 @@ Logical_Flow TABLE
 
                    ·      icmp4.code = 1 (host unreachable)
 
-                   icmp4_error action is expected to be used  to  generate  an
-                   ICMPv4  packet  in  response  to  an  error  in original IP
-                   packet. When this action generates the  ICMPv4  packet,  it
-                   also  copies  the original IP datagram following the ICMPv4
+                   icmp4_error  action  is  expected to be used to generate an
+                   ICMPv4 packet in  response  to  an  error  in  original  IP
+                   packet.  When  this  action generates the ICMPv4 packet, it
+                   also copies the original IP datagram following  the  ICMPv4
                    header as per RFC 1122: 3.2.2.
 
                    Prerequisite: ip4
 
               icmp6 { action; ... };
               icmp6_error { action; ... };
-                   Temporarily replaces the IPv6 packet being processed by  an
+                   Temporarily  replaces the IPv6 packet being processed by an
                    ICMPv6 packet and executes each nested action on the ICMPv6
-                   packet. Actions following the icmp6 action, if  any,  apply
+                   packet.  Actions  following the icmp6 action, if any, apply
                    to the original, unmodified packet.
 
-                   The  ICMPv6 packet that this action operates on is initial‐
-                   ized based on the IPv6 packet being processed, as  follows.
+                   The ICMPv6 packet that this action operates on is  initial‐
+                   ized  based on the IPv6 packet being processed, as follows.
                    These are default values that the nested actions will prob‐
-                   ably want to change. Ethernet and IPv6  fields  not  listed
+                   ably  want  to  change. Ethernet and IPv6 fields not listed
                    here are not changed:
 
                    ·      ip.proto = 58 (ICMPv6)
@@ -1742,14 +1821,14 @@ Logical_Flow TABLE
 
                    ·      icmp6.code = 1 (administratively prohibited)
 
-                   icmp6_error  action  is  expected to be used to generate an
-                   ICMPv6 packet in response to  an  error  in  original  IPv6
+                   icmp6_error action is expected to be used  to  generate  an
+                   ICMPv6  packet  in  response  to  an error in original IPv6
                    packet.
 
                    Prerequisite: ip6
 
               tcp_reset;
-                   This  action transforms the current TCP packet according to
+                   This action transforms the current TCP packet according  to
                    the following pseudocode:
 
                    if (tcp.ack) {
@@ -1760,64 +1839,64 @@ Logical_Flow TABLE
                    }
                    tcp.flags = RST;
 
-                   Then, the action drops all TCP options  and  payload  data,
+                   Then,  the  action  drops all TCP options and payload data,
                    and updates the TCP checksum. IP ttl is set to 255.
 
                    Prerequisite: tcp
 
               reject { action; ... };
-                   If  the  original  packet  is  IPv4  or IPv6 TCP packet, it
-                   replaces it with IPv4 or IPv6 TCP RST packet  and  executes
-                   the  inner actions. Otherwise it replaces it with an ICMPv4
+                   If the original packet is  IPv4  or  IPv6  TCP  packet,  it
+                   replaces  it  with IPv4 or IPv6 TCP RST packet and executes
+                   the inner actions. Otherwise it replaces it with an  ICMPv4
                    or ICMPv6 packet and executes the inner actions.
 
-                   The inner actions should not attempt  to  swap  eth  source
-                   with  eth  destination and IP source with IP destination as
+                   The  inner  actions  should  not attempt to swap eth source
+                   with eth destination and IP source with IP  destination  as
                    this action implicitly does that.
 
               trigger_event;
-                   This action is used to allow  ovs-vswitchd  to  report  CMS
-                   related  events  writing them in Controller_Event table. It
-                   is possible to associate a meter to a each event  in  order
+                   This  action  is  used  to allow ovs-vswitchd to report CMS
+                   related events writing them in Controller_Event  table.  It
+                   is  possible  to associate a meter to a each event in order
                    to not overload pinctrl thread under heavy load; each meter
                    is identified though a defined naming convention. Supported
                    events:
 
-                   ·      empty_lb_backends.   This   event  is  raised  if  a
-                          received packet is destined for a load balancer  VIP
-                          that  has  no  configured  backend destinations. For
-                          this event, the event info includes  the  load  bal‐
+                   ·      empty_lb_backends.  This  event  is  raised   if   a
+                          received  packet is destined for a load balancer VIP
+                          that has no  configured  backend  destinations.  For
+                          this  event,  the  event info includes the load bal‐
                           ancer VIP, the load balancer UUID, and the transport
                           protocol. Associated meter: event-elb
 
               igmp;
-                   This action sends the packet to ovn-controller  for  multi‐
+                   This  action  sends the packet to ovn-controller for multi‐
                    cast snooping.
 
                    Prerequisite: igmp
 
               bind_vport(V, P);
-                   Parameters:  logical  port  string field V of type virtual,
+                   Parameters: logical port string field V  of  type  virtual,
                    logical port string field P.
 
-                   Binds the virtual logical port V and sets the chassis  col‐
-                   umn  and  virtual_parent  of  the  table Port_Binding. vir‐
+                   Binds  the virtual logical port V and sets the chassis col‐
+                   umn and virtual_parent  of  the  table  Port_Binding.  vir‐
                    tual_parent is set to P.
 
               handle_svc_check(P);
                    Parameters: logical port string field P.
 
-                   Handles the service monitor reply received from the VIF  of
-                   the  logical  port P. ovn-controller periodically sends out
-                   the service monitor packets for the services configured  in
-                   the  Service_Monitor table and this action updates the sta‐
+                   Handles  the service monitor reply received from the VIF of
+                   the logical port P. ovn-controller periodically  sends  out
+                   the  service monitor packets for the services configured in
+                   the Service_Monitor table and this action updates the  sta‐
                    tus of those services.
 
                    Example: handle_svc_check(inport);
 
               handle_dhcpv6_reply;
                    Handle DHCPv6 prefix delegation advertisements/replies from
-                   a  IPv6 delegation server. ovn-controller will add an entry
+                   a IPv6 delegation server. ovn-controller will add an  entry
                    ipv6_ra_pd_list  in  the  options  table  for  each  prefix
                    received from the delegation server
 
@@ -1827,72 +1906,183 @@ Logical_Flow TABLE
 
                    Result: stored to a logical field or subfield R.
 
-                   Select from a list of integers N1, N2..., each  within  the
+                   Select  from  a list of integers N1, N2..., each within the
                    range 0 ~ 65535, and store the selected one in the field R.
-                   There must be 2 or  more  integers  listed,  each  with  an
-                   optional  weight,  which is an integer within the range 1 ~
-                   65535. If weight is not specified, it defaults to 100.  The
-                   selection  method  is  based  on the 5-tuple hash of packet
+                   There  must  be  2  or  more  integers listed, each with an
+                   optional weight, which is an integer within the range  1  ~
+                   65535.  If weight is not specified, it defaults to 100. The
+                   selection method is based on the  5-tuple  hash  of  packet
                    header.
 
-                   Processing automatically moves on to the next table, as  if
-                   next;  were specified. The select action must be put as the
-                   last action of the logical flow  when  there  are  multiple
+                   Processing  automatically moves on to the next table, as if
+                   next; were specified. The select action must be put as  the
+                   last  action  of  the  logical flow when there are multiple
                    actions (actions put after select will not take effect).
 
                    Example: reg8[16..31] = select(1=20, 2=30, 3=50);
 
               handle_dhcpv6_reply;
                    This action is used to parse DHCPv6 replies from IPv6 Dele‐
-                   gation Router and  managed  IPv6  Prefix  delegation  state
+                   gation  Router  and  managed  IPv6  Prefix delegation state
                    machine
 
               R = chk_lb_hairpin();
-                   This  action  checks  if the packet under consideration was
+                   This action checks if the packet  under  consideration  was
                    destined to a load balancer VIP and it is hairpinned, i.e.,
-                   after  load balancing the destination IP matches the source
-                   IP. If it is so, then the 1-bit destination register  R  is
+                   after load balancing the destination IP matches the  source
+                   IP.  If  it is so, then the 1-bit destination register R is
                    set to 1.
 
               R = chk_lb_hairpin_reply();
-                   This  action  checks  if  the packet under consideration is
-                   from one of the backend IP of a load balancer VIP  and  the
-                   destination  IP is the load balancer VIP. If it is so, then
+                   This action checks if the  packet  under  consideration  is
+                   from  one  of the backend IP of a load balancer VIP and the
+                   destination IP is the load balancer VIP. If it is so,  then
                    the 1-bit destination register R is set to 1.
 
               R = ct_snat_to_vip;
-                   This action sends the  packet  through  the  SNAT  zone  to
+                   This  action  sends  the  packet  through  the SNAT zone to
                    change the source IP address of the packet to the load bal‐
-                   ancer VIP if the original destination IP was load  balancer
-                   VIP  and  commits  the connection. This action applies suc‐
+                   ancer  VIP if the original destination IP was load balancer
+                   VIP and commits the connection. This  action  applies  suc‐
                    cessfully only for the hairpinned traffic i.e if the action
-                   chk_lb_hairpin  returned  success. This action doesn’t take
+                   chk_lb_hairpin returned success. This action  doesn’t  take
                    any arguments and it determines the SNAT IP internally. The
-                   packet  is  not  automatically  sent to the next table. The
-                   caller has to execute the  next;  action  explicitly  after
+                   packet is not automatically sent to  the  next  table.  The
+                   caller  has  to  execute  the next; action explicitly after
                    this action to advance the packet to the next stage.
+
+              R = check_in_port_sec();
+                   This action checks if the packet under consideration passes
+                   the  inport  port  security checks. If the packet fails the
+                   port security checks, then 1 is stored in  the  destination
+                   register  R.  Else 0 is stored. The port security values to
+                   check are retrieved from the the inport logical port.
+
+                   This action should be used in the  ingress  logical  switch
+                   pipeline.
+
+                   Example: reg8[0..7] = check_in_port_sec();
+
+              R = check_out_port_sec();
+                   This action checks if the packet under consideration passes
+                   the outport port security checks. If the packet  fails  the
+                   port  security  checks, then 1 is stored in the destination
+                   register R. Else 0 is stored. The port security  values  to
+                   check are retrieved from the the outport logical port.
+
+                   This  action  should  be  used in the egress logical switch
+                   pipeline.
+
+                   Example: reg8[0..7] = check_out_port_sec();
+
+              commit_ecmp_nh(ipv6);
+                   Parameters: IPv4/IPv6 traffic.
+
+                   This action translates to an openflow "learn"  action  that
+                   inserts two new flows in tables 76 and 77.
+
+                   ·      Match  on  the the 5-tuple and the expected next-hop
+                          mac address in  table  76:  nw_src=ip0,  nw_dst=ip1,
+                          ip_proto,tp_src=l4_port0,
+                          tp_dst=l4_port1,dl_src=ethaddr and set reg9[5].
+
+                   ·      Match  on  the  5-tuple  in  table  77:  nw_src=ip1,
+                          nw_dst=ip0,        ip_proto,        tp_src=l4_port1,
+                          tp_dst=l4_port0 and set reg9[5] to 1
+
+                   This action is applied if the packet arrives via ECMP route
+                   or if it is routed via an ECMP route
+
+              R = check_ecmp_nh_mac();
+                   This  action  checks  if  the  packet  under  consideration
+                   matches any flow in table 76. If it is so, then  the  1-bit
+                   destination register R is set to 1.
+
+              R = check_ecmp_nh();
+                   This  action  checks  if  the  packet  under  consideration
+                   matches the any flow in table 77. If it  is  so,  then  the
+                   1-bit destination register R is set to 1.
+
+                   commit_lb_aff(vip,  backend,  proto,  timeout); Parameters:
+                   load-balancer virtual ip:port  vip,  load-balancer  backend
+                   ip:port  backend,  load-balancer  protocol  proto, affinity
+                   timeout timeout.
+
+                   This action translates to an openflow "learn"  action  that
+                   inserts a new flow in table 78.
+
+                   ·      Match  on the 4-tuple in table 78: nw_src=ip client,
+                          nw_dst=vip ip, ip_proto,  tp_dst=vip  port  and  set
+                          reg9[6]  to  1, reg4 and reg8 to backend ip and port
+                          respectively. For IPv6 register xxreg1  is  used  to
+                          store the backend ip.
+
+                   This  action  is  applied for new connections received by a
+                   specific load-balacer with affinity timeout configured.
+
+              R = chk_lb_aff();
+                   This  action  checks  if  the  packet  under  consideration
+                   matches  any  flow in table 78. If it is so, then the 1-bit
+                   destination register R is set to 1.
+
+              sample(probability=packets, ...)
+                   This action causes the matched traffic to be sampled  using
+                   IPFIX  protocol.  More information about how per-flow IPFIX
+                   sampling works in OVS can be found  in  ovs-actions(7)  and
+                   ovs-vswitchd.conf.db(5).
+
+                   In  order  to reliably identify each sampled packet when it
+                   is received by the IPFIX collector, this  action  sets  the
+                   content  of  the ObservationDomainID and ObservationPointID
+                   IPFIX fields (see argument description below).
+
+                   The following key-value arguments are supported:
+
+                   probability=packets
+                          The number of sampled packets out of 65535. It  must
+                          be greater or equal to 1.
+
+                   collector_set=id
+                          The unsigned 32-bit integer identifier of the sample
+                          collector to send sampled packets to. It must  match
+                          the  value  configured  in  the  Flow_Sample_Collec‐
+                          tor_Set Table in OVS. Defaults to 0.
+
+                   obs_domain=id
+                          An unsigned 8-bit integer that identifies  the  sam‐
+                          pling  application.  It will be placed in the 8 most
+                          significant bits of the ObservationDomainID field of
+                          IPFIX  samples. The 24 less significant bits will be
+                          automatically  filled  in  with  the  datapath  key.
+                          Defaults to 0.
+
+                   obs_point=id
+                          An  unsigned  32-bit integer to be used as Obsserva‐
+                          tionPointID or the string @cookie to  indicate  that
+                          the  first  32 bits of the Logical_Flow’s UUID shall
+                          be used instead.
 
        tags: map of string-string pairs
               Key-value pairs that provide additional information to help ovn-
-              controller processing the logical flow. Below are the tags  used
+              controller  processing the logical flow. Below are the tags used
               by ovn-controller.
 
               in_out_port
                      In the logical flow’s "match" column, if a logical port P
-                     is compared with "inport" and the logical flow  is  on  a
+                     is  compared  with  "inport" and the logical flow is on a
                      logical switch ingress pipeline, or if P is compared with
-                     "outport" and the logical flow is  on  a  logical  switch
-                     egress  pipeline,  and  the  expression  is combined with
-                     other expressions (if any) using the  operator  &&,  then
-                     the  port  P should be added as the value in this tag. If
-                     there are multiple logical ports meeting  this  criteria,
+                     "outport"  and  the  logical  flow is on a logical switch
+                     egress pipeline, and  the  expression  is  combined  with
+                     other  expressions  (if  any) using the operator &&, then
+                     the port P should be added as the value in this  tag.  If
+                     there  are  multiple logical ports meeting this criteria,
                      one of them can be added. ovn-controller uses this infor‐
-                     mation to skip parsing flows that are not needed  on  the
-                     chassis.  Failing  to add the tag will affect efficiency,
+                     mation  to  skip parsing flows that are not needed on the
+                     chassis. Failing to add the tag will  affect  efficiency,
                      while adding wrong value will affect correctness.
 
        controller_meter: optional string
-              The name of the meter in table Meter to be used for all  packets
+              The  name of the meter in table Meter to be used for all packets
               that the logical flow might send to ovn-controller.
 
        external_ids : stage-name: optional string
@@ -1900,26 +2090,26 @@ Logical_Flow TABLE
 
        external_ids : stage-hint: optional string, containing an uuid
               UUID of a OVN_Northbound record that caused this logical flow to
-              be created. Currently used only for attribute of  logical  flows
+              be  created.  Currently used only for attribute of logical flows
               to northbound ACL records.
 
        external_ids : source: optional string
-              Source  file and line number of the code that added this flow to
+              Source file and line number of the code that added this flow  to
               the pipeline.
 
      Common Columns:
 
-       The overall purpose of these columns is described under Common  Columns
+       The  overall purpose of these columns is described under Common Columns
        at the beginning of this document.
 
        external_ids: map of string-string pairs
 
 Logical_DP_Group TABLE
-       Each  row  in this table represents a group of logical datapaths refer‐
+       Each row in this table represents a group of logical  datapaths  refer‐
        enced by the logical_dp_group column in the Logical_Flow table.
 
    Summary:
-       datapaths                     set of weak reference  to  Datapath_Bind‐
+       datapaths                     set  of  weak reference to Datapath_Bind‐
                                      ings
 
    Details:
@@ -1929,11 +2119,11 @@ Logical_DP_Group TABLE
 Multicast_Group TABLE
        The rows in this table define multicast groups of logical ports. Multi‐
        cast groups allow a single packet transmitted over a tunnel to a hyper‐
-       visor  to  be  delivered to multiple VMs on that hypervisor, which uses
+       visor to be delivered to multiple VMs on that  hypervisor,  which  uses
        bandwidth more efficiently.
 
-       Each row in this table defines a logical multicast group numbered  tun‐
-       nel_key  within  datapath,  whose logical ports are listed in the ports
+       Each  row in this table defines a logical multicast group numbered tun‐
+       nel_key within datapath, whose logical ports are listed  in  the  ports
        column.
 
    Summary:
@@ -1947,30 +2137,66 @@ Multicast_Group TABLE
               The logical datapath in which the multicast group resides.
 
        tunnel_key: integer, in range 32,768 to 65,535
-              The value used to designate this logical egress port  in  tunnel
-              encapsulations.  An index forces the key to be unique within the
-              datapath. The unusual range ensures that multicast group IDs  do
+              The  value  used to designate this logical egress port in tunnel
+              encapsulations. An index forces the key to be unique within  the
+              datapath.  The unusual range ensures that multicast group IDs do
               not overlap with logical port IDs.
 
        name: string
-              The  logical multicast group’s name. An index forces the name to
-              be unique within the datapath.  Logical  flows  in  the  ingress
-              pipeline  may output to the group just as for individual logical
+              The logical multicast group’s name. An index forces the name  to
+              be  unique  within  the  datapath.  Logical flows in the ingress
+              pipeline may output to the group just as for individual  logical
               ports, by assigning the group’s name to outport and executing an
               output action.
 
-              Multicast  group  names  and  logical  port names share a single
-              namespace and thus should not overlap (but the  database  schema
+              Multicast group names and logical  port  names  share  a  single
+              namespace  and  thus should not overlap (but the database schema
               cannot enforce this). To try to avoid conflicts, ovn-northd uses
               names that begin with _MC_.
 
        ports: set of weak reference to Port_Bindings
-              The logical ports included in the multicast group. All of  these
+              The  logical ports included in the multicast group. All of these
               ports must be in the datapath logical datapath (but the database
               schema cannot enforce this).
 
+Mirror TABLE
+       Each  row  in  this table represents a mirror that can be used for port
+       mirroring. These mirrors are referenced by the mirror_rules  column  in
+       the Port_Binding table.
+
+   Summary:
+       name                          string (must be unique within table)
+       filter                        string, either from-lport or to-lport
+       sink                          string
+       type                          string, either erspan or gre
+       index                         integer
+       external_ids                  map of string-string pairs
+
+   Details:
+       name: string (must be unique within table)
+              Represents the name of the mirror.
+
+       filter: string, either from-lport or to-lport
+              The  value  of  this  field represents selection criteria of the
+              mirror.
+
+       sink: string
+              The value of this field represents the destination/sink  of  the
+              mirror.
+
+       type: string, either erspan or gre
+              The  value  of this field represents the type of the tunnel used
+              for sending the mirrored packets
+
+       index: integer
+              The value of this field represents the key/idx depending on  the
+              tunnel type configured
+
+       external_ids: map of string-string pairs
+              See External IDs at the beginning of this document.
+
 Meter TABLE
-       Each row in this table represents a meter that can be used for  QoS  or
+       Each  row  in this table represents a meter that can be used for QoS or
        rate-limiting.
 
    Summary:
@@ -1982,23 +2208,23 @@ Meter TABLE
        name: string (must be unique within table)
               A name for this meter.
 
-              Names  that  begin  with "__" (two underscores) are reserved for
+              Names that begin with "__" (two underscores)  are  reserved  for
               OVN internal use and should not be added manually.
 
        unit: string, either kbps or pktps
-              The unit for rate and burst_rate parameters in the bands  entry.
-              kbps  specifies kilobits per second, and pktps specifies packets
+              The  unit for rate and burst_rate parameters in the bands entry.
+              kbps specifies kilobits per second, and pktps specifies  packets
               per second.
 
        bands: set of 1 or more Meter_Bands
               The bands associated with this meter. Each band specifies a rate
-              above  which  the band is to take the action action. If multiple
-              bands’ rates are exceeded, then the band with the  highest  rate
+              above which the band is to take the action action.  If  multiple
+              bands’  rates  are exceeded, then the band with the highest rate
               among the exceeded bands is selected.
 
 Meter_Band TABLE
        Each row in this table represents a meter band which specifies the rate
-       above which the configured action should be applied.  These  bands  are
+       above  which  the  configured action should be applied. These bands are
        referenced by the bands column in the Meter table.
 
    Summary:
@@ -2013,30 +2239,30 @@ Meter_Band TABLE
 
        rate: integer, in range 1 to 4,294,967,295
               The rate limit for this band, in kilobits per second or bits per
-              second,  depending on whether the parent Meter entry’s unit col‐
+              second, depending on whether the parent Meter entry’s unit  col‐
               umn specified kbps or pktps.
 
        burst_size: integer, in range 0 to 4,294,967,295
-              The maximum burst allowed for the band in kilobits  or  packets,
-              depending  on  whether  kbps or pktps was selected in the parent
-              Meter entry’s unit column. If the size is zero,  the  switch  is
+              The  maximum  burst allowed for the band in kilobits or packets,
+              depending on whether kbps or pktps was selected  in  the  parent
+              Meter  entry’s  unit  column. If the size is zero, the switch is
               free to select some reasonable value depending on its configura‐
               tion.
 
 Datapath_Binding TABLE
-       Each row in this table represents a logical datapath, which  implements
+       Each  row in this table represents a logical datapath, which implements
        a logical pipeline among the ports in the Port_Binding table associated
-       with it. In practice, the pipeline in a given logical  datapath  imple‐
+       with  it.  In practice, the pipeline in a given logical datapath imple‐
        ments either a logical switch or a logical router.
 
-       The  main  purpose of a row in this table is provide a physical binding
-       for a logical datapath. A logical datapath does  not  have  a  physical
-       location,  so  its  physical  binding information is limited: just tun‐
+       The main purpose of a row in this table is provide a  physical  binding
+       for  a  logical  datapath.  A logical datapath does not have a physical
+       location, so its physical binding information  is  limited:  just  tun‐
        nel_key. The rest of the data in this table does not affect packet for‐
        warding.
 
    Summary:
-       tunnel_key                    integer,  in  range 1 to 16,777,215 (must
+       tunnel_key                    integer, in range 1 to  16,777,215  (must
                                      be unique within table)
        load_balancers                set of uuids
        OVN_Northbound Relationship:
@@ -2053,21 +2279,21 @@ Datapath_Binding TABLE
          external_ids                map of string-string pairs
 
    Details:
-       tunnel_key: integer, in range 1 to 16,777,215 (must  be  unique  within
+       tunnel_key:  integer,  in  range 1 to 16,777,215 (must be unique within
        table)
               The tunnel key value to which the logical datapath is bound. The
-              Tunnel Encapsulation section  in  ovn-architecture(7)  describes
-              how  tunnel  keys  are constructed for each supported encapsula‐
+              Tunnel  Encapsulation  section  in ovn-architecture(7) describes
+              how tunnel keys are constructed for  each  supported  encapsula‐
               tion.
 
        load_balancers: set of uuids
-              Not used  anymore;  kept  for  backwards  compatibility  of  the
+              Not  used  anymore;  kept  for  backwards  compatibility  of the
               schema.
 
      OVN_Northbound Relationship:
 
-       Each  row in Datapath_Binding is associated with some logical datapath.
-       ovn-northd uses these keys to track the association of a logical  data‐
+       Each row in Datapath_Binding is associated with some logical  datapath.
+       ovn-northd  uses these keys to track the association of a logical data‐
        path with concepts in the OVN_Northbound database.
 
        external_ids : logical-switch: optional string, containing an uuid
@@ -2081,16 +2307,16 @@ Datapath_Binding TABLE
               ical_Router row in the OVN_Northbound database.
 
        external_ids : interconn-ts: optional string
-              For  a  logical  datapath  that represents a logical switch that
-              represents a  transit  switch  for  interconnection,  ovn-northd
+              For a logical datapath that represents  a  logical  switch  that
+              represents  a  transit  switch  for  interconnection, ovn-northd
               stores in this key the value of the same interconn-ts key of the
-              external_ids column of the corresponding Logical_Switch  row  in
+              external_ids  column  of the corresponding Logical_Switch row in
               the OVN_Northbound database.
 
      Naming:
 
-       ovn-northd  copies  these  from  the  name fields in the OVN_Northbound
-       database, either from name and external_ids:neutron:router_name in  the
+       ovn-northd copies these from the  name  fields  in  the  OVN_Northbound
+       database,  either from name and external_ids:neutron:router_name in the
        Logical_Router table or from name and external_ids:neutron:network_name
        in the Logical_Switch table.
 
@@ -2102,43 +2328,43 @@ Datapath_Binding TABLE
 
      Common Columns:
 
-       The overall purpose of these columns is described under Common  Columns
+       The  overall purpose of these columns is described under Common Columns
        at the beginning of this document.
 
        external_ids: map of string-string pairs
 
 Port_Binding TABLE
-       Each  row in this table binds a logical port to a realization. For most
-       logical ports, this means binding to some physical location, for  exam‐
-       ple  by binding a logical port to a VIF that belongs to a VM running on
-       a particular hypervisor. Other logical ports,  such  as  logical  patch
-       ports,  can be realized without a specific physical location, but their
+       Each row in this table binds a logical port to a realization. For  most
+       logical  ports, this means binding to some physical location, for exam‐
+       ple by binding a logical port to a VIF that belongs to a VM running  on
+       a  particular  hypervisor.  Other  logical ports, such as logical patch
+       ports, can be realized without a specific physical location, but  their
        bindings are still expressed through rows in this table.
 
-       For  every  Logical_Switch_Port  record  in  OVN_Northbound   database,
-       ovn-northd  creates  a  record  in this table. ovn-northd populates and
-       maintains every column except the chassis and  virtual_parent  columns,
+       For   every  Logical_Switch_Port  record  in  OVN_Northbound  database,
+       ovn-northd creates a record in this  table.  ovn-northd  populates  and
+       maintains  every  column except the chassis and virtual_parent columns,
        which it leaves empty in new records.
 
        ovn-controller/ovn-controller-vtep populates the chassis column for the
-       records that identify the logical ports that are located on its  hyper‐
-       visor/gateway,  which  ovn-controller/ovn-controller-vtep in turn finds
-       out by monitoring the local hypervisor’s Open_vSwitch  database,  which
-       identifies  logical  ports  via  the  conventions described in Integra‐
-       tionGuide.rst. (The exceptions are for Port_Binding records  with  type
-       of  l3gateway,  whose  locations  are  identified by ovn-northd via the
+       records  that identify the logical ports that are located on its hyper‐
+       visor/gateway, which ovn-controller/ovn-controller-vtep in  turn  finds
+       out  by  monitoring the local hypervisor’s Open_vSwitch database, which
+       identifies logical ports via  the  conventions  described  in  Integra‐
+       tionGuide.rst.  (The  exceptions are for Port_Binding records with type
+       of l3gateway, whose locations are  identified  by  ovn-northd  via  the
        options:l3gateway-chassis column in this table. ovn-controller is still
        responsible to populate the chassis column.)
 
-       ovn-controller  also  populates  the  virtual_parent  column of records
+       ovn-controller also populates  the  virtual_parent  column  of  records
        whose type is virtual.
 
-       When a chassis shuts down gracefully, it should clean  up  the  chassis
-       column  that it previously had populated. (This is not critical because
-       resources hosted on the chassis are equally unreachable  regardless  of
-       whether  their rows are present.) To handle the case where a VM is shut
+       When  a  chassis  shuts down gracefully, it should clean up the chassis
+       column that it previously had populated. (This is not critical  because
+       resources  hosted  on the chassis are equally unreachable regardless of
+       whether their rows are present.) To handle the case where a VM is  shut
        down abruptly on one chassis, then brought up again on a different one,
-       ovn-controller/ovn-controller-vtep  must  overwrite  the chassis column
+       ovn-controller/ovn-controller-vtep must overwrite  the  chassis  column
        with new information.
 
    Summary:
@@ -2146,14 +2372,20 @@ Port_Binding TABLE
          datapath                    Datapath_Binding
          logical_port                string (must be unique within table)
          encap                       optional weak reference to Encap
+         additional_encap            set of weak reference to Encaps
          chassis                     optional weak reference to Chassis
+         additional_chassis          set of weak reference to Chassis
          gateway_chassis             set of Gateway_Chassises
          ha_chassis_group            optional HA_Chassis_Group
          up                          optional boolean
          tunnel_key                  integer, in range 1 to 32,767
          mac                         set of strings
+         port_security               set of strings
          type                        string
          requested_chassis           optional weak reference to Chassis
+         requested_additional_chassis
+                                     set of weak reference to Chassis
+       mirror_rules                  set of weak reference to Mirrors
        Patch Options:
          options : peer              optional string
          nat_addresses               set of strings
@@ -2178,10 +2410,15 @@ Port_Binding TABLE
        VMI (or VIF) Options:
          options : requested-chassis
                                      optional string
+         options : activation-strategy
+                                     optional string
+         options : additional-chassis-activated
+                                     optional string
          options : iface-id-ver      optional string
+         options : qos_min_rate      optional string
          options : qos_max_rate      optional string
          options : qos_burst         optional string
-         options : qdisc_queue_id    optional string, containing  an  integer,
+         options : qdisc_queue_id    optional  string,  containing an integer,
                                      in range 1 to 61,440
        Distributed Gateway Port Options:
          options : chassis-redirect-port
@@ -2207,43 +2444,48 @@ Port_Binding TABLE
               The logical datapath to which the logical port belongs.
 
        logical_port: string (must be unique within table)
-              A  logical  port.  For a logical switch port, this is taken from
+              A logical port. For a logical switch port, this  is  taken  from
               name in the OVN_Northbound database’s Logical_Switch_Port table.
-              For  a  logical  router  port,  this  is  taken from name in the
+              For a logical router port,  this  is  taken  from  name  in  the
               OVN_Northbound database’s Logical_Router_port table. (This means
-              that  logical  switch ports and router port names must not share
+              that logical switch ports and router port names must  not  share
               names in an OVN deployment.) OVN does not prescribe a particular
               format for the logical port ID.
 
        encap: optional weak reference to Encap
-              Points  to  supported  encapsulation  configurations to transmit
-              logical dataplane packets to this chassis. Each entry is a Encap
-              record that describes the configuration.
+              Points to preferred encapsulation configuration to transmit log‐
+              ical  dataplane  packets to this chassis. The entry is reference
+              to a Encap record.
+
+       additional_encap: set of weak reference to Encaps
+              Points to preferred encapsulation configuration to transmit log‐
+              ical  dataplane packets to this additional chassis. The entry is
+              reference to a Encap record. See also additional_chassis.
 
        chassis: optional weak reference to Chassis
               The meaning of this column depends on the value of the type col‐
               umn. This is the meaning for each type
 
               (empty string)
-                     The physical location of the logical  port.  To  success‐
-                     fully  identify  a chassis, this column must be a Chassis
+                     The  physical  location  of the logical port. To success‐
+                     fully identify a chassis, this column must be  a  Chassis
                      record. This is populated by ovn-controller.
 
-              vtep   The physical location of the  hardware_vtep  gateway.  To
-                     successfully  identify  a  chassis, this column must be a
+              vtep   The  physical  location  of the hardware_vtep gateway. To
+                     successfully identify a chassis, this column  must  be  a
                      Chassis record. This is populated by ovn-controller-vtep.
 
               localnet
-                     Always empty. A localnet port is realized on every  chas‐
-                     sis  that  has connectivity to the corresponding physical
+                     Always  empty. A localnet port is realized on every chas‐
+                     sis that has connectivity to the  corresponding  physical
                      network.
 
               localport
-                     Always empty. A localport port is present on every  chas‐
+                     Always  empty. A localport port is present on every chas‐
                      sis.
 
               l3gateway
-                     The  physical location of the L3 gateway. To successfully
+                     The physical location of the L3 gateway. To  successfully
                      identify a chassis, this column must be a Chassis record.
                      This is populated by ovn-controller based on the value of
                      the options:l3gateway-chassis column in this table.
@@ -2254,26 +2496,31 @@ Port_Binding TABLE
                      This is populated by ovn-controller based on the value of
                      the options:l2gateway-chassis column in this table.
 
+       additional_chassis: set of weak reference to Chassis
+              The meaning of this column is the same as for the  chassis.  The
+              column  is  used to track an additional physical location of the
+              logical port. Used with regular (empty type) port bindings.
+
        gateway_chassis: set of Gateway_Chassises
               A list of Gateway_Chassis.
 
-              This  should  only be populated for ports with type set to chas‐
-              sisredirect. This column defines the list  of  chassis  used  as
+              This should only be populated for ports with type set  to  chas‐
+              sisredirect.  This  column  defines  the list of chassis used as
               gateways where traffic will be redirected through.
 
        ha_chassis_group: optional HA_Chassis_Group
-              This  should  only be populated for ports with type set to chas‐
-              sisredirect. This column defines the HA  chassis  group  with  a
-              list  of HA chassis used as gateways where traffic will be redi‐
+              This should only be populated for ports with type set  to  chas‐
+              sisredirect.  This  column  defines  the HA chassis group with a
+              list of HA chassis used as gateways where traffic will be  redi‐
               rected through.
 
        up: optional boolean
-              This is set to true whenever all  OVS  flows  required  by  this
-              Port_Binding  have been installed. This is populated by ovn-con‐
+              This  is  set  to  true  whenever all OVS flows required by this
+              Port_Binding have been installed. This is populated by  ovn-con‐
               troller.
 
        tunnel_key: integer, in range 1 to 32,767
-              A number that represents the logical port in the key  (e.g.  STT
+              A  number  that represents the logical port in the key (e.g. STT
               key or Geneve TLV) field carried within tunnel protocol packets.
 
               The tunnel ID must be unique within the scope of a logical data‐
@@ -2281,7 +2528,17 @@ Port_Binding TABLE
 
        mac: set of strings
               This column is a misnomer as it may contain MAC addresses and IP
-              addresses.  It  is copied from the addresses column in the Logi‐
+              addresses. It is copied from the addresses column in  the  Logi‐
+              cal_Switch_Port table in the Northbound database. It follows the
+              same format as that column.
+
+       port_security: set of strings
+              This column controls the addresses from which the host  attached
+              to  the  logical  port (``the host’’) is allowed to send packets
+              and to which it is allowed to receive packets. If this column is
+              empty, all addresses are permitted.
+
+              It  is  copied  from  the  port_security  column  in  the  Logi‐
               cal_Switch_Port table in the Northbound database. It follows the
               same format as that column.
 
@@ -2348,7 +2605,7 @@ Port_Binding TABLE
               virtual
                      Represents a logical port with an virtual ip.  This  vir‐
                      tual  ip  can  be  configured on a logical port (which is
-                     refered as virtual parent).
+                     referred as virtual parent).
 
        requested_chassis: optional weak reference to Chassis
               This column exists so that the  ovn-controller  can  effectively
@@ -2360,7 +2617,21 @@ Port_Binding TABLE
               without passing the -restart argument. This  column  must  be  a
               Chassis  record.  This  is  populated  by  ovn-northd  when  the
               options:requested-chassis  is  defined  and  contains  a  string
-              matching the name or hostname of an existing chassis.
+              matching  the  name or hostname of an existing chassis. See also
+              requested_additional_chassis.
+
+       requested_additional_chassis: set of weak reference to Chassis
+              This column exists so that the  ovn-controller  can  effectively
+              monitor  all Port_Binding records destined for it, and is a sup‐
+              plement to the options:requested-chassis  option  when  multiple
+              chassis  are  listed.  This  column  must  be  a list of Chassis
+              records.   This   is   populated   by   ovn-northd   when    the
+              options:requested-chassis  is defined as a list of chassis names
+              or hostnames. See also requested_chassis.
+
+       mirror_rules: set of weak reference to Mirrors
+              Mirror rules that apply to the port binding. Please see the Mir‐
+              ror table.
 
      Patch Options:
 
@@ -2485,32 +2756,60 @@ Port_Binding TABLE
               to a mis-configuration, if a port  is  accidentally  created  on
               more than one chassis.
 
+              If set to a comma separated list, the first entry identifies the
+              main chassis and the rest are one  or  more  additional  chassis
+              that are allowed to bind the same port.
+
+              When  multiple  chassis  are  set  for the port, and the logical
+              switch is connected to an external network  through  a  localnet
+              port,  tunneling  is enforced for the port to guarantee delivery
+              of packets directed to the port to all its locations.  This  has
+              MTU  implications  because  the  network used for tunneling must
+              have MTU larger than localnet for stable connectivity.
+
+       options : activation-strategy: optional string
+              If used with multiple chassis set in  requested-chassis,  speci‐
+              fies  an  activation  strategy  for  all  additional chassis. By
+              default, no activation strategy is used, meaning additional port
+              locations are immediately available for use. When set to "rarp",
+              the port is blocked for ingress and egress communication until a
+              RARP  packet is sent from a new location. The "rarp" strategy is
+              useful in live migration scenarios for virtual machines.
+
+       options : additional-chassis-activated: optional string
+              When activation-strategy is set, this option indicates that  the
+              port was activated using the strategy specified.
+
        options : iface-id-ver: optional string
               If  set,  this port will be bound by ovn-controller only if this
               same key and value is configured in the external_ids  column  in
               the Open_vSwitch database’s Interface table.
 
+       options : qos_min_rate: optional string
+              If set, indicates the minimum guaranteed rate available for data
+              sent from this interface, in bit/s.
+
        options : qos_max_rate: optional string
-              If  set,  indicates  the  maximum  rate  for data sent from this
-              interface, in bit/s. The traffic will  be  shaped  according  to
+              If set, indicates the maximum  rate  for  data  sent  from  this
+              interface,  in  bit/s.  The  traffic will be shaped according to
               this limit.
 
        options : qos_burst: optional string
               If set, indicates the maximum burst size for data sent from this
               interface, in bits.
 
-       options : qdisc_queue_id: optional string, containing  an  integer,  in
+       options  :  qdisc_queue_id:  optional string, containing an integer, in
        range 1 to 61,440
-              Indicates  the queue number on the physical device. This is same
+              Indicates the queue number on the physical device. This is  same
               as the queue_id used in OpenFlow in struct ofp_action_enqueue.
 
      Distributed Gateway Port Options:
 
-       These options apply to the distributed parent ports  of  logical  ports
+       These  options  apply  to the distributed parent ports of logical ports
        with type of chasssisredirect.
 
        options : chassis-redirect-port: optional string
-              The  name of the chassis redirect port derived from this port if
+              The name of the chassis redirect port derived from this port  if
               this port is a distributed parent of a chassis redirect port.
 
      Chassis Redirect Options:
@@ -2518,45 +2817,45 @@ Port_Binding TABLE
        These options apply to logical ports with type of chassisredirect.
 
        options : distributed-port: optional string
-              The name of the distributed port for which this  chassisredirect
+              The  name of the distributed port for which this chassisredirect
               port represents a particular instance.
 
        options : redirect-type: optional string
-              The  value  is  copied from the column options in the OVN_North‐
-              bound database’s Logical_Router_Port table for  the  distributed
+              The value is copied from the column options  in  the  OVN_North‐
+              bound  database’s  Logical_Router_Port table for the distributed
               parent of this port.
 
        options : always-redirect: optional string
-              A  boolean  option that is set to true if the distributed parent
+              A boolean option that is set to true if the  distributed  parent
               of this chassis redirect port does not need distributed process‐
               ing.
 
      Nested Containers:
 
        These columns support containers nested within a VM. Specifically, they
-       are used when type is empty and logical_port identifies  the  interface
-       of  a  container  spawned inside a VM. They are empty for containers or
+       are  used  when type is empty and logical_port identifies the interface
+       of a container spawned inside a VM. They are empty  for  containers  or
        VMs that run directly on a hypervisor.
 
        parent_port: optional string
-              This is taken from parent_name in the OVN_Northbound  database’s
+              This  is taken from parent_name in the OVN_Northbound database’s
               Logical_Switch_Port table.
 
        tag: optional integer, in range 1 to 4,095
-              Identifies  the  VLAN tag in the network traffic associated with
+              Identifies the VLAN tag in the network traffic  associated  with
               that container’s network interface.
 
-              This column is used for a different purpose when type is  local‐
-              net  (see  Localnet Options, above) or l2gateway (see L2 Gateway
+              This  column is used for a different purpose when type is local‐
+              net (see Localnet Options, above) or l2gateway (see  L2  Gateway
               Options, above).
 
      Virtual ports:
 
        virtual_parent: optional string
-              This column is set by ovn-controller with one of the value  from
-              the  options:virtual-parents  in  the  OVN_Northbound database’s
+              This  column is set by ovn-controller with one of the value from
+              the options:virtual-parents  in  the  OVN_Northbound  database’s
               Logical_Switch_Port table when the OVN action bind_vport is exe‐
-              cuted.  ovn-controller also sets the chassis column when it exe‐
+              cuted. ovn-controller also sets the chassis column when it  exe‐
               cutes this action with its chassis id.
 
               ovn-controller sets this column only if the type is "virtual".
@@ -2564,11 +2863,11 @@ Port_Binding TABLE
      Naming:
 
        external_ids : name: optional string
-              For a logical switch port, ovn-northd copies  this  from  exter‐
-              nal_ids:neutron:port_name  in  the  Logical_Switch_Port table in
+              For  a  logical  switch port, ovn-northd copies this from exter‐
+              nal_ids:neutron:port_name in the  Logical_Switch_Port  table  in
               the OVN_Northbound database, if it is a nonempty string.
 
-              For a logical switch port, ovn-northd  does  not  currently  set
+              For  a  logical  switch  port, ovn-northd does not currently set
               this key.
 
      Common Columns:
@@ -2576,59 +2875,60 @@ Port_Binding TABLE
        external_ids: map of string-string pairs
               See External IDs at the beginning of this document.
 
-              The  ovn-northd  program  populates this column with all entries
+              The ovn-northd program populates this column  with  all  entries
               into the external_ids column of the Logical_Switch_Port and Log‐
               ical_Router_Port tables of the OVN_Northbound database.
 
 MAC_Binding TABLE
-       Each  row  in  this  table specifies a binding from an IP address to an
-       Ethernet address that has been discovered through  ARP  (for  IPv4)  or
+       Each row in this table specifies a binding from an  IP  address  to  an
+       Ethernet  address  that  has  been discovered through ARP (for IPv4) or
        neighbor discovery (for IPv6). This table is primarily used to discover
-       bindings on physical networks, because IP-to-MAC bindings  for  virtual
+       bindings  on  physical networks, because IP-to-MAC bindings for virtual
        machines are usually populated statically into the Port_Binding table.
 
        This  table  expresses  a  functional  relationship:  MAC_Binding(logi‐
        cal_port, ip) = mac.
 
-       In outline, the lifetime of a logical router’s MAC binding  looks  like
+       In  outline,  the lifetime of a logical router’s MAC binding looks like
        this:
 
-              1.  On  hypervisor  1, a logical router determines that a packet
-                  should be forwarded to IP address A on  one  of  its  router
-                  ports.  It  uses  its logical flow table to determine that A
-                  lacks a static IP-to-MAC binding and the get_arp  action  to
+              1.  On hypervisor 1, a logical router determines that  a  packet
+                  should  be  forwarded  to  IP address A on one of its router
+                  ports. It uses its logical flow table to  determine  that  A
+                  lacks  a  static IP-to-MAC binding and the get_arp action to
                   determine that it lacks a dynamic IP-to-MAC binding.
 
-              2.  Using  an  OVN logical arp action, the logical router gener‐
-                  ates and sends a broadcast ARP request to the  router  port.
+              2.  Using an OVN logical arp action, the logical  router  gener‐
+                  ates  and  sends a broadcast ARP request to the router port.
                   It drops the IP packet.
 
-              3.  The  logical switch attached to the router port delivers the
-                  ARP request to all of its ports. (It  might  make  sense  to
+              3.  The logical switch attached to the router port delivers  the
+                  ARP  request  to  all  of its ports. (It might make sense to
                   deliver it only to ports that have no static IP-to-MAC bind‐
                   ings, but this could also be surprising behavior.)
 
-              4.  A host or VM on hypervisor 2 (which might  be  the  same  as
-                  hypervisor  1)  attached  to  the logical switch owns the IP
-                  address in question. It composes an ARP reply  and  unicasts
+              4.  A  host  or  VM  on hypervisor 2 (which might be the same as
+                  hypervisor 1) attached to the logical  switch  owns  the  IP
+                  address  in  question. It composes an ARP reply and unicasts
                   it to the logical router port’s Ethernet address.
 
-              5.  The  logical  switch  delivers  the ARP reply to the logical
+              5.  The logical switch delivers the ARP  reply  to  the  logical
                   router port.
 
-              6.  The logical router flow table executes a put_arp action.  To
-                  record  the  IP-to-MAC binding, ovn-controller adds a row to
+              6.  The  logical router flow table executes a put_arp action. To
+                  record the IP-to-MAC binding, ovn-controller adds a  row  to
                   the MAC_Binding table.
 
-              7.  On  hypervisor  1,  ovn-controller  receives   the   updated
+              7.  On   hypervisor   1,  ovn-controller  receives  the  updated
                   MAC_Binding table from the OVN southbound database. The next
-                  packet destined to A through  the  logical  router  is  sent
+                  packet  destined  to  A  through  the logical router is sent
                   directly to the bound Ethernet address.
 
    Summary:
        logical_port                  string
        ip                            string
        mac                           string
+       timestamp                     integer
        datapath                      Datapath_Binding
 
    Details:
@@ -2640,6 +2940,10 @@ MAC_Binding TABLE
 
        mac: string
               The Ethernet address to which the IP is bound.
+
+       timestamp: integer
+              The timestamp in msec when the MAC binding was added or updated.
+              Records that existed before this column will have 0.
 
        datapath: Datapath_Binding
               The logical datapath to which the logical port belongs.
@@ -3462,6 +3766,7 @@ Load_Balancer TABLE
        vips                          map of string-string pairs
        protocol                      optional string, one of sctp, tcp, or udp
        datapaths                     set of Datapath_Bindings
+       datapath_group                optional Logical_DP_Group
        Load_Balancer options:
          options : hairpin_snat_ip   optional string
          options : hairpin_orig_tuple
@@ -3489,6 +3794,11 @@ Load_Balancer TABLE
 
        datapaths: set of Datapath_Bindings
               Datapaths to which this load balancer applies to.
+
+       datapath_group: optional Logical_DP_Group
+              The  group  of datapaths to which this load balancer applies to.
+              This means that the same load balancer applies to all  datapaths
+              in a group.
 
      Load_Balancer options:
 
@@ -3580,12 +3890,13 @@ BFD TABLE
               ·      up
 
 FDB TABLE
-       This  table is primarily used to learn the MACs observed on a VIF which
-       belongs to a Logical_Switch_Port record in  OVN_Northbound  whose  port
-       security  is  disabled  and  ’unknown’ address set. If port security is
-       disabled on a Logical_Switch_Port record, OVN should allow traffic with
-       any  source  mac  from  the  VIF.  This table will be used to deliver a
-       packet to the VIF, If a packet’s eth.dst is learnt.
+       This  table is primarily used to learn the MACs observed on a VIF (or a
+       localnet port with ’localnet_learn_fdb’ enabled)  which  belongs  to  a
+       Logical_Switch_Port  record  in  OVN_Northbound  whose port security is
+       disabled and ’unknown’ address set. If port security is disabled  on  a
+       Logical_Switch_Port  record,  OVN  should allow traffic with any source
+       mac from the VIF. This table will be used to deliver a  packet  to  the
+       VIF, If a packet’s eth.dst is learnt.
 
    Summary:
        mac                           string
@@ -3602,6 +3913,48 @@ FDB TABLE
        port_key: integer, in range 1 to 16,777,215
               The key of the port binding on which this FDB was learnt.
 
+Static_MAC_Binding TABLE
+       Each record represents a Static_MAC_Binding entry for a logical router.
+
+   Summary:
+       logical_port                  string
+       ip                            string
+       mac                           string
+       override_dynamic_mac          boolean
+       datapath                      Datapath_Binding
+
+   Details:
+       logical_port: string
+              The logical router port for the binding.
+
+       ip: string
+              The bound IP address.
+
+       mac: string
+              The Ethernet address to which the IP is bound.
+
+       override_dynamic_mac: boolean
+              Override dynamically learnt MACs.
+
+       datapath: Datapath_Binding
+              The logical datapath to which the logical router port belongs.
+
+Chassis_Template_Var TABLE
+       Each  record represents the set of template variable instantiations for
+       a given chassis and is populated by ovn-northd from the contents of the
+       OVN_Northbound.Chassis_Template_Var table.
+
+   Summary:
+       chassis                       string (must be unique within table)
+       variables                     map of string-string pairs
+
+   Details:
+       chassis: string (must be unique within table)
+              The chassis this set of variable values applies to.
+
+       variables: map of string-string pairs
+              The set of variable values for a given chassis.
 
 
-Open vSwitch 22.03.90          DB Schema 20.21.0                     ovn-sb(5)
+
+Open vSwitch 22.12.90          DB Schema 20.27.0                     ovn-sb(5)
