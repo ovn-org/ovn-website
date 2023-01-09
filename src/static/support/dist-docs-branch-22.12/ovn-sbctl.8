@@ -1,0 +1,658 @@
+'\" p
+.\" -*- nroff -*-
+.TH "ovn-sbctl" 8 "ovn-sbctl" "OVN 22\[char46]12\[char46]1" "OVN Manual"
+.fp 5 L CR              \\" Make fixed-width font available as \\fL.
+.de TQ
+.  br
+.  ns
+.  TP "\\$1"
+..
+.de ST
+.  PP
+.  RS -0.15in
+.  I "\\$1"
+.  RE
+..
+.de SU
+.  PP
+.  I "\\$1"
+..
+.PP
+.SH "NAME"
+.PP
+.PP
+ovn-sbctl \- Open Virtual Network southbound db management utility
+.SH "SYNOPSIS"
+.PP
+\fBovn\-sbctl\fR [\fIoptions\fR] \fIcommand\fR [\fIarg\fR\[char46]\[char46]\[char46]]
+.SH "DESCRIPTION"
+.PP
+.PP
+The \fBovn\-sbctl\fR program configures the \fBOVN_Southbound\fR database by providing a high-level interface to its configuration database\[char46] See \fBovn\-sb\fR(5) for comprehensive documentation of the database schema\[char46]
+.PP
+.PP
+\fBovn\-sbctl\fR connects to an \fBovsdb\-server\fR process that maintains an OVN_Southbound configuration database\[char46] Using this connection, it queries and possibly applies changes to the database, depending on the supplied commands\[char46]
+.PP
+.PP
+\fBovn\-sbctl\fR can perform any number of commands in a single run, implemented as a single atomic transaction against the database\[char46]
+.PP
+.PP
+The \fBovn\-sbctl\fR command line begins with global options (see \fBOPTIONS\fR below for details)\[char46] The global options are followed by one or more commands\[char46] Each command should begin with \fB\-\-\fR by itself as a command-line argument, to separate it from the following commands\[char46] (The \fB\-\-\fR before the first command is optional\[char46]) The command itself starts with command-specific options, if any, followed by the command name and any arguments\[char46]
+.SH "DAEMON MODE"
+.PP
+.PP
+When it is invoked in the most ordinary way, \fBovn\-sbctl\fR connects to an OVSDB server that hosts the southbound database, retrieves a partial copy of the database that is complete enough to do its work, sends a transaction request to the server, and receives and processes the server\(cqs reply\[char46] In common interactive use, this is fine, but if the database is large, the step in which \fBovn\-sbctl\fR retrieves a partial copy of the database can take a long time, which yields poor performance overall\[char46]
+.PP
+.PP
+To improve performance in such a case, \fBovn\-sbctl\fR offers a \(dqdaemon mode,\(dq in which the user first starts \fBovn\-sbctl\fR running in the background and afterward uses the daemon to execute operations\[char46] Over several \fBovn\-sbctl\fR command invocations, this performs better overall because it retrieves a copy of the database only once at the beginning, not once per program run\[char46]
+.PP
+.PP
+Use the \fB\-\-detach\fR option to start an \fBovn\-sbctl\fR daemon\[char46] With this option, \fBovn\-sbctl\fR prints the name of a control socket to stdout\[char46] The client should save this name in environment variable \fBOVN_SB_DAEMON\fR\[char46] Under the Bourne shell this might be done like this:
+.PP
+.nf
+\fL
+.br
+\fL      export OVN_SB_DAEMON=$(ovn\-sbctl \-\-pidfile \-\-detach)
+.br
+\fL    \fR
+.fi
+.PP
+.PP
+When \fBOVN_SB_DAEMON\fR is set, \fBovn\-sbctl\fR automatically and transparently uses the daemon to execute its commands\[char46]
+.PP
+.PP
+When the daemon is no longer needed, kill it and unset the environment variable, e\[char46]g\[char46]:
+.PP
+.nf
+\fL
+.br
+\fL      kill $(cat $OVN_RUNDIR/ovn\-sbctl\[char46]pid)
+.br
+\fL      unset OVN_SB_DAEMON
+.br
+\fL    \fR
+.fi
+.PP
+.PP
+When using daemon mode, an alternative to the \fBOVN_SB_DAEMON\fR environment variable is to specify a path for the Unix socket\[char46] When starting the ovn-sbctl daemon, specify the \fB\-u\fR option with a full path to the location of the socket file\[char46] Here is an exmple:
+.PP
+.nf
+\fL
+.br
+\fL      ovn\-sbctl \-\-detach \-u /tmp/mysock\[char46]ctl
+.br
+\fL    \fR
+.fi
+.PP
+.PP
+Then to connect to the running daemon, use the \fB\-u\fR option with the full path to the socket created when the daemon was started:
+.PP
+.nf
+\fL
+.br
+\fL      ovn\-sbctl \-u /tmp/mysock\[char46]ctl show
+.br
+\fL    \fR
+.fi
+.ST "Daemon Commands"
+.PP
+.PP
+Daemon mode is internally implemented using the same mechanism used by \fBovn\-appctl\fR\[char46] One may also use \fBovn\-appctl\fR directly with the following commands:
+.RS
+.TP
+\fBrun\fR [\fIoptions\fR] \fIcommand\fR [\fIarg\fR\[char46]\[char46]\[char46]] [\fB\-\-\fR [\fIoptions\fR] \fIcommand\fR [\fIarg\fR\[char46]\[char46]\[char46]] \[char46]\[char46]\[char46]]
+Instructs the daemon process to run one or more \fBovn\-sbctl\fR commands described above and reply with the results of running these commands\[char46] Accepts the \fB\-\-no\-wait\fR, \fB\-\-wait\fR, \fB\-\-timeout\fR, \fB\-\-dry\-run\fR, \fB\-\-oneline\fR, and the options described under \fBTable Formatting Options\fR in addition to the the command-specific options\[char46]
+.TP
+\fBexit\fR
+Causes \fBovn\-sbctl\fR to gracefully terminate\[char46]
+.RE
+.SH "OPTIONS"
+.PP
+.PP
+The options listed below affect the behavior of \fBovn\-sbctl\fR as a whole\[char46] Some individual commands also accept their own options, which are given just before the command name\[char46] If the first command on the command line has options, then those options must be separated from the global options by \fB\-\-\fR\[char46]
+.PP
+.PP
+\fBovn\-sbctl\fR also accepts options from the \fBOVN_SBCTL_OPTIONS\fR environment variable, in the same format as on the command line\[char46] Options from the command line override those in the environment\[char46]
+.RS
+.TP
+\fB\-\-db\fR \fIdatabase\fR
+The OVSDB database remote to contact\[char46] If the \fBOVN_SB_DB\fR environment variable is set, its value is used as the default\[char46] Otherwise, the default is \fBunix:/ovnsb_db\[char46]sock\fR, but this default is unlikely to be useful outside of single-machine OVN test environments\[char46]
+.TP
+\fB\-\-leader\-only\fR
+.TQ .5in
+\fB\-\-no\-leader\-only\fR
+By default, or with \fB\-\-leader\-only\fR, when the database server is a clustered database, \fBovn\-sbctl\fR will avoid servers other than the cluster leader\[char46] This ensures that any data that \fBovn\-sbctl\fR reads and reports is up-to-date\[char46] With \fB\-\-no\-leader\-only\fR, \fBovn\-sbctl\fR will use any server in the cluster, which means that for read-only transactions it can report and act on stale data (transactions that modify the database are always serialized even with \fB\-\-no\-leader\-only\fR)\[char46] Refer to \fBUnderstanding Cluster Consistency\fR in \fBovsdb\fR(7) for more information\[char46]
+.TP
+\fB\-\-shuffle\-remotes\fR
+.TQ .5in
+\fB\-\-no\-shuffle\-remotes\fR
+By default, or with \fB\-\-shuffle\-remotes\fR, when there are multiple remotes specified in the OVSDB connection string specified by \fB\-\-db\fR or the \fBOVN_SB_DB\fR environment variable, the order of the remotes will be shuffled before the client tries to connect\[char46] The remotes will be shuffled only once to a new order before the first connection attempt\[char46] The following retries, if any, will follow the same new order\[char46] The default behavior is to make sure clients of a clustered database can distribute evenly to all members of the cluster\[char46] With \fB\-\-no\-shuffle\-remotes\fR, \fBovn\-sbctl\fR will use the original order specified in the connection string to connect\[char46] This allows user to specify the preferred order, which is particularly useful for testing\[char46]
+.TP
+\fB\-\-no\-syslog\fR
+By default, \fBovn\-sbctl\fR logs its arguments and the details of any changes that it makes to the system log\[char46] This option disables this logging\[char46]
+.IP
+This option is equivalent to \fB\-\-verbose=sbctl:syslog:warn\fR\[char46]
+.TP
+\fB\-\-oneline\fR
+Modifies the output format so that the output for each command is printed on a single line\[char46] New-line characters that would otherwise separate lines are printed as \efB\e\en\efR, and any instances of \efB\e\e\efR that would otherwise appear in the output are doubled\[char46] Prints a blank line for each command that has no output\[char46] This option does not affect the formatting of output from the \fBlist\fR or \fBfind\fR commands; see \fBTable Formatting Options\fR below\[char46]
+.TP
+\fB\-\-dry\-run\fR
+Prevents \fBovn\-sbctl\fR from actually modifying the database\[char46]
+.TP
+\fB\-t \fIsecs\fB\fR
+.TQ .5in
+\fB\-\-timeout=\fIsecs\fB\fR
+By default, or with a \fIsecs\fR of \fB0\fR, \fBovn\-sbctl\fR waits forever for a response from the database\[char46] This option limits runtime to approximately \fIsecs\fR seconds\[char46] If the timeout expires, \fBovn\-sbctl\fR will exit with a \fBSIGALRM\fR signal\[char46] (A timeout would normally happen only if the database cannot be contacted, or if the system is overloaded\[char46])
+.RE
+.SS "Daemon Options"
+.TP
+\fB\-\-pidfile\fR[\fB=\fR\fIpidfile\fR]
+Causes a file (by default, \fB\fIprogram\fB\[char46]pid\fR) to be created indicating the PID of the running process\[char46] If the \fIpidfile\fR argument is not specified, or if it does not begin with \fB/\fR, then it is created in \fB\fR\[char46]
+.IP
+If \fB\-\-pidfile\fR is not specified, no pidfile is created\[char46]
+.TP
+\fB\-\-overwrite\-pidfile\fR
+By default, when \fB\-\-pidfile\fR is specified and the specified pidfile already exists and is locked by a running process, the daemon refuses to start\[char46] Specify \fB\-\-overwrite\-pidfile\fR to cause it to instead overwrite the pidfile\[char46]
+.IP
+When \fB\-\-pidfile\fR is not specified, this option has no effect\[char46]
+.TP
+\fB\-\-detach\fR
+Runs this program as a background process\[char46] The process forks, and in the child it starts a new session, closes the standard file descriptors (which has the side effect of disabling logging to the console), and changes its current directory to the root (unless \fB\-\-no\-chdir\fR is specified)\[char46] After the child completes its initialization, the parent exits\[char46]
+.TP
+\fB\-\-monitor\fR
+Creates an additional process to monitor this program\[char46] If it dies due to a signal that indicates a programming error (\fBSIGABRT\fR, \fBSIGALRM\fR, \fBSIGBUS\fR, \fBSIGFPE\fR, \fBSIGILL\fR, \fBSIGPIPE\fR, \fBSIGSEGV\fR, \fBSIGXCPU\fR, or \fBSIGXFSZ\fR) then the monitor process starts a new copy of it\[char46] If the daemon dies or exits for another reason, the monitor process exits\[char46]
+.IP
+This option is normally used with \fB\-\-detach\fR, but it also functions without it\[char46]
+.TP
+\fB\-\-no\-chdir\fR
+By default, when \fB\-\-detach\fR is specified, the daemon changes its current working directory to the root directory after it detaches\[char46] Otherwise, invoking the daemon from a carelessly chosen directory would prevent the administrator from unmounting the file system that holds that directory\[char46]
+.IP
+Specifying \fB\-\-no\-chdir\fR suppresses this behavior, preventing the daemon from changing its current working directory\[char46] This may be useful for collecting core files, since it is common behavior to write core dumps into the current working directory and the root directory is not a good directory to use\[char46]
+.IP
+This option has no effect when \fB\-\-detach\fR is not specified\[char46]
+.TP
+\fB\-\-no\-self\-confinement\fR
+By default this daemon will try to self-confine itself to work with files under well-known directories determined at build time\[char46] It is better to stick with this default behavior and not to use this flag unless some other Access Control is used to confine daemon\[char46] Note that in contrast to other access control implementations that are typically enforced from kernel-space (e\[char46]g\[char46] DAC or MAC), self-confinement is imposed from the user-space daemon itself and hence should not be considered as a full confinement strategy, but instead should be viewed as an additional layer of security\[char46]
+.TP
+\fB\-\-user=\fR\fIuser\fR\fB:\fR\fIgroup\fR
+Causes this program to run as a different user specified in \fIuser\fR\fB:\fR\fIgroup\fR, thus dropping most of the root privileges\[char46] Short forms \fIuser\fR and \fB:\fR\fIgroup\fR are also allowed, with current user or group assumed, respectively\[char46] Only daemons started by the root user accepts this argument\[char46]
+.IP
+On Linux, daemons will be granted \fBCAP_IPC_LOCK\fR and \fBCAP_NET_BIND_SERVICES\fR before dropping root privileges\[char46] Daemons that interact with a datapath, such as \fBovs\-vswitchd\fR, will be granted three additional capabilities, namely \fBCAP_NET_ADMIN\fR, \fBCAP_NET_BROADCAST\fR and \fBCAP_NET_RAW\fR\[char46] The capability change will apply even if the new user is root\[char46]
+.IP
+On Windows, this option is not currently supported\[char46] For security reasons, specifying this option will cause the daemon process not to start\[char46]
+.SS "Logging options"
+.TP
+\fB\-v\fR[\fIspec\fR]
+.TQ .5in
+\fB\-\-verbose=\fR[\fIspec\fR]
+Sets logging levels\[char46] Without any \fIspec\fR, sets the log level for every module and destination to \fBdbg\fR\[char46] Otherwise, \fIspec\fR is a list of words separated by spaces or commas or colons, up to one from each category below:
+.RS
+.IP \(bu
+A valid module name, as displayed by the \fBvlog/list\fR command on \fBovs\-appctl\fR(8), limits the log level change to the specified module\[char46]
+.IP \(bu
+\fBsyslog\fR, \fBconsole\fR, or \fBfile\fR, to limit the log level change to only to the system log, to the console, or to a file, respectively\[char46] (If \fB\-\-detach\fR is specified, the daemon closes its standard file descriptors, so logging to the console will have no effect\[char46])
+.IP
+On Windows platform, \fBsyslog\fR is accepted as a word and is only useful along with the \fB\-\-syslog\-target\fR option (the word has no effect otherwise)\[char46]
+.IP \(bu
+\fBoff\fR, \fBemer\fR, \fBerr\fR, \fBwarn\fR, \fBinfo\fR, or \fBdbg\fR, to control the log level\[char46] Messages of the given severity or higher will be logged, and messages of lower severity will be filtered out\[char46] \fBoff\fR filters out all messages\[char46] See \fBovs\-appctl\fR(8) for a definition of each log level\[char46]
+.RE
+.IP
+Case is not significant within \fIspec\fR\[char46]
+.IP
+Regardless of the log levels set for \fBfile\fR, logging to a file will not take place unless \fB\-\-log\-file\fR is also specified (see below)\[char46]
+.IP
+For compatibility with older versions of OVS, \fBany\fR is accepted as a word but has no effect\[char46]
+.TP
+\fB\-v\fR
+.TQ .5in
+\fB\-\-verbose\fR
+Sets the maximum logging verbosity level, equivalent to \fB\-\-verbose=dbg\fR\[char46]
+.TP
+\fB\-vPATTERN:\fR\fIdestination\fR\fB:\fR\fIpattern\fR
+.TQ .5in
+\fB\-\-verbose=PATTERN:\fR\fIdestination\fR\fB:\fR\fIpattern\fR
+Sets the log pattern for \fIdestination\fR to \fIpattern\fR\[char46] Refer to \fBovs\-appctl\fR(8) for a description of the valid syntax for \fIpattern\fR\[char46]
+.TP
+\fB\-vFACILITY:\fR\fIfacility\fR
+.TQ .5in
+\fB\-\-verbose=FACILITY:\fR\fIfacility\fR
+Sets the RFC5424 facility of the log message\[char46] \fIfacility\fR can be one of \fBkern\fR, \fBuser\fR, \fBmail\fR, \fBdaemon\fR, \fBauth\fR, \fBsyslog\fR, \fBlpr\fR, \fBnews\fR, \fBuucp\fR, \fBclock\fR, \fBftp\fR, \fBntp\fR, \fBaudit\fR, \fBalert\fR, \fBclock2\fR, \fBlocal0\fR, \fBlocal1\fR, \fBlocal2\fR, \fBlocal3\fR, \fBlocal4\fR, \fBlocal5\fR, \fBlocal6\fR or \fBlocal7\fR\[char46] If this option is not specified, \fBdaemon\fR is used as the default for the local system syslog and \fBlocal0\fR is used while sending a message to the target provided via the \fB\-\-syslog\-target\fR option\[char46]
+.TP
+\fB\-\-log\-file\fR[\fB=\fR\fIfile\fR]
+Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/local/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
+.TP
+\fB\-\-syslog\-target=\fR\fIhost\fR\fB:\fR\fIport\fR
+Send syslog messages to UDP \fIport\fR on \fIhost\fR, in addition to the system syslog\[char46] The \fIhost\fR must be a numerical IP address, not a hostname\[char46]
+.TP
+\fB\-\-syslog\-method=\fR\fImethod\fR
+Specify \fImethod\fR as how syslog messages should be sent to syslog daemon\[char46] The following forms are supported:
+.RS
+.IP \(bu
+\fBlibc\fR, to use the libc \fBsyslog()\fR function\[char46] Downside of using this options is that libc adds fixed prefix to every message before it is actually sent to the syslog daemon over \fB/dev/log\fR UNIX domain socket\[char46]
+.IP \(bu
+\fBunix:\fIfile\fB\fR, to use a UNIX domain socket directly\[char46] It is possible to specify arbitrary message format with this option\[char46] However, \fBrsyslogd 8\[char46]9\fR and older versions use hard coded parser function anyway that limits UNIX domain socket use\[char46] If you want to use arbitrary message format with older \fBrsyslogd\fR versions, then use UDP socket to localhost IP address instead\[char46]
+.IP \(bu
+\fBudp:\fIip\fB:\fIport\fB\fR, to use a UDP socket\[char46] With this method it is possible to use arbitrary message format also with older \fBrsyslogd\fR\[char46] When sending syslog messages over UDP socket extra precaution needs to be taken into account, for example, syslog daemon needs to be configured to listen on the specified UDP port, accidental iptables rules could be interfering with local syslog traffic and there are some security considerations that apply to UDP sockets, but do not apply to UNIX domain sockets\[char46]
+.IP \(bu
+\fBnull\fR, to discard all messages logged to syslog\[char46]
+.RE
+.IP
+The default is taken from the \fBOVS_SYSLOG_METHOD\fR environment variable; if it is unset, the default is \fBlibc\fR\[char46]
+.SS "Table Formatting Options"
+These options control the format of output from the \fBlist\fR and \fBfind\fR commands\[char46]
+.RS
+.TP
+\fB\-f\fR \fIformat\fR
+.TQ .5in
+\fB\-\-format=\fR\fIformat\fR
+Sets the type of table formatting\[char46] The following types of \fIformat\fR are available:
+.RS
+.TP
+\fBtable\fR
+2-D text tables with aligned columns\[char46]
+.TP
+\fBlist\fR (default)
+A list with one column per line and rows separated by a blank line\[char46]
+.TP
+\fBhtml\fR
+HTML tables\[char46]
+.TP
+\fBcsv\fR
+Comma-separated values as defined in RFC 4180\[char46]
+.TP
+\fBjson\fR
+JSON format as defined in RFC 4627\[char46] The output is a sequence of JSON objects, each of which corresponds to one table\[char46] Each JSON object has the following members with the noted values:
+.RS
+.TP
+\fBcaption\fR
+The table\(cqs caption\[char46] This member is omitted if the table has no caption\[char46]
+.TP
+\fBheadings\fR
+An array with one element per table column\[char46] Each array element is a string giving the corresponding column\(cqs heading\[char46]
+.TP
+\fBdata\fR
+An array with one element per table row\[char46] Each element is also an array with one element per table column\[char46] The elements of this second-level array are the cells that constitute the table\[char46] Cells that represent OVSDB data or data types are expressed in the format described in the OVSDB specification; other cells are simply expressed as text strings\[char46]
+.RE
+.RE
+.TP
+\fB\-d\fR \fIformat\fR
+.TQ .5in
+\fB\-\-data=\fR\fIformat\fR
+Sets the formatting for cells within output tables unless the table format is set to \fBjson\fR, in which case \fBjson\fR formatting is always used when formatting cells\[char46] The following types of \fIformat\fR are available:
+.RS
+.TP
+\fBstring\fR (default)
+The simple format described in the \fBDatabase Values\fR section of \fBovs\-vsctl\fR(8)\[char46]
+.TP
+\fBbare\fR
+The simple format with punctuation stripped off: \fB[]\fR and \fB{}\fR are omitted around sets, maps, and empty columns, items within sets and maps are space-separated, and strings are never quoted\[char46] This format may be easier for scripts to parse\[char46]
+.TP
+\fBjson\fR
+The RFC 4627 JSON format as described above\[char46]
+.RE
+.TP
+\fB\-\-no\-headings\fR
+This option suppresses the heading row that otherwise appears in the first row of table output\[char46]
+.TP
+\fB\-\-pretty\fR
+By default, JSON in output is printed as compactly as possible\[char46] This option causes JSON in output to be printed in a more readable fashion\[char46] Members of objects and elements of arrays are printed one per line, with indentation\[char46]
+.IP
+This option does not affect JSON in tables, which is always printed compactly\[char46]
+.TP
+\fB\-\-bare\fR
+Equivalent to \fB\-\-format=list \-\-data=bare \-\-no\-headings\fR\[char46]
+.RE
+.SS "PKI Options"
+.PP
+.PP
+PKI configuration is required to use SSL for the connection to the database\[char46]
+.RS
+.TP
+\fB\-p\fR \fIprivkey\[char46]pem\fR
+.TQ .5in
+\fB\-\-private\-key=\fR\fIprivkey\[char46]pem\fR
+Specifies a PEM file containing the private key used as identity for outgoing SSL connections\[char46]
+.TP
+\fB\-c\fR \fIcert\[char46]pem\fR
+.TQ .5in
+\fB\-\-certificate=\fR\fIcert\[char46]pem\fR
+Specifies a PEM file containing a certificate that certifies the private key specified on \fB\-p\fR or \fB\-\-private\-key\fR to be trustworthy\[char46] The certificate must be signed by the certificate authority (CA) that the peer in SSL connections will use to verify it\[char46]
+.TP
+\fB\-C\fR \fIcacert\[char46]pem\fR
+.TQ .5in
+\fB\-\-ca\-cert=\fR\fIcacert\[char46]pem\fR
+Specifies a PEM file containing the CA certificate for verifying certificates presented to this program by SSL peers\[char46] (This may be the same certificate that SSL peers use to verify the certificate specified on \fB\-c\fR or \fB\-\-certificate\fR, or it may be a different one, depending on the PKI design in use\[char46])
+.TP
+\fB\-C none\fR
+.TQ .5in
+\fB\-\-ca\-cert=none\fR
+Disables verification of certificates presented by SSL peers\[char46] This introduces a security risk, because it means that certificates cannot be verified to be those of known trusted hosts\[char46]
+.RE
+.RS
+.TP
+\fB\-\-bootstrap\-ca\-cert=\fR\fIcacert\[char46]pem\fR
+When \fIcacert\[char46]pem\fR exists, this option has the same effect as \fB\-C\fR or \fB\-\-ca\-cert\fR\[char46] If it does not exist, then the executable will attempt to obtain the CA certificate from the SSL peer on its first SSL connection and save it to the named PEM file\[char46] If it is successful, it will immediately drop the connection and reconnect, and from then on all SSL connections must be authenticated by a certificate signed by the CA certificate thus obtained\[char46]
+.IP
+This option exposes the SSL connection to a man-in-the-middle attack obtaining the initial CA certificate, but it may be useful for bootstrapping\[char46]
+.IP
+This option is only useful if the SSL peer sends its CA certificate as part of the SSL certificate chain\[char46] The SSL protocol does not require the server to send the CA certificate\[char46]
+.IP
+This option is mutually exclusive with \fB\-C\fR and \fB\-\-ca\-cert\fR\[char46]
+.RE
+.SS "Other Options"
+.TP
+\fB\-h\fR
+.TQ .5in
+\fB\-\-help\fR
+Prints a brief help message to the console\[char46]
+.TP
+\fB\-V\fR
+.TQ .5in
+\fB\-\-version\fR
+Prints version information to the console\[char46]
+.SH "COMMANDS"
+.PP
+.PP
+The following sections describe the commands that \fBovn\-sbctl\fR supports\[char46]
+.SS "OVN_Southbound Commands"
+.PP
+.PP
+These commands work with an \fBOVN_Southbound\fR database as a whole\[char46]
+.RS
+.TP
+\fBinit\fR
+Initializes the database, if it is empty\[char46] If the database has already been initialized, this command has no effect\[char46]
+.TP
+\fBshow\fR
+Prints a brief overview of the database contents\[char46]
+.RE
+.SS "Chassis Commands"
+.PP
+.PP
+These commands manipulate \fBOVN_Southbound\fR chassis\[char46]
+.RS
+.TP
+[\fB\-\-may\-exist\fR] \fBchassis\-add \fIchassis\fB \fIencap-type\fB \fIencap-ip\fB\fR
+Creates a new chassis named \fIchassis\fR\[char46] \fIencap-type\fR is a comma-separated list of tunnel types\[char46] The chassis will have one encap entry for each specified tunnel type with \fIencap-ip\fR as the destination IP for each\[char46]
+.IP
+Without \fB\-\-may\-exist\fR, attempting to create a chassis that exists is an error\[char46] With \fB\-\-may\-exist\fR, this command does nothing if \fIchassis\fR already exists\[char46]
+.TP
+[\fB\-\-if\-exists\fR] \fIchassis-del \fIchassis\fI\fR
+Deletes \fIchassis\fR and its \fIencaps\fR and \fIgateway_ports\fR\[char46]
+.IP
+Without \fB\-\-if\-exists\fR, attempting to delete a chassis that does not exist is an error\[char46] With \fB\-\-if\-exists\fR attempting to delete a chassis that does not exist has no effect\[char46]
+.RE
+.SS "Port Binding Commands"
+.PP
+.PP
+These commands manipulate \fBOVN_Southbound\fR port bindings\[char46]
+.RS
+.TP
+[\fB\-\-may\-exist\fR] \fBlsp\-bind \fIlogical-port\fB \fIchassis\fB\fR
+Binds the logical port named \fIlogical-port\fR to \fIchassis\fR\[char46]
+.IP
+Without \fB\-\-may\-exist\fR, attempting to bind a logical port that has already been bound is an error\[char46] With \fB\-\-may\-exist\fR, this command does nothing if \fIlogical-port\fR has already been bound to a chassis\[char46]
+.TP
+[\fB\-\-if\-exists\fR] \fBlsp\-unbind \fIlogical-port\fB\fR
+Removes the binding of \fIlogical-port\fR\[char46]
+.IP
+Without \fB\-\-if\-exists\fR, attempting to unbind a logical port that is not bound is an error\[char46] With \fB\-\-if\-exists\fR, attempting to unbind logical port that is not bound has no effect\[char46]
+.RE
+.SS "Logical Flow Commands"
+.TP
+[\fB\-\-uuid\fR] [\fB\-\-ovs\fR[\fB=\fIremote\fB]\fR] [\fB\-\-stats\fR] [\fB\-\-vflows\fR] \fBlflow\-list\fR [\fIlogical-datapath\fR] [\fIlflow\fR\[char46]\[char46]\[char46]]
+List logical flows\[char46] If \fIlogical-datapath\fR is specified, only list flows for that logical datapath\[char46] The \fIlogical-datapath\fR may be given as a UUID or as a datapath name (reporting an error if multiple datapaths have the same name)\[char46]
+.IP
+If at least one \fIlflow\fR is given, only matching logical flows, if any, are listed\[char46] Each \fIlflow\fR may be specified as a UUID or the first few characters of a UUID, optionally prefixed by \fB0x\fR\[char46] (Because \fBovn\-controller\fR sets OpenFlow flow cookies to the first 32 bits of the corresponding logical flow\(cqs UUID, this makes it easy to look up the logical flow that generated a particular OpenFlow flow\[char46])
+.IP
+If \fB\-\-uuid\fR is specified, the output includes the first 32 bits of each logical flow\(cqs UUID\[char46] This makes it easier to find the OpenFlow flows that correspond to a given logical flow\[char46]
+.IP
+If \fB\-\-ovs\fR is included, \fBovn\-sbctl\fR attempts to obtain and display the OpenFlow flows that correspond to each OVN logical flow\[char46] To do so, \fBovn\-sbctl\fR connects to \fIremote\fR (by default, \fBunix:/br\-int\[char46]mgmt\fR) over OpenFlow and retrieves the flows\[char46] If \fIremote\fR is specified, it must be an active OpenFlow connection method described in \fBovsdb\fR(7)\[char46] Please see the discussion of the similar \fB\-\-ovs\fR option in \fBovn\-trace\fR(8) for more information about the OpenFlow flow output\[char46]
+.IP
+By default, OpenFlow flow output includes only match and actions\[char46] Add \fB\-\-stats\fR to include all OpenFlow information, such as packet and byte counters, duration, and timeouts\[char46]
+.IP
+If \fB\-\-vflows\fR is included, other southbound database records directly used for generating OpenFlow flows are also listed\[char46] This includes: \fIport-bindings\fR, \fImac-bindings\fR, \fImulticast-groups\fR, \fIchassis\fR\[char46] The \fB\-\-ovs\fR and \fB\-\-stats\fR can also be used in conjunction with \fB\-\-vflows\fR\[char46]
+.TP
+[\fB\-\-uuid\fR] \fBdump\-flows\fR [\fIlogical-datapath\fR]
+Alias for \fBlflow\-list\fR\[char46]
+.TP
+\fBcount\-flows\fR [\fIlogical-datapath\fR]
+prints numbers of logical flows per table and per datapath\[char46]
+.SS "Remote Connectivity Commands"
+.PP
+.PP
+These commands manipulate the \fBconnections\fR column in the \fBSB_Global\fR table and rows in the \fBConnection\fR table\[char46] When \fBovsdb\-server\fR is configured to use the \fBconnections\fR column for OVSDB connections, this allows the administrator to use \efBovn\e-sbctl\efR to configure database connections\[char46]
+.RS
+.TP
+\fBget\-connection\fR
+Prints the configured connection(s)\[char46]
+.TP
+\fBdel\-connection\fR
+Deletes the configured connection(s)\[char46]
+.TP
+[\fB\-\-inactivity\-probe=\fR\fImsecs\fR] \fBset\-connection\fR \fItarget\fR\[char46]\[char46]\[char46]
+Sets the configured manager target or targets\[char46] Use \fB\-\-inactivity\-probe=\fR\fImsecs\fR to override the default idle connection inactivity probe time\[char46] Use 0 to disable inactivity probes\[char46]
+.RE
+.SS "SSL Configuration Commands"
+.PP
+.PP
+When \fBovsdb\-server\fR is configured to connect using SSL, the following parameters are required:
+.RS
+.TP
+\fIprivate-key\fR
+Specifies a PEM file containing the private key used for SSL connections\[char46]
+.TP
+\fIcertificate\fR
+Specifies a PEM file containing a certificate, signed by the certificate authority (CA) used by the connection peers, that certifies the private key, identifying a trustworthy peer\[char46]
+.TP
+\fIca-cert\fR
+Specifies a PEM file containing the CA certificate used to verify that the connection peers are trustworthy\[char46]
+.RE
+.PP
+.PP
+These SSL settings apply to all SSL connections made by the southbound database server\[char46]
+.RS
+.TP
+\fBget\-ssl\fR
+Prints the SSL configuration\[char46]
+.TP
+\fBdel\-ssl\fR
+Deletes the current SSL configuration\[char46]
+.TP
+[\fB\-\-bootstrap\fR] \fBset\-ssl\fR \fIprivate-key\fR \fIcertificate\fR \fIca-cert\fR [\fIssl-protocol-list\fR [\fIssl-cipher-list\fR]]
+Sets the SSL configuration\[char46]
+.RE
+.SS "Database Commands"
+.PP
+.PP
+These commands query and modify the contents of \fBovsdb\fR tables\[char46] They are a slight abstraction of the \fBovsdb\fR interface and as such they operate at a lower level than other \fBovn\-sbctl\fR commands\[char46]
+.PP
+\fIIdentifying Tables, Records, and Columns\fR
+.PP
+.PP
+Each of these commands has a \fItable\fR parameter to identify a table within the database\[char46] Many of them also take a \fIrecord\fR parameter that identifies a particular record within a table\[char46] The \fIrecord\fR parameter may be the UUID for a record, which may be abbreviated to its first 4 (or more) hex digits, as long as that is unique\[char46] Many tables offer additional ways to identify records\[char46] Some commands also take \fIcolumn\fR parameters that identify a particular field within the records in a table\[char46]
+.PP
+.PP
+For a list of tables and their columns, see \fBovn\-sb\fR(5) or see the table listing from the \fB\-\-help\fR option\[char46]
+.PP
+.PP
+Record names must be specified in full and with correct capitalization, except that UUIDs may be abbreviated to their first 4 (or more) hex digits, as long as that is unique within the table\[char46] Names of tables and columns are not case-sensitive, and \fB\-\fR and \fB_\fR are treated interchangeably\[char46] Unique abbreviations of table and column names are acceptable, e\[char46]g\[char46] \fBd\fR or \fBdhcp\fR is sufficient to identify the \fBDHCP_Options\fR table\[char46]
+.PP
+.PP
+.PP
+\fIDatabase Values\fR
+.PP
+.PP
+Each column in the database accepts a fixed type of data\[char46] The currently defined basic types, and their representations, are:
+.RS
+.TP
+integer
+A decimal integer in the range \-2**63 to 2**63\-1, inclusive\[char46]
+.TP
+real
+A floating-point number\[char46]
+.TP
+Boolean
+True or false, written \fBtrue\fR or \fBfalse\fR, respectively\[char46]
+.TP
+string
+An arbitrary Unicode string, except that null bytes are not allowed\[char46] Quotes are optional for most strings that begin with an English letter or underscore and consist only of letters, underscores, hyphens, and periods\[char46] However, \fBtrue\fR and \fBfalse\fR and strings that match the syntax of UUIDs (see below) must be enclosed in double quotes to distinguish them from other basic types\[char46] When double quotes are used, the syntax is that of strings in JSON, e\[char46]g\[char46] backslashes may be used to escape special characters\[char46] The empty string must be represented as a pair of double quotes (\fB\(dq\(dq\fR)\[char46]
+.TP
+UUID
+Either a universally unique identifier in the style of RFC 4122, e\[char46]g\[char46] \fBf81d4fae\-7dec\-11d0\-a765\-00a0c91e6bf6\fR, or an \fB@\fR\fIname\fR defined by a \fBget\fR or \fBcreate\fR command within the same \fBovs\-vsctl\fR invocation\[char46]
+.RE
+.PP
+.PP
+Multiple values in a single column may be separated by spaces or a single comma\[char46] When multiple values are present, duplicates are not allowed, and order is not important\[char46] Conversely, some database columns can have an empty set of values, represented as \fB[]\fR, and square brackets may optionally enclose other non-empty sets or single values as well\[char46]
+.PP
+.PP
+A few database columns are ``maps\(cq\(cq of key-value pairs, where the key and the value are each some fixed database type\[char46] These are specified in the form \fIkey\fR\fB=\fR\fIvalue\fR, where \fIkey\fR and \fIvalue\fR follow the syntax for the column\(cqs key type and value type, respectively\[char46] When multiple pairs are present (separated by spaces or a comma), duplicate keys are not allowed, and again the order is not important\[char46] Duplicate values are allowed\[char46] An empty map is represented as \fB{}\fR\[char46] Curly braces may optionally enclose non-empty maps as well (but use quotes to prevent the shell from expanding \fBother\-config={0=x,1=y}\fR into \fBother\-config=0=x
+other\-config=1=y\fR, which may not have the desired effect)\[char46]
+.PP
+\fIDatabase Command Syntax\fR
+.RS
+.TP
+[\fB\-\-if\-exists\fR] [\fB\-\-columns=\fR\fIcolumn\fR[\fB,\fR\fIcolumn\fR]\[char46]\[char46]\[char46]] \fBlist\fR \fItable\fR [\fIrecord\fR]\[char46]\[char46]\[char46]
+Lists the data in each specified \fIrecord\fR\[char46] If no records are specified, lists all the records in \fItable\fR\[char46]
+.IP
+If \fB\-\-columns\fR is specified, only the requested columns are listed, in the specified order\[char46] Otherwise, all columns are listed, in alphabetical order by column name\[char46]
+.IP
+Without \fB\-\-if\-exists\fR, it is an error if any specified \fIrecord\fR does not exist\[char46] With \fB\-\-if\-exists\fR, the command ignores any \fIrecord\fR that does not exist, without producing any output\[char46]
+.TP
+[\fB\-\-columns=\fR\fIcolumn\fR[\fB,\fR\fIcolumn\fR]\[char46]\[char46]\[char46]] \fBfind\fR \fItable\fR [\fIcolumn\fR[\fB:\fR\fIkey\fR]\fB=\fR\fIvalue\fR]\[char46]\[char46]\[char46]
+Lists the data in each record in \fItable\fR whose \fIcolumn\fR equals \fIvalue\fR or, if \fIkey\fR is specified, whose \fIcolumn\fR contains a \fIkey\fR with the specified \fIvalue\fR\[char46] The following operators may be used where \fB=\fR is written in the syntax summary:
+.RS
+.TP
+\fB= != < > <= >=\fR
+Selects records in which \fIcolumn\fR[\fB:\fR\fIkey\fR] equals, does not equal, is less than, is greater than, is less than or equal to, or is greater than or equal to \fIvalue\fR, respectively\[char46]
+.IP
+Consider \fIcolumn\fR[\fB:\fR\fIkey\fR] and \fIvalue\fR as sets of elements\[char46] Identical sets are considered equal\[char46] Otherwise, if the sets have different numbers of elements, then the set with more elements is considered to be larger\[char46] Otherwise, consider a element from each set pairwise, in increasing order within each set\[char46] The first pair that differs determines the result\[char46] (For a column that contains key-value pairs, first all the keys are compared, and values are considered only if the two sets contain identical keys\[char46])
+.TP
+\fB{=} {!=}\fR
+Test for set equality or inequality, respectively\[char46]
+.TP
+\fB{<=}\fR
+Selects records in which \fIcolumn\fR[\fB:\fR\fIkey\fR] is a subset of \fIvalue\fR\[char46] For example, \fBflood\-vlans{<=}1,2\fR selects records in which the \fBflood\-vlans\fR column is the empty set or contains 1 or 2 or both\[char46]
+.TP
+\fB{<}\fR
+Selects records in which \fIcolumn\fR[\fB:\fR\fIkey\fR] is a proper subset of \fIvalue\fR\[char46] For example, \fBflood\-vlans{<}1,2\fR selects records in which the \fBflood\-vlans\fR column is the empty set or contains 1 or 2 but not both\[char46]
+.TP
+\fB{>=} {>}\fR
+Same as \fB{<=}\fR and \fB{<}\fR, respectively, except that the relationship is reversed\[char46] For example, \fBflood\-vlans{>=}1,2\fR selects records in which the \fBflood\-vlans\fR column contains both 1 and 2\[char46]
+.RE
+.IP
+The following operators are available only in Open vSwitch 2\[char46]16 and later:
+.RS
+.TP
+\fB{in}\fR
+Selects records in which every element in \fIcolumn\fR[\fB:\fR\fIkey\fR] is also in \fIvalue\fR\[char46] (This is the same as \fB{<=}\fR\[char46])
+.TP
+\fB{not\-in}\fR
+Selects records in which every element in \fIcolumn\fR[\fB:\fR\fIkey\fR] is not in \fIvalue\fR\[char46]
+.RE
+.IP
+For arithmetic operators (\fB= != < > <= >=\fR), when \fIkey\fR is specified but a particular record\(cqs \fIcolumn\fR does not contain \fIkey\fR, the record is always omitted from the results\[char46] Thus, the condition \fBother\-config:mtu!=1500\fR matches records that have a \fBmtu\fR key whose value is not 1500, but not those that lack an \fBmtu\fR key\[char46]
+.IP
+For the set operators, when \fIkey\fR is specified but a particular record\(cqs \fIcolumn\fR does not contain \fIkey\fR, the comparison is done against an empty set\[char46] Thus, the condition \fBother\-config:mtu{!=}1500\fR matches records that have a \fBmtu\fR key whose value is not 1500 and those that lack an \fBmtu\fR key\[char46]
+.IP
+Don\(cqt forget to escape \fB<\fR or \fB>\fR from interpretation by the shell\[char46]
+.IP
+If \fB\-\-columns\fR is specified, only the requested columns are listed, in the specified order\[char46] Otherwise all columns are listed, in alphabetical order by column name\[char46]
+.IP
+The UUIDs shown for rows created in the same \fBovs\-vsctl\fR invocation will be wrong\[char46]
+.TP
+[\fB\-\-if\-exists\fR] [\fB\-\-id=@\fR\fIname\fR] \fBget\fR \fItable record\fR [\fIcolumn\fR[\fB:\fR\fIkey\fR]]\[char46]\[char46]\[char46]
+Prints the value of each specified \fIcolumn\fR in the given \fIrecord\fR in \fItable\fR\[char46] For map columns, a \fIkey\fR may optionally be specified, in which case the value associated with \fIkey\fR in the column is printed, instead of the entire map\[char46]
+.IP
+Without \fB\-\-if\-exists\fR, it is an error if \fIrecord\fR does not exist or \fIkey\fR is specified, if \fIkey\fR does not exist in \fIrecord\fR\[char46] With \fB\-\-if\-exists\fR, a missing \fIrecord\fR yields no output and a missing \fIkey\fR prints a blank line\[char46]
+.IP
+If \fB@\fR\fIname\fR is specified, then the UUID for \fIrecord\fR may be referred to by that name later in the same \fBovs\-vsctl\fR invocation in contexts where a UUID is expected\[char46]
+.IP
+Both \fB\-\-id\fR and the \fIcolumn\fR arguments are optional, but usually at least one or the other should be specified\[char46] If both are omitted, then \fBget\fR has no effect except to verify that \fIrecord\fR exists in \fItable\fR\[char46]
+.IP
+\fB\-\-id\fR and \fB\-\-if\-exists\fR cannot be used together\[char46]
+.TP
+[\fB\-\-if\-exists\fR] \fBset\fR \fItable record column\fR[\fB:\fR\fIkey\fR]\fB=\fR\fIvalue\fR\[char46]\[char46]\[char46]
+Sets the value of each specified \fIcolumn\fR in the given \fIrecord\fR in \fItable\fR to \fIvalue\fR\[char46] For map columns, a \fIkey\fR may optionally be specified, in which case the value associated with \fIkey\fR in that column is changed (or added, if none exists), instead of the entire map\[char46]
+.IP
+Without \fB\-\-if\-exists\fR, it is an error if \fIrecord\fR does not exist\[char46] With \fB\-\-if\-exists\fR, this command does nothing if \fIrecord\fR does not exist\[char46]
+.TP
+[\fB\-\-if\-exists\fR] \fBadd\fR \fItable record column\fR [\fIkey\fR\fB=\fR]\fIvalue\fR\[char46]\[char46]\[char46]
+Adds the specified value or key-value pair to \fIcolumn\fR in \fIrecord\fR in \fItable\fR\[char46] If \fIcolumn\fR is a map, then \fIkey\fR is required, otherwise it is prohibited\[char46] If \fIkey\fR already exists in a map column, then the current \fIvalue\fR is not replaced (use the \fBset\fR command to replace an existing value)\[char46]
+.IP
+Without \fB\-\-if\-exists\fR, it is an error if \fIrecord\fR does not exist\[char46] With \fB\-\-if\-exists\fR, this command does nothing if \fIrecord\fR does not exist\[char46]
+.TP
+[\fB\-\-if\-exists\fR] \fBremove\fR \fItable record column value\fR\[char46]\[char46]\[char46]
+.IP
+[\fB\-\-if\-exists\fR] \fBremove\fR \fItable record column key\fR\[char46]\[char46]\[char46]
+.IP
+[\fB\-\-if\-exists\fR] \fBremove\fR \fItable record column key\fR\fB=\fR\fIvalue\fR\[char46]\[char46]\[char46]
+Removes the specified values or key-value pairs from \fIcolumn\fR in \fIrecord\fR in \fItable\fR\[char46] The first form applies to columns that are not maps: each specified \fIvalue\fR is removed from the column\[char46] The second and third forms apply to map columns: if only a \fIkey\fR is specified, then any key-value pair with the given \fIkey\fR is removed, regardless of its value; if a \fIvalue\fR is given then a pair is removed only if both key and value match\[char46]
+.IP
+It is not an error if the column does not contain the specified key or value or pair\[char46]
+.IP
+Without \fB\-\-if\-exists\fR, it is an error if \fIrecord\fR does not exist\[char46] With \fB\-\-if\-exists\fR, this command does nothing if \fIrecord\fR does not exist\[char46]
+.TP
+[\fB\-\-if\-exists\fR] \fBclear\fR \fItable record column\fR\[char46]\[char46]\[char46]
+Sets each \fIcolumn\fR in \fIrecord\fR in \fItable\fR to the empty set or empty map, as appropriate\[char46] This command applies only to columns that are allowed to be empty\[char46]
+.IP
+Without \fB\-\-if\-exists\fR, it is an error if \fIrecord\fR does not exist\[char46] With \fB\-\-if\-exists\fR, this command does nothing if \fIrecord\fR does not exist\[char46]
+.TP
+[\fB\-\-id=(@\fR\fIname\fR|\fIuuid\fR)] \fBcreate\fR \fItable column\fR[\fB:\fR\fIkey\fR]\fB=\fR\fIvalue\fR\[char46]\[char46]\[char46]
+Creates a new record in \fItable\fR and sets the initial values of each \fIcolumn\fR\[char46] Columns not explicitly set will receive their default values\[char46] Outputs the UUID of the new row\[char46]
+.IP
+If \fB@\fR\fIname\fR is specified, then the UUID for the new row may be referred to by that name elsewhere in the same \fB\e*(PN\fR invocation in contexts where a UUID is expected\[char46] Such references may precede or follow the \fBcreate\fR command\[char46]
+.IP
+If a valid \fIuuid\fR is specified, then it is used as the UUID of the new row\[char46]
+.RS
+.TP
+Caution (ovs-vsctl as example)
+Records in the Open vSwitch database are significant only when they can be reached directly or indirectly from the \fBOpen_vSwitch\fR table\[char46] Except for records in the \fBQoS\fR or \fBQueue\fR tables, records that are not reachable from the \fBOpen_vSwitch\fR table are automatically deleted from the database\[char46] This deletion happens immediately, without waiting for additional \fBovs\-vsctl\fR commands or other database activity\[char46] Thus, a \fBcreate\fR command must generally be accompanied by additional commands \fIwithin the same\fR \fBovs\-vsctl\fR \fIinvocation\fR to add a chain of references to the newly created record from the top-level \fBOpen_vSwitch\fR record\[char46] The \fBEXAMPLES\fR section gives some examples that show how to do this\[char46]
+.RE
+.TP
+[\fB\-\-if\-exists\fR] \fBdestroy\fR \fItable record\fR\[char46]\[char46]\[char46]
+Deletes each specified \fIrecord\fR from \fItable\fR\[char46] Unless \fB\-\-if\-exists\fR is specified, each \fIrecord\fRs must exist\[char46]
+.TP
+\fB\-\-all destroy\fR \fItable\fR
+Deletes all records from the \fItable\fR\[char46]
+.RS
+.TP
+Caution (ovs-vsctl as example)
+The \fBdestroy\fR command is only useful for records in the \fBQoS\fR or \fBQueue\fR tables\[char46] Records in other tables are automatically deleted from the database when they become unreachable from the \fBOpen_vSwitch\fR table\[char46] This means that deleting the last reference to a record is sufficient for deleting the record itself\[char46] For records in these tables, \fBdestroy\fR is silently ignored\[char46] See the \fBEXAMPLES\fR section below for more information\[char46]
+.RE
+.TP
+\fBwait\-until\fR \fItable record\fR [\fIcolumn\fR[\fB:\fR\fIkey\fR]\fB=\fR\fIvalue\fR]\[char46]\[char46]\[char46]
+Waits until \fItable\fR contains a record named \fIrecord\fR whose \fIcolumn\fR equals \fIvalue\fR or, if \fIkey\fR is specified, whose \fIcolumn\fR contains a \fIkey\fR with the specified \fIvalue\fR\[char46] This command supports the same operators and semantics described for the \fBfind\fR command above\[char46]
+.IP
+If no \fIcolumn\fR[\fB:\fR\fIkey\fR]\fB=\fR\fIvalue\fR arguments are given, this command waits only until \fIrecord\fR exists\[char46] If more than one such argument is given, the command waits until all of them are satisfied\[char46]
+.RS
+.TP
+Caution (ovs-vsctl as example)
+Usually \fBwait\-until\fR should be placed at the beginning of a set of \fBovs\-vsctl\fR commands\[char46] For example, \fBwait\-until bridge br0
+\-\- get bridge br0 datapath_id\fR waits until a bridge named \fBbr0\fR is created, then prints its \fBdatapath_id\fR column, whereas \fBget bridge br0 datapath_id \-\- wait\-until bridge br0\fR will abort if no bridge named \fBbr0\fR exists when \fBovs\-vsctl\fR initially connects to the database\[char46]
+.RE
+.IP
+Consider specifying \fB\-\-timeout=0\fR along with \fB\-\-wait\-until\fR, to prevent \fBovs\-vsctl\fR from terminating after waiting only at most 5 seconds\[char46]
+.TP
+\fBcomment\fR [\fIarg\fR]\[char46]\[char46]\[char46]
+This command has no effect on behavior, but any database log record created by the command will include the command and its arguments\[char46]
+.RE
+.SH "ENVIRONMENT"
+.TP
+\fBOVN_SB_DAEMON\fR
+If set, this should name the Unix domain socket for an \fBovn\-sbctl\fR server process\[char46] See \fBDaemon Mode\fR, above, for more information\[char46]
+.TP
+\fBOVN_SBCTL_OPTIONS\fR
+If set, a set of options for \fBovn\-sbctl\fR to apply automatically, in the same form as on the command line\[char46]
+.TP
+\fBOVN_SB_DB\fR
+If set, the default database to contact when the \fB\-\-db\fR option is not used\[char46]
+.SH "EXIT STATUS"
+.TP
+0
+Successful program execution\[char46]
+.TP
+1
+Usage, syntax, or network error\[char46]
+.SH "SEE ALSO"
+\fBovn\-sb\fR(5), \fBovn\-appctl\fR(8)\[char46]
