@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nbctl" 8 "ovn-nbctl" "OVN 22\[char46]03\[char46]90" "OVN Manual"
+.TH "ovn-nbctl" 8 "ovn-nbctl" "OVN 22\[char46]12\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -141,7 +141,7 @@ By default, or with \fB\-\-leader\-only\fR, when the database server is a cluste
 \fB\-\-shuffle\-remotes\fR
 .TQ .5in
 \fB\-\-no\-shuffle\-remotes\fR
-By default, or with \fB\-\-shuffle\-remotes\fR, when there are multiple remotes specified in the OVSDB connection string specified by \fB\-\-db\fR or the \fBOVN_NB_DB\fR environment variable, the order of the remotes will be shuffled before the client tries to connect\[char46] The remotes will be shuffled only once to a new order before the first connection attempt\[char46] The following retries, if any, will follow the same new order\[char46] The default behavior is to make sure clients of a clustered database can distribute evenly to all memembers of the cluster\[char46] With \fB\-\-no\-shuffle\-remotes\fR, \fBovn\-nbctl\fR will use the original order specified in the connection string to connect\[char46] This allows user to specify the preferred order, which is particularly useful for testing\[char46]
+By default, or with \fB\-\-shuffle\-remotes\fR, when there are multiple remotes specified in the OVSDB connection string specified by \fB\-\-db\fR or the \fBOVN_NB_DB\fR environment variable, the order of the remotes will be shuffled before the client tries to connect\[char46] The remotes will be shuffled only once to a new order before the first connection attempt\[char46] The following retries, if any, will follow the same new order\[char46] The default behavior is to make sure clients of a clustered database can distribute evenly to all members of the cluster\[char46] With \fB\-\-no\-shuffle\-remotes\fR, \fBovn\-nbctl\fR will use the original order specified in the connection string to connect\[char46] This allows user to specify the preferred order, which is particularly useful for testing\[char46]
 .TP
 \fB\-\-no\-syslog\fR
 By default, \fBovn\-nbctl\fR logs its arguments and the details of any changes that it makes to the system log\[char46] This option disables this logging\[char46]
@@ -425,7 +425,7 @@ If \fB\-\-may\-exist\fR is specified, adding a duplicated QoS rule succeeds but 
 \fBqos\-del\fR \fIswitch\fR [\fIdirection\fR [\fIpriority\fR \fImatch\fR]]
 Deletes QoS rules from \fIswitch\fR\[char46] If only \fIswitch\fR is supplied, all the QoS rules from the logical switch are deleted\[char46] If \fIdirection\fR is also specified, then all the flows in that direction will be deleted from the logical switch\[char46] If all the fields are supplied, then a single flow that matches the given fields will be deleted\[char46]
 .IP
-If \fIswitch\fR and \fIuuid\fR are supplied, then the QoS rule with sepcified uuid is deleted\[char46]
+If \fIswitch\fR and \fIuuid\fR are supplied, then the QoS rule with specified uuid is deleted\[char46]
 .TP
 \fBqos\-list\fR \fIswitch\fR
 Lists the QoS rules on \fIswitch\fR\[char46]
@@ -554,6 +554,12 @@ Get the configured DHCPv6 options for the logical port\[char46]
 .TP
 \fBlsp\-get\-ls\fR \fIport\fR
 Get the logical switch which the \fIport\fR belongs to\[char46]
+.TP
+\fBlsp\-attach\-mirror\fR \fIport\fR \fIm\fR
+Attaches the mirror \fIm\fR to the logical port \fIport\fR\[char46]
+.TP
+\fBlsp\-dettach\-mirror\fR \fIport\fR \fIm\fR
+Detaches the mirror \fIm\fR from the logical port \fIport\fR\[char46]
 .SS "Forwarding Group Commands"
 .TP
 [\fB\-\-liveness\fR]\fBfwd\-group\-add\fR \fIgroup\fR \fIswitch\fR \fIvip\fR \fIvmac\fR \fIports\fR
@@ -654,16 +660,18 @@ pkt_mark=100
 [\fB\-\-if\-exists\fR] \fBlr\-policy\-del\fR \fIrouter\fR [\fI{priority | uuid} [match]\fR]
 Deletes polices from \fIrouter\fR\[char46] If only \fIrouter\fR is supplied, all the polices from the logical router are deleted\[char46] If \fIpriority\fR and/or \fImatch\fR are also specified, then all the polices that match the conditions will be deleted from the logical router\[char46]
 .IP
-If \fIrouter\fR and \fIuuid\fR are supplied, then the policy with sepcified uuid is deleted\[char46] It is an error if \fIuuid\fR does not exist, unless \fB\-\-if\-exists\fR is specified\[char46]
+If \fIrouter\fR and \fIuuid\fR are supplied, then the policy with specified uuid is deleted\[char46] It is an error if \fIuuid\fR does not exist, unless \fB\-\-if\-exists\fR is specified\[char46]
 .TP
 \fBlr\-policy\-list\fR \fIrouter\fR
 Lists the polices on \fIrouter\fR\[char46]
 .SS "NAT Commands"
 .TP
-[\fB\-\-may\-exist\fR] [\fB\-\-stateless\fR]\fBlr\-nat\-add\fR \fIrouter\fR \fItype\fR \fIexternal_ip\fR \fIlogical_ip\fR [\fIlogical_port\fR \fIexternal_mac\fR]
-Adds the specified NAT to \fIrouter\fR\[char46] The \fItype\fR must be one of \fBsnat\fR, \fBdnat\fR, or \fBdnat_and_snat\fR\[char46] The \fIexternal_ip\fR is an IPv4 address\[char46] The \fIlogical_ip\fR is an IPv4 network (e\[char46]g 192\[char46]168\[char46]1\[char46]0/24) or an IPv4 address\[char46] The \fIlogical_port\fR and \fIexternal_mac\fR are only accepted when \fIrouter\fR is a distributed router (rather than a gateway router) and \fItype\fR is \fBdnat_and_snat\fR\[char46] The \fIlogical_port\fR is the name of an existing logical switch port where the \fIlogical_ip\fR resides\[char46] The \fIexternal_mac\fR is an Ethernet address\[char46] The \fI\-\-stateless\fR
+[\fB\-\-may\-exist\fR] [\fB\-\-stateless\fR] [\fB\-\-gateway_port\fR=\fIGATEWAY_PORT\fR] \fBlr\-nat\-add\fR \fIrouter\fR \fItype\fR \fIexternal_ip\fR \fIlogical_ip\fR [\fIlogical_port\fR \fIexternal_mac\fR]
+Adds the specified NAT to \fIrouter\fR\[char46] The \fItype\fR must be one of \fBsnat\fR, \fBdnat\fR, or \fBdnat_and_snat\fR\[char46] The \fIexternal_ip\fR is an IPv4 address\[char46] The \fIlogical_ip\fR is an IPv4 network (e\[char46]g 192\[char46]168\[char46]1\[char46]0/24) or an IPv4 address\[char46] The \fIlogical_port\fR and \fIexternal_mac\fR are only accepted when \fIrouter\fR is a distributed router (rather than a gateway router) and \fItype\fR is \fBdnat_and_snat\fR\[char46] The \fIlogical_port\fR is the name of an existing logical switch port where the \fIlogical_ip\fR resides\[char46] The \fIexternal_mac\fR is an Ethernet address\[char46]
 .IP
 When \fB\-\-stateless\fR is specified then it implies that we will be not use connection tracker, i\[char46]e internal ip and external ip are 1:1 mapped\[char46] This implies that \fB\-\-stateless\fR is applicable only to dnat_and_snat type NAT rules\[char46] An external ip with \fB\-\-stateless\fR NAT cannot be shared with any other NAT rule\[char46]
+.IP
+\fB\-\-gateway\-port\fR option allows specifying the distributed gateway port of \fIrouter\fR where the NAT rule needs to be applied\[char46] \fIGATEWAY_PORT\fR should reference a \fBLogical_Router_Port\fR row that is a distributed gateway port of \fIrouter\fR\[char46] When \fIrouter\fR has multiple distributed gateway ports and the gateway port for this NAT can\(cqt be inferred from the \fIexternal_ip\fR, it is an error to not specify the \fIGATEWAY_PORT\fR\[char46]
 .IP
 When \fItype\fR is \fBdnat\fR, the externally visible IP address \fIexternal_ip\fR is DNATted to the IP address \fIlogical_ip\fR in the logical space\[char46]
 .IP
@@ -673,12 +681,12 @@ When \fItype\fR is \fBdnat_and_snat\fR, the externally visible IP address \fIext
 .IP
 When the \fIlogical_port\fR and \fIexternal_mac\fR are specified, the NAT rule will be programmed on the chassis where the \fIlogical_port\fR resides\[char46] This includes ARP replies for the \fIexternal_ip\fR, which return the value of \fIexternal_mac\fR\[char46] All packets transmitted with source IP address equal to \fIexternal_ip\fR will be sent using the \fIexternal_mac\fR\[char46]
 .IP
-It is an error if a NAT already exists with the same values of \fIrouter\fR, \fItype\fR, \fIexternal_ip\fR, and \fIlogical_ip\fR, unless \fB\-\-may\-exist\fR is specified\[char46] When \fB\-\-may\-exist\fR, \fIlogical_port\fR, and \fIexternal_mac\fR are all specified, the existing values of \fIlogical_port\fR and \fIexternal_mac\fR are overwritten\[char46]
+It is an error if a NAT already exists with the same values of \fIrouter\fR, \fItype\fR, \fIexternal_ip\fR, \fIlogical_ip\fR and \fIGATEWAY_PORT\fR (in case of multiple distributed gateway ports), unless \fB\-\-may\-exist\fR is specified\[char46] When \fB\-\-may\-exist\fR, \fIlogical_port\fR, and \fIexternal_mac\fR are all specified, the existing values of \fIlogical_port\fR and \fIexternal_mac\fR are overwritten\[char46]
 .TP
-[\fB\-\-if\-exists\fR] \fBlr\-nat\-del\fR \fIrouter\fR [\fItype\fR [\fIip\fR]]
-Deletes NATs from \fIrouter\fR\[char46] If only \fIrouter\fR is supplied, all the NATs from the logical router are deleted\[char46] If \fItype\fR is also specified, then all the NATs that match the \fItype\fR will be deleted from the logical router\[char46] If all the fields are given, then a single NAT rule that matches all the fields will be deleted\[char46] When \fItype\fR is \fBsnat\fR, the \fIip\fR should be logical_ip\[char46] When \fItype\fR is \fBdnat\fR or \fBdnat_and_snat\fR, the \fIip\fR shoud be external_ip\[char46]
+[\fB\-\-if\-exists\fR] \fBlr\-nat\-del\fR \fIrouter\fR [\fItype\fR [\fIip\fR] [\fIgateway_port\fR]]
+Deletes NATs from \fIrouter\fR\[char46] If only \fIrouter\fR is supplied, all the NATs from the logical router are deleted\[char46] If \fItype\fR is also specified, then all the NATs that match the \fItype\fR will be deleted from the logical router\[char46] If \fIip\fR is also specified without specifying \fIgateway_port\fR, then all the NATs that match the \fItype\fR and \fIip\fR will be deleted from the logical router\[char46] If \fIgateway_port\fR is specified without specifying \fIip\fR, then all the NATs that match the \fItype\fR and \fIgateway_port\fR will be deleted from the logical router\[char46] If all the fields are given, then a single NAT rule that matches all the fields will be deleted\[char46] When \fItype\fR is \fBsnat\fR, the \fIip\fR should be logical_ip\[char46] When \fItype\fR is \fBdnat\fR or \fBdnat_and_snat\fR, the \fIip\fR should be external_ip\[char46]
 .IP
-It is an error if \fIip\fR is specified and there is no matching NAT entry, unless \fB\-\-if\-exists\fR is specified\[char46]
+It is an error if both \fIip\fR and \fIgateway_port\fR are specified and there is no matching NAT entry, unless \fB\-\-if\-exists\fR is specified\[char46]
 .TP
 \fBlr\-nat\-list\fR \fIrouter\fR
 Lists the NATs on \fIrouter\fR\[char46]
@@ -820,6 +828,24 @@ Adds the control plane protection policy \fBname\fR to the logical switch \fBswi
 \fBlr\-copp\-add\fR \fIname\fR \fIrouter\fR
 Adds the control plane protection policy \fBname\fR to the logical router \fBrouter\fR\[char46]
 .RE
+.SS "Mirror commands"
+.TP
+\fBmirror\-add\fR \fIm\fR \fItype\fR \fIindex\fR \fIfilter\fR \fIdest\fR
+Creates a new mirror in the \fBMirror\fR table with the name \fBm\fR with the below mandatory arguments\[char46]
+.IP
+\fItype\fR specifies the mirror type - \fBgre\fR or \fBerspan\fR\[char46]
+.IP
+\fIindex\fR specifies the tunnel index value (which is an integer)\[char46]
+.IP
+\fIfilter\fR specifies the mirror source selection\[char46] Can be \fBfrom\-lport\fR or \fBto\-lport\fR\[char46]
+.IP
+\fIdest\fR specifies the mirror destination IP (v4 or v6)\[char46]
+.TP
+\fBmirror\-del\fR \fIm\fR
+Deletes the mirror \fBm\fR\[char46]
+.TP
+\fBmirror\-list\fR
+Lists the mirrors\[char46]
 .SS "Synchronization Commands"
 .TP
 sync
@@ -985,10 +1011,12 @@ Sets each \fIcolumn\fR in \fIrecord\fR in \fItable\fR to the empty set or empty 
 .IP
 Without \fB\-\-if\-exists\fR, it is an error if \fIrecord\fR does not exist\[char46] With \fB\-\-if\-exists\fR, this command does nothing if \fIrecord\fR does not exist\[char46]
 .TP
-[\fB\-\-id=@\fR\fIname\fR] \fBcreate\fR \fItable column\fR[\fB:\fR\fIkey\fR]\fB=\fR\fIvalue\fR\[char46]\[char46]\[char46]
+[\fB\-\-id=(@\fR\fIname\fR|\fIuuid\fR)] \fBcreate\fR \fItable column\fR[\fB:\fR\fIkey\fR]\fB=\fR\fIvalue\fR\[char46]\[char46]\[char46]
 Creates a new record in \fItable\fR and sets the initial values of each \fIcolumn\fR\[char46] Columns not explicitly set will receive their default values\[char46] Outputs the UUID of the new row\[char46]
 .IP
 If \fB@\fR\fIname\fR is specified, then the UUID for the new row may be referred to by that name elsewhere in the same \fB\e*(PN\fR invocation in contexts where a UUID is expected\[char46] Such references may precede or follow the \fBcreate\fR command\[char46]
+.IP
+If a valid \fIuuid\fR is specified, then it is used as the UUID of the new row\[char46]
 .RS
 .TP
 Caution (ovs-vsctl as example)

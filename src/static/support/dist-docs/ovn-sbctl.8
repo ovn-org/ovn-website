@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-sbctl" 8 "ovn-sbctl" "OVN 22\[char46]03\[char46]90" "OVN Manual"
+.TH "ovn-sbctl" 8 "ovn-sbctl" "OVN 22\[char46]12\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -126,7 +126,7 @@ By default, or with \fB\-\-leader\-only\fR, when the database server is a cluste
 \fB\-\-shuffle\-remotes\fR
 .TQ .5in
 \fB\-\-no\-shuffle\-remotes\fR
-By default, or with \fB\-\-shuffle\-remotes\fR, when there are multiple remotes specified in the OVSDB connection string specified by \fB\-\-db\fR or the \fBOVN_SB_DB\fR environment variable, the order of the remotes will be shuffled before the client tries to connect\[char46] The remotes will be shuffled only once to a new order before the first connection attempt\[char46] The following retries, if any, will follow the same new order\[char46] The default behavior is to make sure clients of a clustered database can distribute evenly to all memembers of the cluster\[char46] With \fB\-\-no\-shuffle\-remotes\fR, \fBovn\-sbctl\fR will use the original order specified in the connection string to connect\[char46] This allows user to specify the preferred order, which is particularly useful for testing\[char46]
+By default, or with \fB\-\-shuffle\-remotes\fR, when there are multiple remotes specified in the OVSDB connection string specified by \fB\-\-db\fR or the \fBOVN_SB_DB\fR environment variable, the order of the remotes will be shuffled before the client tries to connect\[char46] The remotes will be shuffled only once to a new order before the first connection attempt\[char46] The following retries, if any, will follow the same new order\[char46] The default behavior is to make sure clients of a clustered database can distribute evenly to all members of the cluster\[char46] With \fB\-\-no\-shuffle\-remotes\fR, \fBovn\-sbctl\fR will use the original order specified in the connection string to connect\[char46] This allows user to specify the preferred order, which is particularly useful for testing\[char46]
 .TP
 \fB\-\-no\-syslog\fR
 By default, \fBovn\-sbctl\fR logs its arguments and the details of any changes that it makes to the system log\[char46] This option disables this logging\[char46]
@@ -598,10 +598,12 @@ Sets each \fIcolumn\fR in \fIrecord\fR in \fItable\fR to the empty set or empty 
 .IP
 Without \fB\-\-if\-exists\fR, it is an error if \fIrecord\fR does not exist\[char46] With \fB\-\-if\-exists\fR, this command does nothing if \fIrecord\fR does not exist\[char46]
 .TP
-[\fB\-\-id=@\fR\fIname\fR] \fBcreate\fR \fItable column\fR[\fB:\fR\fIkey\fR]\fB=\fR\fIvalue\fR\[char46]\[char46]\[char46]
+[\fB\-\-id=(@\fR\fIname\fR|\fIuuid\fR)] \fBcreate\fR \fItable column\fR[\fB:\fR\fIkey\fR]\fB=\fR\fIvalue\fR\[char46]\[char46]\[char46]
 Creates a new record in \fItable\fR and sets the initial values of each \fIcolumn\fR\[char46] Columns not explicitly set will receive their default values\[char46] Outputs the UUID of the new row\[char46]
 .IP
 If \fB@\fR\fIname\fR is specified, then the UUID for the new row may be referred to by that name elsewhere in the same \fB\e*(PN\fR invocation in contexts where a UUID is expected\[char46] Such references may precede or follow the \fBcreate\fR command\[char46]
+.IP
+If a valid \fIuuid\fR is specified, then it is used as the UUID of the new row\[char46]
 .RS
 .TP
 Caution (ovs-vsctl as example)

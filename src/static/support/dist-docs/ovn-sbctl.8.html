@@ -137,8 +137,8 @@ ovn-sbctl(8)                      OVN Manual                      ovn-sbctl(8)
                    a new order before the first connection attempt.  The  fol‐
                    lowing retries, if any, will follow the same new order. The
                    default behavior is to make sure  clients  of  a  clustered
-                   database  can  distribute  evenly  to  all memembers of the
-                   cluster. With <b>-</b><b>-</b><b>n</b><b>o</b><b>-</b><b>s</b><b>h</b><b>u</b><b>f</b><b>f</b><b>l</b><b>e</b><b>-</b><b>r</b><b>e</b><b>m</b><b>o</b><b>t</b><b>e</b><b>s</b>, <b>o</b><b>v</b><b>n</b><b>-</b><b>s</b><b>b</b><b>c</b><b>t</b><b>l</b> will use  the
+                   database  can distribute evenly to all members of the clus‐
+                   ter. With  <b>-</b><b>-</b><b>n</b><b>o</b><b>-</b><b>s</b><b>h</b><b>u</b><b>f</b><b>f</b><b>l</b><b>e</b><b>-</b><b>r</b><b>e</b><b>m</b><b>o</b><b>t</b><b>e</b><b>s</b>,  <b>o</b><b>v</b><b>n</b><b>-</b><b>s</b><b>b</b><b>c</b><b>t</b><b>l</b>  will  use  the
                    original  order  specified in the connection string to con‐
                    nect. This allows user  to  specify  the  preferred  order,
                    which is particularly useful for testing.
@@ -880,7 +880,7 @@ ovn-sbctl(8)                      OVN Manual                      ovn-sbctl(8)
                      exist.  With  <b>-</b><b>-</b><b>i</b><b>f</b><b>-</b><b>e</b><b>x</b><b>i</b><b>s</b><b>t</b><b>s</b>,  this  command does nothing if
                      <u>r</u><u>e</u><u>c</u><u>o</u><u>r</u><u>d</u> does not exist.
 
-              [<b>-</b><b>-</b><b>i</b><b>d</b><b>=</b><b>@</b><u>n</u><u>a</u><u>m</u><u>e</u>] <b>c</b><b>r</b><b>e</b><b>a</b><b>t</b><b>e</b> <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>c</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u>[<b>:</b><u>k</u><u>e</u><u>y</u>]<b>=</b><u>v</u><u>a</u><u>l</u><u>u</u><u>e</u>...
+              [<b>-</b><b>-</b><b>i</b><b>d</b><b>=</b><b>(</b><b>@</b><u>n</u><u>a</u><u>m</u><u>e</u>|<u>u</u><u>u</u><u>i</u><u>d</u>)] <b>c</b><b>r</b><b>e</b><b>a</b><b>t</b><b>e</b> <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>c</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u>[<b>:</b><u>k</u><u>e</u><u>y</u>]<b>=</b><u>v</u><u>a</u><u>l</u><u>u</u><u>e</u>...
                      Creates a new record in <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u> and sets the initial values
                      of  each  <u>c</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u>. Columns not explicitly set will receive
                      their default values. Outputs the UUID of the new row.
@@ -890,69 +890,72 @@ ovn-sbctl(8)                      OVN Manual                      ovn-sbctl(8)
                      invocation in contexts where a  UUID  is  expected.  Such
                      references may precede or follow the <b>c</b><b>r</b><b>e</b><b>a</b><b>t</b><b>e</b> command.
 
+                     If a valid <u>u</u><u>u</u><u>i</u><u>d</u> is specified, then it is used as the UUID
+                     of the new row.
+
                      Caution (ovs-vsctl as example)
-                            Records  in the Open vSwitch database are signifi‐
-                            cant only when they can  be  reached  directly  or
+                            Records in the Open vSwitch database are  signifi‐
+                            cant  only  when  they  can be reached directly or
                             indirectly from the <b>O</b><b>p</b><b>e</b><b>n</b><b>_</b><b>v</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> table. Except for
-                            records in the <b>Q</b><b>o</b><b>S</b> or <b>Q</b><b>u</b><b>e</b><b>u</b><b>e</b> tables,  records  that
-                            are  not reachable from the <b>O</b><b>p</b><b>e</b><b>n</b><b>_</b><b>v</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> table are
+                            records  in  the <b>Q</b><b>o</b><b>S</b> or <b>Q</b><b>u</b><b>e</b><b>u</b><b>e</b> tables, records that
+                            are not reachable from the <b>O</b><b>p</b><b>e</b><b>n</b><b>_</b><b>v</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> table  are
                             automatically  deleted  from  the  database.  This
-                            deletion  happens immediately, without waiting for
-                            additional <b>o</b><b>v</b><b>s</b><b>-</b><b>v</b><b>s</b><b>c</b><b>t</b><b>l</b> commands  or  other  database
+                            deletion happens immediately, without waiting  for
+                            additional  <b>o</b><b>v</b><b>s</b><b>-</b><b>v</b><b>s</b><b>c</b><b>t</b><b>l</b>  commands  or other database
                             activity. Thus, a <b>c</b><b>r</b><b>e</b><b>a</b><b>t</b><b>e</b> command must generally be
                             accompanied by additional commands <u>w</u><u>i</u><u>t</u><u>h</u><u>i</u><u>n</u> <u>t</u><u>h</u><u>e</u> <u>s</u><u>a</u><u>m</u><u>e</u>
-                            <b>o</b><b>v</b><b>s</b><b>-</b><b>v</b><b>s</b><b>c</b><b>t</b><b>l</b>  <u>i</u><u>n</u><u>v</u><u>o</u><u>c</u><u>a</u><u>t</u><u>i</u><u>o</u><u>n</u> to add a chain of references
-                            to the newly created  record  from  the  top-level
-                            <b>O</b><b>p</b><b>e</b><b>n</b><b>_</b><b>v</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b>  record.  The  <b>E</b><b>X</b><b>A</b><b>M</b><b>P</b><b>L</b><b>E</b><b>S</b> section gives
+                            <b>o</b><b>v</b><b>s</b><b>-</b><b>v</b><b>s</b><b>c</b><b>t</b><b>l</b> <u>i</u><u>n</u><u>v</u><u>o</u><u>c</u><u>a</u><u>t</u><u>i</u><u>o</u><u>n</u> to add a chain of  references
+                            to  the  newly  created  record from the top-level
+                            <b>O</b><b>p</b><b>e</b><b>n</b><b>_</b><b>v</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> record. The  <b>E</b><b>X</b><b>A</b><b>M</b><b>P</b><b>L</b><b>E</b><b>S</b>  section  gives
                             some examples that show how to do this.
 
               [<b>-</b><b>-</b><b>i</b><b>f</b><b>-</b><b>e</b><b>x</b><b>i</b><b>s</b><b>t</b><b>s</b>] <b>d</b><b>e</b><b>s</b><b>t</b><b>r</b><b>o</b><b>y</b> <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>r</u><u>e</u><u>c</u><u>o</u><u>r</u><u>d</u>...
-                     Deletes  each  specified  <u>r</u><u>e</u><u>c</u><u>o</u><u>r</u><u>d</u>   from   <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u>.   Unless
+                     Deletes   each   specified   <u>r</u><u>e</u><u>c</u><u>o</u><u>r</u><u>d</u>  from  <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u>.  Unless
                      <b>-</b><b>-</b><b>i</b><b>f</b><b>-</b><b>e</b><b>x</b><b>i</b><b>s</b><b>t</b><b>s</b> is specified, each <u>r</u><u>e</u><u>c</u><u>o</u><u>r</u><u>d</u>s must exist.
 
               <b>-</b><b>-</b><b>a</b><b>l</b><b>l</b> <b>d</b><b>e</b><b>s</b><b>t</b><b>r</b><b>o</b><b>y</b> <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u>
                      Deletes all records from the <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u>.
 
                      Caution (ovs-vsctl as example)
-                            The  <b>d</b><b>e</b><b>s</b><b>t</b><b>r</b><b>o</b><b>y</b> command is only useful for records in
-                            the <b>Q</b><b>o</b><b>S</b> or <b>Q</b><b>u</b><b>e</b><b>u</b><b>e</b> tables. Records in  other  tables
-                            are  automatically  deleted from the database when
-                            they become unreachable from the <b>O</b><b>p</b><b>e</b><b>n</b><b>_</b><b>v</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b>  ta‐
-                            ble.  This  means that deleting the last reference
-                            to a record is sufficient for deleting the  record
-                            itself.  For  records  in these tables, <b>d</b><b>e</b><b>s</b><b>t</b><b>r</b><b>o</b><b>y</b> is
-                            silently ignored. See the <b>E</b><b>X</b><b>A</b><b>M</b><b>P</b><b>L</b><b>E</b><b>S</b>  section  below
+                            The <b>d</b><b>e</b><b>s</b><b>t</b><b>r</b><b>o</b><b>y</b> command is only useful for records  in
+                            the  <b>Q</b><b>o</b><b>S</b>  or <b>Q</b><b>u</b><b>e</b><b>u</b><b>e</b> tables. Records in other tables
+                            are automatically deleted from the  database  when
+                            they  become unreachable from the <b>O</b><b>p</b><b>e</b><b>n</b><b>_</b><b>v</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> ta‐
+                            ble. This means that deleting the  last  reference
+                            to  a record is sufficient for deleting the record
+                            itself. For records in these  tables,  <b>d</b><b>e</b><b>s</b><b>t</b><b>r</b><b>o</b><b>y</b>  is
+                            silently  ignored.  See the <b>E</b><b>X</b><b>A</b><b>M</b><b>P</b><b>L</b><b>E</b><b>S</b> section below
                             for more information.
 
               <b>w</b><b>a</b><b>i</b><b>t</b><b>-</b><b>u</b><b>n</b><b>t</b><b>i</b><b>l</b> <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>r</u><u>e</u><u>c</u><u>o</u><u>r</u><u>d</u> [<u>c</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u>[<b>:</b><u>k</u><u>e</u><u>y</u>]<b>=</b><u>v</u><u>a</u><u>l</u><u>u</u><u>e</u>]...
-                     Waits  until  <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u>  contains a record named <u>r</u><u>e</u><u>c</u><u>o</u><u>r</u><u>d</u> whose
+                     Waits until <u>t</u><u>a</u><u>b</u><u>l</u><u>e</u> contains a record  named  <u>r</u><u>e</u><u>c</u><u>o</u><u>r</u><u>d</u>  whose
                      <u>c</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u> equals <u>v</u><u>a</u><u>l</u><u>u</u><u>e</u> or, if <u>k</u><u>e</u><u>y</u> is specified, whose <u>c</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u>
-                     contains  a  <u>k</u><u>e</u><u>y</u>  with  the specified <u>v</u><u>a</u><u>l</u><u>u</u><u>e</u>. This command
-                     supports the same operators and semantics  described  for
+                     contains a <u>k</u><u>e</u><u>y</u> with the  specified  <u>v</u><u>a</u><u>l</u><u>u</u><u>e</u>.  This  command
+                     supports  the  same operators and semantics described for
                      the <b>f</b><b>i</b><b>n</b><b>d</b> command above.
 
-                     If  no  <u>c</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u>[<b>:</b><u>k</u><u>e</u><u>y</u>]<b>=</b><u>v</u><u>a</u><u>l</u><u>u</u><u>e</u> arguments are given, this com‐
-                     mand waits only until <u>r</u><u>e</u><u>c</u><u>o</u><u>r</u><u>d</u> exists.  If  more  than  one
-                     such  argument  is  given, the command waits until all of
+                     If no <u>c</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u>[<b>:</b><u>k</u><u>e</u><u>y</u>]<b>=</b><u>v</u><u>a</u><u>l</u><u>u</u><u>e</u> arguments are given,  this  com‐
+                     mand  waits  only  until  <u>r</u><u>e</u><u>c</u><u>o</u><u>r</u><u>d</u> exists. If more than one
+                     such argument is given, the command waits  until  all  of
                      them are satisfied.
 
                      Caution (ovs-vsctl as example)
-                            Usually <b>w</b><b>a</b><b>i</b><b>t</b><b>-</b><b>u</b><b>n</b><b>t</b><b>i</b><b>l</b> should be placed at the  begin‐
-                            ning  of a set of <b>o</b><b>v</b><b>s</b><b>-</b><b>v</b><b>s</b><b>c</b><b>t</b><b>l</b> commands. For example,
-                            <b>w</b><b>a</b><b>i</b><b>t</b><b>-</b><b>u</b><b>n</b><b>t</b><b>i</b><b>l</b> <b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b> <b>b</b><b>r</b><b>0</b>  <b>-</b><b>-</b>  <b>g</b><b>e</b><b>t</b>  <b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b>  <b>b</b><b>r</b><b>0</b>  <b>d</b><b>a</b><b>t</b><b>a</b><b>‐</b>
+                            Usually  <b>w</b><b>a</b><b>i</b><b>t</b><b>-</b><b>u</b><b>n</b><b>t</b><b>i</b><b>l</b> should be placed at the begin‐
+                            ning of a set of <b>o</b><b>v</b><b>s</b><b>-</b><b>v</b><b>s</b><b>c</b><b>t</b><b>l</b> commands. For  example,
+                            <b>w</b><b>a</b><b>i</b><b>t</b><b>-</b><b>u</b><b>n</b><b>t</b><b>i</b><b>l</b>  <b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b>  <b>b</b><b>r</b><b>0</b>  <b>-</b><b>-</b>  <b>g</b><b>e</b><b>t</b>  <b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b> <b>b</b><b>r</b><b>0</b> <b>d</b><b>a</b><b>t</b><b>a</b><b>‐</b>
                             <b>p</b><b>a</b><b>t</b><b>h</b><b>_</b><b>i</b><b>d</b> waits until a bridge named <b>b</b><b>r</b><b>0</b> is created,
-                            then prints its <b>d</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>_</b><b>i</b><b>d</b>  column,  whereas  <b>g</b><b>e</b><b>t</b>
-                            <b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b>  <b>b</b><b>r</b><b>0</b>  <b>d</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>_</b><b>i</b><b>d</b>  <b>-</b><b>-</b> <b>w</b><b>a</b><b>i</b><b>t</b><b>-</b><b>u</b><b>n</b><b>t</b><b>i</b><b>l</b> <b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b> <b>b</b><b>r</b><b>0</b>
-                            will abort if no  bridge  named  <b>b</b><b>r</b><b>0</b>  exists  when
+                            then  prints  its  <b>d</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>_</b><b>i</b><b>d</b> column, whereas <b>g</b><b>e</b><b>t</b>
+                            <b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b> <b>b</b><b>r</b><b>0</b> <b>d</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>_</b><b>i</b><b>d</b> <b>-</b><b>-</b>  <b>w</b><b>a</b><b>i</b><b>t</b><b>-</b><b>u</b><b>n</b><b>t</b><b>i</b><b>l</b>  <b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b>  <b>b</b><b>r</b><b>0</b>
+                            will  abort  if  no  bridge  named <b>b</b><b>r</b><b>0</b> exists when
                             <b>o</b><b>v</b><b>s</b><b>-</b><b>v</b><b>s</b><b>c</b><b>t</b><b>l</b> initially connects to the database.
 
-                     Consider  specifying <b>-</b><b>-</b><b>t</b><b>i</b><b>m</b><b>e</b><b>o</b><b>u</b><b>t</b><b>=</b><b>0</b> along with <b>-</b><b>-</b><b>w</b><b>a</b><b>i</b><b>t</b><b>-</b><b>u</b><b>n</b><b>t</b><b>i</b><b>l</b>,
-                     to prevent <b>o</b><b>v</b><b>s</b><b>-</b><b>v</b><b>s</b><b>c</b><b>t</b><b>l</b> from terminating after waiting  only
+                     Consider specifying <b>-</b><b>-</b><b>t</b><b>i</b><b>m</b><b>e</b><b>o</b><b>u</b><b>t</b><b>=</b><b>0</b> along with  <b>-</b><b>-</b><b>w</b><b>a</b><b>i</b><b>t</b><b>-</b><b>u</b><b>n</b><b>t</b><b>i</b><b>l</b>,
+                     to  prevent <b>o</b><b>v</b><b>s</b><b>-</b><b>v</b><b>s</b><b>c</b><b>t</b><b>l</b> from terminating after waiting only
                      at most 5 seconds.
 
               <b>c</b><b>o</b><b>m</b><b>m</b><b>e</b><b>n</b><b>t</b> [<u>a</u><u>r</u><u>g</u>]...
-                     This  command has no effect on behavior, but any database
-                     log record created by the command will include  the  com‐
+                     This command has no effect on behavior, but any  database
+                     log  record  created by the command will include the com‐
                      mand and its arguments.
 
 <b>E</b><b>N</b><b>V</b><b>I</b><b>R</b><b>O</b><b>N</b><b>M</b><b>E</b><b>N</b><b>T</b>
@@ -961,11 +964,11 @@ ovn-sbctl(8)                      OVN Manual                      ovn-sbctl(8)
               server process. See <b>D</b><b>a</b><b>e</b><b>m</b><b>o</b><b>n</b> <b>M</b><b>o</b><b>d</b><b>e</b>, above, for more information.
 
        <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>B</b><b>C</b><b>T</b><b>L</b><b>_</b><b>O</b><b>P</b><b>T</b><b>I</b><b>O</b><b>N</b><b>S</b>
-              If set, a set of options for <b>o</b><b>v</b><b>n</b><b>-</b><b>s</b><b>b</b><b>c</b><b>t</b><b>l</b> to  apply  automatically,
+              If  set,  a set of options for <b>o</b><b>v</b><b>n</b><b>-</b><b>s</b><b>b</b><b>c</b><b>t</b><b>l</b> to apply automatically,
               in the same form as on the command line.
 
        <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>B</b><b>_</b><b>D</b><b>B</b>
-              If  set, the default database to contact when the <b>-</b><b>-</b><b>d</b><b>b</b> option is
+              If set, the default database to contact when the <b>-</b><b>-</b><b>d</b><b>b</b> option  is
               not used.
 
 <b>E</b><b>X</b><b>I</b><b>T</b> <b>S</b><b>T</b><b>A</b><b>T</b><b>U</b><b>S</b>
@@ -978,5 +981,5 @@ ovn-sbctl(8)                      OVN Manual                      ovn-sbctl(8)
 
 
 
-OVN 22.03.90                       ovn-sbctl                      ovn-sbctl(8)
+OVN 22.12.90                       ovn-sbctl                      ovn-sbctl(8)
 </pre></body></html>

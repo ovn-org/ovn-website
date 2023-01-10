@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-controller" 8 "ovn-controller" "OVN 22\[char46]03\[char46]90" "OVN Manual"
+.TH "ovn-controller" 8 "ovn-controller" "OVN 22\[char46]12\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -193,13 +193,13 @@ Prints version information to the console\[char46]
 .RS
 .TP
 \fBexternal_ids:system\-id\fR
-The chassis name to use in the Chassis table\[char46] Changing the \fBsystem\-id\fR while \fBovn\-controller\fR is running is not directly supported\[char46] Users have two options: either first gracefully stop \fBovn\-controller\fR or manually delete the stale \fBChassis\fR and \fBChassis_Private\fR records after changing the \fBsystem\-id\fR\[char46]
+The chassis name to use in the Chassis table\[char46] Changing the \fBsystem\-id\fR while \fBovn\-controller\fR is running is not directly supported\[char46] Users have two options: either first gracefully stop \fBovn\-controller\fR or manually delete the stale \fBChassis\fR and \fBChassis_Private\fR records after changing the \fBsystem\-id\fR\[char46] Note that the chassis name can also be provided via the \fBsystem\-id\-override\fR file in the local OVN \(dqetc\(dq directory or via the \fB\-n\fR command-line option\[char46] The following precedence is used: first, the command-line option is read; if not present, the \fBsystem\-id\-override\fR file is read; if not present, then the name configured in the database is used\[char46]
 .TP
 \fBexternal_ids:hostname\fR
 The hostname to use in the Chassis table\[char46]
 .TP
 \fBexternal_ids:ovn\-bridge\fR
-The integration bridge to which logical ports are attached\[char46] The default is \fBbr\-int\fR\[char46] If this bridge does not exist when ovn-controller starts, it will be created automatically with the default configuration suggested in \fBovn\-architecture\fR(7)\[char46]
+The integration bridge to which logical ports are attached\[char46] The default is \fBbr\-int\fR\[char46] If this bridge does not exist when ovn-controller starts, it will be created automatically with the default configuration suggested in \fBovn\-architecture\fR(7)\[char46] When more than one controllers are running on the same host, \fBexternal_ids:ovn\-bridge\-CHASSIS_NAME\fR should be set for each of them, pointing to a unique bridge\[char46] This is required to avoid controllers stepping on each others\(cq feet\[char46]
 .TP
 \fBexternal_ids:ovn\-bridge\-datapath\-type\fR
 This configuration is optional\[char46] If set, then the datapath type of the integration bridge will be set to the configured value\[char46] If this option is not set, then \fBovn\-controller\fR will not modify the existing \fBdatapath\-type\fR of the integration bridge\[char46]
@@ -234,6 +234,9 @@ Due to the limited amount of metadata in \fBvxlan\fR, the capabilities and perfo
 \fBexternal_ids:ovn\-encap\-ip\fR
 The IP address that a chassis should use to connect to this node using encapsulation types specified by \fBexternal_ids:ovn\-encap\-type\fR\[char46]
 .TP
+\fBexternal_ids:ovn\-encap\-df_default\fR
+indicates the DF flag handling of the encapulation\[char46] Set to \fBtrue\fR to set the DF flag for new data paths or \fBfalse\fR to clear the DF flag\[char46]
+.TP
 \fBexternal_ids:ovn\-bridge\-mappings\fR
 A list of key-value pairs that map a physical network name to a local ovs bridge that provides connectivity to that network\[char46] An example value mapping two physical network names to two ovs bridges would be: \fBphysnet1:br\-eth0,physnet2:br\-eth1\fR\[char46]
 .TP
@@ -260,6 +263,15 @@ The boolean flag indicates if the chassis is used as an interconnection gateway\
 \fBexternal_ids:ovn\-match\-northd\-version\fR
 The boolean flag indicates if \fBovn\-controller\fR needs to check \fBovn\-northd\fR version\[char46] If this flag is set to true and the \fBovn\-northd\(cqs\fR version (reported in the Southbound database) doesn\(cqt match with the \fBovn\-controller\(cqs\fR internal version, then it will stop processing the southbound and local Open vSwitch database changes\[char46] The default value is considered false if this option is not defined\[char46]
 .TP
+\fBexternal_ids:ovn\-ofctrl\-wait\-before\-clear\fR
+The time, in milliseconds, to wait before clearing flows in OVS after OpenFlow connection/reconnection during \fBovn\-controller\fR initialization\[char46] The purpose of this wait is to give time for \fBovn\-controller\fR to compute the new flows before clearing existing ones, to avoid data plane down time during \fBovn\-controller\fR restart/upgrade at large scale environments where recomputing the flows takes more than a few seconds or even longer\[char46] It is difficult for \fBovn\-controller\fR to determine when the new flows computing is completed, because of the dynamics in the cloud environments, which is why this configuration is provided for users to adjust based on the scale of the environment\[char46] By default, it is 0, which means clearing existing flows without waiting\[char46] Not setting the value, or setting it too small, may result in data plane down time during upgrade/restart, while setting it too big may result in unnecessary extra control plane latency of applying new changes of CMS during upgrade/restart\[char46] In most cases, a slightly bigger value is not harmful, because the extra control plane latency happens only once during the OpenFlow connection\[char46] To get a reasonable range of the value setting, it is recommended to run the below commands on a node in the target environment and then set this configuration to twice the value of \fBMaximum\fR shown in the output of the second command\[char46]
+.RS
+.IP \(bu
+\fBovn\-appctl \-t ovn\-controller inc\-engine/recompute\fR
+.IP \(bu
+\fBovn\-appctl \-t ovn\-controller stopwatch/show flow\-generation\fR
+.RE
+.TP
 \fBexternal_ids:ovn\-enable\-lflow\-cache\fR
 The boolean flag indicates if \fBovn\-controller\fR should enable/disable the logical flow in-memory cache it uses when processing Southbound database logical flow changes\[char46] By default caching is enabled\[char46]
 .TP
@@ -281,6 +293,12 @@ When used, this configuration value specifies the time, in milliseconds, since t
 \fBexternal_ids:ovn\-set\-local\-ip\fR
 The boolean flag indicates if \fBovn\-controller\fR when create tunnel ports should set \fBlocal_ip\fR parameter\[char46] Can be heplful to pin source outer IP for the tunnel when multiple interfaces are used on the host for overlay traffic\[char46]
 .RE
+.PP
+.PP
+Most of configuration options listed above can also be set for a particular chassis name (see \fBexternal_ids:system\-id \fR for more information)\[char46] This can be achieved by setting \fBexternal_ids:option\-[chassis]\fR instead of \fBexternal_ids:option\fR\[char46] For example, set \fBexternal_ids:ovn\-encap\-ip\-otherhv\fR to use a particular IP address for the controller instance named \fBotherhv\fR\[char46] Name specific configuration options always override any global options set in the database\[char46]
+.PP
+.PP
+Chassis-specific configuration options in the database plus the ability to configure the chassis name to use via the \fBsystem\-id\-override\fR file or command line allows to run multiple \fBovn\-controller\fR instances with unique chassis names on the same host using the same \fBvswitchd\fR instance\[char46] This may be useful when running a hybrid setup with more than one CMS managing ports on the host, or to use different datapath types on the same host\[char46] Note that this ability is highly experimental and has known limitations (for example, stateful ACLs are not supported)\[char46] Use at your own risk\[char46]
 .PP
 .PP
 \fBovn\-controller\fR reads the following values from the \fBOpen_vSwitch\fR database of the local OVS instance:
@@ -318,7 +336,7 @@ The presence of this key identifies a patch port as one created by \fBovn\-contr
 Each \fBl2gateway\fR logical port is implemented as a pair of patch ports, one in the integration bridge, one in a different bridge, with the same \fBexternal_ids:ovn\-l2gateway\-port\fR value\[char46]
 .TP
 \fBexternal\-ids:ovn\-l3gateway\-port\fR in the \fBPort\fR table
-This key identifies a patch port as one created by \fBovn\-controller\fR to implement a \fBl3gateway\fR logical port\[char46] Its value is the name of the logical port with type set to \fBl3gateway\fR\[char46] This patch port is similar to the OVN logical patch port, except that \fBl3gateway\fR port can only be bound to a paticular chassis\[char46]
+This key identifies a patch port as one created by \fBovn\-controller\fR to implement a \fBl3gateway\fR logical port\[char46] Its value is the name of the logical port with type set to \fBl3gateway\fR\[char46] This patch port is similar to the OVN logical patch port, except that \fBl3gateway\fR port can only be bound to a particular chassis\[char46]
 .TP
 \fBexternal\-ids:ovn\-logical\-patch\-port\fR in the \fBPort\fR table
 This key identifies a patch port as one created by \fBovn\-controller\fR to implement an OVN logical patch port within the integration bridge\[char46] Its value is the name of the OVN logical patch port that it implements\[char46]
@@ -409,6 +427,9 @@ Display \fBovn\-controller\fR engine counters\[char46] For each engine node the 
 .IP \(bu
 \fBabort\fR
 .RE
+.TP
+\fBinc\-engine/show\-stats \fIengine_node_name\fB \fIcounter_name\fB\fR
+Display the \fBovn\-controller\fR engine counter(s) for the specified \fIengine_node_name\fR\[char46] \fIcounter_name\fR is optional and can be one of \fBrecompute\fR, \fBcompute\fR or \fBabort\fR\[char46]
 .TP
 \fBinc\-engine/clear\-stats\fR
 Reset \fBovn\-controller\fR engine counters\[char46]
