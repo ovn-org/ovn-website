@@ -26,4 +26,4 @@ one year of critical bug fixes and security fixes.
 
 ## Previous LTS releases
 
-There are no LTS previous LTS release series.
+There are no previous LTS release series.
