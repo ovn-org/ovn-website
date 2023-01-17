@@ -17,7 +17,7 @@ Source: [OVN 22.12.0](https://github.com/ovn-org/ovn/releases/tag/v22.12.0)
 
 ## Long Term Support (LTS) Version
 
-Source: [OVN 22.03.2](https://github.com/ovn-org/ovn/releases/tag/v22.03.2)
+Long term support release information can be found [here](long_term_support).
 
 ## Other Releases
 
