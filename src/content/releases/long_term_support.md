@@ -22,7 +22,7 @@ one year of critical bug fixes and security fixes.
 
 | Series | Release | Release Date | Release Notes |
 | ------ | ------- | ------------ | ------------- | --------- |
-| OVN 22.03 | [OVN 22.03.2 (LTS)](https://github.com/ovn-org/ovn/releases/tag/v22.03.2) | 20 Dec 2022 | N/A | [Doc 22.03.0](https://www.ovn.org/support/dist-docs-branch-22.03/)
+| OVN 22.03 | [OVN 22.03.2 (LTS)](https://github.com/ovn-org/ovn/releases/tag/v22.03.2) | 20 Dec 2022 | N/A | [Doc 22.03.2](https://www.ovn.org/support/dist-docs-branch-22.03/)
 
 ## Previous LTS releases
 
