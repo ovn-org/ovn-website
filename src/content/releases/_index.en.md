@@ -11,7 +11,7 @@ located [here](https://github.com/ovn-org/ovn/blob/master/Documentation/internal
 
 ## Latest Version
 
-Source: [OVN 22.12.0](https://github.com/ovn-org/ovn/releases/tag/v22.12.0)
+Source: [OVN 23.03.0](https://github.com/ovn-org/ovn/releases/tag/v23.03.0)
 
 [Release Notes](release_22.12.0)
 
@@ -23,6 +23,7 @@ Long term support release information can be found [here](long_term_support).
 
 | Series | Release | Release Date | Release Notes | Manpages |
 | ------ | ------- | ------------ | ------------- | --------- |
+| OVN 23.03 | [OVN 23.03.0](https://github.com/ovn-org/ovn/releases/tag/v23.03.0)       |  3 Mar 2023 | [Release 23.03.0](release_23.03.0) | [Doc 23.03.0](https://www.ovn.org/support/dist-docs-branch-23.03/) |
 | OVN 22.12 | [OVN 22.12.0](https://github.com/ovn-org/ovn/releases/tag/v22.12.0)       | 16 Dec 2022 | [Release 22.12.0](release_22.12.0) | [Doc 22.12.0](https://www.ovn.org/support/dist-docs-branch-22.12/) |
 | OVN 22.09 | [OVN 22.09.1](https://github.com/ovn-org/ovn/releases/tag/v22.09.1)       | 20 Dec 2022 | N/A                                | [Doc 22.09.1](https://www.ovn.org/support/dist-docs-branch-22.09/) |
 | OVN 22.06 | [OVN 22.06.1](https://github.com/ovn-org/ovn/releases/tag/v22.06.1)       | 20 Dec 2022 | N/A                                | [Doc 22.06.0](https://www.ovn.org/support/dist-docs-branch-22.06/) |
