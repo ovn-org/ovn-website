@@ -1,6 +1,6 @@
 +++
-date = 2021-12-14T16:02:35-05:00
-title = "Release 21.12.0"
+date = 2022-12-14T16:02:35-05:00
+title = "Release 22.12.0"
 +++
 
 22.12.0 is mainly a stability release. The vast majority of commits were made
