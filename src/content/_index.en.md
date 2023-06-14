@@ -27,7 +27,7 @@ in userspace and therefore requires no kernel modules to be installed.
 ## Latest Release
 
 Download the latest release of OVN on the [releases](releases) page on the left.
-For a summary of changes in the latest release, see [here](releases/release_23.03.0).
+For a summary of changes in the latest release, see [here](releases/release_23.06.0).
 
 Distribution documentation (aka man pages) is [available here](https://www.ovn.org/support/dist-docs/).
 
