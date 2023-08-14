@@ -19,5 +19,5 @@ In addition to bug fixes, the 22.06.0 release of OVN contains a mix of new featu
 ### Performance Enhancements
 - Flow installation has been modified to minimize dataplan downstime during an upgrade/restart.
 - load balancer gateway router flows have been optimized, bringing ovn-northd loop execution down.
-- Port security flows are calculated in ovn-controller instad of ovn-northd now. This results in both ovn-northd and ovn-controller running more efficiently.
+- Port security flows are calculated in ovn-controller instead of ovn-northd now. This results in both ovn-northd and ovn-controller running more efficiently.
 
