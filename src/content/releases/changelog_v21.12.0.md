@@ -1,0 +1,143 @@
++++
+title = "Changelog v21.12.0"
+[_build]
+  list = 'never'
++++
+
+### Changes from 21.09.0 to v21.12.0
+
+- [b967fee3](https://github.com/ovn-org/ovn/commit/b967fee30ef9c71f8cbf1474c42d8edd1e40eb6e) Set release date for 21.12.0.
+- [962f762e](https://github.com/ovn-org/ovn/commit/962f762e0d6076fe9921626374c9d604c65664d0) controller: fix ovn patch port incremental processing
+- [cbd8794d](https://github.com/ovn-org/ovn/commit/cbd8794d17c3d3ca101fdcfd06517c3f68612842) Do not send multicast packets to conntrack.
+- [cf5124be](https://github.com/ovn-org/ovn/commit/cf5124bedba8a83a8e2c8be0cbe7c69dca080b31) ovn-ctl: add RAFT election timer argument and pass to ovsdb-tool
+- [14c5c61a](https://github.com/ovn-org/ovn/commit/14c5c61a13df016dfb41defbb8563ff415a1b8de) ovn-ctl: pass database socket to ovn-*ctl init
+- [e9d63f93](https://github.com/ovn-org/ovn/commit/e9d63f93892566413befeabbf6315f9f1d68f523) ovn-ctl: allow overriding the database pidfile path
+- [bb960a50](https://github.com/ovn-org/ovn/commit/bb960a503779aee3eb8ed675c128711d618817aa) ovn-ctl: use user-provided control socket paths
+- [44a84f6c](https://github.com/ovn-org/ovn/commit/44a84f6c483dfd45db9c122686a08f1f9c853f7b) ovn-trace: honor ct state in execute_ct_lb
+- [c70f6ed3](https://github.com/ovn-org/ovn/commit/c70f6ed37bcb40de5739b9ab60ba7c1d76285b0b) Prepare for 21.12.0.
+- [a2e7f69d](https://github.com/ovn-org/ovn/commit/a2e7f69d6684766dadfb0a1eb455e123f6bd200a) controller/pinctrl: improve packet-in debuggability
+- [c85835fc](https://github.com/ovn-org/ovn/commit/c85835fc84befb700f3f224e9153160b4ff613fc) northd: send ingress packets from HW VTEP directly to L2_LKUP table
+- [744cb92e](https://github.com/ovn-org/ovn/commit/744cb92e040427eab452db7d91cd3a730477eb71) Revert "northd: support HW VTEP with stateful datapath"
+- [fd8b0170](https://github.com/ovn-org/ovn/commit/fd8b0170b833553768849505a9793cd90babfb79) ovn-controller: Add command debug/dump-lflow-conj-ids.
+- [904c5532](https://github.com/ovn-org/ovn/commit/904c5532919915a5005b95ceaee5f6af1d18e9eb) ovs: Bump submodule to include OVS library perf fixes.
+- [12ddb1c9](https://github.com/ovn-org/ovn/commit/12ddb1c9d9089a5c92bf8d2a80122604ba4d6b1f) lflow-cache: Automatically trim cache when it becomes inactive.
+- [bcd9a8fb](https://github.com/ovn-org/ovn/commit/bcd9a8fb1b60accd6560c45e69ea80b70b2d3346) ovn-controller: Avoid infinite replying for TCP/ICMP connection reset messages
+- [58ed501e](https://github.com/ovn-org/ovn/commit/58ed501ea9b1d77cfe4d3e1c7ace08887cbb52cc) controller: Add IDL memory reports.
+- [044b4a4c](https://github.com/ovn-org/ovn/commit/044b4a4ce3cf536793b21647f20cdcebde3739f5) northd: remove leftover references to l3redirect_port
+- [9e8d24eb](https://github.com/ovn-org/ovn/commit/9e8d24eb7736e58db889c6056e7f40843f973434) inc-proc-eng: Add inc-engine/recompute command.
+- [953832eb](https://github.com/ovn-org/ovn/commit/953832eb17f31374ba3cbc5db99d63b134fc626c) ovn-northd: Don't trigger recompute for transactions that are in progress.
+- [0df68408](https://github.com/ovn-org/ovn/commit/0df68408a6f220fd8f0eccf501c6ffe6a9ff323c) inc-proc-northd: Don't reset I-P engine force recompute.
+- [b6a75011](https://github.com/ovn-org/ovn/commit/b6a750112324f776301bc4b2d7f0859100fcf811) manpages.mk: fix dependencies path
+- [69c50054](https://github.com/ovn-org/ovn/commit/69c50054d7de6b7a44362dcfd0eac9a6c5f9e59e) tests: Really fix requested-chassis localport test
+- [7dc58fe4](https://github.com/ovn-org/ovn/commit/7dc58fe4e490bbe0a563eb2df224a77dda6500d7) northd: allow having VXLAN encaps in ovn-ic enabled setup
+- [acffcc0d](https://github.com/ovn-org/ovn/commit/acffcc0dde6c641aeaf516e0b600813c7bc4d489) nb: Add support for gateway_mtu_bypass.
+- [48d8b070](https://github.com/ovn-org/ovn/commit/48d8b07043300d3cca13762da984c56841f353b5) tests: fix flaky VXLAN check port/datapath key space limits test
+- [60289650](https://github.com/ovn-org/ovn/commit/602896502fcb2229f35cc823b744bc40a8b3a0a2) controller I-P: Add missing FDB flows when a datapath is added locally.
+- [70990956](https://github.com/ovn-org/ovn/commit/709909563edb6e5fcdd575fadf68868e709a0330) ovn-nb: Document LRP gateway_mtu option
+- [993d7113](https://github.com/ovn-org/ovn/commit/993d7113a61f4b5f34de727451003cc1a1a67e63) northd: I-P: fix BFD dependency.
+- [13be1f19](https://github.com/ovn-org/ovn/commit/13be1f19d37b05beeb163a55e68bd98b1b919294) binding: Log iface-id-ver mismatch.
+- [26622b6e](https://github.com/ovn-org/ovn/commit/26622b6e71fd4b9e596085a0cc0c2f4adeb44619) northd: I-P add explicit dependency on Load_Balancer_Group.
+- [5c4010dd](https://github.com/ovn-org/ovn/commit/5c4010dd7f41d2ebd7b8aa4f0350ee7c803b94a5) northd: Generate ARP responder flows only for reachable VIPs.
+- [68105f68](https://github.com/ovn-org/ovn/commit/68105f68c3f15fd1ae678f62b225730ba79a0745) ic: don't learn routes which have local GW
+- [cf444edd](https://github.com/ovn-org/ovn/commit/cf444eddf61fe318bb7d0173af735c4f8c872284) ic: add support for routing tables in adv/learn routes
+- [1655a6c1](https://github.com/ovn-org/ovn/commit/1655a6c146cab4518ed5086df6c6f5e46cc35a2d) northd, utils: support for RouteTables in LRs
+- [b0d9f460](https://github.com/ovn-org/ovn/commit/b0d9f4608e4b057f48bf0f49a56dab989beeca50) northd: make connected routes have higher priority than static
+- [9ce81519](https://github.com/ovn-org/ovn/commit/9ce81519d3240dbf03ecf086a7ee92b695e9d0fb) ic: maintain route origin - connected/static
+- [13e94f4c](https://github.com/ovn-org/ovn/commit/13e94f4c62e87a3c67966aabbe4860aaeeabbd3a) northd: fix symmetric ECMP reply flows documentation
+- [4deac450](https://github.com/ovn-org/ovn/commit/4deac4509abbedd6ffaecf27eed01ddefccea40a) northd: Use ct_(snat/dnat)_in_czone action for distributed routers.
+- [5f03d682](https://github.com/ovn-org/ovn/commit/5f03d68294f7b124578aedcfa7a51e49e1f321c5) actions: Add new actions - ct_dnat_in_czone and ct_snat_in_czone.
+- [b609aeeb](https://github.com/ovn-org/ovn/commit/b609aeeb010620ff25367aac3afdf16c16c17046) lflow: Consistent conjunction id generation.
+- [773ecb28](https://github.com/ovn-org/ovn/commit/773ecb28388520d59669c079a9b87732c366fa7a) test-utils: Add test_read_uint_hex_value helper.
+- [274f84a3](https://github.com/ovn-org/ovn/commit/274f84a358393a03ee604828b9bec7bd4719385a) lflow-cache: Remove conjunction id cache.
+- [c24aed5d](https://github.com/ovn-org/ovn/commit/c24aed5dd1985ece28bdf91c337f9686299f8807) lflow-cache.h: Fix comment about lflow-cache.
+- [f4864726](https://github.com/ovn-org/ovn/commit/f4864726c59604215b05d37b724586428c2ff9e8) controller: add memory accounting for local_datapath
+- [f100a121](https://github.com/ovn-org/ovn/commit/f100a1216854290ee38867cee9eedb442313a7a6) northd: fix FIP traffic with distributed gw router port on the same hv
+- [fcac403e](https://github.com/ovn-org/ovn/commit/fcac403e537cf7691e46cf1702a2c8233fe9ac6c) controller: keep mcast_query_list list in sync with sb configuration
+- [b44f6373](https://github.com/ovn-org/ovn/commit/b44f6373b4043da3d6620a8e7e5416480b1bf1e9) northd: Do not calculate database sequence numbers incrementally
+- [1fa6612f](https://github.com/ovn-org/ovn/commit/1fa6612ffebfa6d7debb01cc6aaf412df4864968) northd: Add lflow node
+- [7de82dcc](https://github.com/ovn-org/ovn/commit/7de82dcc540e52a95e7ffc150f6d78118fd2de8e) northd: Call build_mcast_groups() from build_lflows()
+- [5a977851](https://github.com/ovn-org/ovn/commit/5a9778510e924a2d02182ca72a85cca6302e5e7b) northd: Introduce struct northd_data
+- [ccb3a13e](https://github.com/ovn-org/ovn/commit/ccb3a13e95846f64394eb3f93f47dc5ff18683f2) northd: Add n_nat_entries field to 'struct ovn_datapath'
+- [4597317f](https://github.com/ovn-org/ovn/commit/4597317f16d1a522fd468dc5339cbe3bb851b60e) northd: Introduce incremental processing for northd
+- [4ecc6124](https://github.com/ovn-org/ovn/commit/4ecc61247d866044669c82320c447105cef31a44) northd: fix ttl exceeded with FIP
+- [e6bcb889](https://github.com/ovn-org/ovn/commit/e6bcb889a6b324f80b120a113a0eecbc99ac9166) ovn-nbctl: Fix lrp-set-gateway-chassis.
+- [d659b653](https://github.com/ovn-org/ovn/commit/d659b6538b00bd72aeca1fc5dd3a3c337ac53f37) ovn_detrace.py: add helper to create CookieHandlers
+- [22141532](https://github.com/ovn-org/ovn/commit/221415322abf21dfef04b6c03f622243373ddc63) ovn-detrace: expose version as global variable
+- [1cafb630](https://github.com/ovn-org/ovn/commit/1cafb6306df95311d31124bde26bebb2bb76d308) ovn-detrace: rename ovn-detrace to ovn_detrace.py
+- [307c970e](https://github.com/ovn-org/ovn/commit/307c970ea979f124826af5b24c89b8475c9d7d11) ovn-detrace: use configurable printer object
+- [c117ce1c](https://github.com/ovn-org/ovn/commit/c117ce1cf32a868af50c25eadc790ea20cd08fe8) ovn-trace: Set ct_state if not already set when tracing ct(nat).
+- [45d9840e](https://github.com/ovn-org/ovn/commit/45d9840eae7c656596dc95c8e0016f53327852f2) northd: Don't add ARP responder flows for unreachable VIPs.
+- [bb715113](https://github.com/ovn-org/ovn/commit/bb715113f9cb5a551753f04e48e3f0dd3839124f) northd: Treat reachable and unreachable VIPs differently.
+- [8fc841e4](https://github.com/ovn-org/ovn/commit/8fc841e40858eaa78b3fe5e98f0c0e4408e7e094) ci: Remove generating ovn-k8s test report.
+- [2fb698ac](https://github.com/ovn-org/ovn/commit/2fb698ac5f351554ccaed10147bfef0c56de28ef) ovn-northd: Virtual port add ND/ARP responder flows for IPv6 VIPs.
+- [5c6f8bd7](https://github.com/ovn-org/ovn/commit/5c6f8bd7ba43b5e1e9fcfd4d6e56748d6bac3285) ovs: Bump submodule to include ovsdb/IDL optimizations.
+- [79915a0a](https://github.com/ovn-org/ovn/commit/79915a0a1332bc6a76f0025024aaa7bb3bc2ad0c) ci: Don't run unit tests for system-test job.
+- [a0ab19c1](https://github.com/ovn-org/ovn/commit/a0ab19c12f33249df886e1bc5a862799aaf21f42) NEWS: Add note on infrastructure for VIF plug providers.
+- [42ce5617](https://github.com/ovn-org/ovn/commit/42ce56175f8cd18014fac3c62048c70de30b9002) controller: Consider plugging VIF on CMS request.
+- [f6851462](https://github.com/ovn-org/ovn/commit/f68514622a2e02f5c9f46a1d1ace75df719b82ca) ovn-controller: Prepare VIF plug provider infrastructure.
+- [820a711d](https://github.com/ovn-org/ovn/commit/820a711d3008b1f497e3d531440305886b35e09a) lib: Add infrastructure for VIF plug providers.
+- [ba71a5d8](https://github.com/ovn-org/ovn/commit/ba71a5d813a967fbcfaf5eec5213453820d2e831) northd: fix check_pkt_larger ingress flows with FIP
+- [cd1a0c7c](https://github.com/ovn-org/ovn/commit/cd1a0c7c2ed4494a953d4809e09cee09990f87b6) inc-proc-eng: Allow definition of engine_node with global scope
+- [ccbbbd05](https://github.com/ovn-org/ovn/commit/ccbbbd0584e52c2aa88436a431fe7a6deffd2221) ovn-northd: Treat reachable and unreachable addresses identically.
+- [34669615](https://github.com/ovn-org/ovn/commit/34669615a259010607f9fec328d3e3c9e85d5fa4) utilities: nbctl: add --may-exist parameter to meter-add cmd
+- [7fecf2cc](https://github.com/ovn-org/ovn/commit/7fecf2cc88d246c07b16072929e1bb6a22d0faa3) ovn.at: Fix flaky test "router - check packet length - icmp defrag"
+- [0d3dd014](https://github.com/ovn-org/ovn/commit/0d3dd014d5054798b74763735d6c0b5c20a818bf) tests: Fix requested-chassis localport test
+- [795f9d69](https://github.com/ovn-org/ovn/commit/795f9d6989ccd1a7721a9193a3342cc611744cae) CoPP: add self-test for tcp-reset controller action
+- [797c6724](https://github.com/ovn-org/ovn/commit/797c672472a068ac2af39cf5484b266ceb73f311) CoPP: add self-test for bfd controller action
+- [d3947133](https://github.com/ovn-org/ovn/commit/d3947133f0c489ec3dea0ba35d3c9b89c18d368f) CoPP: add self-test for icmp{4, 6}_error controller action
+- [13770dba](https://github.com/ovn-org/ovn/commit/13770dba7910fec97c17e69f9155e0d75209c072) ci: Make linux-prepare trust system installs.
+- [902fb9d6](https://github.com/ovn-org/ovn/commit/902fb9d62422d98ee53d9e859924b65d15a0463d) northd.c: Fix northd blocking on deleting duplicated SB datapath.
+- [19582247](https://github.com/ovn-org/ovn/commit/1958224766cd96f58892c9949d6ce4372aa73d3b) ipsec: Update documentation for RHEL and CentOS
+- [8f302231](https://github.com/ovn-org/ovn/commit/8f30223178bb450d1e9db644d223e5c2fb02dc65) controller: bfd: do not always wake main thread in bfd_check_detection_timeout
+- [0ecc1315](https://github.com/ovn-org/ovn/commit/0ecc131512b153118260853f6fd494d6dead0dff) tests: Use built objects for unit test deps.
+- [2b7bf80c](https://github.com/ovn-org/ovn/commit/2b7bf80c639700f37cf946a74bc40aece802f8f1) ovn-controller: Move shared functions to ovn-util.
+- [58c6f5bd](https://github.com/ovn-org/ovn/commit/58c6f5bd8bc3b2dc04c222e781564a5b4f39c576) binding: Make local_binding data structure public.
+- [ce66f442](https://github.com/ovn-org/ovn/commit/ce66f44288d20c791c374c96c772ace7e41c5f75) physical: Make use of common can bind helper.
+- [c8c19ceb](https://github.com/ovn-org/ovn/commit/c8c19cebc96e79685f54f4fd64d996566f573b97) binding: Move can_bind helper to lport module.
+- [09f61502](https://github.com/ovn-org/ovn/commit/09f615025dc21f2f934734d9aefe53cf39a221f8) patch: Consume ovsport functions.
+- [4c8df676](https://github.com/ovn-org/ovn/commit/4c8df67693bb6d0597e718f18cbf1c2ec1492c41) controller: Move OVS port functions to new module.
+- [ad77db23](https://github.com/ovn-org/ovn/commit/ad77db239d9a0d1acef92c3f92e3f1fdc8e862bf) controller: Make use of Port_Binding:requested_chassis.
+- [f01ee5fc](https://github.com/ovn-org/ovn/commit/f01ee5fc36c907d9c359a256bdd3ec7707ec41ef) ovn-sb: Add requested_chassis column to Port_Binding.
+- [a0f26dda](https://github.com/ovn-org/ovn/commit/a0f26ddac3611945b8753d3e3669878d337e94fb) northd: Optimize dp/lflow postprocessing
+- [e3d9e10e](https://github.com/ovn-org/ovn/commit/e3d9e10e8dc888e26229604118df1a56d9d9d3ae) libs: Replace weak with strong compare and exchange
+- [f0d7cefa](https://github.com/ovn-org/ovn/commit/f0d7cefad79779747b0823a48f439ebde2a29506) controller: add memory accounting for if_status_mgr module
+- [3f5de005](https://github.com/ovn-org/ovn/commit/3f5de0058a1263a524ddc2aaee9ca6f2beb82fd1) controller: do not allocate iface name twice in if_status_mgr module
+- [ddd69d81](https://github.com/ovn-org/ovn/commit/ddd69d81c8ad5c1568a5656ef5f0abe442fb3e94) utilities/ovn-appctl: free memory before exiting on failure
+- [98299481](https://github.com/ovn-org/ovn/commit/9829948157e76bc513a5fce9d422b1a2aebac3bc) ovn-northd: Doc: Update OVN tables number
+- [0e2cc81b](https://github.com/ovn-org/ovn/commit/0e2cc81b7260685e4922e90a75c7e0442a19cf0d) ipsec: Update documentation for Fedora
+- [e7ef2ac6](https://github.com/ovn-org/ovn/commit/e7ef2ac6347757a4f5e81e1bf29b17a3bf52570b) Deliver multicast traffic to localport ports
+- [3a597e03](https://github.com/ovn-org/ovn/commit/3a597e03cd411e8316b68e13f88f1b097ad82ba0) controller: do not mark bfd and ipv6_pd msgs as local-only
+- [1bdb66bd](https://github.com/ovn-org/ovn/commit/1bdb66bd969107a592854414bf0e8022dd54cb0a) ic: process only local port_bindings
+- [beed00c9](https://github.com/ovn-org/ovn/commit/beed00c9206d439c89da3bcaf924163abf606215) northd: Always generate valid load balancer address set names.
+- [855fb576](https://github.com/ovn-org/ovn/commit/855fb576af2ef24eff9d0ad19f015efb30634310) northd: Fix typo, from destroy_router_enternal_ips to destroy_router_external_ips.
+- [c8126031](https://github.com/ovn-org/ovn/commit/c8126031e873047ef9b7f42f74c04dffba29976a) github: Remove workaround fixing up /etc/hosts.
+- [738e71c1](https://github.com/ovn-org/ovn/commit/738e71c11f130c6873eec78d3eae3cea7b0395df) github: Install scapy to enable CoPP tests.
+- [9622e805](https://github.com/ovn-org/ovn/commit/9622e805845d2e8bd5e7cb048e1b242d9e5dfc28) tests: fix flaky "ovn-ic -- gateway sync" test
+- [7610520a](https://github.com/ovn-org/ovn/commit/7610520a4d659ca75e61b94b24c0c47d1999f860) committer-responsibilities.rst: Add pre-push hook.
+- [0a54224c](https://github.com/ovn-org/ovn/commit/0a54224ca00deb20a7f9e7f6db1c2ff12523c38e) AUTHORS: Add Zhen Wang.
+- [2caf5a21](https://github.com/ovn-org/ovn/commit/2caf5a21249d92bb36e7c01d12d9c5d23970f5c0) doc: Fix Update Openflow Table numbers
+- [53f67bc0](https://github.com/ovn-org/ovn/commit/53f67bc070c86a45d16b870180de73aace1e04e6) MAINTAINERS: Transition myself to emeritus status.
+- [9f0e9c62](https://github.com/ovn-org/ovn/commit/9f0e9c629a0552c86d19c011d2ef4807ff08d147) ovn.at: Fix flaky test "controller I-P handling with monitoring disabled".
+- [98c6c04f](https://github.com/ovn-org/ovn/commit/98c6c04fb7cd731e26b96b53d59fe949b9ec06bc) Set release date for 21.09.0.
+- [f6aba21c](https://github.com/ovn-org/ovn/commit/f6aba21c9de8952beccf7ee7e98cfa28618f1edf) nb: Add support for Load_Balancer_Groups.
+- [c1e3896c](https://github.com/ovn-org/ovn/commit/c1e3896c0a393c035f301db6c1a8431adda57eb0) northd: Use address sets for ARP responder flows for VIPs.
+- [558fd0e7](https://github.com/ovn-org/ovn/commit/558fd0e7b4d99dc513d331ebc5a3dbb513a236cc) Correct help text for ha-chassis-group-add-chassis
+- [3fb397b6](https://github.com/ovn-org/ovn/commit/3fb397b63663297acbcbf794e1233951222ae5af) ovn-parallel-hmap.h: Minor fixes for hashrow_lock.
+- [f9c302d3](https://github.com/ovn-org/ovn/commit/f9c302d3317a8f48451294cf8979c97d2a9a1aef) northd.c: Optimize parallel build performance with hash based locks.
+- [ab4bdb55](https://github.com/ovn-org/ovn/commit/ab4bdb55cd04ca38f1823f367f6ffb28a3fd5250) northd: do not run find_lrp_member_ip with empty nexthop
+- [a1945b21](https://github.com/ovn-org/ovn/commit/a1945b2154059b37839e0a4bfbb00b59df8cfe36) northd.c: Lock to protect against possible od->group corruption.
+- [f5e2120e](https://github.com/ovn-org/ovn/commit/f5e2120ee19bc1005d21375b843b2cb3aee67ccc) northd.c: Remove redundant condition check in ovn_dp_group_add_with_reference().
+- [9dadbd48](https://github.com/ovn-org/ovn/commit/9dadbd482cc09b86a81e72887f8ce7849f70b2af) test: Fix options:requested-chassis with hostname
+- [8c897f5a](https://github.com/ovn-org/ovn/commit/8c897f5ae1a747c55365d68454b5d318897dbd36) spec: add tcpdump to BuildRequires
+- [1c360bbd](https://github.com/ovn-org/ovn/commit/1c360bbd911cab9fadd6df8cd528d992ffa7a998) Fix basic multicast flows for vxlan (non-vtep) tunnels
+- [2cc42bde](https://github.com/ovn-org/ovn/commit/2cc42bdefd0e703d8d4cd9b02f13ceb5efcbe905) northd: Change the default value of ignore_lsp_down to true.
+- [fd44d759](https://github.com/ovn-org/ovn/commit/fd44d75959cedcedf1f103173be1d9fa1abd9cb8) Enforce datapath and port key constraints in vxlan mode
+- [0272f8d9](https://github.com/ovn-org/ovn/commit/0272f8d903c05d0f475401bfe01af93cfda80699) controller: configure only matching encaps between chassis
+- [973c78b9](https://github.com/ovn-org/ovn/commit/973c78b9a162eeee59379f3558fbdbe1dd054bfe) nbctl: allow multiple bfd sessions with same nexthop and different outports
+- [758bb52d](https://github.com/ovn-org/ovn/commit/758bb52d99213afdd2e2651d9e7b0b047f171562) controller: Allocate zone ids for localport port bindings.
+- [9242f27f](https://github.com/ovn-org/ovn/commit/9242f27f6358582995ac1ad06a1f414940f56e82) ovs: Include ovsdb-data optimizations.
+- [3fb27238](https://github.com/ovn-org/ovn/commit/3fb27238f510fcd11c934549e3501e0072743444) rhel: replace try-restart with restart in ovn-controller %postun
+- [9f2eb5cd](https://github.com/ovn-org/ovn/commit/9f2eb5cdb6d67fc8c7e6f477bc4bdc94cfbca028) controller: Allow specifying tos option for tunnel interface
+- [4748dbfa](https://github.com/ovn-org/ovn/commit/4748dbfa0a87404d1387e0688b667b12ab053ef7) northd: Fix multicast relay when DGP are configured.
+- [b2614db8](https://github.com/ovn-org/ovn/commit/b2614db87060312bb4193212adfe919414429f95) northd: Update the probe interval in main loop.
+- [62ca8b96](https://github.com/ovn-org/ovn/commit/62ca8b9620cc1168ace6905575b7d36438363aed) northd: support HW VTEP with stateful datapath

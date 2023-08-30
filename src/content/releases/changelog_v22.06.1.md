@@ -1,0 +1,97 @@
++++
+title = "Changelog v22.06.1"
+[_build]
+  list = 'never'
++++
+
+### Changes from v22.06.0 to v22.06.1
+
+- [8a48c63a](https://github.com/ovn-org/ovn/commit/8a48c63aba22e6bba1a8f8bc4b33fc315de71d71) Set release date for 22.06.1.
+- [95329201](https://github.com/ovn-org/ovn/commit/9532920107043db93994a713552731c85957e270) ic: minor code improvements
+- [6cd86574](https://github.com/ovn-org/ovn/commit/6cd865743a1860fa15eec6776861f0fd822b4efd) ic: prevent advertising/learning multiple same routes
+- [727e6151](https://github.com/ovn-org/ovn/commit/727e61513903d8e4d18c9fc5b278017e3a741674) ic: lookup southbound port_binding only if needed
+- [95d14053](https://github.com/ovn-org/ovn/commit/95d14053a36b913cd4beb0886973bb5e737a37e6) ic: remove orphan ovn interconnection routes
+- [b0a84c9b](https://github.com/ovn-org/ovn/commit/b0a84c9b283d2017984e9f7f600ea03a22fe20e7) ovn-controller: Only set monitor conditions on available tables.
+- [7f8318b4](https://github.com/ovn-org/ovn/commit/7f8318b480eb9578f28f36627edb36191c8df74e) ovn-trace: Support connecting to SB raft followers.
+- [853171ef](https://github.com/ovn-org/ovn/commit/853171ef00f90295ef37f706ddad577ea8f17eb0) CI: Remove .cirrus.yml
+- [65e86e2b](https://github.com/ovn-org/ovn/commit/65e86e2bb6b2f67544c023665f2bcb70da033699) northd: Add missing RBAC rules for BFD table.
+- [c0befbe8](https://github.com/ovn-org/ovn/commit/c0befbe814dc098296a3d3e748b524d01bf40d9d) ovn-nbctl: Fix removal of BFD entry on route deletion
+- [c6061d58](https://github.com/ovn-org/ovn/commit/c6061d58bd0b31aeebef26ca12835d3c4079193f) controller: Fixed ovs/ovn(features) connection lost when running more than 120 seconds
+- [aaad3116](https://github.com/ovn-org/ovn/commit/aaad311664481aee0f6e42383c6ab6d603c7dcd4) ovs: Bump submodule to include latest fixes.
+- [43a8b1e4](https://github.com/ovn-org/ovn/commit/43a8b1e49306abb0e1bdfc21af2ad77bd1fde343) ovn-controller: Fixed missing flows after interface deletion
+- [d5aada0a](https://github.com/ovn-org/ovn/commit/d5aada0accbfbab1fd5753f9ca978841758b79bc) ovn-controller: Fix releasing wrong vif
+- [a13cd4d2](https://github.com/ovn-org/ovn/commit/a13cd4d2f75c6b1d58e017f4864ec332906e32f1) tests: Fix flaky test "multi-vtep SB Chassis encap updates"
+- [38127600](https://github.com/ovn-org/ovn/commit/38127600f9bc8c5393d179588bed6b16216a4f1e) controller: Fix QoS for ports with undetected or too low link speed.
+- [fda37ecd](https://github.com/ovn-org/ovn/commit/fda37ecdc23ea5c76ef7a64149ae16006843cece) ovn-controller: Fix some issues with CT zone assignment.
+- [728afe31](https://github.com/ovn-org/ovn/commit/728afe31a0ca2e3093d547abbf69291283dc846f) OVN-CI: Add test cases with monitor-all enabled.
+- [03f1e2f0](https://github.com/ovn-org/ovn/commit/03f1e2f0e8ec2c04af0156e5074cdc5cc6fcacc0) OVN-CI: remove ddlog test cases.
+- [af7c01db](https://github.com/ovn-org/ovn/commit/af7c01db7dabd0cefedf82e85211f497f11ebdcd) tests: Avoid matching on the OVS flow key contents.
+- [d6b59b35](https://github.com/ovn-org/ovn/commit/d6b59b35fb4c0bc174e9f1cace4a1b9b244f3c58) ovs: Bump submodule to tip of branch-3.0 and add related test
+- [b0406505](https://github.com/ovn-org/ovn/commit/b04065057cb9e86583368ac6dd04617c9439298d) ci: Add missing tests after switch to parallel jobs
+- [74a4bcf1](https://github.com/ovn-org/ovn/commit/74a4bcf18b7623f939216f1244d57e1882c93daf) OVN-CI: ovn unit tests run in parallel jobs.
+- [6579dc83](https://github.com/ovn-org/ovn/commit/6579dc836f7788bccdf6cea72e6d00e0b7aad866) CI-Actions: define matrix as a list
+- [ddaa65a2](https://github.com/ovn-org/ovn/commit/ddaa65a20f1c53e0c3667cf23ee6c6453b37c9a5) ci: Use CFLAGS instead of OVS_CFLAGS
+- [89dab078](https://github.com/ovn-org/ovn/commit/89dab07821a2cf3d881bf156ee3071af9ab3e80b) Build tests with asan and ubsan together to reduce CI time.
+- [dc7df121](https://github.com/ovn-org/ovn/commit/dc7df1213ed25adbb00e43a2d5626a86b0fbc32c) ci: Add UB Sanitizer.
+- [736734a5](https://github.com/ovn-org/ovn/commit/736734a5c123568019369e40eabc64a0ced10af7) controller: Add delay after multicast ARP packet
+- [b490c4b9](https://github.com/ovn-org/ovn/commit/b490c4b9f0f0a215713f440b73ebaca4634b3592) controller: fix ipv6 prefix delegation in gw router mode
+- [51f0f88b](https://github.com/ovn-org/ovn/commit/51f0f88bd81d8ccefc2b77b9d17138aa27ca3b90) spec: require python3-openvswitch for ovn-detrace
+- [6020ed22](https://github.com/ovn-org/ovn/commit/6020ed22eafe3741e92dfd150aa98ca3a767ae43) northd: Use separate SNAT for already-DNATted traffic.
+- [c0a6339f](https://github.com/ovn-org/ovn/commit/c0a6339f37e09a46bb034070aebd0b8fdd4456fc) controller: Restore MAC and vlan for DVR scenario
+- [b336ef8d](https://github.com/ovn-org/ovn/commit/b336ef8dcb860693d5017bf73f489e6a78eb8f97) northd: Fix multicast table full
+- [31b2f6c7](https://github.com/ovn-org/ovn/commit/31b2f6c76ebaa429c79511272277a5796257c43c) ci: ovn-kubernetes: Align CI jobs with recent ovn-kubernetes upstream.
+- [7ec418f2](https://github.com/ovn-org/ovn/commit/7ec418f29b37fe76c968d0a581a4defca4815e7e) controller: Fix first ping from lsp to external through snat failing
+- [981b87f0](https://github.com/ovn-org/ovn/commit/981b87f0450cda3532e42329994178a5cca9d09b) Revert "ovn-controller: fix a crash when deleting a port claimed when sb was ro"
+- [25152000](https://github.com/ovn-org/ovn/commit/25152000923af1b1c35fd2d758dcc8564c158c42) ovn-controller: fix a crash when deleting a port claimed when sb was ro
+- [167a7bf1](https://github.com/ovn-org/ovn/commit/167a7bf1a0838ecbf0617fe0856ba9087df2337b) northd: drop traffic to disabled LSPs in ingress pipeline
+- [adb79f28](https://github.com/ovn-org/ovn/commit/adb79f2838ce37fdd237d54a73bf9955b2df52c5) controller: flush associated conntrack zone on PB release
+- [23676602](https://github.com/ovn-org/ovn/commit/23676602ce71e0fc160c4691bcc748c197a073e9) northd: Re-use IP sets created for load balancer groups.
+- [7de8774e](https://github.com/ovn-org/ovn/commit/7de8774e5aa8cf07e49c483ce3f1e729ad135d06) northd: Retrieve load balancer options only once.
+- [12d9780a](https://github.com/ovn-org/ovn/commit/12d9780ab01d97c6d6f80af8533400f4209f7457) northd: Add datapaths to load balancers in bulk.
+- [c0fa0557](https://github.com/ovn-org/ovn/commit/c0fa05571b30db0760ba9f38b884c8d97d77f865) northd: Optimize load balancer lookups for groups.
+- [65c9911e](https://github.com/ovn-org/ovn/commit/65c9911ed6c8a2575b205b11afd1679f487ca204) Bump required python version to 3.6.
+- [a553f271](https://github.com/ovn-org/ovn/commit/a553f2716cf068478bd50192a3bff6e4eeef9aff) tests: Fix tests/check_acl_log.py outputs.
+- [75f2fe19](https://github.com/ovn-org/ovn/commit/75f2fe197569362f6cd86d05c72e4f75f11447d0) northd: don't include disabled LSP's IP to Load Balancing
+- [f4c7a422](https://github.com/ovn-org/ovn/commit/f4c7a4223abe7129234bd4568e9f2a75b4800d2b) tests: Factor out reset_pcap_file() helper.
+- [fe9fc899](https://github.com/ovn-org/ovn/commit/fe9fc89961ea893755cfcd613703d03785b9bf48) Don't blindly save original dst IP and Port to avoid megaflow unwildcarding.
+- [b89b96e1](https://github.com/ovn-org/ovn/commit/b89b96e1a16134c0aa8cd6513d920d49ff8c6cda) controller: fix potential segmentation violation when removing ports
+- [978c1db7](https://github.com/ovn-org/ovn/commit/978c1db7e1678d69be0f69e2c7ced3e96a0f7488) binding.c: update ld->peers when lsp type updated
+- [8434cdd0](https://github.com/ovn-org/ovn/commit/8434cdd06cac1d16f7140b39862cdf826ea9174b) northd: rely on new actions for ecmp-symmetric routing
+- [c1b22515](https://github.com/ovn-org/ovn/commit/c1b2251563b47075d29dfbc5a37278e11c5f8090) actions: introduce chk_ecmp_nh and chk_ecmp_nh_mac actions
+- [fbe3da47](https://github.com/ovn-org/ovn/commit/fbe3da470f7631169eb6987ee7c1050bbcadffdf) actions: introduce commit_ecmp_nh action
+- [959e035c](https://github.com/ovn-org/ovn/commit/959e035ca12f98818595d0e2442610f4f0ba907c) github: ovn-kubernetes: Update go, kube and libovsdb versions.
+- [5e2baaa4](https://github.com/ovn-org/ovn/commit/5e2baaa4402b7cf600c4822c7b6c1bae89badaf1) controller: physical: fix regression for container ports
+- [d9a050e0](https://github.com/ovn-org/ovn/commit/d9a050e0c9f2e09f8066879809aa96acf6544347) northd: Fix memory leak.
+- [8f1d63bb](https://github.com/ovn-org/ovn/commit/8f1d63bbf6f67ab2bc4eb3d59ba1de43a4f6548f) controller: throttle port claim attempts
+- [3171d0ce](https://github.com/ovn-org/ovn/commit/3171d0ce474eb90c89cbd2b2e4ed7c885195bba4) Split out code to handle port binding db updates
+- [5ad79df0](https://github.com/ovn-org/ovn/commit/5ad79df0229ff190687225a06df73a50d2100f50) northd: Do not relay local IP multicast (224.0.0.X).
+- [1293b7f0](https://github.com/ovn-org/ovn/commit/1293b7f0fb6854cdc0a6a7d760a444db28df1212) tests: Enable vif-plug tests and fix the vif-provider.
+- [e9da1112](https://github.com/ovn-org/ovn/commit/e9da1112d171063c9a8cee417105b65cb85e233d) ovn-ctl: Ensure that log/run directory have correct permission
+- [d6a8d9eb](https://github.com/ovn-org/ovn/commit/d6a8d9eb1579aa1542540e51ae7c53e84e9616d7) ofctrl.c: mff_ovn_geneve should be available at state WAIT_BEFORE_CLEAR.
+- [910523a0](https://github.com/ovn-org/ovn/commit/910523a0b9fc1e5da04ca8d954b03c4f0e641e53) controller: Fix IPv6 prefix delegation
+- [fe639323](https://github.com/ovn-org/ovn/commit/fe639323b3911f2a99e495c3fcf6ea3c18654066) system-tests: Reduce flakiness of IPv6 prefix delegation
+- [367dda01](https://github.com/ovn-org/ovn/commit/367dda01b9fcaab15079fd3dc1418353890745a6) northd: handle virtual lport type update
+- [3affdfe8](https://github.com/ovn-org/ovn/commit/3affdfe8952fa359ed52aa0cbb28ffb879ba6fb6) extend-table: Fix table ID double allocation after OVS restart.
+- [0e3ee19e](https://github.com/ovn-org/ovn/commit/0e3ee19efea923ca6293af12e6610460c0cfb8b8) IPsec: Add option to force NAT-T encapsulation
+- [5f948fc8](https://github.com/ovn-org/ovn/commit/5f948fc8f99fc12fc666ffe1ee4b54e005ff7038) Fix compilation issue in fedora 37/rawhide.
+- [593b3c25](https://github.com/ovn-org/ovn/commit/593b3c25e1ab88db3e13fe93c8a265e7efea3863) pinctrl: fix ovn-controller abort when service start.
+- [6bcb3b79](https://github.com/ovn-org/ovn/commit/6bcb3b7931c3e705c9d2ff0235accc0575cfbc7b) lflow: fix possible use-after-free in add_lb_vip_hairpin_reply_action
+- [55d2f0c8](https://github.com/ovn-org/ovn/commit/55d2f0c805ef912aab5483fed384e2b749fbe413) ovn-ic: do not learn routes with link-local next-hops
+- [592ba564](https://github.com/ovn-org/ovn/commit/592ba5643c5e250e0f2fd0232d475cee1a3e2014) tests: fixed flaky test localnet connectivity with multiple requested-chassis
+- [503e7333](https://github.com/ovn-org/ovn/commit/503e7333efc193fd8457f981e32d48ec27c417df) ovn-nb: Properly document multicast flood config defaults.
+- [bc46ab4d](https://github.com/ovn-org/ovn/commit/bc46ab4dbdd866307ce4851fc68170764625f397) ovn-nbctl: Fix priority arg of lrp-set-gateway-chassis
+- [894bcac4](https://github.com/ovn-org/ovn/commit/894bcac4922928eb5701bdeb0fd8319973fd3ba6) Always funnel multichassis port traffic through tunnels
+- [8cc90ac0](https://github.com/ovn-org/ovn/commit/8cc90ac02fff34d640c551230c712f9184d35e2a) northd: set svc_mon status to offline if port_binding released
+- [5593044a](https://github.com/ovn-org/ovn/commit/5593044a8be0d2ce730e4890cf213ee760916889) ovs: Bump submodule to newer version
+- [4bdade35](https://github.com/ovn-org/ovn/commit/4bdade3593ae3c6604822716d22ab04b0af962da) tests: add multi-chassis keyword to relevant test cases
+- [9885154f](https://github.com/ovn-org/ovn/commit/9885154fc41005dbb8fbbdca9e3a38d892870f53) northd: add condition for stateless nat drop flow in S_ROUTER_IN_GW_REDIRECT pipeline
+- [c5596102](https://github.com/ovn-org/ovn/commit/c5596102cb84e22086d7807b31cbe5c9e893ac38) northd.c: Add flow to skip put_nd action if ip6.src or nd.sll is 0
+- [849106f6](https://github.com/ovn-org/ovn/commit/849106f6ee75d7b1ff990763325d41d45c843a64) Allow arbitrary args to be passed to called binary
+- [656a91b6](https://github.com/ovn-org/ovn/commit/656a91b6b5cd9d9e48b8e938fcffb81ead2d9fda) tests: ovn-nbctl dump-flows -> ovn-sbctl dump-flows
+- [70b36032](https://github.com/ovn-org/ovn/commit/70b360325c13f399835b1f5c7ac0c0acd4832773) Fix memleak in ovn-nbctl when args can't be parsed
+- [c75ddaf8](https://github.com/ovn-org/ovn/commit/c75ddaf804cc8ea8499706430b438ae53f2f1224) Implement RARP activation strategy for ports
+- [44e047d6](https://github.com/ovn-org/ovn/commit/44e047d6f1be5ae4f564e82a928cf1f08f1908ef) Fix pidfile_is_running when $cmd is not passed
+- [6e36ad7a](https://github.com/ovn-org/ovn/commit/6e36ad7a52ec4e6443ccb3185bda6421cdf6747e) Lock pinctrl_mutex for pinctrl_wait
+- [d0847f56](https://github.com/ovn-org/ovn/commit/d0847f56913245c19a33e087f730c084ca674c83) Ensure pid belongs to ovsdb-server in ovn-ctl
+- [98e7d4b3](https://github.com/ovn-org/ovn/commit/98e7d4b3675b237c770763377382075ac08c64ba) Handle re-used pids in pidfile_is_running
+- [437dc3a0](https://github.com/ovn-org/ovn/commit/437dc3a01266d7f128bba532c674c5827af1bd6f) Prepare for 22.06.1.
