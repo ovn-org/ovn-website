@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nbctl" 8 "ovn-nbctl" "OVN 22\[char46]12\[char46]90" "OVN Manual"
+.TH "ovn-nbctl" 8 "ovn-nbctl" "OVN 24\[char46]03\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -400,25 +400,29 @@ Lists all existing switches on standard output, one per line\[char46]
 These commands operates on ACL objects for a given \fIentity\fR\[char46] The \fIentity\fR can be either a logical switch or a port group\[char46] The \fIentity\fR can be specified as uuid or name\[char46] The \fB\-\-type\fR option can be used to specify the type of the \fIentity\fR, in case both a logical switch and a port groups exist with the same name specified for \fIentity\fR\[char46] \fBtype\fR must be either \fBswitch\fR or \fBport\-group\fR\[char46]
 .RS
 .TP
-[\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] [\fB\-\-log\fR] [\fB\-\-meter=\fR\fImeter\fR] [\fB\-\-severity=\fR\fIseverity\fR] [\fB\-\-name=\fR\fIname\fR] [\fB\-\-label=\fR\fIlabel\fR] [\fB\-\-may\-exist\fR] [\fB\-\-apply\-after\-lb\fR] \fBacl\-add\fR \fIentity\fR \fIdirection\fR \fIpriority\fR \fImatch\fR \fIverdict\fR
+[\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] [\fB\-\-log\fR] [\fB\-\-meter=\fR\fImeter\fR] [\fB\-\-severity=\fR\fIseverity\fR] [\fB\-\-name=\fR\fIname\fR] [\fB\-\-label=\fR\fIlabel\fR] [\fB\-\-may\-exist\fR] [\fB\-\-apply\-after\-lb\fR] [\fB\-\-tier\fR] \fBacl\-add\fR \fIentity\fR \fIdirection\fR \fIpriority\fR \fImatch\fR \fIverdict\fR
 Adds the specified ACL to \fIentity\fR\[char46] \fIdirection\fR must be either \fBfrom\-lport\fR or \fBto\-lport\fR\[char46] \fIpriority\fR must be between \fB0\fR and \fB32767\fR, inclusive\[char46] A full description of the fields are in \fBovn\-nb\fR(5)\[char46] If \fB\-\-may\-exist\fR is specified, adding a duplicated ACL succeeds but the ACL is not really created\[char46] Without \fB\-\-may\-exist\fR, adding a duplicated ACL results in error\[char46]
 .IP
 The \fB\-\-log\fR option enables packet logging for the ACL\[char46] The options \fB\-\-severity\fR and \fB\-\-name\fR specify a severity and name, respectively, for log entries (and also enable logging)\[char46] The severity must be one of \fBalert\fR, \fBwarning\fR, \fBnotice\fR, \fBinfo\fR, or \fBdebug\fR\[char46] If a severity is not specified, the default is \fBinfo\fR\[char46] The \fB\-\-meter=\fImeter\fB\fR option is used to rate-limit packet logging\[char46] The \fImeter\fR argument names a meter configured by \fBmeter\-add\fR\[char46]
 .IP
 The \fB\-\-apply\-after\-lb\fR option sets \fBapply\-after\-lb=true\fR in the \fBoptions\fR column of the \fBACL\fR table\[char46] As the option name suggests, the ACL will be applied after the logical switch load balancer stage\[char46]
+.IP
+The \fB\-\-tier\fR option sets the ACL\(cqs tier to the specified value\[char46] For more information about ACL tiers, see the documentation for the \fBovn\-nb\fR(5) database\[char46]
 .TP
-[\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] \fBacl\-del\fR \fIentity\fR [\fIdirection\fR [\fIpriority\fR \fImatch\fR]]
+[\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] [\fB\-\-tier\fR] \fBacl\-del\fR \fIentity\fR [\fIdirection\fR [\fIpriority\fR \fImatch\fR]]
 Deletes ACLs from \fIentity\fR\[char46] If only \fIentity\fR is supplied, all the ACLs from the \fIentity\fR are deleted\[char46] If \fIdirection\fR is also specified, then all the flows in that direction will be deleted from the \fIentity\fR\[char46] If all the fields are given, then a single flow that matches all the fields will be deleted\[char46]
+.IP
+If the \fB\-\-tier\fR option is provided, then only ACLs of the given tier value will be deleted, in addition to whatever other criteria have been provided\[char46]
 .TP
 [\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] \fBacl\-list\fR \fIentity\fR
 Lists the ACLs on \fIentity\fR\[char46]
 .RE
 .SS "Logical Switch QoS Rule Commands"
 .TP
-[\fB\-\-may\-exist\fR] \fBqos\-add\fR \fIswitch\fR \fIdirection\fR \fIpriority\fR \fImatch\fR [\fBdscp=\fR\fIdscp\fR] [\fBrate=\fR\fIrate\fR [\fBburst=\fR\fIburst\fR]]
+[\fB\-\-may\-exist\fR] \fBqos\-add\fR \fIswitch\fR \fIdirection\fR \fIpriority\fR \fImatch\fR [\fBmark=\fR\fImark\fR] [\fBdscp=\fR\fIdscp\fR] [\fBrate=\fR\fIrate\fR [\fBburst=\fR\fIburst\fR]]
 Adds QoS marking and metering rules to \fIswitch\fR\[char46] \fIdirection\fR must be either \fBfrom\-lport\fR or \fBto\-lport\fR\[char46] \fIpriority\fR must be between \fB0\fR and \fB32767\fR, inclusive\[char46]
 .IP
-If \fBdscp=\fR\fIdscp\fR is specified, then matching packets will have DSCP marking applied\[char46] \fIdscp\fR must be between \fB0\fR and \fB63\fR, inclusive\[char46] If \fBrate=\fR\fIrate\fR is specified then matching packets will have metering applied at \fIrate\fR kbps\[char46] If metering is configured, then \fBburst=\fR\fIburst\fR specifies the burst rate limit in kilobits\[char46] \fBdscp\fR and/or \fBrate\fR are required arguments\[char46]
+If \fBdscp=\fR\fIdscp\fR is specified, then matching packets will have DSCP marking applied\[char46] \fIdscp\fR must be between \fB0\fR and \fB63\fR, inclusive\[char46] If \fBrate=\fR\fIrate\fR is specified then matching packets will have metering applied at \fIrate\fR kbps\[char46] If metering is configured, then \fBburst=\fR\fIburst\fR specifies the burst rate limit in kilobits\[char46] \fBdscp\fR and/or \fBrate\fR are required arguments\[char46] If \fBmark=\fR\fImark\fR is specified, then matching packets will be marked (through \fBpkt\[char46]mark\fR)\[char46] \fImark\fR must be a positive integer\[char46]
 .IP
 If \fB\-\-may\-exist\fR is specified, adding a duplicated QoS rule succeeds but the QoS rule is not really created\[char46] Without \fB\-\-may\-exist\fR, adding a duplicated QoS rule results in error\[char46]
 .TP
@@ -558,7 +562,7 @@ Get the logical switch which the \fIport\fR belongs to\[char46]
 \fBlsp\-attach\-mirror\fR \fIport\fR \fIm\fR
 Attaches the mirror \fIm\fR to the logical port \fIport\fR\[char46]
 .TP
-\fBlsp\-dettach\-mirror\fR \fIport\fR \fIm\fR
+\fBlsp\-detach\-mirror\fR \fIport\fR \fIm\fR
 Detaches the mirror \fIm\fR from the logical port \fIport\fR\[char46]
 .SS "Forwarding Group Commands"
 .TP
@@ -648,6 +652,8 @@ Add Policy to \fIrouter\fR which provides a way to configure permit/deny and rer
 .IP
 If \fB\-\-may\-exist\fR is specified, adding a duplicated routing policy with the same priority and match string is not really created\[char46] Without \fB\-\-may\-exist\fR, adding a duplicated routing policy results in error\[char46]
 .IP
+\fB\-\-bfd\fR option is used to link a BFD session to the OVN reroute policy\[char46] OVN will look for an already running BFD session using next-hop as lookup key in the BFD table\[char46] If the lookup fails, a new entry in the BFD table will be created using the \fInexthop\fR as \fIdst_ip\fR\[char46]
+.IP
 The following example shows a policy to lr1, which will drop packets from\fB192\[char46]168\[char46]100\[char46]0/24\fR\[char46]
 .IP
 \fBlr\-policy\-add lr1 100 ip4\[char46]src == 192\[char46]168\[char46]100\[char46]0/24 drop\fR\[char46]
@@ -666,7 +672,7 @@ If \fIrouter\fR and \fIuuid\fR are supplied, then the policy with specified uuid
 Lists the polices on \fIrouter\fR\[char46]
 .SS "NAT Commands"
 .TP
-[\fB\-\-may\-exist\fR] [\fB\-\-stateless\fR] [\fB\-\-gateway_port\fR=\fIGATEWAY_PORT\fR] \fBlr\-nat\-add\fR \fIrouter\fR \fItype\fR \fIexternal_ip\fR \fIlogical_ip\fR [\fIlogical_port\fR \fIexternal_mac\fR]
+[\fB\-\-may\-exist\fR] [\fB\-\-stateless\fR] [\fB\-\-gateway\-port\fR=\fIGATEWAY_PORT\fR] \fBlr\-nat\-add\fR \fIrouter\fR \fItype\fR \fIexternal_ip\fR \fIlogical_ip\fR [\fIlogical_port\fR \fIexternal_mac\fR]
 Adds the specified NAT to \fIrouter\fR\[char46] The \fItype\fR must be one of \fBsnat\fR, \fBdnat\fR, or \fBdnat_and_snat\fR\[char46] The \fIexternal_ip\fR is an IPv4 address\[char46] The \fIlogical_ip\fR is an IPv4 network (e\[char46]g 192\[char46]168\[char46]1\[char46]0/24) or an IPv4 address\[char46] The \fIlogical_port\fR and \fIexternal_mac\fR are only accepted when \fIrouter\fR is a distributed router (rather than a gateway router) and \fItype\fR is \fBdnat_and_snat\fR\[char46] The \fIlogical_port\fR is the name of an existing logical switch port where the \fIlogical_ip\fR resides\[char46] The \fIexternal_mac\fR is an Ethernet address\[char46]
 .IP
 When \fB\-\-stateless\fR is specified then it implies that we will be not use connection tracker, i\[char46]e internal ip and external ip are 1:1 mapped\[char46] This implies that \fB\-\-stateless\fR is applicable only to dnat_and_snat type NAT rules\[char46] An external ip with \fB\-\-stateless\fR NAT cannot be shared with any other NAT rule\[char46]
@@ -765,8 +771,8 @@ Creates a new HA chassis group in the \fBHA_Chassis_Group\fR table named \fBgrou
 \fBha\-chassis\-group\-del\fR \fIgroup\fR
 Deletes the HA chassis group \fBgroup\fR\[char46] It is an error if \fBgroup\fR does not exist\[char46]
 .TP
-\fBha\-chassis\-group\-list\fR
-Lists the HA chassis group \fBgroup\fR along with the \fBHA chassis\fR if any associated with it\[char46]
+\fBha\-chassis\-group\-list\fR [\fIha-chassis-group\fR]
+Lists all HA chassis groups along with the \fBHA chassis\fR if any associated with it\[char46] If \fIha-chassis-group\fR is also specified, then only the specified \fIha-chassis-group\fR will be listed\[char46]
 .TP
 \fBha\-chassis\-group\-add\-chassis\fR \fIgroup\fR \fIchassis\fR \fIpriority\fR
 Adds a new HA chassis \fBchassis\fR to the HA Chassis group \fBgroup\fR with the specified priority\[char46] If the \fBchassis\fR already exists, then the \fBpriority\fR is updated\[char46] The \fBchassis\fR should be the name of the chassis in the \fBOVN_Southbound\fR\[char46]
@@ -830,16 +836,16 @@ Adds the control plane protection policy \fBname\fR to the logical router \fBrou
 .RE
 .SS "Mirror commands"
 .TP
-\fBmirror\-add\fR \fIm\fR \fItype\fR \fIindex\fR \fIfilter\fR \fIdest\fR
+\fBmirror\-add\fR \fIm\fR \fItype\fR [\fIindex\fR] \fIfilter\fR \fIdest\fR
 Creates a new mirror in the \fBMirror\fR table with the name \fBm\fR with the below mandatory arguments\[char46]
 .IP
-\fItype\fR specifies the mirror type - \fBgre\fR or \fBerspan\fR\[char46]
+\fItype\fR specifies the mirror type - \fBgre\fR , \fBerspan\fR or \fBlocal\fR\[char46]
 .IP
-\fIindex\fR specifies the tunnel index value (which is an integer)\[char46]
+\fIindex\fR specifies the tunnel index value (which is an integer) if the \fItype\fR is \fBgre\fR or \fBerspan\fR\[char46]
 .IP
-\fIfilter\fR specifies the mirror source selection\[char46] Can be \fBfrom\-lport\fR or \fBto\-lport\fR\[char46]
+\fIfilter\fR specifies the mirror source selection\[char46] Can be \fBfrom\-lport\fR, \fBto\-lport\fR or \fBboth\fR\[char46]
 .IP
-\fIdest\fR specifies the mirror destination IP (v4 or v6)\[char46]
+\fIdest\fR specifies the mirror destination IP (v4 or v6) if the \fItype\fR is \fBgre\fR or \fBerspan\fR\[char46] For a \fItype\fR of \fBlocal\fR, this field defines a local interface on the OVS integration bridge to be used as the mirror destination\[char46] The interface must possess external-ids:mirror-id that matches this string\[char46]
 .TP
 \fBmirror\-del\fR \fIm\fR
 Deletes the mirror \fBm\fR\[char46]

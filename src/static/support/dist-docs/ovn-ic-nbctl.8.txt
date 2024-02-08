@@ -1,7 +1,5 @@
 ovn-ic-nbctl(8)                   OVN Manual                   ovn-ic-nbctl(8)
 
-
-
 NAME
        ovn-ic-nbctl  - Open Virtual Network interconnection northbound db man‐
        agement utility
@@ -28,14 +26,14 @@ TRANSIT SWITCH COMMANDS
               ceeds but does not create a new transit switch.
 
        [--if-exists] ts-del switch
-              Deletes switch. It is an error if switch does not exist,  unless
+              Deletes  switch. It is an error if switch does not exist, unless
               --if-exists is specified.
 
        ts-list
               Lists all existing switches on standard output, one per line.
 
 DATABASE COMMANDS
-       These  commands query and modify the contents of ovsdb tables. They are
+       These commands query and modify the contents of ovsdb tables. They  are
        a slight abstraction of the ovsdb interface and as such they operate at
        a lower level than other ovn-ic-nbctl commands.
 
@@ -55,8 +53,8 @@ DATABASE COMMANDS
        Record names must be specified in full and with correct capitalization,
        except  that  UUIDs  may  be abbreviated to their first 4 (or more) hex
        digits, as long as that is unique within the table. Names of tables and
-       columns  are  not  case-sensitive, and - and _ are treated interchange‐
-       ably. Unique abbreviations of table and column  names  are  acceptable,
+       columns are not case-sensitive, and - and _  are  treated  interchange‐
+       ably.  Unique  abbreviations  of table and column names are acceptable,
        e.g. t or transit is sufficient to identify the Transit_Switch table.
 
        Database Values
@@ -78,40 +76,40 @@ DATABASE COMMANDS
                      begin  with  an  English letter or underscore and consist
                      only of letters, underscores, hyphens, and periods.  How‐
                      ever, true and false and strings that match the syntax of
-                     UUIDs (see below) must be enclosed in  double  quotes  to
-                     distinguish  them  from  other  basic  types. When double
-                     quotes are used, the syntax is that of strings  in  JSON,
-                     e.g.  backslashes  may  be used to escape special charac‐
-                     ters. The empty string must be represented as a  pair  of
+                     UUIDs  (see  below)  must be enclosed in double quotes to
+                     distinguish them from  other  basic  types.  When  double
+                     quotes  are  used, the syntax is that of strings in JSON,
+                     e.g. backslashes may be used to  escape  special  charac‐
+                     ters.  The  empty string must be represented as a pair of
                      double quotes ("").
 
-              UUID   Either  a  universally  unique identifier in the style of
-                     RFC 4122, e.g.  f81d4fae-7dec-11d0-a765-00a0c91e6bf6,  or
-                     an  @name  defined  by a get or create command within the
+              UUID   Either a universally unique identifier in  the  style  of
+                     RFC  4122,  e.g. f81d4fae-7dec-11d0-a765-00a0c91e6bf6, or
+                     an @name defined by a get or create  command  within  the
                      same ovs-vsctl invocation.
 
        Multiple values in a single column may be separated by spaces or a sin‐
-       gle  comma.  When  multiple  values  are  present,  duplicates  are not
-       allowed, and order is not important. Conversely, some database  columns
+       gle  comma.  When  multiple  values are present, duplicates are not al‐
+       lowed, and order is not important. Conversely,  some  database  columns
        can have an empty set of values, represented as [], and square brackets
        may optionally enclose other non-empty sets or single values as well.
 
-       A few database columns are ``maps’’ of key-value pairs, where  the  key
+       A  few  database columns are ``maps’’ of key-value pairs, where the key
        and the value are each some fixed database type. These are specified in
        the form key=value, where key and value follow the syntax for the  col‐
        umn’s  key  type  and value type, respectively. When multiple pairs are
-       present (separated by spaces  or  a  comma),  duplicate  keys  are  not
-       allowed,  and  again  the  order is not important. Duplicate values are
-       allowed. An empty map is represented as {}. Curly braces may optionally
+       present (separated by spaces or a comma), duplicate keys  are  not  al‐
+       lowed,  and  again the order is not important. Duplicate values are al‐
+       lowed. An empty map is represented as {}. Curly braces  may  optionally
        enclose  non-empty  maps  as  well (but use quotes to prevent the shell
-       from expanding other-config={0=x,1=y} into other-config=0=x  other-con‐
+       from expanding other-config={0=x,1=y} into other-config=0=x  other-con�‐
        fig=1=y, which may not have the desired effect).
 
        Database Command Syntax
 
-              [--if-exists]    [--columns=column[,column]...]    list    table
+              [--if-exists] [--columns=column[,column]...] list table
               [record]...
-                     Lists the data in each specified record.  If  no  records
+                     Lists  the  data  in each specified record. If no records
                      are specified, lists all the records in table.
 
                      If --columns is specified, only the requested columns are
@@ -119,32 +117,32 @@ DATABASE COMMANDS
                      are listed, in alphabetical order by column name.
 
                      Without  --if-exists,  it  is  an  error if any specified
-                     record does not  exist.  With  --if-exists,  the  command
-                     ignores any record that does not exist, without producing
+                     record does not exist. With --if-exists, the command  ig‐
+                     nores  any  record that does not exist, without producing
                      any output.
 
-              [--columns=column[,column]...]      find       table       [col‐
+              [--columns=column[,column]...] find table [col‐
               umn[:key]=value]...
-                     Lists  the  data  in  each  record  in table whose column
-                     equals value or, if key is specified, whose  column  con‐
+                     Lists the data in  each  record  in  table  whose  column
+                     equals  value  or, if key is specified, whose column con‐
                      tains a key with the specified value. The following oper‐
                      ators may be used where = is written in the  syntax  sum‐
                      mary:
 
                      = != < > <= >=
                             Selects records in which column[:key] equals, does
-                            not equal, is less than, is greater than, is  less
-                            than  or  equal to, or is greater than or equal to
+                            not  equal, is less than, is greater than, is less
+                            than or equal to, or is greater than or  equal  to
                             value, respectively.
 
-                            Consider column[:key] and value as  sets  of  ele‐
+                            Consider  column[:key]  and  value as sets of ele‐
                             ments. Identical sets are considered equal. Other‐
                             wise, if the sets have different numbers  of  ele‐
                             ments,  then the set with more elements is consid‐
                             ered to be larger. Otherwise, consider  a  element
                             from each set pairwise, in increasing order within
-                            each set. The first pair that  differs  determines
-                            the  result. (For a column that contains key-value
+                            each  set.  The first pair that differs determines
+                            the result. (For a column that contains  key-value
                             pairs, first all the keys are compared, and values
                             are  considered only if the two sets contain iden‐
                             tical keys.)
@@ -163,30 +161,30 @@ DATABASE COMMANDS
                             the empty set or contains 1 or 2 but not both.
 
                      {>=} {>}
-                            Same as {<=} and {<},  respectively,  except  that
-                            the   relationship   is   reversed.  For  example,
-                            flood-vlans{>=}1,2 selects records  in  which  the
+                            Same  as  {<=}  and {<}, respectively, except that
+                            the  relationship  is   reversed.   For   example,
+                            flood-vlans{>=}1,2  selects  records  in which the
                             flood-vlans column contains both 1 and 2.
 
                      The  following  operators  are  available  only  in  Open
                      vSwitch 2.16 and later:
 
-                     {in}   Selects records in which  every  element  in  col‐
-                            umn[:key]  is  also in value. (This is the same as
+                     {in}   Selects  records  in  which  every element in col‐
+                            umn[:key] is also in value. (This is the  same  as
                             {<=}.)
 
                      {not-in}
-                            Selects records in which  every  element  in  col‐
+                            Selects  records  in  which  every element in col‐
                             umn[:key] is not in value.
 
-                     For  arithmetic  operators  (= != < > <= >=), when key is
-                     specified but a particular record’s column does not  con‐
-                     tain  key, the record is always omitted from the results.
-                     Thus,  the   condition   other-config:mtu!=1500   matches
-                     records  that have a mtu key whose value is not 1500, but
+                     For arithmetic operators (= != < > <= >=),  when  key  is
+                     specified  but a particular record’s column does not con‐
+                     tain key, the record is always omitted from the  results.
+                     Thus,   the   condition   other-config:mtu!=1500  matches
+                     records that have a mtu key whose value is not 1500,  but
                      not those that lack an mtu key.
 
-                     For the set operators, when key is specified but  a  par‐
+                     For  the  set operators, when key is specified but a par‐
                      ticular record’s column does not contain key, the compar‐
                      ison is done against an empty set.  Thus,  the  condition
                      other-config:mtu{!=}1500  matches records that have a mtu
@@ -214,9 +212,9 @@ DATABASE COMMANDS
                      record. With --if-exists, a missing record yields no out‐
                      put and a missing key prints a blank line.
 
-                     If  @name  is  specified, then the UUID for record may be
-                     referred to by that name  later  in  the  same  ovs-vsctl
-                     invocation in contexts where a UUID is expected.
+                     If @name is specified, then the UUID for  record  may  be
+                     referred  to by that name later in the same ovs-vsctl in‐
+                     vocation in contexts where a UUID is expected.
 
                      Both --id and the column arguments are optional, but usu‐
                      ally at least one or the other should  be  specified.  If
@@ -226,41 +224,40 @@ DATABASE COMMANDS
                      --id and --if-exists cannot be used together.
 
               [--if-exists] set table record column[:key]=value...
-                     Sets the value of each  specified  column  in  the  given
-                     record  in  table  to  value.  For map columns, a key may
-                     optionally be specified, in which case the value  associ‐
-                     ated  with  key  in  that column is changed (or added, if
-                     none exists), instead of the entire map.
-
-                     Without --if-exists, it is an error if  record  does  not
-                     exist.  With  --if-exists,  this  command does nothing if
-                     record does not exist.
-
-              [--if-exists] add table record column [key=]value...
-                     Adds the specified value or key-value pair to  column  in
-                     record  in  table.  If  column  is  a  map,  then  key is
-                     required, otherwise it  is  prohibited.  If  key  already
-                     exists  in  a  map  column, then the current value is not
-                     replaced (use the set  command  to  replace  an  existing
-                     value).
+                     Sets  the  value  of  each  specified column in the given
+                     record in table to value. For map columns, a key may  op‐
+                     tionally be specified, in which case the value associated
+                     with key in that column is changed (or added, if none ex‐
+                     ists), instead of the entire map.
 
                      Without  --if-exists,  it  is an error if record does not
                      exist. With --if-exists, this  command  does  nothing  if
+                     record does not exist.
+
+              [--if-exists] add table record column [key=]value...
+                     Adds  the  specified value or key-value pair to column in
+                     record in table. If column is a  map,  then  key  is  re‐
+                     quired, otherwise it is prohibited. If key already exists
+                     in  a  map column, then the current value is not replaced
+                     (use the set command to replace an existing value).
+
+                     Without --if-exists, it is an error if  record  does  not
+                     exist.  With  --if-exists,  this  command does nothing if
                      record does not exist.
 
               [--if-exists] remove table record column value...
 
                      [--if-exists] remove table record column key...
 
-                     [--if-exists]  remove  table  record  column key=value...
+                     [--if-exists] remove  table  record  column  key=value...
                      Removes the specified values or key-value pairs from col‐
                      umn in record in table. The first form applies to columns
-                     that are not maps: each specified value is  removed  from
-                     the  column. The second and third forms apply to map col‐
-                     umns: if only a key is specified, then any key-value pair
-                     with  the  given key is removed, regardless of its value;
-                     if a value is given then a pair is removed only  if  both
-                     key and value match.
+                     that  are  not maps: each specified value is removed from
+                     the column. The second  and  third  forms  apply  to  map
+                     columns:  if  only a key is specified, then any key-value
+                     pair with the given key is  removed,  regardless  of  its
+                     value; if a value is given then a pair is removed only if
+                     both key and value match.
 
                      It  is  not  an  error if the column does not contain the
                      specified key or value or pair.
@@ -280,12 +277,12 @@ DATABASE COMMANDS
 
               [--id=(@name|uuid)] create table column[:key]=value...
                      Creates a new record in table and sets the initial values
-                     of  each  column. Columns not explicitly set will receive
+                     of each column. Columns not explicitly set  will  receive
                      their default values. Outputs the UUID of the new row.
 
-                     If @name is specified, then the UUID for the new row  may
-                     be  referred  to by that name elsewhere in the same \*(PN
-                     invocation in contexts where a  UUID  is  expected.  Such
+                     If  @name is specified, then the UUID for the new row may
+                     be referred to by that name elsewhere in the  same  \*(PN
+                     invocation  in  contexts  where  a UUID is expected. Such
                      references may precede or follow the create command.
 
                      If a valid uuid is specified, then it is used as the UUID
@@ -293,23 +290,23 @@ DATABASE COMMANDS
 
                      Caution (ovs-vsctl as example)
                             Records in the Open vSwitch database are  signifi‐
-                            cant  only  when  they  can be reached directly or
-                            indirectly from the Open_vSwitch table. Except for
-                            records  in  the QoS or Queue tables, records that
-                            are not reachable from the Open_vSwitch table  are
+                            cant only when they can be reached directly or in‐
+                            directly  from  the Open_vSwitch table. Except for
+                            records in the QoS or Queue tables,  records  that
+                            are  not reachable from the Open_vSwitch table are
                             automatically  deleted  from  the  database.  This
-                            deletion happens immediately, without waiting  for
-                            additional  ovs-vsctl  commands  or other database
+                            deletion  happens immediately, without waiting for
+                            additional ovs-vsctl commands  or  other  database
                             activity. Thus, a create command must generally be
                             accompanied by additional commands within the same
-                            ovs-vsctl invocation to add a chain of  references
-                            to  the  newly  created  record from the top-level
-                            Open_vSwitch record. The  EXAMPLES  section  gives
+                            ovs-vsctl  invocation to add a chain of references
+                            to the newly created  record  from  the  top-level
+                            Open_vSwitch  record.  The  EXAMPLES section gives
                             some examples that show how to do this.
 
               [--if-exists] destroy table record...
-                     Deletes   each   specified   record  from  table.  Unless
-                     --if-exists is specified, each records must exist.
+                     Deletes each specified record from table. Unless --if-ex�‐
+                     ists is specified, each records must exist.
 
               --all destroy table
                      Deletes all records from the table.
@@ -328,19 +325,19 @@ DATABASE COMMANDS
               wait-until table record [column[:key]=value]...
                      Waits until table contains a record  named  record  whose
                      column equals value or, if key is specified, whose column
-                     contains a key with the  specified  value.  This  command
-                     supports  the  same operators and semantics described for
+                     contains  a  key  with  the specified value. This command
+                     supports the same operators and semantics  described  for
                      the find command above.
 
-                     If no column[:key]=value arguments are given,  this  com‐
-                     mand  waits  only  until  record exists. If more than one
-                     such argument is given, the command waits  until  all  of
+                     If  no  column[:key]=value arguments are given, this com‐
+                     mand waits only until record exists.  If  more  than  one
+                     such  argument  is  given, the command waits until all of
                      them are satisfied.
 
                      Caution (ovs-vsctl as example)
-                            Usually  wait-until should be placed at the begin‐
-                            ning of a set of ovs-vsctl commands. For  example,
-                            wait-until  bridge  br0  --  get  bridge br0 data‐
+                            Usually wait-until should be placed at the  begin‐
+                            ning  of a set of ovs-vsctl commands. For example,
+                            wait-until bridge br0  --  get  bridge  br0  data�‐
                             path_id waits until a bridge named br0 is created,
                             then  prints  its  datapath_id column, whereas get
                             bridge br0 datapath_id --  wait-until  bridge  br0
@@ -364,7 +361,7 @@ REMOTE CONNECTIVITY COMMANDS
               Deletes the configured connection(s).
 
        [--inactivity-probe=msecs] set-connection target...
-              Sets the configured manager target or  targets.  Use  --inactiv‐
+              Sets the configured manager target or  targets.  Use  --inactiv�‐
               ity-probe=msecs to override the default idle connection inactiv‐
               ity probe time. Use 0 to disable inactivity probes.
 
@@ -375,17 +372,46 @@ SSL CONFIGURATION COMMANDS
        del-ssl
               Deletes the current SSL configuration.
 
-       [--bootstrap] set-ssl private-key  certificate  ca-cert  [ssl-protocol-
+       [--bootstrap] set-ssl private-key certificate ca-cert [ssl-protocol-
        list [ssl-cipher-list]]
               Sets the SSL configuration.
 
+SYNCHRONIZATION COMMANDS
+       sync   Ordinarily,  --wait=sb  only  waits  for  changes by the current
+              ovn-ic-nbctl invocation to take effect. This means that, if none
+              of the commands supplied to ovn-ic-nbctl  change  the  database,
+              then  the  command  does not wait at all. With the sync command,
+              however, ovn-ic-nbctl waits even  for  earlier  changes  to  the
+              database to propagate down to the southbound database, according
+              to the argument of --wait.
+
 OPTIONS
+       --no-wait | --wait=none
+       --wait=sb
+            These  options  control whether and how ovn-ic-nbctl waits for the
+            OVN  system  to  become  up-to-date  with  changes  made   in   an
+            ovn-ic-nbctl invocation.
+
+            By default, or if --no-wait or --wait=none, ovn-ic-nbctl exits im‐
+            mediately after confirming that changes have been committed to the
+            Interconnect northbound database, without waiting.
+
+            With --wait=sb, before ovn-ic-nbctl exits, it waits for ovn-ics to
+            bring the Interconnect southbound database up-to-date with the In‐
+            terconnect northbound database updates.
+
+            Ordinarily,  --wait=sb  only  waits  for  changes  by  the current
+            ovn-ic-nbctl invocation to take effect. This means that,  if  none
+            of the commands supplied to ovn-ic-nbctl change the database, then
+            the command does not wait at all. Use the sync command to override
+            this behavior.
+
        --db database
-              The  OVSDB database remote to contact. If the OVN_IC_NB_DB envi‐
-              ronment variable is set, its value is used as the default.  Oth‐
-              erwise, the default is unix:/ovn_ic_nb_db.sock, but this default
-              is unlikely to be useful  outside  of  single-machine  OVN  test
-              environments.
+            The OVSDB database remote to contact. If the OVN_IC_NB_DB environ‐
+            ment variable is set, its value is used as the default. Otherwise,
+            the  default  is  unix:/ovn_ic_nb_db.sock, but this default is un‐
+            likely to be useful outside of single-machine  OVN  test  environ‐
+            ments.
 
        --leader-only
        --no-leader-only
@@ -394,34 +420,34 @@ OPTIONS
             cluster leader. This ensures that any data that ovn-ic-nbctl reads
             and reports is  up-to-date.  With  --no-leader-only,  ovn-ic-nbctl
             will use any server in the cluster, which means that for read-only
-            transactions it can report and act  on  stale  data  (transactions
-            that   modify   the  database  are  always  serialized  even  with
-            --no-leader-only). Refer to Understanding Cluster  Consistency  in
+            transactions  it  can  report  and act on stale data (transactions
+            that  modify  the  database  are  always  serialized   even   with
+            --no-leader-only).  Refer  to Understanding Cluster Consistency in
             ovsdb(7) for more information.
 
 LOGGING OPTIONS
        -v[spec]
        --verbose=[spec]
-            Sets  logging  levels.  Without  any  spec, sets the log level for
-            every module and destination to dbg. Otherwise, spec is a list  of
+            Sets logging levels. Without any spec,  sets  the  log  level  for
+            every  module and destination to dbg. Otherwise, spec is a list of
             words separated by spaces or commas or colons, up to one from each
             category below:
 
-            ·      A valid module name, as displayed by the vlog/list  command
+            •      A valid module name, as displayed by the vlog/list  command
                    on ovs-appctl(8), limits the log level change to the speci‐
                    fied module.
 
-            ·      syslog, console, or file, to limit the log level change  to
-                   only  to  the  system  log,  to  the console, or to a file,
-                   respectively. (If --detach is specified, the daemon  closes
-                   its  standard  file  descriptors, so logging to the console
+            •      syslog,  console, or file, to limit the log level change to
+                   only to the system log, to the console, or to a  file,  re‐
+                   spectively.  (If  --detach  is specified, the daemon closes
+                   its standard file descriptors, so logging  to  the  console
                    will have no effect.)
 
-                   On Windows platform, syslog is accepted as a  word  and  is
+                   On  Windows  platform,  syslog is accepted as a word and is
                    only useful along with the --syslog-target option (the word
                    has no effect otherwise).
 
-            ·      off, emer, err, warn, info, or  dbg,  to  control  the  log
+            •      off, emer, err, warn, info, or  dbg,  to  control  the  log
                    level.  Messages  of  the  given severity or higher will be
                    logged, and messages of lower  severity  will  be  filtered
                    out.  off filters out all messages. See ovs-appctl(8) for a
@@ -437,26 +463,26 @@ LOGGING OPTIONS
 
        -v
        --verbose
-            Sets the maximum logging verbosity  level,  equivalent  to  --ver‐
+            Sets  the  maximum  logging  verbosity level, equivalent to --ver�‐
             bose=dbg.
 
        -vPATTERN:destination:pattern
        --verbose=PATTERN:destination:pattern
-            Sets  the  log  pattern  for  destination  to  pattern.  Refer  to
-            ovs-appctl(8) for a description of the valid syntax for pattern.
+            Sets the log pattern for destination to pattern. Refer to  ovs-ap�‐
+            pctl(8) for a description of the valid syntax for pattern.
 
        -vFACILITY:facility
        --verbose=FACILITY:facility
-            Sets the RFC5424 facility of the log message. facility can be  one
+            Sets  the RFC5424 facility of the log message. facility can be one
             of kern, user, mail, daemon, auth, syslog, lpr, news, uucp, clock,
             ftp, ntp, audit, alert, clock2, local0,  local1,  local2,  local3,
             local4, local5, local6 or local7. If this option is not specified,
-            daemon is used as the default for  the  local  system  syslog  and
-            local0  is used while sending a message to the target provided via
+            daemon  is used as the default for the local system syslog and lo�‐
+            cal0 is used while sending a message to the  target  provided  via
             the --syslog-target option.
 
        --log-file[=file]
-            Enables logging to a file. If file is specified, then it  is  used
+            Enables  logging  to a file. If file is specified, then it is used
             as the exact name for the log file. The default log file name used
             if file is omitted is /usr/local/var/log/ovn/program.log.
 
@@ -469,30 +495,30 @@ LOGGING OPTIONS
             Specify method as how syslog messages should  be  sent  to  syslog
             daemon. The following forms are supported:
 
-            ·      libc,  to use the libc syslog() function. Downside of using
+            •      libc,  to use the libc syslog() function. Downside of using
                    this options is that libc adds fixed prefix to  every  mes‐
                    sage  before  it is actually sent to the syslog daemon over
                    /dev/log UNIX domain socket.
 
-            ·      unix:file, to use a UNIX domain socket directly. It is pos‐
+            •      unix:file, to use a UNIX domain socket directly. It is pos‐
                    sible to specify arbitrary message format with this option.
                    However, rsyslogd 8.9 and older  versions  use  hard  coded
                    parser  function anyway that limits UNIX domain socket use.
                    If you want to use  arbitrary  message  format  with  older
-                   rsyslogd  versions,  then  use  UDP  socket to localhost IP
-                   address instead.
+                   rsyslogd  versions, then use UDP socket to localhost IP ad‐
+                   dress instead.
 
-            ·      udp:ip:port, to use a UDP socket. With this  method  it  is
+            •      udp:ip:port, to use a UDP socket. With this  method  it  is
                    possible  to  use  arbitrary message format also with older
-                   rsyslogd. When sending  syslog  messages  over  UDP  socket
-                   extra  precaution needs to be taken into account, for exam‐
-                   ple, syslog daemon needs to be configured to listen on  the
-                   specified  UDP  port,  accidental  iptables  rules could be
-                   interfering with local syslog traffic and  there  are  some
-                   security  considerations  that apply to UDP sockets, but do
-                   not apply to UNIX domain sockets.
+                   rsyslogd. When sending syslog messages over UDP socket  ex‐
+                   tra precaution needs to be taken into account, for example,
+                   syslog daemon needs to be configured to listen on the spec‐
+                   ified  UDP  port, accidental iptables rules could be inter‐
+                   fering with local syslog traffic and there are  some  secu‐
+                   rity  considerations  that apply to UDP sockets, but do not
+                   apply to UNIX domain sockets.
 
-            ·      null, to discard all messages logged to syslog.
+            •      null, to discard all messages logged to syslog.
 
             The default is taken from the OVS_SYSLOG_METHOD environment  vari‐
             able; if it is unset, the default is libc.
@@ -534,14 +560,14 @@ TABLE FORMATTING OPTIONS
                                  element is also an array with one element per
                                  table column. The elements  of  this  second-
                                  level array are the cells that constitute the
-                                 table. Cells that  represent  OVSDB  data  or
-                                 data   types  are  expressed  in  the  format
-                                 described in the OVSDB  specification;  other
+                                 table.  Cells  that  represent  OVSDB data or
+                                 data types are expressed in  the  format  de‐
+                                 scribed  in  the  OVSDB  specification; other
                                  cells are simply expressed as text strings.
 
               -d format
               --data=format
-                   Sets  the  formatting for cells within output tables unless
+                   Sets the formatting for cells within output  tables  unless
                    the table format is set to json, in which case json format‐
                    ting  is  always  used when formatting cells. The following
                    types of format are available:
@@ -551,19 +577,19 @@ TABLE FORMATTING OPTIONS
                           section of ovs-vsctl(8).
 
                    bare   The  simple format with punctuation stripped off: []
-                          and {} are omitted around sets, maps, and empty col‐
-                          umns,  items  within  sets  and maps are space-sepa‐
+                          and {} are omitted  around  sets,  maps,  and  empty
+                          columns,  items within sets and maps are space-sepa‐
                           rated, and strings are never quoted. This format may
                           be easier for scripts to parse.
 
                    json   The RFC 4627 JSON format as described above.
 
               --no-headings
-                   This  option  suppresses  the  heading  row  that otherwise
-                   appears in the first row of table output.
+                   This option suppresses the heading row that  otherwise  ap‐
+                   pears in the first row of table output.
 
               --pretty
-                   By default, JSON in output is printed as compactly as  pos‐
+                   By  default, JSON in output is printed as compactly as pos‐
                    sible. This option causes JSON in output to be printed in a
                    more readable fashion. Members of objects and  elements  of
                    arrays are printed one per line, with indentation.
@@ -575,27 +601,27 @@ TABLE FORMATTING OPTIONS
                    Equivalent to --format=list --data=bare --no-headings.
 
    PKI Options
-       PKI configuration is required to use SSL  for  the  connection  to  the
+       PKI  configuration  is  required  to  use SSL for the connection to the
        database.
 
               -p privkey.pem
               --private-key=privkey.pem
-                   Specifies  a  PEM  file  containing the private key used as
+                   Specifies a PEM file containing the  private  key  used  as
                    identity for outgoing SSL connections.
 
               -c cert.pem
               --certificate=cert.pem
-                   Specifies a PEM file containing a certificate  that  certi‐
+                   Specifies  a  PEM file containing a certificate that certi‐
                    fies the private key specified on -p or --private-key to be
                    trustworthy. The certificate must be signed by the certifi‐
-                   cate  authority  (CA) that the peer in SSL connections will
+                   cate authority (CA) that the peer in SSL  connections  will
                    use to verify it.
 
               -C cacert.pem
               --ca-cert=cacert.pem
                    Specifies a PEM file containing the CA certificate for ver‐
                    ifying certificates presented to this program by SSL peers.
-                   (This may be the same certificate that  SSL  peers  use  to
+                   (This  may  be  the  same certificate that SSL peers use to
                    verify the certificate specified on -c or --certificate, or
                    it may be a different one, depending on the PKI  design  in
                    use.)
@@ -614,14 +640,14 @@ TABLE FORMATTING OPTIONS
                      the  SSL  peer on its first SSL connection and save it to
                      the named PEM file. If it is successful, it will  immedi‐
                      ately drop the connection and reconnect, and from then on
-                     all SSL connections must be authenticated by  a  certifi‐
+                     all  SSL  connections must be authenticated by a certifi‐
                      cate signed by the CA certificate thus obtained.
 
-                     This  option  exposes the SSL connection to a man-in-the-
-                     middle attack obtaining the initial CA  certificate,  but
+                     This option exposes the SSL connection to  a  man-in-the-
+                     middle  attack  obtaining the initial CA certificate, but
                      it may be useful for bootstrapping.
 
-                     This  option  is only useful if the SSL peer sends its CA
+                     This option is only useful if the SSL peer sends  its  CA
                      certificate as part of the SSL certificate chain. The SSL
                      protocol  does not require the server to send the CA cer‐
                      tificate.
@@ -637,6 +663,4 @@ TABLE FORMATTING OPTIONS
        --version
             Prints version information to the console.
 
-
-
-OVN 22.12.90                     ovn-ic-nbctl                  ovn-ic-nbctl(8)
+OVN 24.03.90                     ovn-ic-nbctl                  ovn-ic-nbctl(8)

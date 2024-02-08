@@ -1,7 +1,5 @@
 ovn-ctl(8)                        OVN Manual                        ovn-ctl(8)
 
-
-
 NAME
        ovn-ctl - Open Virtual Network northbound daemon lifecycle utility
 
@@ -161,6 +159,8 @@ CLUSTERING OPTIONS
 
        --db-nb-cluster-remote-proto=PROTO (tcp/ssl)
 
+       --db-nb-election-timer=Timeout in milliseconds
+
        --db-sb-cluster-local-addr=IP ADDRESS
 
        --db-sb-cluster-local-port=PORT NUMBER
@@ -172,6 +172,8 @@ CLUSTERING OPTIONS
        --db-sb-cluster-remote-port=PORT NUMBER
 
        --db-sb-cluster-remote-proto=PROTO (tcp/ssl)
+
+       --db-sb-election-timer=Timeout in milliseconds
 
        --db-ic-nb-cluster-local-addr=IP ADDRESS
 
@@ -197,6 +199,8 @@ CLUSTERING OPTIONS
 
        --db-ic-sb-cluster-remote-proto=PROTO (tcp/ssl)
 
+       --db-cluster-schema-upgrade=yes|no
+
 PROBE INTERVAL OPTIONS
        --db-nb-probe-interval-to-active=Time in milliseconds
 
@@ -205,46 +209,46 @@ PROBE INTERVAL OPTIONS
 EXTRA OPTIONS
        Any  options  after  ’-’ will be passed on to the binary run by command
        with the exception of start_northd, which can have options specified in
-       ovn-northd-db-params.conf.  Any  extra_args passed to start_northd will
+       ovn-northd-db-params.conf. Any extra_args passed to  start_northd  will
        be passed to the ovsdb-servers if --ovn-manage-ovsdb=yes
 
 CONFIGURATION FILES
-       Following are the optional configuration files. If present,  it  should
+       Following  are  the optional configuration files. If present, it should
        be located in the etc dir
 
    ovnnb-active.conf
-       If  present,  this  file  should  hold the url to connect to the active
+       If present, this file should hold the url  to  connect  to  the  active
        Northbound DB server
 
        tcp:x.x.x.x:6641
 
    ovnsb-active.conf
-       If present, this file should hold the url  to  connect  to  the  active
+       If  present,  this  file  should  hold the url to connect to the active
        Southbound DB server
 
        tcp:x.x.x.x:6642
 
    ovn-northd-db-params.conf
        If  present,  start_northd  will  not  start  the  DB  server  even  if
-       --ovn-manage-ovsdb=yes. This file should hold the database url  parame‐
+       --ovn-manage-ovsdb=yes.  This file should hold the database url parame‐
        ters to be passed to ovn-northd.
 
        --ovnnb-db=tcp:x.x.x.x:6641 --ovnsb-db=tcp:x.x.x.x:6642
 
    ic-nb-active.conf
-       If  present,  this  file  should  hold the url to connect to the active
-       Interconnection Northbound DB server
+       If present, this file should hold the url to connect to the active  In‐
+       terconnection Northbound DB server
 
        tcp:x.x.x.x:6645
 
    ic-sb-active.conf
-       If present, this file should hold the url  to  connect  to  the  active
-       Interconnection Southbound DB server
+       If  present, this file should hold the url to connect to the active In‐
+       terconnection Southbound DB server
 
        tcp:x.x.x.x:6646
 
    ovn-ic-db-params.conf
-       If  present,  this  file  should hold the database url parameters to be
+       If present, this file should hold the database  url  parameters  to  be
        passed to ovn-ic.
 
        --ic-nb-db=tcp:x.x.x.x:6645 --ic-sb-db=tcp:x.x.x.x:6646
@@ -252,14 +256,14 @@ CONFIGURATION FILES
 RUNNING OVN DB SERVERS WITHOUT DETACHING
        # ovn-ctl run_nb_ovsdb
 
-       This command runs the OVN nb ovsdb-server without  passing  the  detach
-       option,  making it to block until ovsdb-server exits. This command will
+       This  command  runs  the OVN nb ovsdb-server without passing the detach
+       option, making it to block until ovsdb-server exits. This command  will
        be useful for starting the OVN nb ovsdb-server in a container.
 
        # ovn-ctl run_sb_ovsdb
 
-       This command runs the OVN sb ovsdb-server without  passing  the  detach
-       option,  making it to block until ovsdb-server exits. This command will
+       This  command  runs  the OVN sb ovsdb-server without passing the detach
+       option, making it to block until ovsdb-server exits. This command  will
        be useful for starting the OVN sb ovsdb-server in a container.
 
        # ovn-ctl run_ic_nb_ovsdb
@@ -271,7 +275,7 @@ RUNNING OVN DB SERVERS WITHOUT DETACHING
        # ovn-ctl run_ic_sb_ovsdb
 
        This command runs the OVN IC-SB ovsdb-server without passing the detach
-       option,  making it to block until ovsdb-server exits. This command will
+       option, making it to block until ovsdb-server exits. This command  will
        be useful for starting the OVN IC-SB ovsdb-server in a container.
 
 EXAMPLE USAGE
@@ -302,8 +306,8 @@ EXAMPLE USAGE
    Creating a clustered db on 3 nodes with IPs x.x.x.x, y.y.y.y and z.z.z.z
      Starting OVN ovsdb servers and ovn-northd on the node with IP x.x.x.x
 
-         #  ovn-ctl  --db-nb-addr=x.x.x.x   --db-nb-create-insecure-remote=yes
-       --db-sb-addr=x.x.x.x  --db-sb-create-insecure-remote=yes  --db-nb-clus‐
+          #  ovn-ctl  --db-nb-addr=x.x.x.x  --db-nb-create-insecure-remote=yes
+       --db-sb-addr=x.x.x.x  --db-sb-create-insecure-remote=yes  --db-nb-clus�‐
        ter-local-addr=x.x.x.x               --db-sb-cluster-local-addr=x.x.x.x
        --ovn-northd-nb-db=tcp:x.x.x.x:6641,tcp:y.y.y.y:6641,tcp:z.z.z.z:6641
        --ovn-northd-sb-db=tcp:x.x.x.x:6642,tcp:y.y.y.y:6642,tcp:z.z.z.z:6642
@@ -313,8 +317,8 @@ EXAMPLE USAGE
      joining the cluster started at x.x.x.x
 
          #  ovn-ctl  --db-nb-addr=y.y.y.y   --db-nb-create-insecure-remote=yes
-       --db-sb-addr=y.y.y.y  --db-sb-create-insecure-remote=yes  --db-nb-clus‐
-       ter-local-addr=y.y.y.y --db-sb-cluster-local-addr=y.y.y.y --db-nb-clus‐
+       --db-sb-addr=y.y.y.y  --db-sb-create-insecure-remote=yes  --db-nb-clus�‐
+       ter-local-addr=y.y.y.y --db-sb-cluster-local-addr=y.y.y.y --db-nb-clus�‐
        ter-remote-addr=x.x.x.x             --db-sb-cluster-remote-addr=x.x.x.x
        --ovn-northd-nb-db=tcp:x.x.x.x:6641,tcp:y.y.y.y:6641,tcp:z.z.z.z:6641
        --ovn-northd-sb-db=tcp:x.x.x.x:6642,tcp:y.y.y.y:6642,tcp:z.z.z.z:6642
@@ -324,24 +328,40 @@ EXAMPLE USAGE
      joining the cluster started at x.x.x.x
 
           #  ovn-ctl  --db-nb-addr=z.z.z.z  --db-nb-create-insecure-remote=yes
-       --db-nb-cluster-local-addr=z.z.z.z  --db-sb-addr=z.z.z.z   --db-sb-cre‐
+       --db-nb-cluster-local-addr=z.z.z.z  --db-sb-addr=z.z.z.z   --db-sb-cre�‐
        ate-insecure-remote=yes              --db-sb-cluster-local-addr=z.z.z.z
        --db-nb-cluster-remote-addr=x.x.x.x --db-sb-cluster-remote-addr=x.x.x.x
        --ovn-northd-nb-db=tcp:x.x.x.x:6641,tcp:y.y.y.y:6641,tcp:z.z.z.z:6641
        --ovn-northd-sb-db=tcp:x.x.x.x:6642,tcp:y.y.y.y:6642,tcp:z.z.z.z:6642
        start_northd
 
-   Passing  ssl keys when starting OVN dbs will supersede the default ssl val‐
+   Passing ssl keys when starting OVN dbs will supersede the default ssl  val�‐
        ues in db
      Starting standalone ovn db server passing SSL certificates
 
-            #      ovn-ctl      --ovn-nb-db-ssl-key=/etc/ovn/ovnnb-privkey.pem
+             #      ovn-ctl     --ovn-nb-db-ssl-key=/etc/ovn/ovnnb-privkey.pem
        --ovn-nb-db-ssl-cert=/etc/ovn/ovnnb-cert.pem
        --ovn-nb-db-ssl-ca-cert=/etc/ovn/cacert.pem
        --ovn-sb-db-ssl-key=/etc/ovn/ovnsb-privkey.pem
        --ovn-sb-db-ssl-cert=/etc/ovn/ovnsb-cert.pem
        --ovn-sb-db-ssl-ca-cert=/etc/ovn/cacert.pem start_northd
 
+   Avoiding automatic clustered OVN database schema upgrade
+       If you desire more control over clustered DB schema  upgrade,  you  can
+       opt-out  of  automatic  on-start  upgrade  attempts  with --no-db-clus�‐
+       ter-schema-upgrade.
 
+     Start OVN NB and SB clustered databases on host with IP  x.x.x.x  without
+     schema upgrade
 
-OVN 22.12.90                        ovn-ctl                         ovn-ctl(8)
+           #    ovn-ctl    start_nb_ovsdb   --db-nb-cluster-local-addr=x.x.x.x
+       --no-db-cluster-schema-upgrade # ovn-ctl  start_sb_ovsdb  --db-sb-clus�‐
+       ter-local-addr=x.x.x.x --no-db-cluster-schema-upgrade
+
+     Trigger clustered DB schema upgrade manually
+
+          #   ovsdb-client  convert  unix:/var/run/ovn/ovnnb_db.sock  /usr/lo�‐
+       cal/share/ovn/ovn-nb.ovsschema       #       ovsdb-client       convert
+       unix:/var/run/ovn/ovnsb_db.sock /usr/local/share/ovn/ovn-sb.ovsschema
+
+OVN 24.03.90                        ovn-ctl                         ovn-ctl(8)

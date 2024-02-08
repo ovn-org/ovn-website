@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-ic-nbctl" 8 "ovn-ic-nbctl" "OVN 22\[char46]12\[char46]90" "OVN Manual"
+.TH "ovn-ic-nbctl" 8 "ovn-ic-nbctl" "OVN 24\[char46]03\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -243,7 +243,22 @@ Deletes the current SSL configuration\[char46]
 .TP
 [\fB\-\-bootstrap\fR] \fBset\-ssl\fR \fIprivate-key\fR \fIcertificate\fR \fIca-cert\fR [\fIssl-protocol-list\fR [\fIssl-cipher-list\fR]]
 Sets the SSL configuration\[char46]
+.SH "SYNCHRONIZATION COMMANDS"
+.TP
+sync
+Ordinarily, \fB\-\-wait=sb\fR only waits for changes by the current \fBovn\-ic\-nbctl\fR invocation to take effect\[char46] This means that, if none of the commands supplied to \fBovn\-ic\-nbctl\fR change the database, then the command does not wait at all\[char46] With the \fBsync\fR command, however, \fBovn\-ic\-nbctl\fR waits even for earlier changes to the database to propagate down to the southbound database, according to the argument of \fB\-\-wait\fR\[char46]
 .SH "OPTIONS"
+.TP
+\fB\-\-no\-wait\fR | \fB\-\-wait=none\fR
+.TQ .5in
+\fB\-\-wait=sb\fR
+These options control whether and how \fBovn\-ic\-nbctl\fR waits for the OVN system to become up-to-date with changes made in an \fBovn\-ic\-nbctl\fR invocation\[char46]
+.IP
+By default, or if \fB\-\-no\-wait\fR or \fB\-\-wait=none\fR, \fBovn\-ic\-nbctl\fR exits immediately after confirming that changes have been committed to the Interconnect northbound database, without waiting\[char46]
+.IP
+With \fB\-\-wait=sb\fR, before \fBovn\-ic\-nbctl\fR exits, it waits for \fBovn\-ics\fR to bring the Interconnect southbound database up-to-date with the Interconnect northbound database updates\[char46]
+.IP
+Ordinarily, \fB\-\-wait=sb\fR only waits for changes by the current \fBovn\-ic\-nbctl\fR invocation to take effect\[char46] This means that, if none of the commands supplied to \fBovn\-ic\-nbctl\fR change the database, then the command does not wait at all\[char46] Use the \fBsync\fR command to override this behavior\[char46]
 .TP
 \fB\-\-db\fR \fIdatabase\fR
 The OVSDB database remote to contact\[char46] If the \fBOVN_IC_NB_DB\fR environment variable is set, its value is used as the default\[char46] Otherwise, the default is \fBunix:/ovn_ic_nb_db\[char46]sock\fR, but this default is unlikely to be useful outside of single-machine OVN test environments\[char46]
