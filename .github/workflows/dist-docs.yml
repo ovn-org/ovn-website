@@ -1,27 +1,13 @@
-name: Rebuild src/static/support/dist-docs
+name: Rebuild dist-docs
 
 on:
   workflow_dispatch:
 
 jobs:
   build-linux:
-    env:
-      dependencies: |
-        automake libtool gcc bc libjemalloc1 libjemalloc-dev    \
-        libssl-dev llvm-dev libelf-dev libnuma-dev libpcap-dev  \
-        selinux-policy-dev \
-        ghostscript markdown
-      m32_dependecies: gcc-multilib
-      ASAN:        ${{ matrix.asan }}
-      BRANCH:      ${{ matrix.branch }}
-      CC:          gcc
-      LIBS:        ${{ matrix.libs }}
-      M32:         ${{ matrix.m32 }}
-      OPTS:        --disable-ssl
-      TESTSUITE:   ${{ matrix.testsuite }}
-
     name: linux ${{ join(matrix.*, ' ') }}
-    runs-on: ubuntu-18.04
+    container: fedora:latest
+    runs-on: ubuntu-22.04
 
     strategy:
       fail-fast: false
@@ -29,133 +15,106 @@ jobs:
         include:
           - branch:       main
           - branch:       branch-22.03
-          - branch:       branch-22.06
-          - branch:       branch-22.09
           - branch:       branch-22.12
+          - branch:       branch-23.03
+          - branch:       branch-23.06
+          - branch:       branch-23.09
+          - branch:       branch-24.03
 
     steps:
+    - name: install dependencies
+      run: dnf install -y dnf-plugins-core ghostscript git man
+
     - name: checkout ovn-website
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: 'ovn-website'
         ref: 'main'
 
     - name: checkout OVN
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: 'ovn-org/ovn'
         path: 'ovn'
         ref: ${{ matrix.branch }}
         submodules: recursive
 
-    - name: update APT cache
-      run:  sudo apt update
+    - name: install build dependencies
+      run: |
+        sed -e 's/@VERSION@/0.0.1/' rhel/ovn-fedora.spec.in \
+        > /tmp/ovn.spec
+        dnf builddep -y /tmp/ovn.spec
+      working-directory: ovn
 
-    - name: install required dependencies
-      run:  sudo apt install -y ${{ env.dependencies }}
+    - name: configure OvS
+      run: ./boot.sh && ./configure
+      working-directory: ovn/ovs
 
-    - name: install libunbound libunwind
-      if:   matrix.m32 == ''
-      run:  sudo apt install -y libunbound-dev libunwind-dev
+    - name: make dist OvS
+      run: make -j4 dist
+      working-directory: ovn/ovs
 
-    - name: install 32-bit dependencies
-      if:   matrix.m32 != ''
-      run:  sudo apt install -y ${{ env.m32_dependecies }}
+    - name: configure OVN
+      run: ./boot.sh && ./configure
+      working-directory: ovn
 
-    - name: update PATH
-      run:  |
-        echo "$HOME/bin"        >> $GITHUB_PATH
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
+    - name: make dist-docs OVN
+      run: make -j4 dist-docs
+      working-directory: ovn
 
-    - name: set up python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
-
-    - name: prepare ovn
-      run:  |
-        pushd ./ovn
-        ./.ci/linux-prepare.sh
-        popd
-
-    - name: build ovn
-      run:  |
-        pushd ./ovn
-        ./.ci/linux-build.sh
-        popd
-
-    - name: build ovn dist-docs
-      run:  |
-        pushd ./ovn
-        make dist-docs
-        popd
+    - name: archive dist-docs
+      run: tar -czvf /tmp/dist-docs.tgz dist-docs
+      working-directory: ovn
 
     - name: replace dist-docs content
       if: ${{ success() }}
       run:  |
-        pushd ./ovn
-        tar -czvf /tmp/dist-docs.tgz dist-docs
-        popd
         DOCS_DIR="dist-docs"
-        [ "${BRANCH}" == "main" ] || DOCS_DIR="${DOCS_DIR}-${BRANCH}"
-        pushd ./ovn-website
-        git config user.name github-actions
-        git config user.email github-actions@github.com
-        export OVN_WEBSITE_BRANCH="dist-docs-${BRANCH}"
-        git checkout ${OVN_WEBSITE_BRANCH} || git checkout -b ${OVN_WEBSITE_BRANCH}
-        pushd ./src/static/support
-        rm -rf ./${DOCS_DIR}
-        mkdir -v ./${DOCS_DIR}
-        tar xzvf /tmp/dist-docs.tgz --strip-components=1 -C ./${DOCS_DIR}
-        git add ${DOCS_DIR}
-        popd
-        git commit -m "dist-docs: Update OVN $BRANCH manpages"
-        git push --force origin "${OVN_WEBSITE_BRANCH}"
-        popd
-        # Setting these variables for the pull request
-        echo "PULL_REQUEST_FROM_BRANCH=${OVN_WEBSITE_BRANCH}" >> $GITHUB_ENV
-        echo "PULL_REQUEST_TITLE=Pulling dist-docs from OVN ${BRANCH}" >> $GITHUB_ENV
+        [ "${{ matrix.branch }}" == "main" ] || DOCS_DIR="${DOCS_DIR}-${{ matrix.branch }}"
+        rm -rf ${DOCS_DIR}
+        mkdir -v ${DOCS_DIR}
+        tar xzvf /tmp/dist-docs.tgz --strip-components=1 -C ${DOCS_DIR}
+      working-directory: ovn-website/src/static/support
 
     - name: pull-request for updated dist-docs
-      if: ${{ success() }}
       id: pull_request
-      uses: vsoch/pull-request-action@1.0.15
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PULL_REQUEST_BRANCH: "main"
-        BRANCH_PREFIX: "dist-docs-"
-        PULL_REQUEST_UPDATE: true
+      uses: peter-evans/create-pull-request@v6
+      with:
+        path: ovn-website
+        commit-message: |
+          dist-docs: Update OVN ${{ matrix.branch }} manpages
+        committer: github-actions <github-actions@github.com>
+        author: github-actions <github-actions@github.com>
+        branch: dist-docs-${{ matrix.branch }}
+        title: Pulling dist-docs from OVN ${{ matrix.branch }}
+        body: Automated changes to pull latest dist-docs from OVN ${{ matrix.branch }}
 
     - name: pull-request info
       if: ${{ success() }}
-      env:
-        pull_request_number_output: ${{ steps.pull_request.outputs.pull_request_number }}
-        pull_request_url_output: ${{ steps.pull_request.outputs.pull_request_url }}
       run: |
-        echo "Pull request number: ${pull_request_number_output}"
-        echo "Pull request url: ${pull_request_url_output}"
+        echo "Pull request number: ${{ steps.pull_request.outputs.pull-request-number }}"
+        echo "Pull request url: ${{ steps.pull_request.outputs.pull-request-url }}"
 
     - name: copy logs on failure
       if: failure() || cancelled()
       run: |
-        pushd ./ovn
-        # upload-artifact@v2 doesn't work well enough with wildcards.
+        # upload-artifact doesn't work well enough with wildcards.
         # So, we're just archiving everything here to avoid any issues.
         mkdir logs
         cp config.log ./logs/
         tar -czvf logs.tgz logs/
-        popd
+      working-directory: ovn
 
     - name: upload logs on failure
       if: failure() || cancelled()
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: logs-linux-${{ join(matrix.*, '-') }}
         path: ovn/logs.tgz
 
     - name: upload dist-docs on failure
       if: failure() || cancelled()
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: dist-docs-${{ join(matrix.*, '-') }}
         path: /tmp/dist-docs.tgz
