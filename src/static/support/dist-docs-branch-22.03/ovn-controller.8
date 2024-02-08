@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-controller" 8 "ovn-controller" "OVN 22\[char46]03\[char46]3" "OVN Manual"
+.TH "ovn-controller" 8 "ovn-controller" "OVN 22\[char46]03\[char46]6" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -210,7 +210,7 @@ The OVN database that this system should connect to for its configuration, in on
 \fBexternal_ids:ovn\-monitor\-all\fR
 A boolean value that tells if \fBovn\-controller\fR should monitor all records of tables in \fIovs-database\fR\[char46] If set to \fBfalse\fR, it will conditionally monitor the records that is needed in the current chassis\[char46]
 .IP
-It is more optimal to set it to \fBtrue\fR in use cases when the chassis would anyway need to monitor most of the records in \fIovs-database\fR, which would save the overhead of conditions processing, especially for server side\[char46] Typically, set it to \fBtrue\fR for environments that all workloads need to be reachable from each other\[char46]
+It is more efficient to set it to \fBtrue\fR in use cases where the chassis would anyway need to monitor most of the records in \fIOVN Southbound\fR database, which would save the overhead of conditions processing, especially for server side\[char46] Typically, set it to \fBtrue\fR for environments that all workloads need to be reachable from each other\[char46]
 .IP
 Default value is \fIfalse\fR\[char46]
 .TP
@@ -227,9 +227,9 @@ If the value is nonzero, then it will be forced to a value of at least 5s\[char4
 \fBexternal_ids:ovn\-encap\-type\fR
 The encapsulation type that a chassis should use to connect to this node\[char46] Multiple encapsulation types may be specified with a comma-separated list\[char46] Each listed encapsulation type will be paired with \fBovn\-encap\-ip\fR\[char46]
 .IP
-Supported tunnel types for connecting hypervisors are \fBgeneve\fR and \fBstt\fR\[char46] Gateways may use \fBgeneve\fR, \fBvxlan\fR, or \fBstt\fR\[char46]
+Supported tunnel types for connecting hypervisors and gateways are \fBgeneve\fR, \fBvxlan\fR, and \fBstt\fR\[char46]
 .IP
-Due to the limited amount of metadata in \fBvxlan\fR, the capabilities and performance of connected gateways will be reduced versus other tunnel formats\[char46]
+Due to the limited amount of metadata in \fBvxlan\fR, the capabilities and performance of connected gateways and hypervisors will be reduced versus other tunnel formats\[char46]
 .TP
 \fBexternal_ids:ovn\-encap\-ip\fR
 The IP address that a chassis should use to connect to this node using encapsulation types specified by \fBexternal_ids:ovn\-encap\-type\fR\[char46]
@@ -289,6 +289,9 @@ When used, this configuration value specifies the time, in milliseconds, since t
 .TP
 \fBexternal_ids:ovn\-set\-local\-ip\fR
 The boolean flag indicates if \fBovn\-controller\fR when create tunnel ports should set \fBlocal_ip\fR parameter\[char46] Can be heplful to pin source outer IP for the tunnel when multiple interfaces are used on the host for overlay traffic\[char46]
+.TP
+\fBexternal_ids:garp\-max\-timeout\-sec\fR
+When used, this configuration value specifies the maximum timeout (in seconds) between two consecutive GARP packets sent by \fBovn\-controller\fR\[char46] \fBovn\-controller\fR by default sends just 4 GARP packets with an exponential backoff timeout\[char46] Setting \fBexternal_ids:garp\-max\-timeout\-sec\fR allows to cap for the exponential backoff used by \fBovn\-controller\fR to send GARPs packets\[char46]
 .RE
 .PP
 .PP
