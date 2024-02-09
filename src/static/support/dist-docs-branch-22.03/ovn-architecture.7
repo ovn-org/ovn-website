@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-architecture" 7 "OVN Architecture" "OVN 22\[char46]03\[char46]3" "OVN Manual"
+.TH "ovn-architecture" 7 "OVN Architecture" "OVN 22\[char46]03\[char46]6" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -563,7 +563,7 @@ OpenFlow table 0 performs physical-to-logical translation\[char46] It matches th
 Packets that originate from a container nested within a VM are treated in a slightly different way\[char46] The originating container can be distinguished based on the VIF-specific VLAN ID, so the physical-to-logical translation flows additionally match on VLAN ID and the actions strip the VLAN header\[char46] Following this step, OVN treats packets from containers just like any other packets\[char46]
 .IP
 Table 0 also processes packets that arrive from other chassis\[char46] It distinguishes them from other packets by ingress port, which is a tunnel\[char46] As with packets just entering the OVN pipeline, the actions annotate these packets with logical datapath metadata\[char46] For tunnel types that support it, they are also annotated with logical ingress port metadata\[char46] In addition, the actions set the logical output port field, which is available because in OVN tunneling occurs after the logical output port is known\[char46] These pieces of information are obtained from the tunnel encapsulation metadata (see \fBTunnel
-Encapsulations\fR for encoding details)\[char46] Then the actions resubmit to table 33 to enter the logical egress pipeline\[char46]
+Encapsulations\fR for encoding details)\[char46] Then the actions resubmit to table 38 to enter the logical egress pipeline\[char46]
 .IP 2. .4in
 OpenFlow tables 8 through 31 execute the logical ingress pipeline from the \fBLogical_Flow\fR table in the OVN Southbound database\[char46] These tables are expressed entirely in terms of logical concepts like logical ports and logical datapaths\[char46] A big part of \fBovn\-controller\fR\(cqs job is to translate them into equivalent OpenFlow (in particular it translates the table numbers: \fBLogical_Flow\fR tables 0 through 23 become OpenFlow tables 8 through 31)\[char46]
 .IP
@@ -702,7 +702,7 @@ OVN allows you to specify a prioritized list of chassis for a distributed gatewa
 When multiple chassis have been specified for a gateway, all chassis that may send packets to that gateway will enable BFD on tunnels to all configured gateway chassis\[char46] The current master chassis for the gateway is the highest priority gateway chassis that is currently viewed as active based on BFD status\[char46]
 .PP
 .PP
-For more information on L3 gateway high availability, please refer to http://docs\[char46]ovn\[char46]org/en/latest/topics/high-availability\[char46]
+For more information on L3 gateway high availability, please refer to http://docs\[char46]ovn\[char46]org/en/latest/topics/high-availability\[char46]html\[char46]
 .ST "Restrictions of Distributed Gateway Ports"
 .PP
 .PP
@@ -1108,7 +1108,7 @@ The limited space available for metadata when VXLAN tunnels are enabled in a clu
 .IP \(bu
 The maximum number of networks is reduced to 4096\[char46]
 .IP \(bu
-The maximum number of ports per network is reduced to 4096\[char46] (Including multicast group ports\[char46])
+The maximum number of ports per network is reduced to 2048\[char46]
 .IP \(bu
 ACLs matching against logical ingress port identifiers are not supported\[char46]
 .IP \(bu
