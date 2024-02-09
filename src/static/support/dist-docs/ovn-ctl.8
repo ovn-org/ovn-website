@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-ctl" 8 "ovn-ctl" "OVN 22\[char46]12\[char46]90" "OVN Manual"
+.TH "ovn-ctl" 8 "ovn-ctl" "OVN 24\[char46]03\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -236,6 +236,8 @@ This program is intended to be invoked internally by Open Virtual Network startu
 .PP
 \fB\-\-db\-nb\-cluster\-remote\-proto=\fIPROTO (tcp/ssl)\fB\fR
 .PP
+\fB\-\-db\-nb\-election\-timer=\fITimeout in milliseconds\fB\fR
+.PP
 \fB\-\-db\-sb\-cluster\-local\-addr=\fIIP ADDRESS\fB\fR
 .PP
 \fB\-\-db\-sb\-cluster\-local\-port=\fIPORT NUMBER\fB\fR
@@ -247,6 +249,8 @@ This program is intended to be invoked internally by Open Virtual Network startu
 \fB\-\-db\-sb\-cluster\-remote\-port=\fIPORT NUMBER\fB\fR
 .PP
 \fB\-\-db\-sb\-cluster\-remote\-proto=\fIPROTO (tcp/ssl)\fB\fR
+.PP
+\fB\-\-db\-sb\-election\-timer=\fITimeout in milliseconds\fB\fR
 .PP
 \fB\-\-db\-ic\-nb\-cluster\-local\-addr=\fIIP ADDRESS\fB\fR
 .PP
@@ -271,6 +275,8 @@ This program is intended to be invoked internally by Open Virtual Network startu
 \fB\-\-db\-ic\-sb\-cluster\-remote\-port=\fIPORT NUMBER\fB\fR
 .PP
 \fB\-\-db\-ic\-sb\-cluster\-remote\-proto=\fIPROTO (tcp/ssl)\fB\fR
+.PP
+\fB\-\-db\-cluster\-schema\-upgrade=\fIyes|no\fB\fR
 .SH "PROBE INTERVAL OPTIONS"
 .PP
 \fB\-\-db\-nb\-probe\-interval\-to\-active=\fITime in milliseconds\fB\fR
@@ -419,4 +425,22 @@ start_northd
 \-\-ovn\-sb\-db\-ssl\-cert=/etc/ovn/ovnsb\-cert\[char46]pem
 \-\-ovn\-sb\-db\-ssl\-ca\-cert=/etc/ovn/cacert\[char46]pem
 start_northd
+\fR
+.SS "Avoiding automatic clustered OVN database schema upgrade"
+.PP
+.PP
+If you desire more control over clustered DB schema upgrade, you can opt-out of automatic on-start upgrade attempts with \fB\-\-no\-db\-cluster\-schema\-upgrade\fR\[char46]
+.ST "Start OVN NB and SB clustered databases on host with IP x\[char46]x\[char46]x\[char46]x without schema upgrade"
+.PP
+.PP
+\fB
+# ovn\-ctl start_nb_ovsdb \-\-db\-nb\-cluster\-local\-addr=x\[char46]x\[char46]x\[char46]x \-\-no\-db\-cluster\-schema\-upgrade
+# ovn\-ctl start_sb_ovsdb \-\-db\-sb\-cluster\-local\-addr=x\[char46]x\[char46]x\[char46]x \-\-no\-db\-cluster\-schema\-upgrade
+\fR
+.ST "Trigger clustered DB schema upgrade manually"
+.PP
+.PP
+\fB
+# ovsdb\-client convert unix:/var/run/ovn/ovnnb_db\[char46]sock /usr/local/share/ovn/ovn\-nb\[char46]ovsschema
+# ovsdb\-client convert unix:/var/run/ovn/ovnsb_db\[char46]sock /usr/local/share/ovn/ovn\-sb\[char46]ovsschema
 \fR
