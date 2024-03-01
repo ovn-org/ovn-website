@@ -6,12 +6,12 @@ weight = 20
 
 ### Latest OVN release Series
 
-The most recent series of OVN released is 23.09. Use this version
+The most recent series of OVN released is 24.03. Use this version
 if you are interested in trying out the latest release of OVN with the most
 up-to-date features and performance improvements.
 
 You can find more information, including download links, release notes and
-changelogs for this series [here](23.09).
+changelogs for this series [here](24.03).
 
 
 ### Long Term Support
@@ -32,9 +32,9 @@ that any given LTS will receive bug fix support for two years, followed by
 one year of critical bug fixes and security fixes.
 
 The most recent LTS series of OVN released is
-22.03. 
+24.03. 
 You can find more information, including download links, release notes and
-changelogs for this series [here](22.03).
+changelogs for this series [here](24.03).
 
 
 ### Standard Term Support
