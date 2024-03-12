@@ -1,0 +1,97 @@
++++
+title = "Changelog v23.03.3"
+[_build]
+  list = 'never'
++++
+
+### Changes from v23.03.2 to v23.03.3
+
+- [589eb8a1](https://github.com/ovn-org/ovn/commit/589eb8a167ebaf61ee20aec08c368c7c65b4eccc) Set release date for 23.03.3.
+- [fec1ad85](https://github.com/ovn-org/ovn/commit/fec1ad85a29b714e42e2dac7e7290f3fb37895f7) controller: Set check_tnl_key for BFD on tunnel ifaces.
+- [907e4ef9](https://github.com/ovn-org/ovn/commit/907e4ef9ee04878946b2dfd99d7a682c18038295) tests: Skip EDNS test if the scapy version doesn't support it.
+- [f33155c7](https://github.com/ovn-org/ovn/commit/f33155c7d9856b7803dd2e2f6beb729b9e2b5340) northd: Don't skip the unSNAT stage for traffic towards VIPs.
+- [8c4995fc](https://github.com/ovn-org/ovn/commit/8c4995fc69772493e56d239c6c216ca5dbeb9f5f) northd: Don't create fair Sb meters for ACLs with logging disabled.
+- [085377fa](https://github.com/ovn-org/ovn/commit/085377fa3358077b00f84efde061310ffeb2c56d) controller: ofctrl: Use index for meter lookups.
+- [1ad4d742](https://github.com/ovn-org/ovn/commit/1ad4d7425491409a1ce086011f7011f87e8ea5f1) tests: Fix "router port type update and then ...".
+- [0314ffa2](https://github.com/ovn-org/ovn/commit/0314ffa2e20d640515ccbde192ea5472283347f1) tests: Fix "ovn-controller - Chassis other_config".
+- [677d4d80](https://github.com/ovn-org/ovn/commit/677d4d8051e872f1fa2e387ae7b51d5d06ee2e76) tests: Fix "ofctrl wait before clearing flows".
+- [b2afef4f](https://github.com/ovn-org/ovn/commit/b2afef4f7991c92eb1fa78b47de01984ce8b3764) tests: Fix flaky "ovn-controller-vtep - binding 1".
+- [080bf284](https://github.com/ovn-org/ovn/commit/080bf2844a85449206652126536aa09491e1ec5a) tests: Fix flaky "options:requested-chassis ...".
+- [95685640](https://github.com/ovn-org/ovn/commit/95685640dbd468dd677ec91f9de3cd0a5cfccd30) tests: Fix typos in tests.
+- [187d0d4f](https://github.com/ovn-org/ovn/commit/187d0d4fef2d0d78e68859f8443b5e0747fa6fcd) tests: Have tests fail when adding veth peer fails.
+- [cb0c9185](https://github.com/ovn-org/ovn/commit/cb0c9185d027fec75d0bd4d454574e97ad894e56) pinctrl: dns: Ignore additional records.
+- [6c15e96f](https://github.com/ovn-org/ovn/commit/6c15e96f0c2225117e07cbb664a29c0025fbb3a4) ovn-ic: Fix global blacklist filter for IPv6 addresses.
+- [d74c2ce0](https://github.com/ovn-org/ovn/commit/d74c2ce0ab8fd6c2c5e1f24b116e273f7e14f5fe) tests: Fix macro OVN_CHECK_PACKETS_CONTAIN.
+- [5538fe72](https://github.com/ovn-org/ovn/commit/5538fe723ce945c79b755497fbb931fe2dac63b5) features.c: Always wait on the rconn.
+- [21956ff2](https://github.com/ovn-org/ovn/commit/21956ff2a234541e4c22fc9094f5c588fa79daf5) Documentation: Fix broken links in ovn-sandbox.rst.
+- [1cd23bcf](https://github.com/ovn-org/ovn/commit/1cd23bcfd2335e1cc58dd3d94ade9569b3fee760) ovn-sb.xml: Remove IPv4-only restriction from Service Monitors.
+- [f97a7ba9](https://github.com/ovn-org/ovn/commit/f97a7ba9498b683ece0aa13795828012dc9bb434) github: Update versions of action dependencies (Node.js 20).
+- [c4ae1857](https://github.com/ovn-org/ovn/commit/c4ae1857df373295009d4a00fb8458a970584e37) northd: Remove the protocol match from ECMP symmetric reply flows.
+- [09e6a814](https://github.com/ovn-org/ovn/commit/09e6a814a40102e15b448600f867b2a15bbfa742) actions: Use random port selection for SNAT with external_port_range.
+- [bea7dde2](https://github.com/ovn-org/ovn/commit/bea7dde2f54f4e70c524e9043e135516f56b7543) ovn-ic: Handle NB:name updates properly.
+- [591a0a22](https://github.com/ovn-org/ovn/commit/591a0a2206c6e1db89a56b8ff13d565ed8b5dfef) Fix segfault due to ssl-ciphers.
+- [7f1681b1](https://github.com/ovn-org/ovn/commit/7f1681b19d2865956c332bf7481a28ba4c89cd5f) controller: fixed potential segfault when changing tunnel_key and deleting ls.
+- [56a75521](https://github.com/ovn-org/ovn/commit/56a755211a856776d743484722ea2fc7b543150a) northd: Use proper field for lookup_nd
+- [6be3e893](https://github.com/ovn-org/ovn/commit/6be3e893d6125f4ec906270db57bfa0ff5bb30b2) checkpatch.py: Port checkpatch related changes from the OVS repo.
+- [5c4465f0](https://github.com/ovn-org/ovn/commit/5c4465f05ef42cdba809efd807f20b50473fa94e) actions: Make sure affinity learnt flows are auto deleted.
+- [285564dc](https://github.com/ovn-org/ovn/commit/285564dc039c9f624a02d0acb39f33b799273519) pinctrl: Directly retrieve desired port_binding MAC.
+- [c513eb91](https://github.com/ovn-org/ovn/commit/c513eb91c6c304de7a6c0de71a04cc75588e8fcf) test: add dedicated test for garp-max-timeout
+- [f1d37a37](https://github.com/ovn-org/ovn/commit/f1d37a3754d317ff0fdda308d91f24ffd34cc01e) treewide: Fix small memory leaks reported by static analysis
+- [32fd3332](https://github.com/ovn-org/ovn/commit/32fd33320507c5089f8ef08f7a0cbb0ca0e1c484) ovs: Bump submodule to include IDL "spurious delete" fix.
+- [67153656](https://github.com/ovn-org/ovn/commit/6715365602bc9277692b55777ed52c234a5c1a21) Correct ethtype referencing incorrect values
+- [45dfd8be](https://github.com/ovn-org/ovn/commit/45dfd8be6a9d697b88f09cbbce720c5544ba443d) northd: forward arp request to lrp snat on.
+- [f38d6c0b](https://github.com/ovn-org/ovn/commit/f38d6c0b524bf3e56af34b039ec6004290d039f1) ovn-macros: Make sure stopped daemons continue before the test ends.
+- [8abd0082](https://github.com/ovn-org/ovn/commit/8abd0082b759d8cb63ca5774fca51f7b203b3ab7) system-test: Fix tcpdump usage in LB template tests.
+- [26a91f1a](https://github.com/ovn-org/ovn/commit/26a91f1ac38bf26636e69550d922642e39f9aa1b) controller: make garp_max_timeout configurable
+- [01d85f35](https://github.com/ovn-org/ovn/commit/01d85f351031a6125444eccf0e56eb0037d2741c) system-tests: Consolidate wait condition in CoPP test
+- [0865b780](https://github.com/ovn-org/ovn/commit/0865b78090523c8a1d7e2c7061ff3f6d3542432c) pinctrl: Fix up comments about sending RST packets for healthcheck.
+- [95d426d0](https://github.com/ovn-org/ovn/commit/95d426d014f3129ad434d52bb5fd0e93a0df4bbd) fmt_pkt: make sure scapy-server is started once
+- [e939fb39](https://github.com/ovn-org/ovn/commit/e939fb39aaee55923bb022ed4cdf2841ff79d709) fmt_pkt: improve scapy-server logging
+- [9b80a40e](https://github.com/ovn-org/ovn/commit/9b80a40efbabe89c5d09536416db30deadf11a96) fmt_pkt: use -S check to wait for scapy sock file
+- [233d59bf](https://github.com/ovn-org/ovn/commit/233d59bffc4bca75ed50737f2fdb7f387fd06850) fmt_pkt: don't subshell when calling ovs-appctl
+- [9a428e2b](https://github.com/ovn-org/ovn/commit/9a428e2b330f386b70eaced59ebd72c3569222c7) controller: fix group_table and meter_table allocation
+- [ee3dc050](https://github.com/ovn-org/ovn/commit/ee3dc050dd7d91ea94f081ac460a48d281f04855) controller: avoid extra flows if localnet_learn_fdb is disabled
+- [b76da8a7](https://github.com/ovn-org/ovn/commit/b76da8a790af1ff19640f976a21fc7033e1f20b9) controller: FDB entries for localnet should not overwrite entries for vifs
+- [378d608f](https://github.com/ovn-org/ovn/commit/378d608fa3858728b4d0a3b73ea4374f4b295cdc) pinctrl: reset success and failures n_count regardless of svc state
+- [091fde81](https://github.com/ovn-org/ovn/commit/091fde815777a711dda830aa82c54da025af7177) pinctrl: send RST instead of RST_ACK bit for lb hc
+- [a497e552](https://github.com/ovn-org/ovn/commit/a497e552bec5935b97556b62bdd7303dab18fe76) controller: Don't artificially limit group and meter IDs to 16bit.
+- [e060ec3a](https://github.com/ovn-org/ovn/commit/e060ec3a8ec2850deec8a2d04d58bdd661cc7f2f) tests: fixed race_condition with max_prefix
+- [740e0d2a](https://github.com/ovn-org/ovn/commit/740e0d2af4a254235b1c7786143b49f21c4e7603) tests: fixed "ovn-nbctl - daemon retry connection"
+- [07fa9051](https://github.com/ovn-org/ovn/commit/07fa9051e9348953aa6fbd55548253b585bd46cb) tests: fixed system test "LR with SNAT fragmentation needed for external server".
+- [95be0768](https://github.com/ovn-org/ovn/commit/95be07682f430b0b60236c78e06084042ec6d64c) ovn-ctl man: Add election timer config to manpage
+- [6c15f7b7](https://github.com/ovn-org/ovn/commit/6c15f7b7e654016b5f09292d90acb8b6183c61b5) controller: have I+P assigning ct_zones for l3gateway ports
+- [5479f034](https://github.com/ovn-org/ovn/commit/5479f0344174ee393541f4312fa0c2b3fad52146) tests: fixed another set of flaky ovn-ic tests
+- [6a9ac409](https://github.com/ovn-org/ovn/commit/6a9ac409f01889bbd887241afc87fd4323dcc7a9) tests: wait for all flows to be installed before sending packets
+- [dcc31854](https://github.com/ovn-org/ovn/commit/dcc31854f8042fd99eb0de4eff6d704450371344) tests: fixed "ipsec -- basic configuration"
+- [3f7845d4](https://github.com/ovn-org/ovn/commit/3f7845d4ef5adf40bcede5ae9f1e3ba1f4ef2458) tests: do not start backup-northd by default
+- [38e73eb8](https://github.com/ovn-org/ovn/commit/38e73eb845c0e6d7b932c3697f7fbc3124435c31) tests: fixed multiple tests not properly waiting for packets to be received
+- [ede9954a](https://github.com/ovn-org/ovn/commit/ede9954ac921bfcb21e57f1c08f75c9a4ae380a9) ci: Pin Python, Fedora and Ubuntu runner versions.
+- [b0d658bc](https://github.com/ovn-org/ovn/commit/b0d658bc66c3846f7f60dbdbf951e075ab8608d7) ovs: Bump submodule to include E721 fixes.
+- [a51ef9ba](https://github.com/ovn-org/ovn/commit/a51ef9ba2ee2ff9c0f79e460bafe59989e8d292a) tests: Remove broken "feature inactivity probe" test.
+- [51e35c15](https://github.com/ovn-org/ovn/commit/51e35c15f3a4e77e294770d5ff0b4d4c06777253) ovs: Bump submodule to v3.1.3.
+- [9f3d494e](https://github.com/ovn-org/ovn/commit/9f3d494e62c9c83623139ea407018ca135c45f46) py-requirements: Remove hacking dependency and use recent flake8.
+- [1f09eaa4](https://github.com/ovn-org/ovn/commit/1f09eaa46f5579935c7c663cd82cd3eb5927a2dd) controller, northd: Wait for cleanup before replying to exit
+- [6627389a](https://github.com/ovn-org/ovn/commit/6627389a6975c09800aaa80e12360b8b07ff4358) tests: Add missing check for scapy.
+- [a43d6dc4](https://github.com/ovn-org/ovn/commit/a43d6dc49f48c0c21b9d441422d115dc878e7b21) ci: Apply the ASAN workaround only for Clang <16
+- [72461e96](https://github.com/ovn-org/ovn/commit/72461e96242c713ce7d2787bf8931fa027b4578f) ci: Use proper uname argument to get the HW type
+- [0213101b](https://github.com/ovn-org/ovn/commit/0213101be1261abf02334e32629ee25ae9b898b6) tests: Wait for new ovn-controllers to connect to Southbound.
+- [e0923a6d](https://github.com/ovn-org/ovn/commit/e0923a6d282f144089382dea9451c89131135e09) system-tests: Make sure that IPv6 address is available right away
+- [e1657ff3](https://github.com/ovn-org/ovn/commit/e1657ff3ff4f1046e9ec3150cfadb6857ff6a2f4) Don't mention packet cloning when failing to find tunnel
+- [c223dd86](https://github.com/ovn-org/ovn/commit/c223dd86344988559f92470c667d25116a2be6e8) northd: Allow need frag to be SNATed
+- [8d5ca8b6](https://github.com/ovn-org/ovn/commit/8d5ca8b6d390899fb62d79dcda4f3fa225740a9b) docs: require ovn-set-local-ip for co-located ovn-controllers
+- [658f8ef5](https://github.com/ovn-org/ovn/commit/658f8ef515e9a8d326d07b2303cf6a16a2c9ec63) memory-trim: Fix timestamp overflow warning right after reboot.
+- [7ef8a937](https://github.com/ovn-org/ovn/commit/7ef8a93748d21a190a3827ca98e001dba49ff754) Fix missing flows in ls_in_dhcp_options table
+- [7fad2584](https://github.com/ovn-org/ovn/commit/7fad2584b4ec1b4d0d97d012c52b12acae16e246) controller: throttle port claim attempts from if-status
+- [69b8d8ba](https://github.com/ovn-org/ovn/commit/69b8d8baf28d4b27fd71d27cc974f1d14c4e87cc) tests: fixed "send gratuitous ARP for NAT rules on HA distributed router"
+- [45b3946d](https://github.com/ovn-org/ovn/commit/45b3946d6d05fd85db83d004f86ef4e04f00cb2f) tests: move trim_zeros() to ovn-macros
+- [6ec80d26](https://github.com/ovn-org/ovn/commit/6ec80d26a8110f781768c5880e15358a1b1d4336) tests: fixed "L2 Drop and Allow ACL w/ Stateful ACL"
+- [7c0ed671](https://github.com/ovn-org/ovn/commit/7c0ed6716e3da21a4b71209900011389800576f1) tests: fixed multiple tests missing ovn-nbctl "wait"
+- [8aebd7bf](https://github.com/ovn-org/ovn/commit/8aebd7bf916d324d7bc8b368d79a4ebe49e19bdd) tests: fixed "options:requested-chassis for logical port"
+- [801ec270](https://github.com/ovn-org/ovn/commit/801ec2708248477e3513fb7fb8de131b4ccd5ac6) tests: fixed "Logical router policy packet marking"
+- [8115b603](https://github.com/ovn-org/ovn/commit/8115b60391815bea49d3ad5f78fbcad68aeed772) tests: fixed multiple ovn-ic tests
+- [6a950fb4](https://github.com/ovn-org/ovn/commit/6a950fb4348f3de87ca7321189deacf5fbc0692a) pinctrl: Reply with correct destination for ICMPv6 RA packets
+- [c5491c31](https://github.com/ovn-org/ovn/commit/c5491c31bdf389ffcb426064fd52b0c84428a3d4) ovn-controller: Add monitor condition for FDB.
+- [24c505ef](https://github.com/ovn-org/ovn/commit/24c505ef7a0fc60461aaa515397595c637705711) Rename scapy-server into scapy-server.py
+- [d522eaa2](https://github.com/ovn-org/ovn/commit/d522eaa26e9f270a92b3608f80688f66268ed583) Add ovnkube-identity binary to the ovn-kubernetes Dockerfile
+- [a811fd6c](https://github.com/ovn-org/ovn/commit/a811fd6cfe0517bcebfcff7feae175f99c27f4f5) tests: offload scapy transformations to a separate unixctl daemon
+- [d1c3b730](https://github.com/ovn-org/ovn/commit/d1c3b730958253a28b08c8feb1d5fc2bf2b2d070) Prepare for 23.03.3.
