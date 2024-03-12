@@ -3695,7 +3695,7 @@ Service_Monitor TABLE
        Each  row  in  this table configures monitoring a service for its live‐
        ness. The service can be an IPv4 TCP or UDP service. ovn-controller pe‐
        riodically sends out service monitor packets and updates the status  of
-       the service. Service monitoring for IPv6 services is not supported.
+       the service.
 
        ovn-northd  uses  this  feature  to  implement the load balancer health
        check feature offered to the CMS through the northbound database.
@@ -3742,33 +3742,34 @@ Service_Monitor TABLE
               Source Ethernet address to use in the service monitor packet.
 
        src_ip: string
-              Source IPv4 address to use in the service monitor packet.
+              Source  IPv4  or  IPv6  address  to  use  in the service monitor
+              packet.
 
        options : interval: optional string, containing an integer
               The interval, in seconds, between service monitor checks.
 
        options : timeout: optional string, containing an integer
-              The  time,  in  seconds,  after  which the service monitor check
+              The time, in seconds, after  which  the  service  monitor  check
               times out.
 
        options : success_count: optional string, containing an integer
-              The number of successful checks after which the service is  con‐
+              The  number of successful checks after which the service is con‐
               sidered online.
 
        options : failure_count: optional string, containing an integer
-              The  number of failure checks after which the service is consid‐
+              The number of failure checks after which the service is  consid‐
               ered offline.
 
      Status Reporting:
 
-       The ovn-controller on the chassis that hosts the  logical_port  updates
+       The  ovn-controller  on the chassis that hosts the logical_port updates
        this column to report the service’s status.
 
        status: optional string, one of error, offline, or online
-              For  TCP  service, ovn-controller sends a SYN to the service and
+              For TCP service, ovn-controller sends a SYN to the  service  and
               expects an ACK response to consider the service to be online.
 
-              For UDP service, ovn-controller sends a UDP packet to  the  ser‐
+              For  UDP  service, ovn-controller sends a UDP packet to the ser‐
               vice and doesn’t expect any reply. If it receives an ICMP reply,
               then it considers the service to be offline.
 
@@ -3797,50 +3798,50 @@ Load_Balancer TABLE
 
    Details:
        name: string
-              A  name  for the load balancer. This name has no special meaning
-              or purpose other than to provide convenience for human  interac‐
+              A name for the load balancer. This name has no  special  meaning
+              or  purpose other than to provide convenience for human interac‐
               tion with the ovn-nb database.
 
        vips: map of string-string pairs
-              A  map of virtual IP addresses (and an optional port number with
-              : as a separator) associated with this load balancer  and  their
-              corresponding  endpoint  IP addresses (and optional port numbers
+              A map of virtual IP addresses (and an optional port number  with
+              :  as  a separator) associated with this load balancer and their
+              corresponding endpoint IP addresses (and optional  port  numbers
               with : as separators) separated by commas.
 
        protocol: optional string, one of sctp, tcp, or udp
-              Valid protocols are tcp, udp, or sctp.  This  column  is  useful
-              when  a  port  number is provided as part of the vips column. If
-              this column is empty and a port number is provided  as  part  of
+              Valid  protocols  are  tcp,  udp, or sctp. This column is useful
+              when a port number is provided as part of the  vips  column.  If
+              this  column  is  empty and a port number is provided as part of
               vips column, OVN assumes the protocol to be tcp.
 
        datapaths: set of Datapath_Bindings
               Datapaths to which this load balancer applies to.
 
        datapath_group: optional Logical_DP_Group
-              Deprecated.  The  group of datapaths to which this load balancer
-              applies to. This means that the same load  balancer  applies  to
+              Deprecated. The group of datapaths to which this  load  balancer
+              applies  to.  This  means that the same load balancer applies to
               all datapaths in a group.
 
        ls_datapath_group: optional Logical_DP_Group
-              The  group  of datapaths to which this load balancer applies to.
-              This means that the same load balancer applies to all  datapaths
+              The group of datapaths to which this load balancer  applies  to.
+              This  means that the same load balancer applies to all datapaths
               in a group.
 
        lr_datapath_group: optional Logical_DP_Group
-              The  group  of  logical router datapaths to which this load bal‐
+              The group of logical router datapaths to which  this  load  bal‐
               ancer applies to. This means that the same load balancer applies
               to all datapaths in a group.
 
      Load_Balancer options:
 
        options : hairpin_snat_ip: optional string
-              IP to be used as source IP for  packets  that  have  been  hair-
-              pinned  after  load balancing. This value is automatically popu‐
+              IP  to  be  used  as  source IP for packets that have been hair-
+              pinned after load balancing. This value is  automatically  popu‐
               lated by ovn-northd.
 
        options : hairpin_orig_tuple: optional string, either true or false
               This value is automatically set to true by ovn-northd when orig‐
-              inal destination IP and transport  port  of  the  load  balanced
+              inal  destination  IP  and  transport  port of the load balanced
               packets are stored in registers reg1, reg2, xxreg1.
 
      Common Columns:
@@ -3870,12 +3871,12 @@ BFD TABLE
      Configuration:
 
        src_port: integer, in range 49,152 to 65,535
-              udp  source  port  used  in bfd control packets. The source port
+              udp source port used in bfd control  packets.  The  source  port
               MUST be in the range 49152 through 65535 (RFC5881 section 4).
 
        disc: integer
               A unique, nonzero discriminator value generated by the transmit‐
-              ting system, used to demultiplex multiple BFD  sessions  between
+              ting  system,  used to demultiplex multiple BFD sessions between
               the same pair of systems.
 
        logical_port: string
@@ -3885,20 +3886,20 @@ BFD TABLE
               BFD peer IP address.
 
        min_tx: integer
-              This  is  the  minimum interval, in milliseconds, that the local
-              system would like to use when transmitting BFD Control  packets,
+              This is the minimum interval, in milliseconds,  that  the  local
+              system  would like to use when transmitting BFD Control packets,
               less any jitter applied. The value zero is reserved.
 
        min_rx: integer
-              This  is the minimum interval, in milliseconds, between received
-              BFD Control packets that this system is capable  of  supporting,
-              less  any  jitter  applied by the sender. If this value is zero,
-              the transmitting system does not want the remote system to  send
+              This is the minimum interval, in milliseconds, between  received
+              BFD  Control  packets that this system is capable of supporting,
+              less any jitter applied by the sender. If this  value  is  zero,
+              the  transmitting system does not want the remote system to send
               any periodic BFD Control packets.
 
        detect_mult: integer
-              Detection  time  multiplier.  The  negotiated transmit interval,
-              multiplied by this value, provides the Detection  Time  for  the
+              Detection time multiplier.  The  negotiated  transmit  interval,
+              multiplied  by  this  value, provides the Detection Time for the
               receiving system in Asynchronous mode.
 
        options: map of string-string pairs
@@ -3920,12 +3921,12 @@ BFD TABLE
 
               •      up
 FDB TABLE
-       This  table is primarily used to learn the MACs observed on a VIF (or a
-       localnet port with ’localnet_learn_fdb’ enabled)  which  belongs  to  a
-       Logical_Switch_Port  record  in  OVN_Northbound  whose port security is
-       disabled and ’unknown’ address set. If port security is disabled  on  a
-       Logical_Switch_Port  record,  OVN  should allow traffic with any source
-       mac from the VIF. This table will be used to deliver a  packet  to  the
+       This table is primarily used to learn the MACs observed on a VIF (or  a
+       localnet  port  with  ’localnet_learn_fdb’  enabled) which belongs to a
+       Logical_Switch_Port record in OVN_Northbound  whose  port  security  is
+       disabled  and  ’unknown’ address set. If port security is disabled on a
+       Logical_Switch_Port record, OVN should allow traffic  with  any  source
+       mac  from  the  VIF. This table will be used to deliver a packet to the
        VIF, If a packet’s eth.dst is learnt.
 
    Summary:
@@ -3975,7 +3976,7 @@ Static_MAC_Binding TABLE
               The logical datapath to which the logical router port belongs.
 
 Chassis_Template_Var TABLE
-       Each  record represents the set of template variable instantiations for
+       Each record represents the set of template variable instantiations  for
        a given chassis and is populated by ovn-northd from the contents of the
        OVN_Northbound.Chassis_Template_Var table.
 
@@ -3990,4 +3991,4 @@ Chassis_Template_Var TABLE
        variables: map of string-string pairs
               The set of variable values for a given chassis.
 
-Open vSwitch 23.09.2           DB Schema 20.29.0                     ovn-sb(5)
+Open vSwitch 23.09.4           DB Schema 20.29.0                     ovn-sb(5)
