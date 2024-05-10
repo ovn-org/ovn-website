@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-northd" 8 "ovn-northd" "OVN 24\[char46]03\[char46]2" "OVN Manual"
+.TH "ovn-northd" 8 "ovn-northd" "OVN 24\[char46]03\[char46]3" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -1082,7 +1082,9 @@ A priority\-110 flow with the match \fBeth\[char46]src == \fIE\fB\fR for all log
 .IP \(bu
 A priority\-100 flow that punts all IGMP/MLD packets to \fBovn\-controller\fR if multicast snooping is enabled on the logical switch\[char46]
 .IP \(bu
-Priority\-90 flows that forward registered IP multicast traffic to their corresponding multicast group, which \fBovn\-northd\fR creates based on learnt \fBIGMP_Group\fR entries\[char46] The flows also forward packets to the \fBMC_MROUTER_FLOOD\fR multicast group, which \fBovn\-nortdh\fR populates with all the logical ports that are connected to logical routers with \fBoptions\fR:mcast_relay=\(cqtrue\(cq\[char46]
+Priority\-90 flows for transit switches that forward registered IP multicast traffic to their corresponding multicast group , which \fBovn\-northd\fR creates based on learnt \fBIGMP_Group\fR entries\[char46]
+.IP \(bu
+Priority\-90 flows for non-transit switches that forward registered IP multicast traffic to their corresponding multicast group, which \fBovn\-northd\fR creates based on learnt \fBIGMP_Group\fR entries\[char46] The flows also forward packets to the \fBMC_MROUTER_FLOOD\fR multicast group, which \fBovn\-nortdh\fR populates with all the logical ports that are connected to logical routers with \fBoptions\fR:mcast_relay=\(cqtrue\(cq\[char46]
 .IP \(bu
 A priority\-85 flow that forwards all IP multicast traffic destined to 224\[char46]0\[char46]0\[char46]X to the \fBMC_FLOOD_L2\fR multicast group, which \fBovn\-northd\fR populates with all non-router logical ports\[char46]
 .IP \(bu
@@ -2657,6 +2659,8 @@ If the NAT rule can be handled in a distributed manner, then there is an additio
 .PP
 .RS
 .IP \(bu
+A priority\-70 logical flow is added that initiates CT state for traffic that is configured to be SNATed on Distributed routers\[char46] This allows the next table, \fBlr_out_snat\fR, to effectively match on various CT states\[char46]
+.IP \(bu
 A priority\-50 logical flow is added that commits any untracked flows from the previous table \fBlr_out_undnat\fR for Gateway routers\[char46] This flow matches on \fBct\[char46]new && ip\fR with action \fBct_commit { } ; next; \fR\[char46]
 .IP \(bu
 A priority\-0 logical flow with match \fB1\fR has actions \fBnext;\fR\[char46]
@@ -2721,6 +2725,11 @@ If the NAT rule has \fBallowed_ext_ips\fR configured, then there is an additiona
 If the NAT rule has \fBexempted_ext_ips\fR set, then there is an additional flow configured at the priority \fB\fIP\fB + 2 \fR of corresponding NAT rule\[char46] The flow matches if destination ip is an \fBexempted_ext_ip\fR and the action is \fBnext;
 \fR\[char46] This flow is used to bypass the ct_snat action for a flow which is destinted to \fBexempted_ext_ips\fR\[char46]
 .IP \(bu
+An additional flow is added for traffic that goes in opposite direction (i\[char46]e\[char46] it enters a network with configured SNAT)\[char46] Where the flow above matched on \fBip4\[char46]src == \fIA\fB && outport
+== \fIGW\fB\fR, this flow matches on \fB ip4\[char46]dst ==
+\fIA\fB && inport == \fIGW\fB\fR\[char46] A CT state is initiated for this traffic so that the following table, \fB
+lr_out_post_snat\fR, can identify whether the traffic flow was initiated from the internal or external network\[char46]
+.IP \(bu
 A priority\-0 logical flow with match \fB1\fR has actions \fBnext;\fR\[char46]
 .RE
 .ST "Egress Table 4: Post SNAT"
@@ -2728,6 +2737,8 @@ A priority\-0 logical flow with match \fB1\fR has actions \fBnext;\fR\[char46]
 .PP
 Packets reaching this table are processed according to the flows below:
 .RS
+.IP \(bu
+Traffic that goes directly into a network configured with SNAT on Distributed routers, and was initiated from an external network (i\[char46]e\[char46] it matches \fBct\[char46]new\fR), is committed to the SNAT CT zone\[char46] This ensures that replies returning from the SNATed network do not have their source address translated\[char46] For details about match rules and priority see section \(dqEgress Table 3: SNAT on Distributed Routers\(dq\[char46]
 .IP \(bu
 A priority\-0 logical flow that matches all packets not already handled (match \fB1\fR) and action \fBnext;\fR\[char46]
 .RE
