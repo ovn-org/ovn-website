@@ -1216,68 +1216,82 @@
                    useful  for  setting <b>c</b><b>t</b><b>_</b><b>m</b><b>a</b><b>r</b><b>k</b> on a connection tracking entry
                    before dropping a packet, for example.
 
+              <b>c</b><b>t</b><b>_</b><b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b><b>_</b><b>t</b><b>o</b><b>_</b><b>z</b><b>o</b><b>n</b><b>e</b><b>(</b><b>d</b><b>n</b><b>a</b><b>t</b><b>)</b><b>;</b>
+              <b>c</b><b>t</b><b>_</b><b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b><b>_</b><b>t</b><b>o</b><b>_</b><b>z</b><b>o</b><b>n</b><b>e</b><b>(</b><b>s</b><b>n</b><b>a</b><b>t</b><b>)</b><b>;</b>
+                   Commit the flow to the  specific  zone  in  the  connection
+                   tracker.  The packet is then automatically sent to the next
+                   tables as if followed by <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action. The next tables will
+                   see the changes in the  packet  caused  by  the  connection
+                   tracker.
+
+                   Note  that  this  action  is meaningful only in the Logical
+                   Router Datapath as the Logical Switch Datapath does not use
+                   separate connection tracking zones. Using  this  action  in
+                   Logical  Switch  Datapath falls back to committing the flow
+                   into the logical port’s conntrack zone.
+
               <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b><b>;</b>
               <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b><b>(</b><u>I</u><u>P</u><b>)</b><b>;</b>
                    <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b> sends the packet through the DNAT zone  in  connec‐
                    tion tracking table to unDNAT any packet that was DNATed in
                    the  opposite  direction.  The packet is then automatically
-                   sent to to the next tables as if followed by <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>  action.
-                   The  next  tables will see the changes in the packet caused
-                   by the connection tracker.
+                   sent to the next tables as if followed by <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action. The
+                   next tables will see the changes in the  packet  caused  by
+                   the connection tracker.
 
-                   <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b><b>(</b><u>I</u><u>P</u><b>)</b> sends the  packet  through  the  DNAT  zone  to
-                   change  the destination IP address of the packet to the one
+                   <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b><b>(</b><u>I</u><u>P</u><b>)</b>  sends  the  packet  through  the  DNAT zone to
+                   change the destination IP address of the packet to the  one
                    provided inside the parentheses and commits the connection.
                    The packet is then automatically sent to the next tables as
-                   if followed by <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action. The next tables will  see  the
+                   if  followed  by <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action. The next tables will see the
                    changes in the packet caused by the connection tracker.
 
               <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>;</b>
               <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>(</b><u>I</u><u>P</u><b>)</b><b>;</b>
-                   <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b>  sends  the  packet through the SNAT zone to unSNAT
-                   any packet that was SNATed in the opposite  direction.  The
-                   packet  is automatically sent to the next tables as if fol‐
-                   lowed by the <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action. The next  tables  will  see  the
+                   <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b> sends the packet through the SNAT  zone  to  unSNAT
+                   any  packet  that was SNATed in the opposite direction. The
+                   packet is automatically sent to the next tables as if  fol‐
+                   lowed  by  the  <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>  action. The next tables will see the
                    changes in the packet caused by the connection tracker.
 
-                   <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>(</b><u>I</u><u>P</u><b>)</b>  sends  the  packet  through  the  SNAT zone to
-                   change the source IP address of the packet to the one  pro‐
-                   vided  inside  the  parenthesis and commits the connection.
+                   <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>(</b><u>I</u><u>P</u><b>)</b> sends the  packet  through  the  SNAT  zone  to
+                   change  the source IP address of the packet to the one pro‐
+                   vided inside the parenthesis and  commits  the  connection.
                    The packet is then automatically sent to the next tables as
-                   if followed by <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action. The next tables will  see  the
+                   if  followed  by <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action. The next tables will see the
                    changes in the packet caused by the connection tracker.
 
               <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b><b>_</b><b>i</b><b>n</b><b>_</b><b>c</b><b>z</b><b>o</b><b>n</b><b>e</b><b>;</b>
               <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b><b>_</b><b>i</b><b>n</b><b>_</b><b>c</b><b>z</b><b>o</b><b>n</b><b>e</b><b>(</b><u>I</u><u>P</u><b>)</b><b>;</b>
-                   <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b><b>_</b><b>i</b><b>n</b><b>_</b><b>c</b><b>z</b><b>o</b><b>n</b><b>e</b>  sends  the  packet through the common NAT
-                   zone (used for both DNAT and SNAT) in  connection  tracking
-                   table  to unDNAT any packet that was DNATed in the opposite
-                   direction. The packet is then automatically sent to to  the
+                   <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b><b>_</b><b>i</b><b>n</b><b>_</b><b>c</b><b>z</b><b>o</b><b>n</b><b>e</b> sends the packet through  the  common  NAT
+                   zone  (used  for both DNAT and SNAT) in connection tracking
+                   table to unDNAT any packet that was DNATed in the  opposite
+                   direction.  The  packet  is  then automatically sent to the
                    next tables as if followed by <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action. The next tables
                    will see the changes in the packet caused by the connection
                    tracker.
 
-                   <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b><b>_</b><b>i</b><b>n</b><b>_</b><b>c</b><b>z</b><b>o</b><b>n</b><b>e</b><b>(</b><u>I</u><u>P</u><b>)</b>  sends  the  packet through the common
+                   <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b><b>_</b><b>i</b><b>n</b><b>_</b><b>c</b><b>z</b><b>o</b><b>n</b><b>e</b><b>(</b><u>I</u><u>P</u><b>)</b> sends the packet  through  the  common
                    NAT zone to change the destination IP address of the packet
-                   to the one provided inside the parentheses and commits  the
-                   connection.  The  packet  is then automatically sent to the
+                   to  the one provided inside the parentheses and commits the
+                   connection. The packet is then automatically  sent  to  the
                    next tables as if followed by <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action. The next tables
                    will see the changes in the packet caused by the connection
                    tracker.
 
               <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>i</b><b>n</b><b>_</b><b>c</b><b>z</b><b>o</b><b>n</b><b>e</b><b>;</b>
               <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>i</b><b>n</b><b>_</b><b>c</b><b>z</b><b>o</b><b>n</b><b>e</b><b>(</b><u>I</u><u>P</u><b>)</b><b>;</b>
-                   <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>i</b><b>n</b><b>_</b><b>c</b><b>z</b><b>o</b><b>n</b><b>e</b> sends the packet through  the  common  NAT
-                   zone  to  unSNAT any packet that was SNATed in the opposite
+                   <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>i</b><b>n</b><b>_</b><b>c</b><b>z</b><b>o</b><b>n</b><b>e</b>  sends  the  packet through the common NAT
+                   zone to unSNAT any packet that was SNATed in  the  opposite
                    direction. The packet is automatically sent to the next ta‐
-                   bles as if followed by the <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action.  The  next  tables
+                   bles  as  if  followed by the <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action. The next tables
                    will see the changes in the packet caused by the connection
                    tracker.
 
-                   <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>i</b><b>n</b><b>_</b><b>c</b><b>z</b><b>o</b><b>n</b><b>e</b><b>(</b><u>I</u><u>P</u><b>)</b>  sends  the packet\ through the common
-                   NAT zone to change the source IP address of the  packet  to
-                   the  one  provided  inside  the parenthesis and commits the
-                   connection. The packet is then automatically  sent  to  the
+                   <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>i</b><b>n</b><b>_</b><b>c</b><b>z</b><b>o</b><b>n</b><b>e</b><b>(</b><u>I</u><u>P</u><b>)</b> sends the packet\ through  the  common
+                   NAT  zone  to change the source IP address of the packet to
+                   the one provided inside the  parenthesis  and  commits  the
+                   connection.  The  packet  is then automatically sent to the
                    next tables as if followed by <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action. The next tables
                    will see the changes in the packet caused by the connection
                    tracker.
@@ -1287,28 +1301,28 @@
 
               <b>c</b><b>t</b><b>_</b><b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b><b>_</b><b>n</b><b>a</b><b>t</b><b>;</b>
                    Applies NAT and commits the connection to the CT. Automati‐
-                   cally  moves  on to the next table, as if followed by <b>n</b><b>e</b><b>x</b><b>t</b>.
-                   This is very useful for connections  that  are  in  related
-                   state  for  already existing connections and allows the NAT
+                   cally moves on to the next table, as if followed  by  <b>n</b><b>e</b><b>x</b><b>t</b>.
+                   This  is  very  useful  for connections that are in related
+                   state for already existing connections and allows  the  NAT
                    to be applied to them as well.
 
               <b>c</b><b>l</b><b>o</b><b>n</b><b>e</b> <b>{</b> <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u><b>;</b> ... <b>}</b><b>;</b>
-                   Makes a copy of the packet  being  processed  and  executes
-                   each  <b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>  on  the copy. Actions following the <u>c</u><u>l</u><u>o</u><u>n</u><u>e</u> ac‐
-                   tion, if any, apply to  the  original,  unmodified  packet.
-                   This  can  be  used  as  a  way to ``save and restore’’ the
-                   packet around a set of  actions  that  may  modify  it  and
+                   Makes  a  copy  of  the packet being processed and executes
+                   each <b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b> on the copy. Actions following  the  <u>c</u><u>l</u><u>o</u><u>n</u><u>e</u>  ac‐
+                   tion,  if  any,  apply  to the original, unmodified packet.
+                   This can be used as a  way  to  ``save  and  restore’’  the
+                   packet  around  a  set  of  actions  that may modify it and
                    should not persist.
 
               <b>a</b><b>r</b><b>p</b> <b>{</b> <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u><b>;</b> ... <b>}</b><b>;</b>
-                   Temporarily  replaces the IPv4 packet being processed by an
-                   ARP packet and executes  each  nested  <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u>  on  the  ARP
-                   packet.  Actions following the <u>a</u><u>r</u><u>p</u> action, if any, apply to
+                   Temporarily replaces the IPv4 packet being processed by  an
+                   ARP  packet  and  executes  each  nested  <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> on the ARP
+                   packet. Actions following the <u>a</u><u>r</u><u>p</u> action, if any, apply  to
                    the original, unmodified packet.
 
-                   The ARP packet that this action operates on is  initialized
+                   The  ARP packet that this action operates on is initialized
                    based on the IPv4 packet being processed, as follows. These
-                   are  default  values  that the nested actions will probably
+                   are default values that the nested  actions  will  probably
                    want to change:
 
                    •      <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b> unchanged
@@ -1327,48 +1341,48 @@
 
                    •      <b>a</b><b>r</b><b>p</b><b>.</b><b>t</b><b>p</b><b>a</b> copied from <b>i</b><b>p</b><b>4</b><b>.</b><b>d</b><b>s</b><b>t</b>
 
-                   The ARP packet has the same VLAN header, if any, as the  IP
+                   The  ARP packet has the same VLAN header, if any, as the IP
                    packet it replaces.
 
                    <b>P</b><b>r</b><b>e</b><b>r</b><b>e</b><b>q</b><b>u</b><b>i</b><b>s</b><b>i</b><b>t</b><b>e</b><b>:</b> <b>i</b><b>p</b><b>4</b>
 
               <b>g</b><b>e</b><b>t</b><b>_</b><b>a</b><b>r</b><b>p</b><b>(</b><u>P</u><b>,</b> <u>A</u><b>)</b><b>;</b>
-                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:  logical port string field <u>P</u>, 32-bit IP address
+                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>: logical port string field <u>P</u>, 32-bit IP  address
                    field <u>A</u>.
 
-                   Looks up <u>A</u> in <u>P</u>’s mac binding table. If an entry is  found,
-                   stores  its  Ethernet  address in <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b>, otherwise stores
+                   Looks  up <u>A</u> in <u>P</u>’s mac binding table. If an entry is found,
+                   stores its Ethernet address in  <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b>,  otherwise  stores
                    <b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b> in <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b>.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>g</b><b>e</b><b>t</b><b>_</b><b>a</b><b>r</b><b>p</b><b>(</b><b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b> <b>i</b><b>p</b><b>4</b><b>.</b><b>d</b><b>s</b><b>t</b><b>)</b><b>;</b>
 
               <b>p</b><b>u</b><b>t</b><b>_</b><b>a</b><b>r</b><b>p</b><b>(</b><u>P</u><b>,</b> <u>A</u><b>,</b> <u>E</u><b>)</b><b>;</b>
-                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>: logical port string field <u>P</u>, 32-bit IP  address
+                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:  logical port string field <u>P</u>, 32-bit IP address
                    field <u>A</u>, 48-bit Ethernet address field <u>E</u>.
 
-                   Adds  or updates the entry for IP address <u>A</u> in logical port
+                   Adds or updates the entry for IP address <u>A</u> in logical  port
                    <u>P</u>’s mac binding table, setting its Ethernet address to <u>E</u>.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>p</b><b>u</b><b>t</b><b>_</b><b>a</b><b>r</b><b>p</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b> <b>a</b><b>r</b><b>p</b><b>.</b><b>s</b><b>p</b><b>a</b><b>,</b> <b>a</b><b>r</b><b>p</b><b>.</b><b>s</b><b>h</b><b>a</b><b>)</b><b>;</b>
 
               <u>R</u> <b>=</b> <b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>_</b><b>a</b><b>r</b><b>p</b><b>(</b><u>P</u><b>,</b> <u>A</u><b>,</b> <u>M</u><b>)</b><b>;</b>
-                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>: logical port string field <u>P</u>, 32-bit IP  address
+                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:  logical port string field <u>P</u>, 32-bit IP address
                    field <u>A</u>, 48-bit MAC address field <u>M</u>.
 
                    <b>R</b><b>e</b><b>s</b><b>u</b><b>l</b><b>t</b>: stored to a 1-bit subfield <u>R</u>.
 
-                   Looks  up  <u>A</u> and <u>M</u> in <u>P</u>’s mac binding table. If an entry is
+                   Looks up <u>A</u> and <u>M</u> in <u>P</u>’s mac binding table. If an  entry  is
                    found, stores <b>1</b> in the 1-bit subfield <u>R</u>, else 0.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>0</b><b>]</b> <b>=</b> <b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>_</b><b>a</b><b>r</b><b>p</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b> <b>a</b><b>r</b><b>p</b><b>.</b><b>s</b><b>p</b><b>a</b><b>,</b> <b>a</b><b>r</b><b>p</b><b>.</b><b>s</b><b>h</b><b>a</b><b>)</b><b>;</b>
 
               <u>R</u> <b>=</b> <b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>_</b><b>a</b><b>r</b><b>p</b><b>_</b><b>i</b><b>p</b><b>(</b><u>P</u><b>,</b> <u>A</u><b>)</b><b>;</b>
-                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>: logical port string field <u>P</u>, 32-bit IP  address
+                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:  logical port string field <u>P</u>, 32-bit IP address
                    field <u>A</u>.
 
                    <b>R</b><b>e</b><b>s</b><b>u</b><b>l</b><b>t</b>: stored to a 1-bit subfield <u>R</u>.
 
-                   Looks  up <u>A</u> in <u>P</u>’s mac binding table. If an entry is found,
+                   Looks up <u>A</u> in <u>P</u>’s mac binding table. If an entry is  found,
                    stores <b>1</b> in the 1-bit subfield <u>R</u>, else 0.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>0</b><b>]</b> <b>=</b> <b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>_</b><b>a</b><b>r</b><b>p</b><b>_</b><b>i</b><b>p</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b> <b>a</b><b>r</b><b>p</b><b>.</b><b>s</b><b>p</b><b>a</b><b>)</b><b>;</b>
@@ -1376,7 +1390,7 @@
               <u>P</u> <b>=</b> <b>g</b><b>e</b><b>t</b><b>_</b><b>f</b><b>d</b><b>b</b><b>(</b><u>A</u><b>)</b><b>;</b>
                    <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:48-bit MAC address field <u>A</u>.
 
-                   Looks up <u>A</u> in fdb table. If an entry is found,  stores  the
+                   Looks  up  <u>A</u> in fdb table. If an entry is found, stores the
                    logical port key to the out parameter <b>P</b>.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b> <b>g</b><b>e</b><b>t</b><b>_</b><b>f</b><b>d</b><b>b</b><b>(</b><b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b><b>)</b><b>;</b>
@@ -1397,21 +1411,21 @@
                    <b>R</b><b>e</b><b>s</b><b>u</b><b>l</b><b>t</b>: stored to a 1-bit subfield <u>R</u>.
 
                    Looks up <u>A</u> in fdb table. If an entry is found and the logi‐
-                   cal  port  key  is  <u>P</u>, <b>P</b>, stores <b>1</b> in the 1-bit subfield <u>R</u>,
+                   cal port key is <u>P</u>, <b>P</b>, stores <b>1</b> in  the  1-bit  subfield  <u>R</u>,
                    else 0. If <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>n</b><b>e</b><b>t</b> is set then <b>1</b> is stored if an en‐
-                   try is found and the logical port key is <u>P</u> or if  an  entry
+                   try  is  found and the logical port key is <u>P</u> or if an entry
                    is found and the entry port type is VIF.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>0</b><b>]</b> <b>=</b> <b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>_</b><b>f</b><b>d</b><b>b</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b> <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b><b>)</b><b>;</b>
 
               <b>n</b><b>d</b><b>_</b><b>n</b><b>s</b> <b>{</b> <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u><b>;</b> ... <b>}</b><b>;</b>
-                   Temporarily  replaces the IPv6 packet being processed by an
-                   IPv6 Neighbor Solicitation packet and executes each  nested
-                   <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u>  on  the IPv6 NS packet. Actions following the <u>n</u><u>d</u><b>_</b><u>n</u><u>s</u>
+                   Temporarily replaces the IPv6 packet being processed by  an
+                   IPv6  Neighbor Solicitation packet and executes each nested
+                   <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> on the IPv6 NS packet. Actions following  the  <u>n</u><u>d</u><b>_</b><u>n</u><u>s</u>
                    action, if any, apply to the original, unmodified packet.
 
                    The IPv6 NS packet that this action operates on is initial‐
-                   ized based on the IPv6 packet being processed, as  follows.
+                   ized  based on the IPv6 packet being processed, as follows.
                    These are default values that the nested actions will prob‐
                    ably want to change:
 
@@ -1435,15 +1449,15 @@
                    <b>P</b><b>r</b><b>e</b><b>r</b><b>e</b><b>q</b><b>u</b><b>i</b><b>s</b><b>i</b><b>t</b><b>e</b><b>:</b> <b>i</b><b>p</b><b>6</b>
 
               <b>n</b><b>d</b><b>_</b><b>n</b><b>a</b> <b>{</b> <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u><b>;</b> ... <b>}</b><b>;</b>
-                   Temporarily  replaces the IPv6 neighbor solicitation packet
-                   being processed by  an  IPv6  neighbor  advertisement  (NA)
-                   packet  and  executes  each nested <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> on the NA packet.
-                   Actions following the <b>n</b><b>d</b><b>_</b><b>n</b><b>a</b> action, if any,  apply  to  the
+                   Temporarily replaces the IPv6 neighbor solicitation  packet
+                   being  processed  by  an  IPv6  neighbor advertisement (NA)
+                   packet and executes each nested <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> on  the  NA  packet.
+                   Actions  following  the  <b>n</b><b>d</b><b>_</b><b>n</b><b>a</b> action, if any, apply to the
                    original, unmodified packet.
 
-                   The  NA  packet that this action operates on is initialized
+                   The NA packet that this action operates on  is  initialized
                    based on the IPv6 packet being processed, as follows. These
-                   are default values that the nested  actions  will  probably
+                   are  default  values  that the nested actions will probably
                    want to change:
 
                    •      <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> exchanged with <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b>
@@ -1468,16 +1482,16 @@
                    <b>P</b><b>r</b><b>e</b><b>r</b><b>e</b><b>q</b><b>u</b><b>i</b><b>s</b><b>i</b><b>t</b><b>e</b><b>:</b> <b>n</b><b>d</b><b>_</b><b>n</b><b>s</b>
 
               <b>n</b><b>d</b><b>_</b><b>n</b><b>a</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> <b>{</b> <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u><b>;</b> ... <b>}</b><b>;</b>
-                   Temporarily  replaces the IPv6 neighbor solicitation packet
-                   being processed by  an  IPv6  neighbor  advertisement  (NA)
-                   packet,  sets  ND_NSO_ROUTER  in the RSO flags and executes
-                   each nested <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> on the NA packet. Actions following  the
+                   Temporarily replaces the IPv6 neighbor solicitation  packet
+                   being  processed  by  an  IPv6  neighbor advertisement (NA)
+                   packet, sets ND_NSO_ROUTER in the RSO  flags  and  executes
+                   each  nested <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> on the NA packet. Actions following the
                    <b>n</b><b>d</b><b>_</b><b>n</b><b>a</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> action, if any, apply to the original, unmodi‐
                    fied packet.
 
-                   The  NA  packet that this action operates on is initialized
+                   The NA packet that this action operates on  is  initialized
                    based on the IPv6 packet being processed, as follows. These
-                   are default values that the nested  actions  will  probably
+                   are  default  values  that the nested actions will probably
                    want to change:
 
                    •      <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> exchanged with <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b>
@@ -1502,20 +1516,20 @@
                    <b>P</b><b>r</b><b>e</b><b>r</b><b>e</b><b>q</b><b>u</b><b>i</b><b>s</b><b>i</b><b>t</b><b>e</b><b>:</b> <b>n</b><b>d</b><b>_</b><b>n</b><b>s</b>
 
               <b>g</b><b>e</b><b>t</b><b>_</b><b>n</b><b>d</b><b>(</b><u>P</u><b>,</b> <u>A</u><b>)</b><b>;</b>
-                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:  logical  port string field <u>P</u>, 128-bit IPv6 ad‐
+                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>: logical port string field <u>P</u>, 128-bit  IPv6  ad‐
                    dress field <u>A</u>.
 
-                   Looks up <u>A</u> in <u>P</u>’s mac binding table. If an entry is  found,
-                   stores  its  Ethernet  address in <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b>, otherwise stores
+                   Looks  up <u>A</u> in <u>P</u>’s mac binding table. If an entry is found,
+                   stores its Ethernet address in  <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b>,  otherwise  stores
                    <b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b> in <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b>.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>g</b><b>e</b><b>t</b><b>_</b><b>n</b><b>d</b><b>(</b><b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b> <b>i</b><b>p</b><b>6</b><b>.</b><b>d</b><b>s</b><b>t</b><b>)</b><b>;</b>
 
               <b>p</b><b>u</b><b>t</b><b>_</b><b>n</b><b>d</b><b>(</b><u>P</u><b>,</b> <u>A</u><b>,</b> <u>E</u><b>)</b><b>;</b>
-                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>: logical port string field <u>P</u>, 128-bit  IPv6  ad‐
+                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:  logical  port string field <u>P</u>, 128-bit IPv6 ad‐
                    dress field <u>A</u>, 48-bit Ethernet address field <u>E</u>.
 
-                   Adds  or  updates  the  entry for IPv6 address <u>A</u> in logical
+                   Adds or updates the entry for IPv6  address  <u>A</u>  in  logical
                    port <u>P</u>’s mac binding table, setting its Ethernet address to
                    <u>E</u>.
 
@@ -1527,7 +1541,7 @@
 
                    <b>R</b><b>e</b><b>s</b><b>u</b><b>l</b><b>t</b>: stored to a 1-bit subfield <u>R</u>.
 
-                   Looks up <u>A</u> and <u>M</u> in <u>P</u>’s mac binding table. If an  entry  is
+                   Looks  up  <u>A</u> and <u>M</u> in <u>P</u>’s mac binding table. If an entry is
                    found, stores <b>1</b> in the 1-bit subfield <u>R</u>, else 0.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>0</b><b>]</b> <b>=</b> <b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>_</b><b>n</b><b>d</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b> <b>i</b><b>p</b><b>6</b><b>.</b><b>s</b><b>r</b><b>c</b><b>,</b> <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b><b>)</b><b>;</b>
@@ -1538,7 +1552,7 @@
 
                    <b>R</b><b>e</b><b>s</b><b>u</b><b>l</b><b>t</b>: stored to a 1-bit subfield <u>R</u>.
 
-                   Looks  up <u>A</u> in <u>P</u>’s mac binding table. If an entry is found,
+                   Looks up <u>A</u> in <u>P</u>’s mac binding table. If an entry is  found,
                    stores <b>1</b> in the 1-bit subfield <u>R</u>, else 0.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>0</b><b>]</b> <b>=</b> <b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>_</b><b>n</b><b>d</b><b>_</b><b>i</b><b>p</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b> <b>i</b><b>p</b><b>6</b><b>.</b><b>s</b><b>r</b><b>c</b><b>)</b><b>;</b>
@@ -1551,17 +1565,17 @@
 
                    Valid only in the ingress pipeline.
 
-                   When this action  is  applied  to  a  DHCP  request  packet
+                   When  this  action  is  applied  to  a  DHCP request packet
                    (DHCPDISCOVER or DHCPREQUEST), it changes the packet into a
-                   DHCP  reply  (DHCPOFFER or DHCPACK, respectively), replaces
-                   the options by those specified as parameters, and stores  1
+                   DHCP reply (DHCPOFFER or DHCPACK,  respectively),  replaces
+                   the  options by those specified as parameters, and stores 1
                    in <u>R</u>.
 
-                   When  this action is applied to a non-DHCP packet or a DHCP
-                   packet that is not DHCPDISCOVER or DHCPREQUEST,  it  leaves
+                   When this action is applied to a non-DHCP packet or a  DHCP
+                   packet  that  is not DHCPDISCOVER or DHCPREQUEST, it leaves
                    the packet unchanged and stores 0 in <u>R</u>.
 
-                   The  contents of the <b>D</b><b>H</b><b>C</b><b>P</b><b>_</b><b>O</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b> table control the DHCP op‐
+                   The contents of the <b>D</b><b>H</b><b>C</b><b>P</b><b>_</b><b>O</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b> table control the DHCP  op‐
                    tion names and values that this action supports.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>0</b><b>]</b> <b>=</b> <b>p</b><b>u</b><b>t</b><b>_</b><b>d</b><b>h</b><b>c</b><b>p</b><b>_</b><b>o</b><b>p</b><b>t</b><b>s</b><b>(</b><b>o</b><b>f</b><b>f</b><b>e</b><b>r</b><b>i</b><b>p</b> <b>=</b> <b>1</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>.</b><b>2</b><b>,</b> <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>
@@ -1575,31 +1589,31 @@
 
                    Valid only in the ingress pipeline.
 
-                   When this action is applied to a DHCPv6 request packet,  it
-                   changes  the  packet  into a DHCPv6 reply, replaces the op‐
+                   When  this action is applied to a DHCPv6 request packet, it
+                   changes the packet into a DHCPv6 reply,  replaces  the  op‐
                    tions by those specified as parameters, and stores 1 in <u>R</u>.
 
-                   When this action is applied to a non-DHCPv6  packet  or  an
-                   invalid  DHCPv6  request  packet , it leaves the packet un‐
+                   When  this  action  is applied to a non-DHCPv6 packet or an
+                   invalid DHCPv6 request packet , it leaves  the  packet  un‐
                    changed and stores 0 in <u>R</u>.
 
                    The contents of the <b>D</b><b>H</b><b>C</b><b>P</b><b>v</b><b>6</b><b>_</b><b>O</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> table control the DHCPv6
                    option names and values that this action supports.
 
-                   <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b>  <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>3</b><b>]</b>  <b>=</b>  <b>p</b><b>u</b><b>t</b><b>_</b><b>d</b><b>h</b><b>c</b><b>p</b><b>v</b><b>6</b><b>_</b><b>o</b><b>p</b><b>t</b><b>s</b><b>(</b><b>i</b><b>a</b><b>_</b><b>a</b><b>d</b><b>d</b><b>r</b>  <b>=</b>   <b>a</b><b>e</b><b>f</b><b>0</b><b>:</b><b>:</b><b>4</b><b>,</b>
-                   <b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b><b>_</b><b>i</b><b>d</b>                <b>=</b>               <b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>1</b><b>0</b><b>:</b><b>0</b><b>2</b><b>,</b>
+                   <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b>   <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>3</b><b>]</b>  <b>=</b>  <b>p</b><b>u</b><b>t</b><b>_</b><b>d</b><b>h</b><b>c</b><b>p</b><b>v</b><b>6</b><b>_</b><b>o</b><b>p</b><b>t</b><b>s</b><b>(</b><b>i</b><b>a</b><b>_</b><b>a</b><b>d</b><b>d</b><b>r</b>  <b>=</b>  <b>a</b><b>e</b><b>f</b><b>0</b><b>:</b><b>:</b><b>4</b><b>,</b>
+                   <b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b><b>_</b><b>i</b><b>d</b>               <b>=</b>                <b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>1</b><b>0</b><b>:</b><b>0</b><b>2</b><b>,</b>
                    <b>d</b><b>n</b><b>s</b><b>_</b><b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b><b>=</b><b>{</b><b>a</b><b>e</b><b>7</b><b>0</b><b>:</b><b>:</b><b>1</b><b>,</b><b>a</b><b>e</b><b>7</b><b>0</b><b>:</b><b>:</b><b>2</b><b>}</b><b>)</b><b>;</b>
 
               <b>s</b><b>e</b><b>t</b><b>_</b><b>q</b><b>u</b><b>e</b><b>u</b><b>e</b><b>(</b><u>q</u><u>u</u><u>e</u><u>u</u><u>e</u><b>_</b><u>n</u><u>u</u><u>m</u><u>b</u><u>e</u><u>r</u><b>)</b><b>;</b>
-                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>: Queue number <u>q</u><u>u</u><u>e</u><u>u</u><u>e</u><b>_</b><u>n</u><u>u</u><u>m</u><u>b</u><u>e</u><u>r</u>, in the  range  0  to
+                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:  Queue  number  <u>q</u><u>u</u><u>e</u><u>u</u><u>e</u><b>_</b><u>n</u><u>u</u><u>m</u><u>b</u><u>e</u><u>r</u>, in the range 0 to
                    61440.
 
-                   This  is a logical equivalent of the OpenFlow <b>s</b><b>e</b><b>t</b><b>_</b><b>q</b><b>u</b><b>e</b><b>u</b><b>e</b> ac‐
+                   This is a logical equivalent of the OpenFlow <b>s</b><b>e</b><b>t</b><b>_</b><b>q</b><b>u</b><b>e</b><b>u</b><b>e</b>  ac‐
                    tion. It affects packets that egress a hypervisor through a
                    physical interface. For nonzero <u>q</u><u>u</u><u>e</u><u>u</u><u>e</u><b>_</b><u>n</u><u>u</u><u>m</u><u>b</u><u>e</u><u>r</u>, it configures
-                   packet queuing to match the  settings  configured  for  the
-                   <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>     with    <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>q</b><b>d</b><b>i</b><b>s</b><b>c</b><b>_</b><b>q</b><b>u</b><b>e</b><b>u</b><b>e</b><b>_</b><b>i</b><b>d</b>    matching
-                   <u>q</u><u>u</u><u>e</u><u>u</u><u>e</u><b>_</b><u>n</u><u>u</u><u>m</u><u>b</u><u>e</u><u>r</u>. When <u>q</u><u>u</u><u>e</u><u>u</u><u>e</u><b>_</b><u>n</u><u>u</u><u>m</u><u>b</u><u>e</u><u>r</u> is zero, it resets  queuing
+                   packet  queuing  to  match  the settings configured for the
+                   <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>    with    <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>q</b><b>d</b><b>i</b><b>s</b><b>c</b><b>_</b><b>q</b><b>u</b><b>e</b><b>u</b><b>e</b><b>_</b><b>i</b><b>d</b>     matching
+                   <u>q</u><u>u</u><u>e</u><u>u</u><u>e</u><b>_</b><u>n</u><u>u</u><u>m</u><u>b</u><u>e</u><u>r</u>.  When <u>q</u><u>u</u><u>e</u><u>u</u><u>e</u><b>_</b><u>n</u><u>u</u><u>m</u><u>b</u><u>e</u><u>r</u> is zero, it resets queuing
                    to the default strategy.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>s</b><b>e</b><b>t</b><b>_</b><b>q</b><b>u</b><b>e</b><b>u</b><b>e</b><b>(</b><b>1</b><b>0</b><b>)</b><b>;</b>
@@ -1607,40 +1621,40 @@
               <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b><b>;</b>
               <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b><b>(</b><b>b</b><b>a</b><b>c</b><b>k</b><b>e</b><b>n</b><b>d</b><b>s</b><b>=</b><u>i</u><u>p</u><b>[</b><b>:</b><u>p</u><u>o</u><u>r</u><u>t</u><b>]</b><b>[</b><b>,</b><b>.</b><b>.</b><b>.</b><b>]</b><b>[</b><b>;</b>
               <b>h</b><b>a</b><b>s</b><b>h</b><b>_</b><b>f</b><b>i</b><b>e</b><b>l</b><b>d</b><b>s</b><b>=</b><u>f</u><u>i</u><u>e</u><u>l</u><u>d</u><u>1</u><b>,</b><u>f</u><u>i</u><u>e</u><u>l</u><u>d</u><u>2</u><b>,</b><b>.</b><b>.</b><b>.</b><b>]</b><b>[</b><b>;</b> <b>c</b><b>t</b><b>_</b><b>f</b><b>l</b><b>a</b><b>g</b><b>]</b><b>)</b><b>;</b>
-                   With  arguments, <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b> commits the packet to the connection
-                   tracking table and DNATs the packet’s  destination  IP  ad‐
-                   dress  (and  port)  to the IP address or addresses (and op‐
+                   With arguments, <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b> commits the packet to the  connection
+                   tracking  table  and  DNATs the packet’s destination IP ad‐
+                   dress (and port) to the IP address or  addresses  (and  op‐
                    tional ports) specified in the <b>b</b><b>a</b><b>c</b><b>k</b><b>e</b><b>n</b><b>d</b><b>s</b>. If multiple comma-
-                   separated IP addresses are specified, each is  given  equal
+                   separated  IP  addresses are specified, each is given equal
                    weight for picking the DNAT address. By default, <b>d</b><b>p</b><b>_</b><b>h</b><b>a</b><b>s</b><b>h</b> is
                    used  as  the  OpenFlow  group  selection  method,  but  if
-                   <b>h</b><b>a</b><b>s</b><b>h</b><b>_</b><b>f</b><b>i</b><b>e</b><b>l</b><b>d</b><b>s</b> is specified, <b>h</b><b>a</b><b>s</b><b>h</b> is  used  as  the  selection
-                   method,  and the fields listed are used as the hash fields.
-                   The  <b>c</b><b>t</b><b>_</b><b>f</b><b>l</b><b>a</b><b>g</b>  field  represents  one  of  supported   flag:
+                   <b>h</b><b>a</b><b>s</b><b>h</b><b>_</b><b>f</b><b>i</b><b>e</b><b>l</b><b>d</b><b>s</b>  is  specified,  <b>h</b><b>a</b><b>s</b><b>h</b>  is used as the selection
+                   method, and the fields listed are used as the hash  fields.
+                   The   <b>c</b><b>t</b><b>_</b><b>f</b><b>l</b><b>a</b><b>g</b>  field  represents  one  of  supported  flag:
                    <b>s</b><b>k</b><b>i</b><b>p</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b> or <b>f</b><b>o</b><b>r</b><b>c</b><b>e</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b>, this flag will be stored in <b>c</b><b>t</b><b>_</b><b>l</b><b>a</b>‐‐
                    <b>b</b><b>e</b><b>l</b> register.
 
                    Without arguments, <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b> sends the packet to the connection
                    tracking table to NAT the packets. If the packet is part of
-                   an  established connection that was previously committed to
-                   the connection tracker via <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b><b>(</b>...<b>)</b>,  it  will  automati‐
+                   an established connection that was previously committed  to
+                   the  connection  tracker  via <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b><b>(</b>...<b>)</b>, it will automati‐
                    cally get DNATed to the same IP address as the first packet
                    in that connection.
 
-                   Processing  automatically moves on to the next table, as if
+                   Processing automatically moves on to the next table, as  if
                    <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> were specified, and later tables act on the packet as
-                   modified by the  connection  tracker.  Connection  tracking
+                   modified  by  the  connection  tracker. Connection tracking
                    state is scoped by the logical port when the action is used
-                   in  a  flow  for a logical switch, so overlapping addresses
-                   may be used. Connection tracking state  is  scoped  by  the
-                   logical  topology  when  the action is used in a flow for a
+                   in a flow for a logical switch,  so  overlapping  addresses
+                   may  be  used.  Connection  tracking state is scoped by the
+                   logical topology when the action is used in a  flow  for  a
                    router.
 
               <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b><b>_</b><b>m</b><b>a</b><b>r</b><b>k</b><b>;</b>
               <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b><b>_</b><b>m</b><b>a</b><b>r</b><b>k</b><b>(</b><b>b</b><b>a</b><b>c</b><b>k</b><b>e</b><b>n</b><b>d</b><b>s</b><b>=</b><u>i</u><u>p</u><b>[</b><b>:</b><u>p</u><u>o</u><u>r</u><u>t</u><b>]</b><b>[</b><b>,</b><b>.</b><b>.</b><b>.</b><b>]</b><b>[</b><b>;</b>
               <b>h</b><b>a</b><b>s</b><b>h</b><b>_</b><b>f</b><b>i</b><b>e</b><b>l</b><b>d</b><b>s</b><b>=</b><u>f</u><u>i</u><u>e</u><u>l</u><u>d</u><u>1</u><b>,</b><u>f</u><u>i</u><u>e</u><u>l</u><u>d</u><u>2</u><b>,</b><b>.</b><b>.</b><b>.</b><b>]</b><b>[</b><b>;</b> <b>c</b><b>t</b><b>_</b><b>f</b><b>l</b><b>a</b><b>g</b><b>]</b><b>)</b><b>;</b>
-                   Same as <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b>, except that it internally  uses  ct_mark  to
-                   store  the NAT flag, while <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b> uses ct_label for the same
+                   Same  as  <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b>,  except that it internally uses ct_mark to
+                   store the NAT flag, while <b>c</b><b>t</b><b>_</b><b>l</b><b>b</b> uses ct_label for the  same
                    purpose.
 
               <u>R</u> <b>=</b> <b>d</b><b>n</b><b>s</b><b>_</b><b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>(</b><b>)</b><b>;</b>
@@ -1650,18 +1664,18 @@
 
                    Valid only in the ingress pipeline.
 
-                   When this action is applied to a valid DNS request  (a  UDP
-                   packet  typically  directed to port 53), it attempts to re‐
-                   solve the query using the contents of the <b>D</b><b>N</b><b>S</b> table. If  it
-                   is  successful,  it changes the packet into a DNS reply and
-                   stores 1 in <u>R</u>. If  the  action  is  applied  to  a  non-DNS
-                   packet,  an  invalid DNS request packet, or a valid DNS re‐
+                   When  this  action is applied to a valid DNS request (a UDP
+                   packet typically directed to port 53), it attempts  to  re‐
+                   solve  the query using the contents of the <b>D</b><b>N</b><b>S</b> table. If it
+                   is successful, it changes the packet into a DNS  reply  and
+                   stores  1  in  <u>R</u>.  If  the  action  is applied to a non-DNS
+                   packet, an invalid DNS request packet, or a valid  DNS  re‐
                    quest for which the <b>D</b><b>N</b><b>S</b> table does not supply an answer, it
                    leaves the packet unchanged and stores 0 in <u>R</u>.
 
-                   Regardless of success, the action does not make any of  the
+                   Regardless  of success, the action does not make any of the
                    changes to the flow that are necessary to direct the packet
-                   back  to  the requester. The logical pipeline can implement
+                   back to the requester. The logical pipeline  can  implement
                    this behavior with matches and actions in later tables.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>3</b><b>]</b> <b>=</b> <b>d</b><b>n</b><b>s</b><b>_</b><b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>(</b><b>)</b><b>;</b>
@@ -1669,21 +1683,21 @@
                    <b>P</b><b>r</b><b>e</b><b>r</b><b>e</b><b>q</b><b>u</b><b>i</b><b>s</b><b>i</b><b>t</b><b>e</b><b>:</b> <b>u</b><b>d</b><b>p</b>
 
               <u>R</u> <b>=</b> <b>p</b><b>u</b><b>t</b><b>_</b><b>n</b><b>d</b><b>_</b><b>r</b><b>a</b><b>_</b><b>o</b><b>p</b><b>t</b><b>s</b><b>(</b><u>D</u><u>1</u> <b>=</b> <u>V</u><u>1</u><b>,</b> <u>D</u><u>2</u> <b>=</b> <u>V</u><u>2</u><b>,</b> <b>.</b><b>.</b><b>.</b><b>,</b> <u>D</u><u>n</u> <b>=</b> <u>V</u><u>n</u><b>)</b><b>;</b>
-                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>: The following IPv6 ND Router Advertisement  op‐
+                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:  The following IPv6 ND Router Advertisement op‐
                    tion/value pairs as defined in RFC 4861.
 
                    •      <b>a</b><b>d</b><b>d</b><b>r</b><b>_</b><b>m</b><b>o</b><b>d</b><b>e</b>
 
                           Mandatory parameter which specifies the address mode
-                          flag  to  be  set  in the RA flag options field. The
-                          value of this option is a string and  the  following
-                          values  can  be defined - "slaac", "dhcpv6_stateful"
+                          flag to be set in the RA  flag  options  field.  The
+                          value  of  this option is a string and the following
+                          values can be defined -  "slaac",  "dhcpv6_stateful"
                           and "dhcpv6_stateless".
 
                    •      <b>s</b><b>l</b><b>l</b><b>a</b>
 
-                          Mandatory parameter which specifies  the  link-layer
-                          address  of  the interface from which the Router Ad‐
+                          Mandatory  parameter  which specifies the link-layer
+                          address of the interface from which the  Router  Ad‐
                           vertisement is sent.
 
                    •      <b>m</b><b>t</b><b>u</b>
@@ -1692,23 +1706,23 @@
 
                    •      <b>p</b><b>r</b><b>e</b><b>f</b><b>i</b><b>x</b>
 
-                          Optional parameter which should be specified if  the
+                          Optional  parameter which should be specified if the
                           addr_mode  is  "slaac"  or  "dhcpv6_stateless".  The
-                          value should be an IPv6 prefix which  will  be  used
-                          for  stateless  IPv6 address configuration. This op‐
+                          value  should  be  an IPv6 prefix which will be used
+                          for stateless IPv6 address configuration.  This  op‐
                           tion can be defined multiple times.
 
                    <b>R</b><b>e</b><b>s</b><b>u</b><b>l</b><b>t</b>: stored to a 1-bit subfield <u>R</u>.
 
                    Valid only in the ingress pipeline.
 
-                   When this action is applied to an IPv6 Router  solicitation
-                   request  packet,  it changes the packet into an IPv6 Router
-                   Advertisement reply and adds the options specified  in  the
+                   When  this action is applied to an IPv6 Router solicitation
+                   request packet, it changes the packet into an  IPv6  Router
+                   Advertisement  reply  and adds the options specified in the
                    parameters, and stores 1 in <u>R</u>.
 
-                   When  this action is applied to a non-IPv6 Router solicita‐
-                   tion packet or an invalid IPv6 request packet ,  it  leaves
+                   When this action is applied to a non-IPv6 Router  solicita‐
+                   tion  packet  or an invalid IPv6 request packet , it leaves
                    the packet unchanged and stores 0 in <u>R</u>.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>3</b><b>]</b> <b>=</b> <b>p</b><b>u</b><b>t</b><b>_</b><b>n</b><b>d</b><b>_</b><b>r</b><b>a</b><b>_</b><b>o</b><b>p</b><b>t</b><b>s</b><b>(</b><b>a</b><b>d</b><b>d</b><b>r</b><b>_</b><b>m</b><b>o</b><b>d</b><b>e</b> <b>=</b> <b>"</b><b>s</b><b>l</b><b>a</b><b>a</b><b>c</b><b>"</b><b>,</b> <b>s</b><b>l</b><b>l</b><b>a</b>
@@ -1716,7 +1730,7 @@
 
               <b>s</b><b>e</b><b>t</b><b>_</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>(</b><u>r</u><u>a</u><u>t</u><u>e</u><b>)</b><b>;</b>
               <b>s</b><b>e</b><b>t</b><b>_</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>(</b><u>r</u><u>a</u><u>t</u><u>e</u><b>,</b> <u>b</u><u>u</u><u>r</u><u>s</u><u>t</u><b>)</b><b>;</b>
-                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:  rate  limit int field <u>r</u><u>a</u><u>t</u><u>e</u> in kbps, burst rate
+                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>: rate limit int field <u>r</u><u>a</u><u>t</u><u>e</u> in kbps,  burst  rate
                    limits int field <u>b</u><u>u</u><u>r</u><u>s</u><u>t</u> in kbps.
 
                    This action sets the rate limit for a flow.
@@ -1728,68 +1742,68 @@
 
                    <b>R</b><b>e</b><b>s</b><b>u</b><b>l</b><b>t</b>: stored to a 1-bit subfield <u>R</u>.
 
-                   This   is   a   logical   equivalent   of   the    OpenFlow
-                   <b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>_</b><b>p</b><b>k</b><b>t</b><b>_</b><b>l</b><b>a</b><b>r</b><b>g</b><b>e</b><b>r</b>  action.  If the packet is larger than the
+                   This    is   a   logical   equivalent   of   the   OpenFlow
+                   <b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>_</b><b>p</b><b>k</b><b>t</b><b>_</b><b>l</b><b>a</b><b>r</b><b>g</b><b>e</b><b>r</b> action. If the packet is larger  than  the
                    length specified in <u>L</u>, it stores 1 in the subfield <u>R</u>.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>6</b><b>]</b> <b>=</b> <b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>_</b><b>p</b><b>k</b><b>t</b><b>_</b><b>l</b><b>a</b><b>r</b><b>g</b><b>e</b><b>r</b><b>(</b><b>1</b><b>0</b><b>0</b><b>0</b><b>)</b><b>;</b>
 
               <b>l</b><b>o</b><b>g</b><b>(</b><u>k</u><u>e</u><u>y</u><b>=</b><u>v</u><u>a</u><u>l</u><u>u</u><u>e</u><b>,</b> ...<b>)</b><b>;</b>
-                     Causes <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> to log the packet  on  the  chassis
+                     Causes  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  to  log the packet on the chassis
                      that processes it. Packet logging currently uses the same
                      logging mechanism as other Open vSwitch and OVN messages,
-                     which  means  that  whether and where log messages appear
-                     depends on the local logging configuration  that  can  be
+                     which means that whether and where  log  messages  appear
+                     depends  on  the  local logging configuration that can be
                      configured with <b>o</b><b>v</b><b>s</b><b>-</b><b>a</b><b>p</b><b>p</b><b>c</b><b>t</b><b>l</b>, etc.
 
-                     The  <b>l</b><b>o</b><b>g</b>  action takes zero or more of the following key-
+                     The <b>l</b><b>o</b><b>g</b> action takes zero or more of the  following  key-
                      value pair arguments that control what is logged:
 
                      <b>n</b><b>a</b><b>m</b><b>e</b><b>=</b><u>s</u><u>t</u><u>r</u><u>i</u><u>n</u><u>g</u>
-                            An optional name for the ACL. The <u>s</u><u>t</u><u>r</u><u>i</u><u>n</u><u>g</u>  is  cur‐
+                            An  optional  name for the ACL. The <u>s</u><u>t</u><u>r</u><u>i</u><u>n</u><u>g</u> is cur‐
                             rently limited to 64 bytes.
 
                      <b>s</b><b>e</b><b>v</b><b>e</b><b>r</b><b>i</b><b>t</b><b>y</b><b>=</b><u>l</u><u>e</u><u>v</u><u>e</u><u>l</u>
-                            Indicates  the severity of the event. The <u>l</u><u>e</u><u>v</u><u>e</u><u>l</u> is
-                            one of following  (from  more  to  less  serious):
-                            <b>a</b><b>l</b><b>e</b><b>r</b><b>t</b>,  <b>w</b><b>a</b><b>r</b><b>n</b><b>i</b><b>n</b><b>g</b>,  <b>n</b><b>o</b><b>t</b><b>i</b><b>c</b><b>e</b>,  <b>i</b><b>n</b><b>f</b><b>o</b>,  or  <b>d</b><b>e</b><b>b</b><b>u</b><b>g</b>.  If a
+                            Indicates the severity of the event. The <u>l</u><u>e</u><u>v</u><u>e</u><u>l</u>  is
+                            one  of  following  (from  more  to less serious):
+                            <b>a</b><b>l</b><b>e</b><b>r</b><b>t</b>, <b>w</b><b>a</b><b>r</b><b>n</b><b>i</b><b>n</b><b>g</b>,  <b>n</b><b>o</b><b>t</b><b>i</b><b>c</b><b>e</b>,  <b>i</b><b>n</b><b>f</b><b>o</b>,  or  <b>d</b><b>e</b><b>b</b><b>u</b><b>g</b>.  If  a
                             severity is not provided, the default is <b>i</b><b>n</b><b>f</b><b>o</b>.
 
                      <b>v</b><b>e</b><b>r</b><b>d</b><b>i</b><b>c</b><b>t</b><b>=</b><u>v</u><u>a</u><u>l</u><u>u</u><u>e</u>
-                            The verdict for packets  matching  the  flow.  The
+                            The  verdict  for  packets  matching the flow. The
                             value must be one of <b>a</b><b>l</b><b>l</b><b>o</b><b>w</b>, <b>d</b><b>e</b><b>n</b><b>y</b>, or <b>r</b><b>e</b><b>j</b><b>e</b><b>c</b><b>t</b>.
 
                      <b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>=</b><u>s</u><u>t</u><u>r</u><u>i</u><u>n</u><u>g</u>
-                            An  optional  rate-limiting meter to be applied to
+                            An optional rate-limiting meter to be  applied  to
                             the logs. The <u>s</u><u>t</u><u>r</u><u>i</u><u>n</u><u>g</u> should reference a <b>n</b><b>a</b><b>m</b><b>e</b> entry
-                            from the <b>M</b><b>e</b><b>t</b><b>e</b><b>r</b> table. The only meter  <b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>  that
+                            from  the  <b>M</b><b>e</b><b>t</b><b>e</b><b>r</b> table. The only meter <b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b> that
                             is appropriate is <b>d</b><b>r</b><b>o</b><b>p</b>.
 
               <b>f</b><b>w</b><b>d</b><b>_</b><b>g</b><b>r</b><b>o</b><b>u</b><b>p</b><b>(</b><b>l</b><b>i</b><b>v</b><b>e</b><b>n</b><b>e</b><b>s</b><b>s</b><b>=</b><u>b</u><u>o</u><u>o</u><u>l</u><b>,</b> <b>c</b><b>h</b><b>i</b><b>l</b><b>d</b><b>p</b><b>o</b><b>r</b><b>t</b><b>s</b><b>=</b><u>p</u><u>o</u><u>r</u><u>t</u><b>,</b> <b>.</b><b>.</b><b>.</b><b>)</b><b>;</b>
-                     <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:  optional <b>l</b><b>i</b><b>v</b><b>e</b><b>n</b><b>e</b><b>s</b><b>s</b>, either <b>t</b><b>r</b><b>u</b><b>e</b> or <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>, de‐
-                     faulting to false; <b>c</b><b>h</b><b>i</b><b>l</b><b>d</b><b>p</b><b>o</b><b>r</b><b>t</b><b>s</b>, a comma-delimited list  of
+                     <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>: optional <b>l</b><b>i</b><b>v</b><b>e</b><b>n</b><b>e</b><b>s</b><b>s</b>, either <b>t</b><b>r</b><b>u</b><b>e</b> or <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>,  de‐
+                     faulting  to false; <b>c</b><b>h</b><b>i</b><b>l</b><b>d</b><b>p</b><b>o</b><b>r</b><b>t</b><b>s</b>, a comma-delimited list of
                      strings denoting logical ports to load balance across.
 
                      Load balance traffic to one or more child ports in a log‐
                      ical switch. <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> translates the <b>f</b><b>w</b><b>d</b><b>_</b><b>g</b><b>r</b><b>o</b><b>u</b><b>p</b> into
                      an OpenFlow group with one bucket for each child port. If
                      <b>l</b><b>i</b><b>v</b><b>e</b><b>n</b><b>e</b><b>s</b><b>s</b><b>=</b><b>t</b><b>r</b><b>u</b><b>e</b> is specified, it also integrates the bucket
-                     selection  with BFD status on the tunnel interface corre‐
+                     selection with BFD status on the tunnel interface  corre‐
                      sponding to child port.
 
                      <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>f</b><b>w</b><b>d</b><b>_</b><b>g</b><b>r</b><b>o</b><b>u</b><b>p</b><b>(</b><b>l</b><b>i</b><b>v</b><b>e</b><b>n</b><b>e</b><b>s</b><b>s</b><b>=</b><b>t</b><b>r</b><b>u</b><b>e</b><b>,</b> <b>c</b><b>h</b><b>i</b><b>l</b><b>d</b><b>p</b><b>o</b><b>r</b><b>t</b><b>s</b><b>=</b><b>"</b><b>p</b><b>1</b><b>"</b><b>,</b> <b>"</b><b>p</b><b>2</b><b>"</b><b>)</b><b>;</b>
 
               <b>i</b><b>c</b><b>m</b><b>p</b><b>4</b> <b>{</b> <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u><b>;</b> ... <b>}</b><b>;</b>
               <b>i</b><b>c</b><b>m</b><b>p</b><b>4</b><b>_</b><b>e</b><b>r</b><b>r</b><b>o</b><b>r</b> <b>{</b> <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u><b>;</b> ... <b>}</b><b>;</b>
-                   Temporarily replaces the IPv4 packet being processed by  an
+                   Temporarily  replaces the IPv4 packet being processed by an
                    ICMPv4 packet and executes each nested <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> on the ICMPv4
-                   packet.  Actions  following these actions, if any, apply to
+                   packet. Actions following these actions, if any,  apply  to
                    the original, unmodified packet.
 
-                   The ICMPv4 packet that these actions operates  on  is  ini‐
-                   tialized  based on the IPv4 packet being processed, as fol‐
+                   The  ICMPv4  packet  that these actions operates on is ini‐
+                   tialized based on the IPv4 packet being processed, as  fol‐
                    lows. These are default values that the nested actions will
-                   probably want to  change.  Ethernet  and  IPv4  fields  not
+                   probably  want  to  change.  Ethernet  and  IPv4 fields not
                    listed here are not changed:
 
                    •      <b>i</b><b>p</b><b>.</b><b>p</b><b>r</b><b>o</b><b>t</b><b>o</b> <b>=</b> <b>1</b> (ICMPv4)
@@ -1802,25 +1816,25 @@
 
                    •      <b>i</b><b>c</b><b>m</b><b>p</b><b>4</b><b>.</b><b>c</b><b>o</b><b>d</b><b>e</b> <b>=</b> <b>1</b> (host unreachable)
 
-                   <b>i</b><b>c</b><b>m</b><b>p</b><b>4</b><b>_</b><b>e</b><b>r</b><b>r</b><b>o</b><b>r</b>  action  is  expected to be used to generate an
-                   ICMPv4 packet in  response  to  an  error  in  original  IP
-                   packet.  When  this  action generates the ICMPv4 packet, it
-                   also copies the original IP datagram following  the  ICMPv4
+                   <b>i</b><b>c</b><b>m</b><b>p</b><b>4</b><b>_</b><b>e</b><b>r</b><b>r</b><b>o</b><b>r</b> action is expected to be used  to  generate  an
+                   ICMPv4  packet  in  response  to  an  error  in original IP
+                   packet. When this action generates the  ICMPv4  packet,  it
+                   also  copies  the original IP datagram following the ICMPv4
                    header as per RFC 1122: 3.2.2.
 
                    <b>P</b><b>r</b><b>e</b><b>r</b><b>e</b><b>q</b><b>u</b><b>i</b><b>s</b><b>i</b><b>t</b><b>e</b><b>:</b> <b>i</b><b>p</b><b>4</b>
 
               <b>i</b><b>c</b><b>m</b><b>p</b><b>6</b> <b>{</b> <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u><b>;</b> ... <b>}</b><b>;</b>
               <b>i</b><b>c</b><b>m</b><b>p</b><b>6</b><b>_</b><b>e</b><b>r</b><b>r</b><b>o</b><b>r</b> <b>{</b> <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u><b>;</b> ... <b>}</b><b>;</b>
-                   Temporarily  replaces the IPv6 packet being processed by an
+                   Temporarily replaces the IPv6 packet being processed by  an
                    ICMPv6 packet and executes each nested <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> on the ICMPv6
-                   packet. Actions following the <u>i</u><u>c</u><u>m</u><u>p</u><u>6</u> action, if  any,  apply
+                   packet.  Actions  following the <u>i</u><u>c</u><u>m</u><u>p</u><u>6</u> action, if any, apply
                    to the original, unmodified packet.
 
-                   The  ICMPv6 packet that this action operates on is initial‐
-                   ized based on the IPv6 packet being processed, as  follows.
+                   The ICMPv6 packet that this action operates on is  initial‐
+                   ized  based on the IPv6 packet being processed, as follows.
                    These are default values that the nested actions will prob‐
-                   ably  want  to  change. Ethernet and IPv6 fields not listed
+                   ably want to change. Ethernet and IPv6  fields  not  listed
                    here are not changed:
 
                    •      <b>i</b><b>p</b><b>.</b><b>p</b><b>r</b><b>o</b><b>t</b><b>o</b> <b>=</b> <b>5</b><b>8</b> (ICMPv6)
@@ -1831,14 +1845,14 @@
 
                    •      <b>i</b><b>c</b><b>m</b><b>p</b><b>6</b><b>.</b><b>c</b><b>o</b><b>d</b><b>e</b> <b>=</b> <b>1</b> (administratively prohibited)
 
-                   <b>i</b><b>c</b><b>m</b><b>p</b><b>6</b><b>_</b><b>e</b><b>r</b><b>r</b><b>o</b><b>r</b> action is expected to be used  to  generate  an
-                   ICMPv6  packet  in  response  to  an error in original IPv6
+                   <b>i</b><b>c</b><b>m</b><b>p</b><b>6</b><b>_</b><b>e</b><b>r</b><b>r</b><b>o</b><b>r</b>  action  is  expected to be used to generate an
+                   ICMPv6 packet in response to  an  error  in  original  IPv6
                    packet.
 
                    <b>P</b><b>r</b><b>e</b><b>r</b><b>e</b><b>q</b><b>u</b><b>i</b><b>s</b><b>i</b><b>t</b><b>e</b><b>:</b> <b>i</b><b>p</b><b>6</b>
 
               <b>t</b><b>c</b><b>p</b><b>_</b><b>r</b><b>e</b><b>s</b><b>e</b><b>t</b><b>;</b>
-                   This action transforms the current TCP packet according  to
+                   This  action transforms the current TCP packet according to
                    the following pseudocode:
 
                    <b>i</b><b>f</b> <b>(</b><b>t</b><b>c</b><b>p</b><b>.</b><b>a</b><b>c</b><b>k</b><b>)</b> <b>{</b>
@@ -1849,65 +1863,65 @@
                    <b>}</b>
                    <b>t</b><b>c</b><b>p</b><b>.</b><b>f</b><b>l</b><b>a</b><b>g</b><b>s</b> <b>=</b> <b>R</b><b>S</b><b>T</b><b>;</b>
 
-                   Then,  the  action  drops all TCP options and payload data,
+                   Then, the action drops all TCP options  and  payload  data,
                    and updates the TCP checksum. IP ttl is set to 255.
 
                    <b>P</b><b>r</b><b>e</b><b>r</b><b>e</b><b>q</b><b>u</b><b>i</b><b>s</b><b>i</b><b>t</b><b>e</b><b>:</b> <b>t</b><b>c</b><b>p</b>
 
               <b>r</b><b>e</b><b>j</b><b>e</b><b>c</b><b>t</b> <b>{</b> <u>a</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u><b>;</b> ... <b>}</b><b>;</b>
-                   If the original packet is IPv4 or IPv6 TCP packet,  it  re‐
+                   If  the  original packet is IPv4 or IPv6 TCP packet, it re‐
                    places it with IPv4 or IPv6 TCP RST packet and executes the
-                   inner  actions.  Otherwise it replaces it with an ICMPv4 or
+                   inner actions. Otherwise it replaces it with an  ICMPv4  or
                    ICMPv6 packet and executes the inner actions.
 
-                   The inner actions should not attempt  to  swap  eth  source
-                   with  eth  destination and IP source with IP destination as
+                   The  inner  actions  should  not attempt to swap eth source
+                   with eth destination and IP source with IP  destination  as
                    this action implicitly does that.
 
               <b>t</b><b>r</b><b>i</b><b>g</b><b>g</b><b>e</b><b>r</b><b>_</b><b>e</b><b>v</b><b>e</b><b>n</b><b>t</b><b>;</b>
                    This action is used to allow ovs-vswitchd to report CMS re‐
-                   lated events writing them in <b>C</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>_</b><b>E</b><b>v</b><b>e</b><b>n</b><b>t</b> table. It  is
-                   possible  to  associate a meter to a each event in order to
+                   lated  events writing them in <b>C</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>_</b><b>E</b><b>v</b><b>e</b><b>n</b><b>t</b> table. It is
+                   possible to associate a meter to a each event in  order  to
                    not overload pinctrl thread under heavy load; each meter is
-                   identified though a defined  naming  convention.  Supported
+                   identified  though  a  defined naming convention. Supported
                    events:
 
-                   •      <u>e</u><u>m</u><u>p</u><u>t</u><u>y</u><b>_</b><u>l</u><u>b</u><b>_</b><u>b</u><u>a</u><u>c</u><u>k</u><u>e</u><u>n</u><u>d</u><u>s</u>.  This  event  is  raised if a re‐
-                          ceived packet is destined for a  load  balancer  VIP
-                          that  has  no  configured  backend destinations. For
-                          this event, the event info includes  the  load  bal‐
+                   •      <u>e</u><u>m</u><u>p</u><u>t</u><u>y</u><b>_</b><u>l</u><u>b</u><b>_</b><u>b</u><u>a</u><u>c</u><u>k</u><u>e</u><u>n</u><u>d</u><u>s</u>. This event is  raised  if  a  re‐
+                          ceived  packet  is  destined for a load balancer VIP
+                          that has no  configured  backend  destinations.  For
+                          this  event,  the  event info includes the load bal‐
                           ancer VIP, the load balancer UUID, and the transport
                           protocol. Associated meter: <b>e</b><b>v</b><b>e</b><b>n</b><b>t</b><b>-</b><b>e</b><b>l</b><b>b</b>
 
               <b>i</b><b>g</b><b>m</b><b>p</b><b>;</b>
-                   This  action  sends the packet to <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> for multi‐
+                   This action sends the packet to <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  for  multi‐
                    cast snooping.
 
                    <b>P</b><b>r</b><b>e</b><b>r</b><b>e</b><b>q</b><b>u</b><b>i</b><b>s</b><b>i</b><b>t</b><b>e</b><b>:</b> <b>i</b><b>g</b><b>m</b><b>p</b>
 
               <b>b</b><b>i</b><b>n</b><b>d</b><b>_</b><b>v</b><b>p</b><b>o</b><b>r</b><b>t</b><b>(</b><u>V</u><b>,</b> <u>P</u><b>)</b><b>;</b>
-                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>: logical port string field <u>V</u>  of  type  <b>v</b><b>i</b><b>r</b><b>t</b><b>u</b><b>a</b><b>l</b>,
+                   <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:  logical  port  string field <u>V</u> of type <b>v</b><b>i</b><b>r</b><b>t</b><b>u</b><b>a</b><b>l</b>,
                    logical port string field <u>P</u>.
 
-                   Binds  the virtual logical port <u>V</u> and sets the <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> col‐
-                   umn and <b>v</b><b>i</b><b>r</b><b>t</b><b>u</b><b>a</b><b>l</b><b>_</b><b>p</b><b>a</b><b>r</b><b>e</b><b>n</b><b>t</b>  of  the  table  <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>.  <b>v</b><b>i</b><b>r</b>‐‐
+                   Binds the virtual logical port <u>V</u> and sets the <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>  col‐
+                   umn  and  <b>v</b><b>i</b><b>r</b><b>t</b><b>u</b><b>a</b><b>l</b><b>_</b><b>p</b><b>a</b><b>r</b><b>e</b><b>n</b><b>t</b>  of  the  table <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>. <b>v</b><b>i</b><b>r</b>‐‐
                    <b>t</b><b>u</b><b>a</b><b>l</b><b>_</b><b>p</b><b>a</b><b>r</b><b>e</b><b>n</b><b>t</b> is set to <u>P</u>.
 
               <b>h</b><b>a</b><b>n</b><b>d</b><b>l</b><b>e</b><b>_</b><b>s</b><b>v</b><b>c</b><b>_</b><b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>(</b><u>P</u><b>)</b><b>;</b>
                    <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>: logical port string field <u>P</u>.
 
-                   Handles  the service monitor reply received from the VIF of
-                   the logical port <u>P</u>. <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> periodically  sends  out
-                   the  service monitor packets for the services configured in
-                   the <b>S</b><b>e</b><b>r</b><b>v</b><b>i</b><b>c</b><b>e</b><b>_</b><b>M</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b> table and this action updates the  sta‐
+                   Handles the service monitor reply received from the VIF  of
+                   the  logical  port <u>P</u>. <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> periodically sends out
+                   the service monitor packets for the services configured  in
+                   the  <b>S</b><b>e</b><b>r</b><b>v</b><b>i</b><b>c</b><b>e</b><b>_</b><b>M</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b> table and this action updates the sta‐
                    tus of those services.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>h</b><b>a</b><b>n</b><b>d</b><b>l</b><b>e</b><b>_</b><b>s</b><b>v</b><b>c</b><b>_</b><b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>)</b><b>;</b>
 
               <b>h</b><b>a</b><b>n</b><b>d</b><b>l</b><b>e</b><b>_</b><b>d</b><b>h</b><b>c</b><b>p</b><b>v</b><b>6</b><b>_</b><b>r</b><b>e</b><b>p</b><b>l</b><b>y</b><b>;</b>
                    Handle DHCPv6 prefix delegation advertisements/replies from
-                   a  IPv6 delegation server. <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> will add an entry
-                   <b>i</b><b>p</b><b>v</b><b>6</b><b>_</b><b>r</b><b>a</b><b>_</b><b>p</b><b>d</b><b>_</b><b>l</b><b>i</b><b>s</b><b>t</b> in the <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> table for  each  prefix  re‐
+                   a IPv6 delegation server. <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> will add an  entry
+                   <b>i</b><b>p</b><b>v</b><b>6</b><b>_</b><b>r</b><b>a</b><b>_</b><b>p</b><b>d</b><b>_</b><b>l</b><b>i</b><b>s</b><b>t</b>  in  the  <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> table for each prefix re‐
                    ceived from the delegation server
 
               <u>R</u> <b>=</b> <b>s</b><b>e</b><b>l</b><b>e</b><b>c</b><b>t</b><b>(</b><u>N</u><u>1</u><b>[</b><b>=</b><u>W</u><u>1</u><b>]</b><b>,</b> <u>N</u><u>2</u><b>[</b><b>=</b><u>W</u><u>2</u><b>]</b><b>,</b> <b>.</b><b>.</b><b>.</b><b>)</b><b>;</b>
@@ -1916,16 +1930,16 @@
 
                    <b>R</b><b>e</b><b>s</b><b>u</b><b>l</b><b>t</b>: stored to a logical field or subfield <u>R</u>.
 
-                   Select  from  a list of integers <u>N</u><u>1</u>, <u>N</u><u>2</u>..., each within the
+                   Select from a list of integers <u>N</u><u>1</u>, <u>N</u><u>2</u>..., each  within  the
                    range 0 ~ 65535, and store the selected one in the field <u>R</u>.
-                   There must be 2 or more integers listed, each with  an  op‐
-                   tional  weight,  which  is  an integer within the range 1 ~
-                   65535. If weight is not specified, it defaults to 100.  The
-                   selection  method  is  based  on the 5-tuple hash of packet
+                   There  must  be 2 or more integers listed, each with an op‐
+                   tional weight, which is an integer within  the  range  1  ~
+                   65535.  If weight is not specified, it defaults to 100. The
+                   selection method is based on the  5-tuple  hash  of  packet
                    header.
 
-                   Processing automatically moves on to the next table, as  if
-                   <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>  were specified. The <b>s</b><b>e</b><b>l</b><b>e</b><b>c</b><b>t</b> action must be put as the
+                   Processing  automatically moves on to the next table, as if
+                   <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> were specified. The <b>s</b><b>e</b><b>l</b><b>e</b><b>c</b><b>t</b> action must be put as  the
                    last action of the logical flow when there are multiple ac‐
                    tions (actions put after <b>s</b><b>e</b><b>l</b><b>e</b><b>c</b><b>t</b> will not take effect).
 
@@ -1933,54 +1947,54 @@
 
               <b>h</b><b>a</b><b>n</b><b>d</b><b>l</b><b>e</b><b>_</b><b>d</b><b>h</b><b>c</b><b>p</b><b>v</b><b>6</b><b>_</b><b>r</b><b>e</b><b>p</b><b>l</b><b>y</b><b>;</b>
                    This action is used to parse DHCPv6 replies from IPv6 Dele‐
-                   gation Router and managed IPv6 Prefix delegation state  ma‐
+                   gation  Router and managed IPv6 Prefix delegation state ma‐
                    chine
 
               <u>R</u> <b>=</b> <b>c</b><b>h</b><b>k</b><b>_</b><b>l</b><b>b</b><b>_</b><b>h</b><b>a</b><b>i</b><b>r</b><b>p</b><b>i</b><b>n</b><b>(</b><b>)</b><b>;</b>
-                   This  action  checks  if the packet under consideration was
+                   This action checks if the packet  under  consideration  was
                    destined to a load balancer VIP and it is hairpinned, i.e.,
-                   after load balancing the destination IP matches the  source
-                   IP.  If  it is so, then the 1-bit destination register <u>R</u> is
+                   after  load balancing the destination IP matches the source
+                   IP. If it is so, then the 1-bit destination register  <u>R</u>  is
                    set to 1.
 
               <u>R</u> <b>=</b> <b>c</b><b>h</b><b>k</b><b>_</b><b>l</b><b>b</b><b>_</b><b>h</b><b>a</b><b>i</b><b>r</b><b>p</b><b>i</b><b>n</b><b>_</b><b>r</b><b>e</b><b>p</b><b>l</b><b>y</b><b>(</b><b>)</b><b>;</b>
-                   This action checks if the  packet  under  consideration  is
-                   from  one  of the backend IP of a load balancer VIP and the
-                   destination IP is the load balancer VIP. If it is so,  then
+                   This  action  checks  if  the packet under consideration is
+                   from one of the backend IP of a load balancer VIP  and  the
+                   destination  IP is the load balancer VIP. If it is so, then
                    the 1-bit destination register <u>R</u> is set to 1.
 
               <u>R</u> <b>=</b> <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>t</b><b>o</b><b>_</b><b>v</b><b>i</b><b>p</b><b>;</b>
-                   This  action  sends  the  packet  through  the SNAT zone to
+                   This action sends the  packet  through  the  SNAT  zone  to
                    change the source IP address of the packet to the load bal‐
-                   ancer VIP if the original destination IP was load  balancer
-                   VIP  and  commits  the connection. This action applies suc‐
+                   ancer  VIP if the original destination IP was load balancer
+                   VIP and commits the connection. This  action  applies  suc‐
                    cessfully only for the hairpinned traffic i.e if the action
-                   <b>c</b><b>h</b><b>k</b><b>_</b><b>l</b><b>b</b><b>_</b><b>h</b><b>a</b><b>i</b><b>r</b><b>p</b><b>i</b><b>n</b> returned success. This action  doesn’t  take
+                   <b>c</b><b>h</b><b>k</b><b>_</b><b>l</b><b>b</b><b>_</b><b>h</b><b>a</b><b>i</b><b>r</b><b>p</b><b>i</b><b>n</b>  returned  success. This action doesn’t take
                    any arguments and it determines the SNAT IP internally. The
-                   packet  is  not  automatically  sent to the next table. The
-                   caller has to execute the  <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>  action  explicitly  after
+                   packet is not automatically sent to  the  next  table.  The
+                   caller  has  to  execute  the <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> action explicitly after
                    this action to advance the packet to the next stage.
 
               <u>R</u> <b>=</b> <b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>_</b><b>i</b><b>n</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b><b>_</b><b>s</b><b>e</b><b>c</b><b>(</b><b>)</b><b>;</b>
                    This action checks if the packet under consideration passes
-                   the  inport  port  security checks. If the packet fails the
-                   port security checks, then <b>1</b> is stored in  the  destination
-                   register  <u>R</u>.  Else 0 is stored. The port security values to
+                   the inport port security checks. If the  packet  fails  the
+                   port  security  checks, then <b>1</b> is stored in the destination
+                   register <u>R</u>. Else 0 is stored. The port security  values  to
                    check are retrieved from the the <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> logical port.
 
-                   This action should be used in the  ingress  logical  switch
+                   This  action  should  be used in the ingress logical switch
                    pipeline.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>r</b><b>e</b><b>g</b><b>8</b><b>[</b><b>0</b><b>.</b><b>.</b><b>7</b><b>]</b> <b>=</b> <b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>_</b><b>i</b><b>n</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b><b>_</b><b>s</b><b>e</b><b>c</b><b>(</b><b>)</b><b>;</b>
 
               <u>R</u> <b>=</b> <b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>_</b><b>o</b><b>u</b><b>t</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b><b>_</b><b>s</b><b>e</b><b>c</b><b>(</b><b>)</b><b>;</b>
                    This action checks if the packet under consideration passes
-                   the  outport  port security checks. If the packet fails the
-                   port security checks, then <b>1</b> is stored in  the  destination
-                   register  <u>R</u>.  Else 0 is stored. The port security values to
+                   the outport port security checks. If the packet  fails  the
+                   port  security  checks, then <b>1</b> is stored in the destination
+                   register <u>R</u>. Else 0 is stored. The port security  values  to
                    check are retrieved from the the <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> logical port.
 
-                   This action should be used in  the  egress  logical  switch
+                   This  action  should  be  used in the egress logical switch
                    pipeline.
 
                    <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b> <b>r</b><b>e</b><b>g</b><b>8</b><b>[</b><b>0</b><b>.</b><b>.</b><b>7</b><b>]</b> <b>=</b> <b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>_</b><b>o</b><b>u</b><b>t</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b><b>_</b><b>s</b><b>e</b><b>c</b><b>(</b><b>)</b><b>;</b>
@@ -1988,11 +2002,11 @@
               <b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b><b>_</b><b>e</b><b>c</b><b>m</b><b>p</b><b>_</b><b>n</b><b>h</b><b>(</b><u>i</u><u>p</u><u>v</u><u>6</u><b>)</b><b>;</b>
                    <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>: IPv4/IPv6 traffic.
 
-                   This  action  translates to an openflow "learn" action that
+                   This action translates to an openflow "learn"  action  that
                    inserts two new flows in tables 76 and 77.
 
-                   •      Match on the the 5-tuple and the  expected  next-hop
-                          mac  address  in  table  76: <b>n</b><b>w</b><b>_</b><b>s</b><b>r</b><b>c</b><b>=</b><b>i</b><b>p</b><b>0</b>, <b>n</b><b>w</b><b>_</b><b>d</b><b>s</b><b>t</b><b>=</b><b>i</b><b>p</b><b>1</b>,
+                   •      Match  on  the the 5-tuple and the expected next-hop
+                          mac address in  table  76:  <b>n</b><b>w</b><b>_</b><b>s</b><b>r</b><b>c</b><b>=</b><b>i</b><b>p</b><b>0</b>,  <b>n</b><b>w</b><b>_</b><b>d</b><b>s</b><b>t</b><b>=</b><b>i</b><b>p</b><b>1</b>,
                           <b>i</b><b>p</b><b>_</b><b>p</b><b>r</b><b>o</b><b>t</b><b>o</b>,<b>t</b><b>p</b><b>_</b><b>s</b><b>r</b><b>c</b><b>=</b><b>l</b><b>4</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b><b>0</b>,
                           <b>t</b><b>p</b><b>_</b><b>d</b><b>s</b><b>t</b><b>=</b><b>l</b><b>4</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b><b>1</b>,<b>d</b><b>l</b><b>_</b><b>s</b><b>r</b><b>c</b><b>=</b><b>e</b><b>t</b><b>h</b><b>a</b><b>d</b><b>d</b><b>r</b> and set <b>r</b><b>e</b><b>g</b><b>9</b><b>[</b><b>5</b><b>]</b>.
 
@@ -2005,76 +2019,111 @@
 
               <u>R</u> <b>=</b> <b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>_</b><b>e</b><b>c</b><b>m</b><b>p</b><b>_</b><b>n</b><b>h</b><b>_</b><b>m</b><b>a</b><b>c</b><b>(</b><b>)</b><b>;</b>
                    This  action  checks  if  the  packet  under  consideration
-                   matches  any  flow in table 76. If it is so, then the 1-bit
+                   matches any flow in table 76. If it is so, then  the  1-bit
                    destination register <u>R</u> is set to 1.
 
               <u>R</u> <b>=</b> <b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>_</b><b>e</b><b>c</b><b>m</b><b>p</b><b>_</b><b>n</b><b>h</b><b>(</b><b>)</b><b>;</b>
                    This  action  checks  if  the  packet  under  consideration
-                   matches  the  any  flow  in table 77. If it is so, then the
+                   matches the any flow in table 77. If it  is  so,  then  the
                    1-bit destination register <u>R</u> is set to 1.
 
-                   commit_lb_aff(<u>v</u><u>i</u><u>p</u><b>,</b> <u>b</u><u>a</u><u>c</u><u>k</u><u>e</u><u>n</u><u>d</u><b>,</b>  <u>p</u><u>r</u><u>o</u><u>t</u><u>o</u><b>,</b>  <u>t</u><u>i</u><u>m</u><u>e</u><u>o</u><u>u</u><u>t</u><b>)</b><b>;</b>  <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:
-                   load-balancer  virtual  ip:port  <u>v</u><u>i</u><u>p</u>, load-balancer backend
-                   ip:port <u>b</u><u>a</u><u>c</u><u>k</u><u>e</u><u>n</u><u>d</u>,  load-balancer  protocol  <u>p</u><u>r</u><u>o</u><u>t</u><u>o</u>,  affinity
+                   commit_lb_aff(<u>v</u><u>i</u><u>p</u><b>,</b>  <u>b</u><u>a</u><u>c</u><u>k</u><u>e</u><u>n</u><u>d</u><b>,</b>  <u>p</u><u>r</u><u>o</u><u>t</u><u>o</u><b>,</b>  <u>t</u><u>i</u><u>m</u><u>e</u><u>o</u><u>u</u><u>t</u><b>)</b><b>;</b> <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:
+                   load-balancer virtual ip:port  <u>v</u><u>i</u><u>p</u>,  load-balancer  backend
+                   ip:port  <u>b</u><u>a</u><u>c</u><u>k</u><u>e</u><u>n</u><u>d</u>,  load-balancer  protocol  <u>p</u><u>r</u><u>o</u><u>t</u><u>o</u>, affinity
                    timeout <u>t</u><u>i</u><u>m</u><u>e</u><u>o</u><u>u</u><u>t</u>.
 
-                   This  action  translates to an openflow "learn" action that
+                   This action translates to an openflow "learn"  action  that
                    inserts a new flow in table 78.
 
-                   •      Match on the 4-tuple in table 78: <b>n</b><b>w</b><b>_</b><b>s</b><b>r</b><b>c</b><b>=</b><b>i</b><b>p</b>  <b>c</b><b>l</b><b>i</b><b>e</b><b>n</b><b>t</b>,
-                          <b>n</b><b>w</b><b>_</b><b>d</b><b>s</b><b>t</b><b>=</b><b>v</b><b>i</b><b>p</b>  <b>i</b><b>p</b>,  <b>i</b><b>p</b><b>_</b><b>p</b><b>r</b><b>o</b><b>t</b><b>o</b>,  <b>t</b><b>p</b><b>_</b><b>d</b><b>s</b><b>t</b><b>=</b><b>v</b><b>i</b><b>p</b>  <b>p</b><b>o</b><b>r</b><b>t</b> and set
-                          <b>r</b><b>e</b><b>g</b><b>9</b><b>[</b><b>6</b><b>]</b> to 1, <b>r</b><b>e</b><b>g</b><b>4</b> and <b>r</b><b>e</b><b>g</b><b>8</b> to backend ip  and  port
-                          respectively.  For  IPv6  register <b>x</b><b>x</b><b>r</b><b>e</b><b>g</b><b>1</b> is used to
+                   •      Match  on the 4-tuple in table 78: <b>n</b><b>w</b><b>_</b><b>s</b><b>r</b><b>c</b><b>=</b><b>i</b><b>p</b> <b>c</b><b>l</b><b>i</b><b>e</b><b>n</b><b>t</b>,
+                          <b>n</b><b>w</b><b>_</b><b>d</b><b>s</b><b>t</b><b>=</b><b>v</b><b>i</b><b>p</b> <b>i</b><b>p</b>, <b>i</b><b>p</b><b>_</b><b>p</b><b>r</b><b>o</b><b>t</b><b>o</b>,  <b>t</b><b>p</b><b>_</b><b>d</b><b>s</b><b>t</b><b>=</b><b>v</b><b>i</b><b>p</b>  <b>p</b><b>o</b><b>r</b><b>t</b>  and  set
+                          <b>r</b><b>e</b><b>g</b><b>9</b><b>[</b><b>6</b><b>]</b>  to  1, <b>r</b><b>e</b><b>g</b><b>4</b> and <b>r</b><b>e</b><b>g</b><b>8</b> to backend ip and port
+                          respectively. For IPv6 register <b>x</b><b>x</b><b>r</b><b>e</b><b>g</b><b>1</b>  is  used  to
                           store the backend ip.
 
-                   This action is applied for new connections  received  by  a
+                   This  action  is  applied for new connections received by a
                    specific load-balacer with affinity timeout configured.
 
               <u>R</u> <b>=</b> <b>c</b><b>h</b><b>k</b><b>_</b><b>l</b><b>b</b><b>_</b><b>a</b><b>f</b><b>f</b><b>(</b><b>)</b><b>;</b>
                    This  action  checks  if  the  packet  under  consideration
-                   matches any flow in table 78. If it is so, then  the  1-bit
+                   matches  any  flow in table 78. If it is so, then the 1-bit
                    destination register <u>R</u> is set to 1.
 
               <b>s</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>(</b><b>p</b><b>r</b><b>o</b><b>b</b><b>a</b><b>b</b><b>i</b><b>l</b><b>i</b><b>t</b><b>y</b><b>=</b><u>p</u><u>a</u><u>c</u><u>k</u><u>e</u><u>t</u><u>s</u><b>,</b> <b>.</b><b>.</b><b>.</b><b>)</b>
-                   This  action causes the matched traffic to be sampled using
-                   IPFIX protocol. More information about how  per-flow  IPFIX
-                   sampling  works  in  OVS can be found in <b>o</b><b>v</b><b>s</b><b>-</b><b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>(7) and
+                   This action causes the matched traffic to be sampled  using
+                   IPFIX  protocol.  More information about how per-flow IPFIX
+                   sampling works in OVS can be found  in  <b>o</b><b>v</b><b>s</b><b>-</b><b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>(7)  and
                    <b>o</b><b>v</b><b>s</b><b>-</b><b>v</b><b>s</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>d</b><b>.</b><b>c</b><b>o</b><b>n</b><b>f</b><b>.</b><b>d</b><b>b</b>(5).
 
-                   In order to reliably identify each sampled packet  when  it
-                   is  received  by  the IPFIX collector, this action sets the
-                   content of the <b>O</b><b>b</b><b>s</b><b>e</b><b>r</b><b>v</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b><b>D</b><b>o</b><b>m</b><b>a</b><b>i</b><b>n</b><b>I</b><b>D</b>  and  <b>O</b><b>b</b><b>s</b><b>e</b><b>r</b><b>v</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b><b>P</b><b>o</b><b>i</b><b>n</b><b>t</b><b>I</b><b>D</b>
+                   In  order  to reliably identify each sampled packet when it
+                   is received by the IPFIX collector, this  action  sets  the
+                   content  of  the <b>O</b><b>b</b><b>s</b><b>e</b><b>r</b><b>v</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b><b>D</b><b>o</b><b>m</b><b>a</b><b>i</b><b>n</b><b>I</b><b>D</b> and <b>O</b><b>b</b><b>s</b><b>e</b><b>r</b><b>v</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b><b>P</b><b>o</b><b>i</b><b>n</b><b>t</b><b>I</b><b>D</b>
                    IPFIX fields (see argument description below).
 
                    The following key-value arguments are supported:
 
                    <b>p</b><b>r</b><b>o</b><b>b</b><b>a</b><b>b</b><b>i</b><b>l</b><b>i</b><b>t</b><b>y</b><b>=</b><u>p</u><u>a</u><u>c</u><u>k</u><u>e</u><u>t</u><u>s</u>
-                          The  number of sampled packets out of 65535. It must
+                          The number of sampled packets out of 65535. It  must
                           be greater or equal to 1.
 
                    <b>c</b><b>o</b><b>l</b><b>l</b><b>e</b><b>c</b><b>t</b><b>o</b><b>r</b><b>_</b><b>s</b><b>e</b><b>t</b><b>=</b><u>i</u><u>d</u>
                           The unsigned 32-bit integer identifier of the sample
-                          collector to send sampled packets to. It must  match
+                          collector  to send sampled packets to. It must match
                           the  value  configured  in  the  <b>F</b><b>l</b><b>o</b><b>w</b><b>_</b><b>S</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>_</b><b>C</b><b>o</b><b>l</b><b>l</b><b>e</b><b>c</b>‐‐
                           <b>t</b><b>o</b><b>r</b><b>_</b><b>S</b><b>e</b><b>t</b> Table in OVS. Defaults to 0.
 
                    <b>o</b><b>b</b><b>s</b><b>_</b><b>d</b><b>o</b><b>m</b><b>a</b><b>i</b><b>n</b><b>=</b><u>i</u><u>d</u>
-                          An unsigned 8-bit integer that identifies  the  sam‐
-                          pling  application.  It will be placed in the 8 most
+                          An  unsigned  8-bit integer that identifies the sam‐
+                          pling application. It will be placed in the  8  most
                           significant bits of the <b>O</b><b>b</b><b>s</b><b>e</b><b>r</b><b>v</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b><b>D</b><b>o</b><b>m</b><b>a</b><b>i</b><b>n</b><b>I</b><b>D</b> field of
-                          IPFIX samples. The 24 less significant bits will  be
-                          automatically  filled  in with the datapath key. De‐
+                          IPFIX  samples. The 24 less significant bits will be
+                          automatically filled in with the datapath  key.  De‐
                           faults to 0.
 
                    <b>o</b><b>b</b><b>s</b><b>_</b><b>p</b><b>o</b><b>i</b><b>n</b><b>t</b><b>=</b><u>i</u><u>d</u>
-                          An unsigned 32-bit integer to be used  as  <b>O</b><b>b</b><b>s</b><b>s</b><b>e</b><b>r</b><b>v</b><b>a</b>‐‐
-                          <b>t</b><b>i</b><b>o</b><b>n</b><b>P</b><b>o</b><b>i</b><b>n</b><b>t</b><b>I</b><b>D</b>  or  the string <b>@</b><b>c</b><b>o</b><b>o</b><b>k</b><b>i</b><b>e</b> to indicate that
-                          the first 32 bits of the <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>F</b><b>l</b><b>o</b><b>w</b>’s  UUID  shall
+                          An  unsigned  32-bit integer to be used as <b>O</b><b>b</b><b>s</b><b>s</b><b>e</b><b>r</b><b>v</b><b>a</b>‐‐
+                          <b>t</b><b>i</b><b>o</b><b>n</b><b>P</b><b>o</b><b>i</b><b>n</b><b>t</b><b>I</b><b>D</b> or the string <b>@</b><b>c</b><b>o</b><b>o</b><b>k</b><b>i</b><b>e</b> to  indicate  that
+                          the  first  32 bits of the <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>F</b><b>l</b><b>o</b><b>w</b>’s UUID shall
                           be used instead.
 
               <b>m</b><b>a</b><b>c</b><b>_</b><b>c</b><b>a</b><b>c</b><b>h</b><b>e</b><b>_</b><b>u</b><b>s</b><b>e</b><b>;</b>
-                   This  action resubmits to corresponding table which updates
+                   This action resubmits to corresponding table which  updates
                    the use statistics of MAC cache.
+
+              <u>R</u> <b>=</b> <b>d</b><b>h</b><b>c</b><b>p</b><b>_</b><b>r</b><b>e</b><b>l</b><b>a</b><b>y</b><b>_</b><b>r</b><b>e</b><b>q</b><b>_</b><b>c</b><b>h</b><b>k</b><b>(</b><u>r</u><u>e</u><u>l</u><u>a</u><u>y</u><u>-</u><u>i</u><u>p</u><b>,</b>
+                   <u>s</u><u>e</u><u>r</u><u>v</u><u>e</u><u>r</u><u>-</u><u>i</u><u>p</u><b>)</b><b>;</b>  <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>:  Logical  Router Port IP <u>r</u><u>e</u><u>l</u><u>a</u><u>y</u><u>-</u><u>i</u><u>p</u>,
+                   DHCP Server IP <u>s</u><u>e</u><u>r</u><u>v</u><u>e</u><u>r</u><u>-</u><u>i</u><u>p</u>.
+
+                   <b>R</b><b>e</b><b>s</b><b>u</b><b>l</b><b>t</b>: stored to a 1-bit subfield <u>R</u>.
+
+                   This action executes on the source node on which  the  DHCP
+                   request (DHCPDISCOVER or DHCPREQUEST) originated.
+
+                   When  this  action applied successfully on the DHCP request
+                   packet, it updates GIADDR in the DHCP packet with  <u>r</u><u>e</u><u>l</u><u>a</u><u>y</u><u>-</u><u>i</u><u>p</u>
+                   and stores 1 in R.
+
+                   When  this  action failed to apply on the packet, it leaves
+                   the packet unchanged and stores 0 in R.
+
+              <u>R</u> <b>=</b> <b>d</b><b>h</b><b>c</b><b>p</b><b>_</b><b>r</b><b>e</b><b>l</b><b>a</b><b>y</b><b>_</b><b>r</b><b>e</b><b>s</b><b>p</b><b>_</b><b>c</b><b>h</b><b>k</b><b>(</b><u>r</u><u>e</u><u>l</u><u>a</u><u>y</u><u>-</u><u>i</u><u>p</u><b>,</b>
+                   <u>s</u><u>e</u><u>r</u><u>v</u><u>e</u><u>r</u><u>-</u><u>i</u><u>p</u><b>)</b><b>;</b> <b>P</b><b>a</b><b>r</b><b>a</b><b>m</b><b>e</b><b>t</b><b>e</b><b>r</b><b>s</b>: Logical Router  Port  IP  <u>r</u><u>e</u><u>l</u><u>a</u><u>y</u><u>-</u><u>i</u><u>p</u>,
+                   DHCP Server IP <u>s</u><u>e</u><u>r</u><u>v</u><u>e</u><u>r</u><u>-</u><u>i</u><u>p</u>.
+
+                   <b>R</b><b>e</b><b>s</b><b>u</b><b>l</b><b>t</b>: stored to a 1-bit subfield <u>R</u>.
+
+                   This  action  executes  on the first node (Redirect Chassis
+                   node) which processes the DHCP response(DHCPOFFER, DHCPACK)
+                   from the DHCP server.
+
+                   When this action applied successfully on the DHCP  response
+                   packet,  it  updates the destination MAC and destination IP
+                   in the packet and stores 1 in R. <u>r</u><u>e</u><u>l</u><u>a</u><u>y</u><u>-</u><u>i</u><u>p</u> and <u>s</u><u>e</u><u>r</u><u>v</u><u>e</u><u>r</u><u>-</u><u>i</u><u>p</u> are
+                   used to validate GIADDR and SERVER-ID in the DHCP  response
+                   packet.
+
+                   When  this  action failed to apply on the packet, it leaves
+                   the packet unchanged and stores 0 in R.
 
        <b>t</b><b>a</b><b>g</b><b>s</b>: map of string-string pairs
               Key-value pairs that provide additional information to help ovn-
@@ -3681,6 +3730,7 @@
 
    <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
        <b>a</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b>                       string
+       <b>p</b><b>r</b><b>o</b><b>t</b><b>o</b><b>c</b><b>o</b><b>l</b>                      string
        <b>d</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b>                      optional weak reference to <b>D</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b>‐‐
                                      <b>i</b><b>n</b><b>g</b>
        <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>                       optional weak reference to <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>
@@ -3690,6 +3740,9 @@
    <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
        <b>a</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b>: string
               Destination IPv4 address for the IGMP group.
+
+       <b>p</b><b>r</b><b>o</b><b>t</b><b>o</b><b>c</b><b>o</b><b>l</b>: string
+              Group protocol version either IGMPv1,v2,v3 or MLDv1,v2.
 
        <b>d</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b>: optional weak reference to <b>D</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>
               Datapath to which this IGMP group belongs.
@@ -4012,5 +4065,5 @@
        <b>v</b><b>a</b><b>r</b><b>i</b><b>a</b><b>b</b><b>l</b><b>e</b><b>s</b>: map of string-string pairs
               The set of variable values for a given chassis.
 
-Open vSwitch 24.03.90          DB Schema 20.33.0                     <u>o</u><u>v</u><u>n</u><u>-</u><u>s</u><u>b</u>(5)
+Open vSwitch 24.03.90          DB Schema 20.34.0                     <u>o</u><u>v</u><u>n</u><u>-</u><u>s</u><u>b</u>(5)
 </pre></body></html>

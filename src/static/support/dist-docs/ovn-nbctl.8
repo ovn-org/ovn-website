@@ -672,12 +672,14 @@ If \fIrouter\fR and \fIuuid\fR are supplied, then the policy with specified uuid
 Lists the polices on \fIrouter\fR\[char46]
 .SS "NAT Commands"
 .TP
-[\fB\-\-may\-exist\fR] [\fB\-\-stateless\fR] [\fB\-\-gateway\-port\fR=\fIGATEWAY_PORT\fR] \fBlr\-nat\-add\fR \fIrouter\fR \fItype\fR \fIexternal_ip\fR \fIlogical_ip\fR [\fIlogical_port\fR \fIexternal_mac\fR]
+[\fB\-\-may\-exist\fR] [\fB\-\-stateless\fR] [\fB\-\-gateway\-port\fR=\fIGATEWAY_PORT\fR] [\-portrange] \fBlr\-nat\-add\fR \fIrouter\fR \fItype\fR \fIexternal_ip\fR \fIlogical_ip\fR [\fIlogical_port\fR \fIexternal_mac\fR] [\fIexternal_port_range\fR]
 Adds the specified NAT to \fIrouter\fR\[char46] The \fItype\fR must be one of \fBsnat\fR, \fBdnat\fR, or \fBdnat_and_snat\fR\[char46] The \fIexternal_ip\fR is an IPv4 address\[char46] The \fIlogical_ip\fR is an IPv4 network (e\[char46]g 192\[char46]168\[char46]1\[char46]0/24) or an IPv4 address\[char46] The \fIlogical_port\fR and \fIexternal_mac\fR are only accepted when \fIrouter\fR is a distributed router (rather than a gateway router) and \fItype\fR is \fBdnat_and_snat\fR\[char46] The \fIlogical_port\fR is the name of an existing logical switch port where the \fIlogical_ip\fR resides\[char46] The \fIexternal_mac\fR is an Ethernet address\[char46]
 .IP
 When \fB\-\-stateless\fR is specified then it implies that we will be not use connection tracker, i\[char46]e internal ip and external ip are 1:1 mapped\[char46] This implies that \fB\-\-stateless\fR is applicable only to dnat_and_snat type NAT rules\[char46] An external ip with \fB\-\-stateless\fR NAT cannot be shared with any other NAT rule\[char46]
 .IP
 \fB\-\-gateway\-port\fR option allows specifying the distributed gateway port of \fIrouter\fR where the NAT rule needs to be applied\[char46] \fIGATEWAY_PORT\fR should reference a \fBLogical_Router_Port\fR row that is a distributed gateway port of \fIrouter\fR\[char46] When \fIrouter\fR has multiple distributed gateway ports and the gateway port for this NAT can\(cqt be inferred from the \fIexternal_ip\fR, it is an error to not specify the \fIGATEWAY_PORT\fR\[char46]
+.IP
+If the \fB\-\-portrange\fR option is specified, then a range of ports may be specified in the \fBexternal_port_range\fR part of the \fBlr\-nat\-add\fR command\[char46] If this option is omitted, then an external port range may not be specified\[char46] The format of the port range is \fBport_low\-port_high\fR, where \fIport_low\fR is a lower number than \fIport_high\fR\[char46] When the packet is NATted, a random port from the range will be selected as the source port\[char46] The range for the \fBexternal_port_range\fR is \fB1\-65535\fR\[char46]
 .IP
 When \fItype\fR is \fBdnat\fR, the externally visible IP address \fIexternal_ip\fR is DNATted to the IP address \fIlogical_ip\fR in the logical space\[char46]
 .IP
