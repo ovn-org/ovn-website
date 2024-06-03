@@ -8,7 +8,7 @@ The OVN documentation website is based on hugo, grav, and the
 hugo-learn-theme and written in markdown format.
 
 If you want to contribute I recommend reading the
-[hugo-learn-theme documentation](https://themes.gohugo.io//theme/hugo-theme-learn/en/cont/pages/)
+[hugo-learn-theme documentation](https://themes.gohugo.io/themes/hugo-theme-learn/)
 
 You can always click the "Edit this page link" at the top right of each page, but
 if you want to test your changes locally before submitting you can:
