@@ -2,6 +2,9 @@ name: Rebuild dist-docs
 
 on:
   workflow_dispatch:
+  # Build every week on Monday 00:00
+  schedule:
+    - cron:  '0 0 * * 1'
 
 jobs:
   build-linux:
@@ -10,16 +13,12 @@ jobs:
     runs-on: ubuntu-22.04
 
     strategy:
+      max-parallel: 1
       fail-fast: false
       matrix:
         include:
           - branch:       main
-          - branch:       branch-22.03
-          - branch:       branch-22.12
-          - branch:       branch-23.03
-          - branch:       branch-23.06
-          - branch:       branch-23.09
-          - branch:       branch-24.03
+          - branch:       branch-24.09
 
     steps:
     - name: install dependencies
@@ -28,6 +27,7 @@ jobs:
     - name: checkout ovn-website
       uses: actions/checkout@v4
       with:
+        token: ${{ secrets.GITHUB_TOKEN }}
         path: 'ovn-website'
         ref: 'main'
 
@@ -76,24 +76,18 @@ jobs:
         tar xzvf /tmp/dist-docs.tgz --strip-components=1 -C ${DOCS_DIR}
       working-directory: ovn-website/src/static/support
 
-    - name: pull-request for updated dist-docs
-      id: pull_request
-      uses: peter-evans/create-pull-request@v6
-      with:
-        path: ovn-website
-        commit-message: |
-          dist-docs: Update OVN ${{ matrix.branch }} manpages
-        committer: github-actions <github-actions@github.com>
-        author: github-actions <github-actions@github.com>
-        branch: dist-docs-${{ matrix.branch }}
-        title: Pulling dist-docs from OVN ${{ matrix.branch }}
-        body: Automated changes to pull latest dist-docs from OVN ${{ matrix.branch }}
-
-    - name: pull-request info
-      if: ${{ success() }}
+    - name: push updated dist-docs
       run: |
-        echo "Pull request number: ${{ steps.pull_request.outputs.pull-request-number }}"
-        echo "Pull request url: ${{ steps.pull_request.outputs.pull-request-url }}"
+        if ! git diff --quiet --exit-code; then
+            git config --global user.name "github-actions"
+            git config --global user.email "github-actions@github.com"
+            git add src/static/support
+            git commit -m "Update OVN ${{ matrix.branch }} manpages"
+            #git push
+        else
+            echo "No changes needed for ${{ matrix.branch }} manpages"
+        fi
+      working-directory: ovn-website
 
     - name: copy logs on failure
       if: failure() || cancelled()
