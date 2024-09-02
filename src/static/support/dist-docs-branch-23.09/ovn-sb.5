@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-sb" 5 " DB Schema 20.29.0" "Open vSwitch 23.09.4" "Open vSwitch Manual"
+.TH "ovn-sb" 5 " DB Schema 20.32.0" "Open vSwitch 23.09.6" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -1084,6 +1084,8 @@ The following predicates are supported:
 .IP \(bu
 \fBeth\[char46]mcast\fR expands to \fBeth\[char46]dst[40]\fR
 .IP \(bu
+\fBeth\[char46]mcastv6\fR expands to \fBeth\[char46]dst[32\[char46]\[char46]47] == 0x3333\fR
+.IP \(bu
 \fBvlan\[char46]present\fR expands to \fBvlan\[char46]tci[12]\fR
 .IP \(bu
 \fBip4\fR expands to \fBeth\[char46]type == 0x800\fR
@@ -1112,9 +1114,13 @@ The following predicates are supported:
 .IP \(bu
 \fBrarp\fR expands to \fBeth\[char46]type == 0x8035\fR
 .IP \(bu
+\fBip6\[char46]mcast\fR expands to \fBeth\[char46]mcastv6 && ip6\[char46]dst[120\[char46]\[char46]127] == 0xff\fR
+.IP \(bu
 \fBnd\fR expands to \fBicmp6\[char46]type == {135, 136} && icmp6\[char46]code == 0 && ip\[char46]ttl == 255\fR
 .IP \(bu
 \fBnd_ns\fR expands to \fBicmp6\[char46]type == 135 && icmp6\[char46]code == 0 && ip\[char46]ttl == 255\fR
+.IP \(bu
+\fBnd_ns_mcast\fR expands to \fBip6\[char46]mcast  && icmp6\[char46]type == 135 && icmp6\[char46]code == 0 && ip\[char46]ttl == 255\fR
 .IP \(bu
 \fBnd_na\fR expands to \fBicmp6\[char46]type == 136 && icmp6\[char46]code == 0 && ip\[char46]ttl == 255\fR
 .IP \(bu
@@ -3201,6 +3207,9 @@ optional weak reference to \fBChassis\fR
 .TQ 3.00in
 \fBports\fR
 set of weak reference to \fBPort_Binding\fRs
+.TQ 3.00in
+\fBchassis_name\fR
+string
 .SS "Details:
 .IP "\fBaddress\fR: string"
 Destination IPv4 address for the IGMP group\[char46]
@@ -3210,6 +3219,8 @@ Datapath to which this IGMP group belongs\[char46]
 Chassis to which this IGMP group belongs\[char46]
 .IP "\fBports\fR: set of weak reference to \fBPort_Binding\fRs"
 The destination port bindings for this IGMP group\[char46]
+.IP "\fBchassis_name\fR: string"
+The chassis that inserted this record\[char46] This column is used for RBAC purposes only\[char46]
 .bp
 .SH "Service_Monitor TABLE"
 .PP
@@ -3240,6 +3251,9 @@ string
 string
 .TQ 2.75in
 \fBsrc_ip\fR
+string
+.TQ 2.75in
+\fBchassis_name\fR
 string
 .TQ 2.75in
 \fBoptions : interval\fR
@@ -3286,6 +3300,8 @@ The VIF of the logical port on which the service is running\[char46] The \fBovn\
 Source Ethernet address to use in the service monitor packet\[char46]
 .IP "\fBsrc_ip\fR: string"
 Source IPv4 or IPv6 address to use in the service monitor packet\[char46]
+.IP "\fBchassis_name\fR: string"
+The name of the chassis where the logical port is bound\[char46]
 .IP "\fBoptions : interval\fR: optional string, containing an integer"
 The interval, in seconds, between service monitor checks\[char46]
 .IP "\fBoptions : timeout\fR: optional string, containing an integer"
@@ -3409,6 +3425,9 @@ integer
 \fBdetect_mult\fR
 integer
 .TQ 2.75in
+\fBchassis_name\fR
+string
+.TQ 2.75in
 \fBoptions\fR
 map of string-string pairs
 .TQ 2.75in
@@ -3439,6 +3458,8 @@ This is the minimum interval, in milliseconds, that the local system would like 
 This is the minimum interval, in milliseconds, between received BFD Control packets that this system is capable of supporting, less any jitter applied by the sender\[char46] If this value is zero, the transmitting system does not want the remote system to send any periodic BFD Control packets\[char46]
 .IP "\fBdetect_mult\fR: integer"
 Detection time multiplier\[char46] The negotiated transmit interval, multiplied by this value, provides the Detection Time for the receiving system in Asynchronous mode\[char46]
+.IP "\fBchassis_name\fR: string"
+The name of the chassis where the logical port is bound\[char46]
 .IP "\fBoptions\fR: map of string-string pairs"
 Reserved for future use\[char46]
 .IP "\fBexternal_ids\fR: map of string-string pairs"
