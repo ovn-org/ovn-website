@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nbctl" 8 "ovn-nbctl" "OVN 24\[char46]03\[char46]90" "OVN Manual"
+.TH "ovn-nbctl" 8 "ovn-nbctl" "OVN 24\[char46]09\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -400,10 +400,12 @@ Lists all existing switches on standard output, one per line\[char46]
 These commands operates on ACL objects for a given \fIentity\fR\[char46] The \fIentity\fR can be either a logical switch or a port group\[char46] The \fIentity\fR can be specified as uuid or name\[char46] The \fB\-\-type\fR option can be used to specify the type of the \fIentity\fR, in case both a logical switch and a port groups exist with the same name specified for \fIentity\fR\[char46] \fBtype\fR must be either \fBswitch\fR or \fBport\-group\fR\[char46]
 .RS
 .TP
-[\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] [\fB\-\-log\fR] [\fB\-\-meter=\fR\fImeter\fR] [\fB\-\-severity=\fR\fIseverity\fR] [\fB\-\-name=\fR\fIname\fR] [\fB\-\-label=\fR\fIlabel\fR] [\fB\-\-may\-exist\fR] [\fB\-\-apply\-after\-lb\fR] [\fB\-\-tier\fR] \fBacl\-add\fR \fIentity\fR \fIdirection\fR \fIpriority\fR \fImatch\fR \fIverdict\fR
+[\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] [\fB\-\-log\fR] [\fB\-\-meter=\fR\fImeter\fR] [\fB\-\-severity=\fR\fIseverity\fR] [\fB\-\-name=\fR\fIname\fR] [\fB\-\-label=\fR\fIlabel\fR] [\fB\-\-sample\-new=\fR\fIsample\fR] [\fB\-\-sample\-est=\fR\fIsample\fR] [\fB\-\-may\-exist\fR] [\fB\-\-apply\-after\-lb\fR] [\fB\-\-tier\fR] \fBacl\-add\fR \fIentity\fR \fIdirection\fR \fIpriority\fR \fImatch\fR \fIverdict\fR
 Adds the specified ACL to \fIentity\fR\[char46] \fIdirection\fR must be either \fBfrom\-lport\fR or \fBto\-lport\fR\[char46] \fIpriority\fR must be between \fB0\fR and \fB32767\fR, inclusive\[char46] A full description of the fields are in \fBovn\-nb\fR(5)\[char46] If \fB\-\-may\-exist\fR is specified, adding a duplicated ACL succeeds but the ACL is not really created\[char46] Without \fB\-\-may\-exist\fR, adding a duplicated ACL results in error\[char46]
 .IP
 The \fB\-\-log\fR option enables packet logging for the ACL\[char46] The options \fB\-\-severity\fR and \fB\-\-name\fR specify a severity and name, respectively, for log entries (and also enable logging)\[char46] The severity must be one of \fBalert\fR, \fBwarning\fR, \fBnotice\fR, \fBinfo\fR, or \fBdebug\fR\[char46] If a severity is not specified, the default is \fBinfo\fR\[char46] The \fB\-\-meter=\fImeter\fB\fR option is used to rate-limit packet logging\[char46] The \fImeter\fR argument names a meter configured by \fBmeter\-add\fR\[char46]
+.IP
+The \fB\-\-sample\-new\fR (and optionally \fB\-\-sample\-est\fR) enable ACL sampling\[char46] A valid uuid of a row of the \fBSample\fR table must be provided\[char46]
 .IP
 The \fB\-\-apply\-after\-lb\fR option sets \fBapply\-after\-lb=true\fR in the \fBoptions\fR column of the \fBACL\fR table\[char46] As the option name suggests, the ACL will be applied after the logical switch load balancer stage\[char46]
 .IP
@@ -647,7 +649,7 @@ It is an error if there is no matching route entry, unless \fB\-\-if\-exists\fR 
 Lists the routes on \fIrouter\fR\[char46]
 .SS "Logical Router Policy Commands"
 .TP
-[\fB\-\-may\-exist\fR]\fBlr\-policy\-add\fR \fIrouter\fR \fIpriority\fR \fImatch\fR \fIaction\fR [\fInexthop\fR[,\fInexthop\fR,\[char46]\[char46]\[char46]]] [\fIoptions key=value]\fR]
+[\fB\-\-may\-exist\fR] [\fB\-\-bfd\fR] \fBlr\-policy\-add\fR \fIrouter\fR \fIpriority\fR \fImatch\fR \fIaction\fR [\fInexthop\fR[,\fInexthop\fR,\[char46]\[char46]\[char46]]] [\fIoptions key=value]\fR]
 Add Policy to \fIrouter\fR which provides a way to configure permit/deny and reroute policies on the router\[char46] Permit/deny policies are similar to OVN ACLs, but exist on the logical-router\[char46] Reroute policies are needed for service-insertion and service-chaining\[char46] \fInexthop\fR is an optional parameter\[char46] It needs to be provided only when \fIaction\fR is \fIreroute\fR\[char46] Multiple \fBnexthops\fR can be specified for ECMP routing\[char46] A policy is uniquely identified by \fIpriority\fR and \fImatch\fR\[char46] Multiple policies can have the same \fIpriority\fR\[char46] \fIoptions\fR sets the router policy options as key-value pair\[char46] The supported option is : \fBpkt_mark\fR\[char46]
 .IP
 If \fB\-\-may\-exist\fR is specified, adding a duplicated routing policy with the same priority and match string is not really created\[char46] Without \fB\-\-may\-exist\fR, adding a duplicated routing policy results in error\[char46]
@@ -672,12 +674,18 @@ If \fIrouter\fR and \fIuuid\fR are supplied, then the policy with specified uuid
 Lists the polices on \fIrouter\fR\[char46]
 .SS "NAT Commands"
 .TP
-[\fB\-\-may\-exist\fR] [\fB\-\-stateless\fR] [\fB\-\-gateway\-port\fR=\fIGATEWAY_PORT\fR] \fBlr\-nat\-add\fR \fIrouter\fR \fItype\fR \fIexternal_ip\fR \fIlogical_ip\fR [\fIlogical_port\fR \fIexternal_mac\fR]
+[\fB\-\-may\-exist\fR] [\fB\-\-stateless\fR] [\fB\-\-gateway\-port\fR=\fIGATEWAY_PORT\fR] [\-portrange] [\fB\-\-match\fR=\fIMATCH\fR] [\fB\-\-priority\fR=\fIPRIORITY\fR] \fBlr\-nat\-add\fR \fIrouter\fR \fItype\fR \fIexternal_ip\fR \fIlogical_ip\fR [\fIlogical_port\fR \fIexternal_mac\fR] [\fIexternal_port_range\fR]
 Adds the specified NAT to \fIrouter\fR\[char46] The \fItype\fR must be one of \fBsnat\fR, \fBdnat\fR, or \fBdnat_and_snat\fR\[char46] The \fIexternal_ip\fR is an IPv4 address\[char46] The \fIlogical_ip\fR is an IPv4 network (e\[char46]g 192\[char46]168\[char46]1\[char46]0/24) or an IPv4 address\[char46] The \fIlogical_port\fR and \fIexternal_mac\fR are only accepted when \fIrouter\fR is a distributed router (rather than a gateway router) and \fItype\fR is \fBdnat_and_snat\fR\[char46] The \fIlogical_port\fR is the name of an existing logical switch port where the \fIlogical_ip\fR resides\[char46] The \fIexternal_mac\fR is an Ethernet address\[char46]
 .IP
 When \fB\-\-stateless\fR is specified then it implies that we will be not use connection tracker, i\[char46]e internal ip and external ip are 1:1 mapped\[char46] This implies that \fB\-\-stateless\fR is applicable only to dnat_and_snat type NAT rules\[char46] An external ip with \fB\-\-stateless\fR NAT cannot be shared with any other NAT rule\[char46]
 .IP
 \fB\-\-gateway\-port\fR option allows specifying the distributed gateway port of \fIrouter\fR where the NAT rule needs to be applied\[char46] \fIGATEWAY_PORT\fR should reference a \fBLogical_Router_Port\fR row that is a distributed gateway port of \fIrouter\fR\[char46] When \fIrouter\fR has multiple distributed gateway ports and the gateway port for this NAT can\(cqt be inferred from the \fIexternal_ip\fR, it is an error to not specify the \fIGATEWAY_PORT\fR\[char46]
+.IP
+If the \fB\-\-portrange\fR option is specified, then a range of ports may be specified in the \fBexternal_port_range\fR part of the \fBlr\-nat\-add\fR command\[char46] If this option is omitted, then an external port range may not be specified\[char46] The format of the port range is \fBport_low\-port_high\fR, where \fIport_low\fR is a lower number than \fIport_high\fR\[char46] When the packet is NATted, a random port from the range will be selected as the source port\[char46] The range for the \fBexternal_port_range\fR is \fB1\-65535\fR\[char46]
+.IP
+The \fB\-\-match\fR allows to specify the extra match condition\[char46] The extra match is for more fine-grained control over the NAT rule\[char46]
+.IP
+The \fB\-\-priority\fR option allows to specify order of NAT rule evaluation\[char46] Priority must be between \fB0\fR and \fB32767\fR, inclusive and can be only specified together with \fB\-\-match\fR\[char46]
 .IP
 When \fItype\fR is \fBdnat\fR, the externally visible IP address \fIexternal_ip\fR is DNATted to the IP address \fIlogical_ip\fR in the logical space\[char46]
 .IP

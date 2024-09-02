@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-sb" 5 " DB Schema 20.33.0" "Open vSwitch 24.03.90" "Open vSwitch Manual"
+.TH "ovn-sb" 5 " DB Schema 20.37.0" "Open vSwitch 24.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -467,13 +467,6 @@ optional string
 optional string
 .RE
 .TQ .25in
-\fIOptions for configuring Load Balancers:\fR
-.RS .25in
-.TQ 2.50in
-\fBoptions : lb_hairpin_use_ct_mark\fR
-optional string
-.RE
-.TQ .25in
 \fIOptions for configuring ovn-sbctl:\fR
 .RS .25in
 .TQ 2.50in
@@ -532,13 +525,6 @@ If set to a 8-bit number and if \fBdebug_drop_collector_set\fR is also configure
 The observation_point_id will be set to the OpenFlow table number\[char46]
 .IP "\fBoptions : debug_drop_collector_set\fR: optional string"
 If set to a 32-bit number \fBovn\-controller\fR will add a \fBsample\fR action to every flow that does not come from a logical flow that contains a \(cqdrop\(cq action\[char46] The sample action will have the specified collector_set_id\[char46] The value must match that of the local OVS configuration as described in \fBovs\-actions\fR(7)\[char46]
-.ST "Options for configuring Load Balancers:"
-.PP
-.PP
-.PP
-These options apply when \fBovn\-controller\fR configures load balancer related flows\[char46]
-.IP "\fBoptions : lb_hairpin_use_ct_mark\fR: optional string"
-By default this option is turned on (even if not present in the database) unless its value is explicitly set to \fBfalse\fR\[char46] This value is automatically set to \fBfalse\fR by \fBovn\-northd\fR when action \fBct_lb_mark\fR cannot be used for new load balancer sessions and action \fBct_lb\fR will be used instead\[char46] \fBovn\-controller\fR then knows that it should check \fBct_label\[char46]natted\fR to detect load balanced traffic\[char46]
 .ST "Options for configuring ovn-sbctl:"
 .PP
 .PP
@@ -731,6 +717,9 @@ optional string, either \fBtrue\fR or \fBfalse\fR
 \fBoptions : dst_port\fR
 optional string, containing an integer
 .TQ 3.00in
+\fBoptions : is_default\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 3.00in
 \fBip\fR
 string
 .TQ 3.00in
@@ -753,6 +742,8 @@ Not all devices see such a benefit\[char46] The most notable exception is hardwa
 This option applies to \fBgeneve\fR and \fBvxlan\fR encapsulations\[char46]
 .IP "\fBoptions : dst_port\fR: optional string, containing an integer"
 If set, overrides the UDP (for \fBgeneve\fR and \fBvxlan\fR) or TCP (for \fBstt\fR) destination port\[char46]
+.IP "\fBoptions : is_default\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+When there are multiple encaps for a chassis with different IPs, this option indicates if the encap is the default one that matches the IP in \fBexternal_ids:ovn-encap-ip-default\fR column of the Open_vSwitch database\(cqs \fBOpen_vSwitch\fR table\[char46]
 .IP "\fBip\fR: string"
 The IPv4 address of the encapsulation tunnel endpoint\[char46]
 .IP "\fBchassis_name\fR: string"
@@ -865,6 +856,9 @@ string
 map of string-string pairs
 .TQ 3.00in
 \fBcontroller_meter\fR
+optional string
+.TQ 3.00in
+\fBflow_desc\fR
 optional string
 .TQ 3.00in
 \fBexternal_ids : stage-name\fR
@@ -1084,6 +1078,8 @@ The following predicates are supported:
 .IP \(bu
 \fBeth\[char46]mcast\fR expands to \fBeth\[char46]dst[40]\fR
 .IP \(bu
+\fBeth\[char46]mcastv6\fR expands to \fBeth\[char46]dst[32\[char46]\[char46]47] == 0x3333\fR
+.IP \(bu
 \fBvlan\[char46]present\fR expands to \fBvlan\[char46]tci[12]\fR
 .IP \(bu
 \fBip4\fR expands to \fBeth\[char46]type == 0x800\fR
@@ -1112,9 +1108,13 @@ The following predicates are supported:
 .IP \(bu
 \fBrarp\fR expands to \fBeth\[char46]type == 0x8035\fR
 .IP \(bu
+\fBip6\[char46]mcast\fR expands to \fBeth\[char46]mcastv6 && ip6\[char46]dst[120\[char46]\[char46]127] == 0xff\fR
+.IP \(bu
 \fBnd\fR expands to \fBicmp6\[char46]type == {135, 136} && icmp6\[char46]code == 0 && ip\[char46]ttl == 255\fR
 .IP \(bu
 \fBnd_ns\fR expands to \fBicmp6\[char46]type == 135 && icmp6\[char46]code == 0 && ip\[char46]ttl == 255\fR
+.IP \(bu
+\fBnd_ns_mcast\fR expands to \fBip6\[char46]mcast  && icmp6\[char46]type == 135 && icmp6\[char46]code == 0 && ip\[char46]ttl == 255\fR
 .IP \(bu
 \fBnd_na\fR expands to \fBicmp6\[char46]type == 136 && icmp6\[char46]code == 0 && ip\[char46]ttl == 255\fR
 .IP \(bu
@@ -1216,10 +1216,17 @@ Commit the flow to the connection tracking entry associated with it by a previou
 .IP
 Note that if you want processing to continue in the next table, you must execute the \fBnext\fR action after \fBct_commit\fR\[char46] You may also leave out \fBnext\fR which will commit connection tracking state, and then drop the packet\[char46] This could be useful for setting \fBct_mark\fR on a connection tracking entry before dropping a packet, for example\[char46]
 .TP
+\fBct_commit_to_zone(dnat);\fR
+.TQ .5in
+\fBct_commit_to_zone(snat);\fR
+Commit the flow to the specific zone in the connection tracker\[char46] The packet is then automatically sent to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
+.IP
+Note that this action is meaningful only in the Logical Router Datapath as the Logical Switch Datapath does not use separate connection tracking zones\[char46] Using this action in Logical Switch Datapath falls back to committing the flow into the logical port\(cqs conntrack zone\[char46]
+.TP
 \fBct_dnat;\fR
 .TQ .5in
 \fBct_dnat(\fIIP\fB);\fR
-\fBct_dnat\fR sends the packet through the DNAT zone in connection tracking table to unDNAT any packet that was DNATed in the opposite direction\[char46] The packet is then automatically sent to to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
+\fBct_dnat\fR sends the packet through the DNAT zone in connection tracking table to unDNAT any packet that was DNATed in the opposite direction\[char46] The packet is then automatically sent to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
 .IP
 \fBct_dnat(\fIIP\fB)\fR sends the packet through the DNAT zone to change the destination IP address of the packet to the one provided inside the parentheses and commits the connection\[char46] The packet is then automatically sent to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
 .TP
@@ -1233,7 +1240,7 @@ Note that if you want processing to continue in the next table, you must execute
 \fBct_dnat_in_czone;\fR
 .TQ .5in
 \fBct_dnat_in_czone(\fIIP\fB);\fR
-\fBct_dnat_in_czone\fR sends the packet through the common NAT zone (used for both DNAT and SNAT) in connection tracking table to unDNAT any packet that was DNATed in the opposite direction\[char46] The packet is then automatically sent to to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
+\fBct_dnat_in_czone\fR sends the packet through the common NAT zone (used for both DNAT and SNAT) in connection tracking table to unDNAT any packet that was DNATed in the opposite direction\[char46] The packet is then automatically sent to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
 .IP
 \fBct_dnat_in_czone(\fIIP\fB)\fR sends the packet through the common NAT zone to change the destination IP address of the packet to the one provided inside the parentheses and commits the connection\[char46] The packet is then automatically sent to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
 .TP
@@ -1812,6 +1819,30 @@ An unsigned 32-bit integer to be used as \fBObsservationPointID\fR or the string
 .TP
 \fBmac_cache_use;\fR
 This action resubmits to corresponding table which updates the use statistics of MAC cache\[char46]
+.TP
+\fB\fIR\fB = dhcp_relay_req_chk(\fIrelay-ip\fB,
+\fIserver-ip\fB);\fR
+\fBParameters\fR: Logical Router Port IP \fIrelay-ip\fR, DHCP Server IP \fIserver-ip\fR\[char46]
+.IP
+\fBResult\fR: stored to a 1-bit subfield \fIR\fR\[char46]
+.IP
+This action executes on the source node on which the DHCP request (DHCPDISCOVER or DHCPREQUEST) originated\[char46]
+.IP
+When this action applied successfully on the DHCP request packet, it updates GIADDR in the DHCP packet with \fIrelay-ip\fR and stores 1 in R\[char46]
+.IP
+When this action failed to apply on the packet, it leaves the packet unchanged and stores 0 in R\[char46]
+.TP
+\fB\fIR\fB = dhcp_relay_resp_chk(\fIrelay-ip\fB,
+\fIserver-ip\fB);\fR
+\fBParameters\fR: Logical Router Port IP \fIrelay-ip\fR, DHCP Server IP \fIserver-ip\fR\[char46]
+.IP
+\fBResult\fR: stored to a 1-bit subfield \fIR\fR\[char46]
+.IP
+This action executes on the first node (Redirect Chassis node) which processes the DHCP response(DHCPOFFER, DHCPACK) from the DHCP server\[char46]
+.IP
+When this action applied successfully on the DHCP response packet, it updates the destination MAC and destination IP in the packet and stores 1 in R\[char46] \fIrelay-ip\fR and \fIserver-ip\fR are used to validate GIADDR and SERVER-ID in the DHCP response packet\[char46]
+.IP
+When this action failed to apply on the packet, it leaves the packet unchanged and stores 0 in R\[char46]
 .RE
 .IP "\fBtags\fR: map of string-string pairs"
 Key-value pairs that provide additional information to help ovn-controller processing the logical flow\[char46] Below are the tags used by ovn-controller\[char46]
@@ -1822,6 +1853,8 @@ In the logical flow\(cqs \(dqmatch\(dq column, if a logical port P is compared w
 .RE
 .IP "\fBcontroller_meter\fR: optional string"
 The name of the meter in table \fBMeter\fR to be used for all packets that the logical flow might send to \fBovn\-controller\fR\[char46]
+.IP "\fBflow_desc\fR: optional string"
+Human-readable explanation of the flow, this is optional and used to provide context for the given flow\[char46]
 .IP "\fBexternal_ids : stage-name\fR: optional string"
 Human-readable name for this flow\(cqs stage in the pipeline\[char46]
 .IP "\fBexternal_ids : stage-hint\fR: optional string, containing an uuid"
@@ -3042,7 +3075,7 @@ map of string-string pairs
 .IP "\fBchassis\fR: optional weak reference to \fBChassis\fR"
 The \fBChassis\fR which provides the HA functionality\[char46]
 .IP "\fBpriority\fR: integer, in range 0 to 32,767"
-Priority of the HA chassis\[char46] Chassis with highest priority will be the master in the HA chassis group\[char46]
+Priority of the HA chassis\[char46] Chassis with highest priority will be the active chassis in the HA chassis group\[char46]
 .ST "Common Columns:"
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
@@ -3052,7 +3085,7 @@ See \fBExternal IDs\fR at the beginning of this document\[char46]
 .PP
 .PP
 .PP
-Table representing a group of chassis which can provide High availability services\[char46] Each chassis in the group is represented by the table \fBHA_Chassis\fR\[char46] The HA chassis with highest priority will be the master of this group\[char46] If the master chassis failover is detected, the HA chassis with the next higher priority takes over the responsibility of providing the HA\[char46] If \fBha_chassis_group\fR column of the table \fBPort_Binding\fR references this table, then this HA chassis group provides the gateway functionality and redirects the gateway traffic to the master of this group\[char46]
+Table representing a group of chassis which can provide High availability services\[char46] Each chassis in the group is represented by the table \fBHA_Chassis\fR\[char46] The HA chassis with highest priority will be the active chassis of this group\[char46] If the active chassis failover is detected, the HA chassis with the next higher priority takes over the responsibility of providing the HA\[char46] If \fBha_chassis_group\fR column of the table \fBPort_Binding\fR references this table, then this HA chassis group provides the gateway functionality and redirects the gateway traffic to the active chassis of this group\[char46]
 .SS "Summary:
 .TQ 3.00in
 \fBname\fR
@@ -3198,6 +3231,9 @@ Contains learned IGMP groups indexed by address/datapath/chassis\[char46]
 \fBaddress\fR
 string
 .TQ 3.00in
+\fBprotocol\fR
+string
+.TQ 3.00in
 \fBdatapath\fR
 optional weak reference to \fBDatapath_Binding\fR
 .TQ 3.00in
@@ -3212,6 +3248,8 @@ string
 .SS "Details:
 .IP "\fBaddress\fR: string"
 Destination IPv4 address for the IGMP group\[char46]
+.IP "\fBprotocol\fR: string"
+Group protocol version either IGMPv1,v2,v3 or MLDv1,v2\[char46]
 .IP "\fBdatapath\fR: optional weak reference to \fBDatapath_Binding\fR"
 Datapath to which this IGMP group belongs\[char46]
 .IP "\fBchassis\fR: optional weak reference to \fBChassis\fR"

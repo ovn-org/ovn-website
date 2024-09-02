@@ -396,6 +396,10 @@ CONFIGURATION
                      for handling specific traffic associated with  particular
                      VIFs.
 
+              external_ids:ovn-encap-ip-default
+                     When ovn-encap-ip contains multiple IPs, this field indi‐
+                     cates the default one.
+
               external_ids:ovn-encap-df_default
                      indicates  the  DF flag handling of the encapulation. Set
                      to true to set the DF flag for new data paths or false to
@@ -534,16 +538,6 @@ CONFIGURATION
                      regardless of how many entries there are in the cache. By
                      default this is set to 30000 (30 seconds).
 
-              external_ids:ovn-set-local-ip
-                     The boolean flag indicates if ovn-controller when  create
-                     tunnel  ports should set local_ip parameter. Can be hepl‐
-                     ful to pin source outer IP for the tunnel  when  multiple
-                     interfaces are used on the host for overlay traffic. This
-                     is  also  useful when running multiple ovn-controller in‐
-                     stances on the same chassis, in which case  this  setting
-                     will  guarantee  that their tunnel ports have unique con‐
-                     figuration and can exist in parallel.
-
               external_ids:garp-max-timeout-sec
                      When used, this configuration value specifies the maximum
                      timeout (in seconds) between two consecutive GARP packets
@@ -552,6 +546,16 @@ CONFIGURATION
                      Setting external_ids:garp-max-timeout-sec allows  to  cap
                      for  the  exponential  backoff  used by ovn-controller to
                      send GARPs packets.
+
+              external_ids:ovn-bridge-remote
+                     Connection to the OVN management bridge in  OvS.  It  de‐
+                     faults to unix:br-int.mgmt when not specified.
+
+              external_ids:ovn-bridge-remote-probe-interval
+                     The  inactivity  probe  interval of the connection to the
+                     OVN management bridge, in milliseconds.  It  defaults  to
+                     zero.  If  the  value is zero, it disables the inactivity
+                     probe.
 
        Most of configuration options listed above can also be set for  a  par‐
        ticular  chassis  name  (see  external_ids:system-id  for more informa‐
@@ -567,10 +571,9 @@ CONFIGURATION
        unique chassis names on the same host using the same vswitchd instance.
        This  may  be useful when running a hybrid setup with more than one CMS
        managing ports on the host, or to use different datapath types  on  the
-       same  host.  Make  sure you also set external_ids:ovn-set-local-ip when
-       using such configuration. Also note that this ability is highly experi‐
-       mental and has known limitations (for example, stateful  ACLs  are  not
-       supported). Use at your own risk.
+       same  host.  Also note that this ability is highly experimental and has
+       known limitations (for example, stateful ACLs are not  supported).  Use
+       at your own risk.
 
        ovn-controller  reads  the following values from the Open_vSwitch data‐
        base of the local OVS instance:
@@ -603,6 +606,12 @@ OPEN VSWITCH DATABASE USAGE
                      the integration bridge as one created  by  ovn-controller
                      to reach a remote chassis. Its value is the chassis ID of
                      the remote chassis.
+
+              external_ids:ct-zone-range in the Open_vSwitch table
+                     The presence of this key identifies a minimum and maximum
+                     values  for  ct-zone ids dynamically selected by ovn-con‐
+                     troller (boundaries are included in the  range).  Minimum
+                     value is 1 while maximum value is 65535.
 
               external_ids:ct-zone-* in the Bridge table
                      Logical  ports and gateway routers are assigned a connec‐
@@ -786,14 +795,14 @@ RUNTIME MANAGEMENT COMMANDS
 
                      •      compute
 
-                     •      abort
+                     •      cancel
 
               inc-engine/show-stats engine_node_name counter_name
                      Display  the  ovn-controller  engine  counter(s)  for the
                      specified engine_node_name. counter_name is optional  and
-                     can be one of recompute, compute or abort.
+                     can be one of recompute, compute or cancel.
 
               inc-engine/clear-stats
                      Reset ovn-controller engine counters.
 
-OVN 24.03.90                    ovn-controller               ovn-controller(8)
+OVN 24.09.90                    ovn-controller               ovn-controller(8)

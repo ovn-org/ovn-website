@@ -1378,7 +1378,7 @@ DESCRIPTION
 
        When multiple chassis have been specified for a  gateway,  all  chassis
        that may send packets to that gateway will enable BFD on tunnels to all
-       configured  gateway chassis. The current master chassis for the gateway
+       configured  gateway chassis. The current active chassis for the gateway
        is the highest priority gateway chassis that is currently viewed as ac‐
        tive based on BFD status.
 
@@ -2103,8 +2103,8 @@ DESIGN DECISIONS
        When  VXLAN  is  enabled  on  any hypervisor in a cluster, datapath and
        egress port identifier ranges are reduced to 12-bits. This is done  be‐
        cause only STT and Geneve provide the large space for metadata (over 32
-       bits per packet). To accommodate for VXLAN, 24 bits available are split
-       as follows:
+       bits per packet). The mode with reduced ranges is called VXLAN mode. To
+       accommodate for VXLAN, 24 bits available are split as follows:
 
               •      12-bit logical datapath identifier, derived from the tun�‐
                      nel_key column in the OVN Southbound Datapath_Binding ta‐
@@ -2180,4 +2180,9 @@ DESIGN DECISIONS
        with  large  amounts of metadata may continue to have a reduced feature
        set.
 
-OVN 24.03.90                   OVN Architecture            ovn-architecture(7)
+       VXLAN mode is recommended to be disabled if VXLAN encap at  hypervisors
+       is  needed  only  to  support HW VTEP L2 Gateway functionality. See man
+       ovn-nb(5) for table NB_Global column options key  vxlan_mode  for  more
+       details.
+
+OVN 24.09.90                   OVN Architecture            ovn-architecture(7)

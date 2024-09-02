@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-architecture" 7 "OVN Architecture" "OVN 24\[char46]03\[char46]90" "OVN Manual"
+.TH "ovn-architecture" 7 "OVN Architecture" "OVN 24\[char46]09\[char46]90" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -702,7 +702,7 @@ In order to trigger the second set of actions, the \fBchassisredirect\fR type of
 OVN allows you to specify a prioritized list of chassis for a distributed gateway port\[char46] This is done by associating multiple \fBGateway_Chassis\fR rows with a \fBLogical_Router_Port\fR in the \fBOVN_Northbound\fR database\[char46]
 .PP
 .PP
-When multiple chassis have been specified for a gateway, all chassis that may send packets to that gateway will enable BFD on tunnels to all configured gateway chassis\[char46] The current master chassis for the gateway is the highest priority gateway chassis that is currently viewed as active based on BFD status\[char46]
+When multiple chassis have been specified for a gateway, all chassis that may send packets to that gateway will enable BFD on tunnels to all configured gateway chassis\[char46] The current active chassis for the gateway is the highest priority gateway chassis that is currently viewed as active based on BFD status\[char46]
 .PP
 .PP
 For more information on L3 gateway high availability, please refer to http://docs\[char46]ovn\[char46]org/en/latest/topics/high-availability\[char46]html\[char46]
@@ -1095,7 +1095,7 @@ In general, OVN annotates logical network packets that it sends from one hypervi
 .RE
 .PP
 .PP
-When VXLAN is enabled on any hypervisor in a cluster, datapath and egress port identifier ranges are reduced to 12-bits\[char46] This is done because only STT and Geneve provide the large space for metadata (over 32 bits per packet)\[char46] To accommodate for VXLAN, 24 bits available are split as follows:
+When VXLAN is enabled on any hypervisor in a cluster, datapath and egress port identifier ranges are reduced to 12-bits\[char46] This is done because only STT and Geneve provide the large space for metadata (over 32 bits per packet)\[char46] The mode with reduced ranges is called \fBVXLAN mode\fR\[char46] To accommodate for VXLAN, 24 bits available are split as follows:
 .RS
 .IP \(bu
 12-bit logical datapath identifier, derived from the \fBtunnel_key\fR column in the OVN Southbound \fBDatapath_Binding\fR table\[char46]
@@ -1208,3 +1208,6 @@ line <-> invis "" above from B0.nw + (0,textht) to B3.ne + (0,textht)
 .PP
 .PP
 For connecting to gateways, in addition to Geneve and STT, OVN supports VXLAN, because only VXLAN support is common on top-of-rack (ToR) switches\[char46] Currently, gateways have a feature set that matches the capabilities as defined by the VTEP schema, so fewer bits of metadata are necessary\[char46] In the future, gateways that do not support encapsulations with large amounts of metadata may continue to have a reduced feature set\[char46]
+.PP
+.PP
+\fBVXLAN mode\fR is recommended to be disabled if VXLAN encap at hypervisors is needed only to support HW VTEP L2 Gateway functionality\[char46] See man ovn-nb(5) for table \fBNB_Global\fR column \fBoptions\fR key \fBvxlan_mode\fR for more details\[char46]
