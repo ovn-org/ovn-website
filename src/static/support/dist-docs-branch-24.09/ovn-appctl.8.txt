@@ -1,0 +1,222 @@
+ovn-appctl(8)                     OVN Manual                     ovn-appctl(8)
+
+NAME
+       ovn-appctl - utility for configuring running OVN daemons
+
+SYNOPSIS
+        ovn-appctl [-target=target | -t target] [-T secs | -timeout=secs] com‐
+       mand [arg...]
+
+       ovn-appctl -help
+
+       ovn-appctl -version
+
+DESCRIPTION
+       OVN  daemons accept certain commands at runtime to control their behav‐
+       ior and query their settings. Every daemon accepts a common set of com‐
+       mands documented under COMMON COMMANDS below. Some daemons support  ad‐
+       ditional commands documented in their own manpages.
+
+       The  ovn-appctl program provides a simple way to invoke these commands.
+       The command to be sent is specified on  ovn-appctl�’s  command  line  as
+       non-option  arguments. ovn-appctl sends the command and prints the dae‐
+       mon’s response on standard output.
+
+       ovn-ctl is exactly similar to Open vSwitch ovs-appctl utility.
+
+COMMAND COMMANDS
+       Every OVN daemon supports a common set of  commands,  which  are  docu‐
+       mented in this section.
+
+   General Commands
+       These  commands  display  daemon-specific commands and the running ver‐
+       sion. Note that these commands are different from the -help  and  -ver‐
+       sion  options  that return information about the ovn-appctl utility it‐
+       self.
+
+              list-commands
+                     Lists the commands supported by the target.
+
+              version
+                     Displays the version and compilation date of the target.
+
+   Logging Commands
+       OVN has several log levels. The highest-severity log level is:
+
+              off    No message is ever logged at this  level,  so  setting  a
+                     logging  destination’s  log level to off disables logging
+                     to that destination.
+
+       The following log levels, in order of descending severity,  are  avail‐
+       able:
+
+              emer   A major failure forced a process to hard stop.
+
+              err    A  high-level  operation or a subsystem failed. Attention
+                     is warranted.
+
+              warn   A low-level operation failed, but higher-level subsystems
+                     may be able to recover.
+
+              info   Information that may be useful in retrospect when  inves‐
+                     tigating a problem.
+
+              dbg    Information  useful only to someone with intricate knowl‐
+                     edge of the system, or that would commonly cause  too-vo‐
+                     luminous  log  output. Log messages at this level are not
+                     logged by default.
+
+       Every OVN daemon supports the following commands for examining and  ad‐
+       justing log levels.
+
+              vlog/list
+                     Lists the known logging modules and their current levels.
+
+              vlog/list-pattern
+                     Lists logging pattern used for each destination.
+
+              vlog/set [spec]
+                     Sets logging levels. Without any spec, sets the log level
+                     for  every module and destination to dbg. Otherwise, spec
+                     is a list of words  separated  by  spaces  or  commas  or
+                     colons, up to one from each category below:
+
+                     •      A valid module name, as displayed by the vlog/list
+                            command  on  ovn-appctl(8),  limits  the log level
+                            change to the specified module.
+
+                     •      syslog, console, or file, to limit the  log  level
+                            change  to only to the system log, to the console,
+                            or to a file, respectively.
+
+                            On Windows platform, syslog is accepted as a  word
+                            and  is only useful if the target was started with
+                            the --syslog-target option (the word has no effect
+                            otherwise).
+
+                     •      off, emer, err, warn, info, or dbg, to control the
+                            log level.  Messages  of  the  given  severity  or
+                            higher  will  be  logged,  and  messages  of lower
+                            severity will be filtered out. off filters out all
+                            messages.
+
+                     Case is not significant within spec.
+
+              vlog/set PATTERN:destination: pattern
+                     Sets the log pattern for  destination  to  pattern.  Each
+                     time  a  message is logged to destination, pattern deter‐
+                     mines the message’s formatting. Most characters  in  pat‐
+                     tern are copied literally to the log, but special escapes
+                     beginning with % are expanded as follows:
+
+                     •      %A  : The name of the application logging the mes‐
+                            sage, e.g. ovn-controller.
+
+                     •      %B : The RFC5424 syslog PRI of the message.
+
+                     •      %c : The name of the module (as shown  by  ovn-ap‐
+                            pctl -list) logging the message.
+
+                     •      %d  : The current date and time in ISO 8601 format
+                            (YYYY-MM-DD HH:MM:SS).
+
+                     •      %d{format} : The current  date  and  time  in  the
+                            specified  format,  which takes the same format as
+                            the template argument to strftime(3). As an exten‐
+                            sion, any # characters in format will be  replaced
+                            by  fractional  seconds, e.g. use %H:%M:%S.### for
+                            the time to the  nearest  millisecond.  Sub-second
+                            times  are  only approximate and currently decimal
+                            places after the third will always be reported  as
+                            zero.
+
+                     •      %D  :  The  current  UTC date and time in ISO 8601
+                            format (YYYY-MM-DD HH:MM:SS).
+
+                     •      %D{format} : The current UTC date and time in  the
+                            specified  format,  which takes the same format as
+                            the template argument to strftime(3). Supports the
+                            same  extension  for  sub-second   resolution   as
+                            %d{...}.
+
+                     •      %E : The hostname of the node running the applica‐
+                            tion.
+
+                     •      %m : The message being logged.
+
+                     •      %N  : A serial number for this message within this
+                            run of the program, as a decimal number. The first
+                            message a program logs has serial  number  1,  the
+                            second one has serial number 2, and so on.
+
+                     •      %n : A new-line.
+
+                     •      %p  :  The  level  at which the message is logged,
+                            e.g. DBG.
+
+                     •      %P : The program’s process ID (pid), as a  decimal
+                            number.
+
+                     •      %r  :  The number of milliseconds elapsed from the
+                            start of the application to the time  the  message
+                            was logged.
+
+                     •      %t  : The subprogram name, that is, an identifying
+                            name for the process or thread  that  emitted  the
+                            log  message, such as monitor for the process used
+                            for -monitor or main for the  primary  process  or
+                            thread in a program.
+
+                     •      %T  : The subprogram name enclosed in parentheses,
+                            e.g. (monitor), or the empty string for  the  pri‐
+                            mary process or thread in a program.
+
+                     •      %% : A literal %.
+
+                     A  few  options  may  appear between the % and the format
+                     specifier character, in this order:
+
+                     •      - : Left justify the escape’s expansion within its
+                            field width. Right justification is the default.
+
+                     •      - : Pad the field to  the  field  width  with  0s.
+                            Padding with spaces is the default.
+
+                     width  A number specifies the minimum field width. If the
+                     escape expands to fewer characters than width then it  is
+                     padded to fill the field width. (A field wider than width
+                     is not truncated to fit.)
+
+                     The  default  pattern  for  console  and  file  output is
+                     %D{%Y-%m-%dT %H:%M:%SZ}|%05N|%c|%p|%m; for syslog output,
+                     %05N|%c|%p|%m.
+
+              vlog/set FACILITY:facility
+                     Sets the RFC5424 facility of the  log  message.  facility
+                     can  be  one  of  kern, user, mail, daemon, auth, syslog,
+                     lpr, news, uucp, clock, ftp, ntp, audit,  alert,  clock2,
+                     local0, local1, local2, local3, local4, local5, local6 or
+                     local7.
+
+              vlog/close
+                     Causes  the  daemon to close its log file, if it is open.
+                     (Use vlog/reopen to reopen it later.)
+
+              vlog/reopen
+                     Causes the daemon to close its log file, if it  is  open,
+                     and  then  reopen  it. (This is useful after rotating log
+                     files, to cause a new log file to be used.)
+
+                     This has no effect if the target application was not  in‐
+                     voked with the --log-file option.
+
+OPTIONS
+       -h
+       --help
+            Prints a brief help message to the console.
+
+       -V
+       --version
+            Prints version information to the console.
+
+OVN 24.09.0                       ovn-appctl                     ovn-appctl(8)

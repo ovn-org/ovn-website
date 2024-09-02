@@ -1,0 +1,673 @@
+'\" p
+.\" -*- nroff -*-
+.TH "ovn-ic-sb" 5 " DB Schema 1.2.0" "Open vSwitch 24.09.0" "Open vSwitch Manual"
+.fp 5 L CR              \\" Make fixed-width font available as \\fL.
+.de TQ
+.  br
+.  ns
+.  TP "\\$1"
+..
+.de ST
+.  PP
+.  RS -0.15in
+.  I "\\$1"
+.  RE
+..
+.SH NAME
+ovn-ic-sb \- OVN_IC_Southbound database schema
+.PP
+.PP
+.PP
+.PP
+This database holds configuration and state for interconnecting different OVN deployments\[char46] The content of the database is populated and used by the \fBovn\-ic\fR program in each OVN deployment, and not supposed to be directly used by CMS or end user\[char46]
+.PP
+.PP
+The OVN Interconnection Southbound database is shared by \fBovn\-ic\fR program in each OVN deployment\[char46] It contains interconnection information from all related OVN deployments, and is used as the intermediate store for each OVN deployment to exchange the information\[char46] The \fBovn\-ic\fR program in each deployment is responsible for syncing the data between this database and the its own northbound and southbound databases\[char46]
+.SS "Database Structure"
+.PP
+.PP
+The OVN Interconnection Southbound database contains classes of data with different properties, as described in the sections below\[char46]
+.ST "Availability Zone Specific Information"
+.PP
+.PP
+These tables contain objects that are availability zone specific\[char46] Each object is owned and populated by one availability zone, and read by other availability zones\[char46]
+.PP
+.PP
+The \fBAvailability_Zone\fR, \fBGateway\fR, \fBEncap\fR and \fBPort_Binding\fR tables are the availability zone specific tables\[char46]
+.ST "Global Information"
+.PP
+.PP
+The data that does not belong to any specific availability zone but is common for all availability zones\[char46]
+.PP
+.PP
+The \fBDatapath_Binding\fR table contains the common datapath binding information\[char46]
+.ST "Common Columns"
+.PP
+.PP
+Each of the tables in this database contains a special column, named \fBexternal_ids\fR\[char46] This column has the same form and purpose each place it appears\[char46]
+.RS
+.TP
+\fBexternal_ids\fR: map of string-string pairs
+Key-value pairs for use by \fBovn\-ic\fR\[char46]
+.RE
+.SH "TABLE SUMMARY"
+.PP
+The following list summarizes the purpose of each of the tables in the
+\fBOVN_IC_Southbound\fR database.  Each table is described in more detail on a later
+page.
+.IP "Table" 1in
+Purpose
+.TQ 1in
+\fBIC_SB_Global\fR
+IC Southbound configuration
+.TQ 1in
+\fBAvailability_Zone\fR
+Availability Zone Information
+.TQ 1in
+\fBGateway\fR
+Interconnection Gateway Information
+.TQ 1in
+\fBEncap\fR
+Encapsulation Types
+.TQ 1in
+\fBDatapath_Binding\fR
+Transit Switch Datapath Bindings
+.TQ 1in
+\fBPort_Binding\fR
+Transit Port Bindings
+.TQ 1in
+\fBRoute\fR
+Route
+.TQ 1in
+\fBConnection\fR
+OVSDB client connections\[char46]
+.TQ 1in
+\fBSSL\fR
+SSL configuration\[char46]
+.\" check if in troff mode (TTY)
+.if t \{
+.bp
+.SH "TABLE RELATIONSHIPS"
+.PP
+The following diagram shows the relationship among tables in the
+database.  Each node represents a table.  Tables that are part of the
+``root set'' are shown with double borders.  Each edge leads from the
+table that contains it and points to the table that its value
+represents.  Edges are labeled with their column names, followed by a
+constraint on the number of allowed values: \fB?\fR for zero or one,
+\fB*\fR for zero or more, \fB+\fR for one or more.  Thick lines
+represent strong references; thin lines represent weak references.
+.RS -1in
+.ps -3
+.PS
+linethick = 1;
+linethick = 0.500000;
+box at 0.764118,0.478405 wid 1.279064 height 0.478405 "IC_SB_Global"
+box at 0.764118,0.478405 wid 1.223508 height 0.422849
+linethick = 1.000000;
+box at 4.006642,0.956810 wid 1.039861 height 0.478405 "Connection"
+linethick = 1.000000;
+box at 4.006642,0.239203 wid 0.717608 height 0.478405 "SSL"
+linethick = 0.500000;
+box at 4.006642,1.940219 wid 1.528217 height 0.478405 "Availability_Zone"
+box at 4.006642,1.940219 wid 1.472661 height 0.422849
+linethick = 0.500000;
+box at 0.764118,2.312323 wid 0.850499 height 0.478405 "Gateway"
+box at 0.764118,2.312323 wid 0.794943 height 0.422849
+linethick = 1.000000;
+box at 4.006642,3.029930 wid 0.717608 height 0.478405 "Encap"
+linethick = 0.500000;
+box at 0.764118,3.760837 wid 1.528217 height 0.478405 "Datapath_Binding"
+box at 0.764118,3.760837 wid 1.472661 height 0.422849
+linethick = 0.500000;
+box at 0.764118,3.043230 wid 1.189411 height 0.478405 "Port_Binding"
+box at 0.764118,3.043230 wid 1.133855 height 0.422849
+linethick = 0.500000;
+box at 0.764118,1.448515 wid 0.717608 height 0.478405 "Route"
+box at 0.764118,1.448515 wid 0.662052 height 0.422849
+linethick = 1.000000;
+spline -> from 1.405363,0.591510 to 1.405363,0.591510 to 1.525442,0.612138 to 1.650210,0.632892 to 1.767419,0.651167 to 2.355188,0.742762 to 3.032609,0.833697 to 3.484224,0.892244
+"connections*" at 2.385423,0.918605
+linethick = 1.000000;
+spline -> from 1.408903,0.431435 to 1.408903,0.431435 to 2.076565,0.381767 to 3.105805,0.305222 to 3.641715,0.265362
+"ssl?" at 2.385423,0.506640
+linethick = 1.000000;
+spline -> from 1.192472,2.124118 to 1.192472,2.124118 to 1.366325,2.054941 to 1.572900,1.985094 to 1.767419,1.950170 to 2.252426,1.863100 to 2.806419,1.860326 to 3.240428,1.879462
+"availability_zone" at 2.385423,2.034848
+linethick = 1.000000;
+spline -> from 1.193908,2.278643 to 1.193908,2.278643 to 1.648966,2.255105 to 2.394417,2.255488 to 3.003331,2.441875 to 3.244160,2.515549 to 3.487764,2.659166 to 3.673098,2.786039
+"encaps+" at 2.385423,2.526552
+linethick = 1.000000;
+spline -> from 1.364507,2.947740 to 1.364507,2.947740 to 1.972272,2.846797 to 2.853782,2.693803 to 3.003331,2.631228 to 3.264349,2.522055 to 3.525462,2.335860 to 3.713858,2.184206
+"availability_zone" at 2.385423,2.965154
+linethick = 0.500000;
+spline -> from 1.363263,3.098246 to 1.363263,3.098246 to 1.496068,3.108484 to 1.636528,3.117670 to 1.767419,3.122932 to 2.316246,3.144939 to 2.454600,3.148670 to 3.003331,3.122932 to 3.217178,3.112886 to 3.456093,3.090783 to 3.645733,3.070595
+"encap?" at 2.385423,3.230860
+linethick = 1.000000;
+spline -> from 1.127888,1.449471 to 1.127888,1.449471 to 1.569360,1.456552 to 2.349351,1.488605 to 3.003331,1.617966 to 3.104370,1.637963 to 3.209523,1.665041 to 3.311902,1.694989
+"availability_zone" at 2.385423,1.702643
+.ps +3
+.PE
+.RE\}
+.bp
+.SH "IC_SB_Global TABLE"
+.PP
+.PP
+.PP
+Interconnection Southbound configuration\[char46] This table must have exactly one row\[char46]
+.SS "Summary:
+.TQ .25in
+\fIStatus:\fR
+.RS .25in
+.TQ 2.75in
+\fBnb_ic_cfg\fR
+integer
+.RE
+.TQ .25in
+\fICommon Columns:\fR
+.RS .25in
+.TQ 2.75in
+\fBexternal_ids\fR
+map of string-string pairs
+.TQ 2.75in
+\fBoptions\fR
+map of string-string pairs
+.RE
+.TQ .25in
+\fIConnection Options:\fR
+.RS .25in
+.TQ 2.75in
+\fBconnections\fR
+set of \fBConnection\fRs
+.TQ 2.75in
+\fBssl\fR
+optional \fBSSL\fR
+.RE
+.SS "Details:
+.ST "Status:"
+.PP
+This column allow a client to track the overall configuration state of the system\[char46]
+.IP "\fBnb_ic_cfg\fR: integer"
+Sequence number for the configuration\[char46] When a CMS or \fBovn\-ic\-nbctl\fR updates the Interconnect northbound database, it increments the \fBnb_ic_cfg\fR column in the \fBNB_IC_Global\fR table in the Interconnect northbound database\[char46] when \fBOVN\-ICs\fR updates the southbound database to bring it up to date with these changes, one \fBOVN\-IC\fR updates this column to the same value\[char46]
+.ST "Common Columns:"
+.PP
+.IP "\fBexternal_ids\fR: map of string-string pairs"
+See \fBExternal IDs\fR at the beginning of this document\[char46]
+.IP "\fBoptions\fR: map of string-string pairs"
+.ST "Connection Options:"
+.PP
+.IP "\fBconnections\fR: set of \fBConnection\fRs"
+Database clients to which the Open vSwitch database server should connect or on which it should listen, along with options for how these connections should be configured\[char46] See the \fBConnection\fR table for more information\[char46]
+.IP "\fBssl\fR: optional \fBSSL\fR"
+Global SSL configuration\[char46]
+.bp
+.SH "Availability_Zone TABLE"
+.PP
+.PP
+.PP
+Each row in this table represents an Availability Zone\[char46] Each OVN deployment is considered an availability zone from OVN control plane perspective, with its own central components, such as northbound and southbound databases and \fBovn\-northd\fR daemon\[char46]
+.SS "Summary:
+.TQ 3.00in
+\fBname\fR
+string (must be unique within table)
+.TQ 3.00in
+\fBnb_ic_cfg\fR
+integer
+.SS "Details:
+.IP "\fBname\fR: string (must be unique within table)"
+A name that uniquely identifies the availability zone\[char46]
+.IP "\fBnb_ic_cfg\fR: integer"
+This column is used by the \fBOVN\-IC\fR to inform that this IC instance is aligned with the changes in INB
+.bp
+.SH "Gateway TABLE"
+.PP
+.PP
+.PP
+Each row in this table represents a interconnection gateway chassis in an availability zone\[char46]
+.SS "Summary:
+.TQ 3.00in
+\fBname\fR
+string (must be unique within table)
+.TQ 3.00in
+\fBavailability_zone\fR
+\fBAvailability_Zone\fR
+.TQ 3.00in
+\fBhostname\fR
+string
+.TQ .25in
+\fICommon Columns:\fR
+.RS .25in
+.TQ 2.75in
+\fBexternal_ids\fR
+map of string-string pairs
+.RE
+.TQ .25in
+\fIEncapsulation Configuration:\fR
+.RS .25in
+.TQ 2.75in
+\fBencaps\fR
+set of 1 or more \fBEncap\fRs
+.RE
+.SS "Details:
+.IP "\fBname\fR: string (must be unique within table)"
+The name of the gateway\[char46] See \fBname\fR column of the OVN Southbound database\(cqs \fBChassis\fR table\[char46]
+.IP "\fBavailability_zone\fR: \fBAvailability_Zone\fR"
+The availability zone that the gateway belongs to\[char46]
+.IP "\fBhostname\fR: string"
+The hostname of the gateway\[char46]
+.ST "Common Columns:"
+.PP
+The overall purpose of these columns is described under \fBCommon
+Columns\fR at the beginning of this document\[char46]
+.IP "\fBexternal_ids\fR: map of string-string pairs"
+.ST "Encapsulation Configuration:"
+.PP
+.PP
+.PP
+OVN uses encapsulation to transmit logical dataplane packets between gateways\[char46]
+.IP "\fBencaps\fR: set of 1 or more \fBEncap\fRs"
+Points to supported encapsulation configurations to transmit logical dataplane packets to this gateway\[char46] Each entry is a \fBEncap\fR record that describes the configuration\[char46] See \fBencaps\fR column of the OVN Southbound database\(cqs \fBChassis\fR table\[char46]
+.bp
+.SH "Encap TABLE"
+.PP
+.PP
+.PP
+The \fBencaps\fR column in the \fBGateway\fR table refers to rows in this table to identify how OVN may transmit logical dataplane packets to this gateway\[char46]
+.SS "Summary:
+.TQ 3.00in
+\fBtype\fR
+string, one of \fBgeneve\fR, \fBstt\fR, or \fBvxlan\fR
+.TQ 3.00in
+\fBoptions\fR
+map of string-string pairs
+.TQ 3.00in
+\fBip\fR
+string
+.TQ 3.00in
+\fBgateway_name\fR
+string
+.SS "Details:
+.IP "\fBtype\fR: string, one of \fBgeneve\fR, \fBstt\fR, or \fBvxlan\fR"
+The encapsulation to use to transmit packets to this gateway\[char46] See \fBtype\fR column of the OVN Southbound database\(cqs \fBEncap\fR table\[char46]
+.IP "\fBoptions\fR: map of string-string pairs"
+Options for configuring the encapsulation, which may be \fBtype\fR specific\[char46] See \fBoptions\fR column of the OVN Southbound database\(cqs \fBEncap\fR table\[char46]
+.IP "\fBip\fR: string"
+The IPv4 address of the encapsulation tunnel endpoint\[char46]
+.IP "\fBgateway_name\fR: string"
+The name of the gateway that created this encap\[char46]
+.bp
+.SH "Datapath_Binding TABLE"
+.PP
+.PP
+.PP
+Each row in this table represents a logical datapath for a transit logical switch configured in the OVN Interconnection Northbound database\(cqs \fBTransit_Switch\fR table\[char46]
+.SS "Summary:
+.TQ 3.00in
+\fBtransit_switch\fR
+string
+.TQ 3.00in
+\fBtunnel_key\fR
+integer, in range 1 to 16,777,215 (must be unique within table)
+.TQ .25in
+\fICommon Columns:\fR
+.RS .25in
+.TQ 2.75in
+\fBexternal_ids\fR
+map of string-string pairs
+.RE
+.SS "Details:
+.IP "\fBtransit_switch\fR: string"
+The name of the transit logical switch that is configured in the OVN Interconnection Northbound database\(cqs \fBTransit_Switch\fR table\[char46]
+.IP "\fBtunnel_key\fR: integer, in range 1 to 16,777,215 (must be unique within table)"
+The tunnel key value to which the logical datapath is bound\[char46] The key can be generated by any \fBovn\-ic\fR but the same key is shared by all availability zones so that the logical datapaths can be peered across them\[char46] A tunnel key for transit switch datapath binding must be globally unique\[char46]
+.IP
+For more information about the meanings of a tunnel key, see \fBtunnel_key\fR column of the OVN Southbound database\(cqs \fBDatapath_Binding\fR table\[char46]
+.ST "Common Columns:"
+.PP
+The overall purpose of these columns is described under \fBCommon
+Columns\fR at the beginning of this document\[char46]
+.IP "\fBexternal_ids\fR: map of string-string pairs"
+.bp
+.SH "Port_Binding TABLE"
+.PP
+.PP
+.PP
+Each row in this table binds a logical port on the transit switch to a physical gateway and a tunnel key\[char46] Each port on the transit switch belongs to a specific availability zone\[char46]
+.SS "Summary:
+.TQ .25in
+\fICore Features:\fR
+.RS .25in
+.TQ 2.75in
+\fBtransit_switch\fR
+string
+.TQ 2.75in
+\fBlogical_port\fR
+string (must be unique within table)
+.TQ 2.75in
+\fBavailability_zone\fR
+\fBAvailability_Zone\fR
+.TQ 2.75in
+\fBencap\fR
+optional weak reference to \fBEncap\fR
+.TQ 2.75in
+\fBgateway\fR
+string
+.TQ 2.75in
+\fBtunnel_key\fR
+integer, in range 1 to 32,767
+.TQ 2.75in
+\fBaddress\fR
+string
+.RE
+.TQ .25in
+\fICommon Columns:\fR
+.RS .25in
+.TQ 2.75in
+\fBexternal_ids\fR
+map of string-string pairs
+.RE
+.SS "Details:
+.ST "Core Features:"
+.PP
+.IP "\fBtransit_switch\fR: string"
+The name of the transit switch that the corresponding logical port belongs to\[char46]
+.IP "\fBlogical_port\fR: string (must be unique within table)"
+A logical port, taken from \fBname\fR in the OVN_Northbound database\(cqs \fBLogical_Switch_Port\fR table\[char46] The logical port name must be unique across all availability zones\[char46]
+.IP "\fBavailability_zone\fR: \fBAvailability_Zone\fR"
+The availability zone that the port belongs to\[char46]
+.IP "\fBencap\fR: optional weak reference to \fBEncap\fR"
+Points to supported encapsulation configurations to transmit logical dataplane packets to this gateway\[char46] Each entry is a \fBEncap\fR record that describes the configuration\[char46]
+.IP "\fBgateway\fR: string"
+The name of the gateway that this port is physically located\[char46]
+.IP "\fBtunnel_key\fR: integer, in range 1 to 32,767"
+A number that represents the logical port in the key (e\[char46]g\[char46] STT key or Geneve TLV) field carried within tunnel protocol packets\[char46] The key can be generated by any \fBovn\-ic\fR but the same key is shared by all availability zones so that the packets can go through the datapath pipelines of different availability zones\[char46]
+.IP
+The tunnel ID must be unique within the scope of a logical datapath\[char46]
+.IP
+For more information about tunnel key, see \fBtunnel_key\fR column of the OVN Southbound database\(cqs \fBPort_Binding\fR table\[char46]
+.IP "\fBaddress\fR: string"
+The Ethernet address and IP addresses used by the corresponding logical router port peering with the transit switch port\[char46] It is a string combined with the value of \fBmac\fR column followed by the values in \fBnetworks\fR column in \fBLogical_Router_Port\fR table\[char46]
+.ST "Common Columns:"
+.PP
+.IP "\fBexternal_ids\fR: map of string-string pairs"
+See \fBExternal IDs\fR at the beginning of this document\[char46]
+.bp
+.SH "Route TABLE"
+.PP
+.PP
+.PP
+Each row in this table represents a route advertised\[char46]
+.SS "Summary:
+.TQ .25in
+\fICore Features:\fR
+.RS .25in
+.TQ 2.75in
+\fBtransit_switch\fR
+string
+.TQ 2.75in
+\fBavailability_zone\fR
+\fBAvailability_Zone\fR
+.TQ 2.75in
+\fBroute_table\fR
+string
+.TQ 2.75in
+\fBip_prefix\fR
+string
+.TQ 2.75in
+\fBnexthop\fR
+string
+.TQ 2.75in
+\fBorigin\fR
+string, either \fBconnected\fR or \fBstatic\fR
+.RE
+.TQ .25in
+\fICommon Columns:\fR
+.RS .25in
+.TQ 2.75in
+\fBexternal_ids\fR
+map of string-string pairs
+.RE
+.SS "Details:
+.ST "Core Features:"
+.PP
+.IP "\fBtransit_switch\fR: string"
+The name of the transit switch, upon which the route is advertised\[char46]
+.IP "\fBavailability_zone\fR: \fBAvailability_Zone\fR"
+The availability zone that has advertised the route\[char46]
+.IP "\fBroute_table\fR: string"
+Route table within which this route was created\[char46] Empty value means \fI<main>\fR routing table\[char46]
+.IP
+Routes for directly-connected networks will be learned to \fI<main>\fR routing table and if Logical Routers have more than one Transit Switch, which interconnects them, directly-connected routes will be added via each transit switch port and configured as ECMP routes\[char46]
+.IP
+Static routes within route tables will be advertised and learned only if interconnecting transit switch\(cqs LRPs will have same value in \fBoptions:route_table\fR as NB \fBroute_table\fR or ICSB \fBroute_table\fR value respectively\[char46]
+.IP "\fBip_prefix\fR: string"
+IP prefix of this route (e\[char46]g\[char46] 192\[char46]168\[char46]100\[char46]0/24)\[char46]
+.IP "\fBnexthop\fR: string"
+Nexthop IP address for this route\[char46]
+.IP "\fBorigin\fR: string, either \fBconnected\fR or \fBstatic\fR"
+Can be one of \fBconnected\fR or \fBstatic\fR\[char46] Routes to directly-connected subnets - LRP\(cqs CIDRs are inserted to OVN IC SB DB with \fBconnected\fR value in \fBorigin\fR\[char46] Static routes are inserted to OVN IC SB DB with \fBstatic\fR value\[char46] Next when route is learned to another AZ NB DB by ovn-ic, route origin is synced to \fBoptions:origin\fR\[char46]
+.ST "Common Columns:"
+.PP
+.IP "\fBexternal_ids\fR: map of string-string pairs"
+See \fBExternal IDs\fR at the beginning of this document\[char46]
+.bp
+.SH "Connection TABLE"
+.PP
+.PP
+.PP
+Configuration for a database connection to an Open vSwitch database (OVSDB) client\[char46]
+.PP
+.PP
+This table primarily configures the Open vSwitch database server (\fBovsdb\-server\fR)\[char46]
+.PP
+.PP
+The Open vSwitch database server can initiate and maintain active connections to remote clients\[char46] It can also listen for database connections\[char46]
+.SS "Summary:
+.TQ .25in
+\fICore Features:\fR
+.RS .25in
+.TQ 2.75in
+\fBtarget\fR
+string (must be unique within table)
+.RE
+.TQ .25in
+\fIClient Failure Detection and Handling:\fR
+.RS .25in
+.TQ 2.75in
+\fBmax_backoff\fR
+optional integer, at least 1,000
+.TQ 2.75in
+\fBinactivity_probe\fR
+optional integer
+.RE
+.TQ .25in
+\fIStatus:\fR
+.RS .25in
+.TQ 2.75in
+\fBis_connected\fR
+boolean
+.TQ 2.75in
+\fBstatus : last_error\fR
+optional string
+.TQ 2.75in
+\fBstatus : state\fR
+optional string, one of \fBACTIVE\fR, \fBBACKOFF\fR, \fBCONNECTING\fR, \fBIDLE\fR, or \fBVOID\fR
+.TQ 2.75in
+\fBstatus : sec_since_connect\fR
+optional string, containing an integer, at least 0
+.TQ 2.75in
+\fBstatus : sec_since_disconnect\fR
+optional string, containing an integer, at least 0
+.TQ 2.75in
+\fBstatus : locks_held\fR
+optional string
+.TQ 2.75in
+\fBstatus : locks_waiting\fR
+optional string
+.TQ 2.75in
+\fBstatus : locks_lost\fR
+optional string
+.TQ 2.75in
+\fBstatus : n_connections\fR
+optional string, containing an integer, at least 2
+.TQ 2.75in
+\fBstatus : bound_port\fR
+optional string, containing an integer
+.RE
+.TQ .25in
+\fICommon Columns:\fR
+.RS .25in
+.TQ 2.75in
+\fBexternal_ids\fR
+map of string-string pairs
+.TQ 2.75in
+\fBother_config\fR
+map of string-string pairs
+.RE
+.SS "Details:
+.ST "Core Features:"
+.PP
+.IP "\fBtarget\fR: string (must be unique within table)"
+Connection methods for clients\[char46]
+.IP
+The following connection methods are currently supported:
+.RS
+.TP
+\fBssl:\fIhost\fB\fR[\fB:\fIport\fB\fR]
+The specified SSL \fIport\fR on the given \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address\[char46] A valid SSL configuration must be provided when this form is used, this configuration can be specified via command-line options or the \fBSSL\fR table\[char46]
+.IP
+If \fIport\fR is not specified, it defaults to 6640\[char46]
+.IP
+SSL support is an optional feature that is not always built as part of Open vSwitch\[char46]
+.TP
+\fBtcp:\fIhost\fB\fR[\fB:\fIport\fB\fR]
+The specified TCP \fIport\fR on the given \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address (IPv4 or IPv6)\[char46] If \fIhost\fR is an IPv6 address, wrap it in square brackets, e\[char46]g\[char46] \fBtcp:[::1]:6640\fR\[char46]
+.IP
+If \fIport\fR is not specified, it defaults to 6640\[char46]
+.TP
+\fBpssl:\fR[\fIport\fR][\fB:\fIhost\fB\fR]
+Listens for SSL connections on the specified TCP \fIport\fR\[char46] Specify 0 for \fIport\fR to have the kernel automatically choose an available port\[char46] If \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address, is specified, then connections are restricted to the resolved or specified local IP address (either IPv4 or IPv6 address)\[char46] If \fIhost\fR is an IPv6 address, wrap in square brackets, e\[char46]g\[char46] \fBpssl:6640:[::1]\fR\[char46] If \fIhost\fR is not specified then it listens only on IPv4 (but not IPv6) addresses\[char46] A valid SSL configuration must be provided when this form is used, this can be specified either via command-line options or the \fBSSL\fR table\[char46]
+.IP
+If \fIport\fR is not specified, it defaults to 6640\[char46]
+.IP
+SSL support is an optional feature that is not always built as part of Open vSwitch\[char46]
+.TP
+\fBptcp:\fR[\fIport\fR][\fB:\fIhost\fB\fR]
+Listens for connections on the specified TCP \fIport\fR\[char46] Specify 0 for \fIport\fR to have the kernel automatically choose an available port\[char46] If \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address, is specified, then connections are restricted to the resolved or specified local IP address (either IPv4 or IPv6 address)\[char46] If \fIhost\fR is an IPv6 address, wrap it in square brackets, e\[char46]g\[char46] \fBptcp:6640:[::1]\fR\[char46] If \fIhost\fR is not specified then it listens only on IPv4 addresses\[char46]
+.IP
+If \fIport\fR is not specified, it defaults to 6640\[char46]
+.RE
+.IP
+When multiple clients are configured, the \fBtarget\fR values must be unique\[char46] Duplicate \fBtarget\fR values yield unspecified results\[char46]
+.ST "Client Failure Detection and Handling:"
+.PP
+.IP "\fBmax_backoff\fR: optional integer, at least 1,000"
+Maximum number of milliseconds to wait between connection attempts\[char46] Default is implementation-specific\[char46]
+.IP "\fBinactivity_probe\fR: optional integer"
+Maximum number of milliseconds of idle time on connection to the client before sending an inactivity probe message\[char46] If Open vSwitch does not communicate with the client for the specified number of seconds, it will send a probe\[char46] If a response is not received for the same additional amount of time, Open vSwitch assumes the connection has been broken and attempts to reconnect\[char46] Default is implementation-specific\[char46] A value of 0 disables inactivity probes\[char46]
+.ST "Status:"
+.PP
+.PP
+.PP
+Key-value pair of \fBis_connected\fR is always updated\[char46] Other key-value pairs in the status columns may be updated depends on the \fBtarget\fR type\[char46]
+.PP
+.PP
+When \fBtarget\fR specifies a connection method that listens for inbound connections (e\[char46]g\[char46] \fBptcp:\fR or \fBpunix:\fR), both \fBn_connections\fR and \fBis_connected\fR may also be updated while the remaining key-value pairs are omitted\[char46]
+.PP
+.PP
+On the other hand, when \fBtarget\fR specifies an outbound connection, all key-value pairs may be updated, except the above-mentioned two key-value pairs associated with inbound connection targets\[char46] They are omitted\[char46]
+.IP "\fBis_connected\fR: boolean"
+\fBtrue\fR if currently connected to this client, \fBfalse\fR otherwise\[char46]
+.IP "\fBstatus : last_error\fR: optional string"
+A human-readable description of the last error on the connection to the manager; i\[char46]e\[char46] \fBstrerror(errno)\fR\[char46] This key will exist only if an error has occurred\[char46]
+.IP "\fBstatus : state\fR: optional string, one of \fBACTIVE\fR, \fBBACKOFF\fR, \fBCONNECTING\fR, \fBIDLE\fR, or \fBVOID\fR"
+The state of the connection to the manager:
+.RS
+.TP
+\fBVOID\fR
+Connection is disabled\[char46]
+.TP
+\fBBACKOFF\fR
+Attempting to reconnect at an increasing period\[char46]
+.TP
+\fBCONNECTING\fR
+Attempting to connect\[char46]
+.TP
+\fBACTIVE\fR
+Connected, remote host responsive\[char46]
+.TP
+\fBIDLE\fR
+Connection is idle\[char46] Waiting for response to keep-alive\[char46]
+.RE
+.IP
+These values may change in the future\[char46] They are provided only for human consumption\[char46]
+.IP "\fBstatus : sec_since_connect\fR: optional string, containing an integer, at least 0"
+The amount of time since this client last successfully connected to the database (in seconds)\[char46] Value is empty if client has never successfully been connected\[char46]
+.IP "\fBstatus : sec_since_disconnect\fR: optional string, containing an integer, at least 0"
+The amount of time since this client last disconnected from the database (in seconds)\[char46] Value is empty if client has never disconnected\[char46]
+.IP "\fBstatus : locks_held\fR: optional string"
+Space-separated list of the names of OVSDB locks that the connection holds\[char46] Omitted if the connection does not hold any locks\[char46]
+.IP "\fBstatus : locks_waiting\fR: optional string"
+Space-separated list of the names of OVSDB locks that the connection is currently waiting to acquire\[char46] Omitted if the connection is not waiting for any locks\[char46]
+.IP "\fBstatus : locks_lost\fR: optional string"
+Space-separated list of the names of OVSDB locks that the connection has had stolen by another OVSDB client\[char46] Omitted if no locks have been stolen from this connection\[char46]
+.IP "\fBstatus : n_connections\fR: optional string, containing an integer, at least 2"
+When \fBtarget\fR specifies a connection method that listens for inbound connections (e\[char46]g\[char46] \fBptcp:\fR or \fBpssl:\fR) and more than one connection is actually active, the value is the number of active connections\[char46] Otherwise, this key-value pair is omitted\[char46]
+.IP "\fBstatus : bound_port\fR: optional string, containing an integer"
+When \fBtarget\fR is \fBptcp:\fR or \fBpssl:\fR, this is the TCP port on which the OVSDB server is listening\[char46] (This is particularly useful when \fBtarget\fR specifies a port of 0, allowing the kernel to choose any available port\[char46])
+.ST "Common Columns:"
+.PP
+The overall purpose of these columns is described under \fBCommon
+Columns\fR at the beginning of this document\[char46]
+.IP "\fBexternal_ids\fR: map of string-string pairs"
+.IP "\fBother_config\fR: map of string-string pairs"
+.bp
+.SH "SSL TABLE"
+.PP
+SSL configuration for ovn-sb database access\[char46]
+.SS "Summary:
+.TQ 3.00in
+\fBprivate_key\fR
+string
+.TQ 3.00in
+\fBcertificate\fR
+string
+.TQ 3.00in
+\fBca_cert\fR
+string
+.TQ 3.00in
+\fBbootstrap_ca_cert\fR
+boolean
+.TQ 3.00in
+\fBssl_protocols\fR
+string
+.TQ 3.00in
+\fBssl_ciphers\fR
+string
+.TQ .25in
+\fICommon Columns:\fR
+.RS .25in
+.TQ 2.75in
+\fBexternal_ids\fR
+map of string-string pairs
+.RE
+.SS "Details:
+.IP "\fBprivate_key\fR: string"
+Name of a PEM file containing the private key used as the switch\(cqs identity for SSL connections to the controller\[char46]
+.IP "\fBcertificate\fR: string"
+Name of a PEM file containing a certificate, signed by the certificate authority (CA) used by the controller and manager, that certifies the switch\(cqs private key, identifying a trustworthy switch\[char46]
+.IP "\fBca_cert\fR: string"
+Name of a PEM file containing the CA certificate used to verify that the switch is connected to a trustworthy controller\[char46]
+.IP "\fBbootstrap_ca_cert\fR: boolean"
+If set to \fBtrue\fR, then Open vSwitch will attempt to obtain the CA certificate from the controller on its first SSL connection and save it to the named PEM file\[char46] If it is successful, it will immediately drop the connection and reconnect, and from then on all SSL connections must be authenticated by a certificate signed by the CA certificate thus obtained\[char46] \fBThis option exposes the
+SSL connection to a man\-in\-the\-middle attack obtaining the initial
+CA certificate\[char46]\fR It may still be useful for bootstrapping\[char46]
+.IP "\fBssl_protocols\fR: string"
+List of SSL protocols to be enabled for SSL connections\[char46] The default when this option is omitted is \fBTLSv1,TLSv1\[char46]1,TLSv1\[char46]2\fR\[char46]
+.IP "\fBssl_ciphers\fR: string"
+List of ciphers (in OpenSSL cipher string format) to be supported for SSL connections\[char46] The default when this option is omitted is \fBHIGH:!aNULL:!MD5\fR\[char46]
+.ST "Common Columns:"
+.PP
+The overall purpose of these columns is described under \fBCommon
+Columns\fR at the beginning of this document\[char46]
+.IP "\fBexternal_ids\fR: map of string-string pairs"
