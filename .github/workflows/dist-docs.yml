@@ -117,3 +117,18 @@ jobs:
       with:
         name: dist-docs-${{ join(matrix.*, '-') }}
         path: /tmp/dist-docs.tgz
+
+  push-changes:
+    if: github.repository_owner == 'ovn-org' && github.ref_name == 'main'
+    name: Push changes
+    runs-on: ubuntu-latest
+    needs: [build-linux]
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: checkout ovn-website
+        uses: actions/checkout@v4
+
+      - name: Trigger publish
+        run: gh workflow run publish.yml --ref main
