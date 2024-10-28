@@ -1926,6 +1926,8 @@ Logical_Flow TABLE
                    ceived from the delegation server
 
               R = select(N1[=W1], N2[=W2], ...);
+              R = select(values=(N1[=W1], N2[=W2], ...);
+              hash_fields="field1,field2,...");
                    Parameters: Integer N1, N2..., with optional weight W1, W2,
                    ...
 
@@ -1939,12 +1941,19 @@ Logical_Flow TABLE
                    selection method is based on the  5-tuple  hash  of  packet
                    header.
 
+                   By default, dp_hash is used as the OpenFlow group selection
+                   method,  but  if values and hash_fields are specified, hash
+                   is used as the selection method, and the fields listed  are
+                   used as the hash fields.
+
                    Processing  automatically moves on to the next table, as if
                    next; were specified. The select action must be put as  the
                    last action of the logical flow when there are multiple ac‐
                    tions (actions put after select will not take effect).
 
-                   Example: reg8[16..31] = select(1=20, 2=30, 3=50);
+                   Example:  reg8[16..31] = select(1=20, 2=30, 3=50); Example:
+                   reg8[16..31]   =    select(values=(1=20,    2=30,    3=50);
+                   hash_fields="ip_proto,src_ip,dst_ip");
 
               handle_dhcpv6_reply;
                    This action is used to parse DHCPv6 replies from IPv6 Dele‐

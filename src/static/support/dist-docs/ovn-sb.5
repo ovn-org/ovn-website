@@ -1728,15 +1728,19 @@ Handles the service monitor reply received from the VIF of the logical port \fIP
 Handle DHCPv6 prefix delegation advertisements/replies from a IPv6 delegation server\[char46] \fBovn\-controller\fR will add an entry \fBipv6_ra_pd_list\fR in the \fBoptions\fR table for each prefix received from the delegation server
 .TP
 \fB\fIR\fB = select(\fIN1\fB[=\fIW1\fB], \fIN2\fB[=\fIW2\fB], \[char46]\[char46]\[char46]);\fR
+.TQ .5in
+\fB\fIR\fB = select(values=(\fIN1\fB[=\fIW1\fB], \fIN2\fB[=\fIW2\fB], \[char46]\[char46]\[char46]); hash_fields=\(dq\fIfield1\fB,\fIfield2\fB,\[char46]\[char46]\[char46]\(dq);\fR
 \fBParameters\fR: Integer \fIN1\fR, \fIN2\fR\[char46]\[char46]\[char46], with optional weight \fIW1\fR, \fIW2\fR, \[char46]\[char46]\[char46]
 .IP
 \fBResult\fR: stored to a logical field or subfield \fIR\fR\[char46]
 .IP
 Select from a list of integers \fIN1\fR, \fIN2\fR\[char46]\[char46]\[char46], each within the range 0 ~ 65535, and store the selected one in the field \fIR\fR\[char46] There must be 2 or more integers listed, each with an optional weight, which is an integer within the range 1 ~ 65535\[char46] If weight is not specified, it defaults to 100\[char46] The selection method is based on the 5-tuple hash of packet header\[char46]
 .IP
+By default, \fBdp_hash\fR is used as the OpenFlow group selection method, but if \fBvalues\fR and \fBhash_fields\fR are specified, \fBhash\fR is used as the selection method, and the fields listed are used as the hash fields\[char46]
+.IP
 Processing automatically moves on to the next table, as if \fBnext;\fR were specified\[char46] The \fBselect\fR action must be put as the last action of the logical flow when there are multiple actions (actions put after \fBselect\fR will not take effect)\[char46]
 .IP
-\fBExample:\fR \fBreg8[16\[char46]\[char46]31] = select(1=20, 2=30, 3=50);\fR
+\fBExample:\fR \fBreg8[16\[char46]\[char46]31] = select(1=20, 2=30, 3=50);\fR \fBExample:\fR \fBreg8[16\[char46]\[char46]31] = select(values=(1=20, 2=30, 3=50); hash_fields=\(dqip_proto,src_ip,dst_ip\(dq);\fR
 .TP
 \fBhandle_dhcpv6_reply;\fR
 This action is used to parse DHCPv6 replies from IPv6 Delegation Router and managed IPv6 Prefix delegation state machine

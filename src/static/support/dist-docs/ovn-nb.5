@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nb" 5 " DB Schema 7.6.0" "Open vSwitch 24.09.90" "Open vSwitch Manual"
+.TH "ovn-nb" 5 " DB Schema 7.7.0" "Open vSwitch 24.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -1835,6 +1835,9 @@ optional string
 .TQ 2.75in
 \fBoptions : ct_flush\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 2.75in
+\fBoptions : use_stateless_nat\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
 .RE
 .SS "Details:
 .IP "\fBname\fR: string"
@@ -1926,6 +1929,8 @@ Address family used by the load balancer\[char46] Supported values are \fBipv4\f
 If the CMS provides a positive value (in seconds) for \fBaffinity_timeout\fR, OVN will dnat connections received from the same client to this lb to the same backend if received in the affinity timeslot\[char46] Max supported affinity_timeout is 65535 seconds\[char46]
 .IP "\fBoptions : ct_flush\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 The value indicates whether ovn-controller should flush CT entries that are related to this LB\[char46] The flush happens if the LB is removed, any of the backends is updated/removed or the LB is not considered local anymore by the ovn-controller\[char46] This option is set to \fBfalse\fR by default\[char46]
+.IP "\fBoptions : use_stateless_nat\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+If the load balancer is configured with \fBuse_stateless_nat\fR option to \fBtrue\fR, the logical router that references this load balancer will use Stateless NAT rules when the logical router has multiple distributed gateway ports(DGP)\[char46] Otherwise, the outbound traffic may be dropped in scenarios where we have different chassis for each DGP\[char46] This option is set to \fBfalse\fR by default\[char46]
 .bp
 .SH "Load_Balancer_Group TABLE"
 .PP
@@ -2250,7 +2255,7 @@ This column is used to administratively set router state\[char46] If this column
 .IP "\fBnat\fR: set of \fBNAT\fRs"
 One or more NAT rules for the router\[char46] NAT rules only work on Gateway routers, and on distributed routers with one and only one distributed gateway port\[char46]
 .IP "\fBload_balancer\fR: set of weak reference to \fBLoad_Balancer\fRs"
-Set of load balancers associated to this logical router\[char46] Load balancer Load balancer rules only work on the Gateway routers or routers with one and only one distributed gateway port\[char46]
+Set of load balancers associated to this logical router\[char46] Load balancer rules only work without limitations on the Gateway routers or routers with one and only one distributed gateway port (DGP)\[char46] Load balancers will only work in scenarios that use more than one DGP when the multiple DGPs are associated with the same gateway chassis, this way this chassis can apply/maintain the conntrack state without problems\[char46] To use a load balancer in scenarios with DGPs associated with different gateway chassis (e\[char46]g\[char46] ECMP routes), consider using the \fBuse_stateless_nat\fR option to \fBtrue\fR in the load balancer options column\[char46]
 .IP "\fBload_balancer_group\fR: set of \fBLoad_Balancer_Group\fRs"
 Set of load balancers groups associated to this logical router\[char46]
 .ST "Naming:"
@@ -2589,6 +2594,12 @@ optional string
 .TQ 2.75in
 \fBoptions : centralize_routing\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 2.75in
+\fBoptions : ic-route-tag\fR
+optional string
+.TQ 2.75in
+\fBoptions : ic-route-filter-tag\fR
+optional string
 .RE
 .TQ .25in
 \fIAttachment:\fR
@@ -2783,6 +2794,10 @@ The Logical router has only one distributed gateway port\[char46]
 .IP \(bu
 The router port\(cqs peer logical switch has no localnet ports\[char46]
 .RE
+.IP "\fBoptions : ic-route-tag\fR: optional string"
+This option expects a name of a route-tag that\(cqs present in the Logical Router Port\[char46] If set, it causes any route advertised by the Logical Router Port to include the \fBroute\-tag\fR in the \fB external_ids \fR register of the advertised route entry in the \fBRoute\fR table of the \fBOVN_IC_Southbound\fR database\[char46] This allows to tag and filter route tags in the process of advertising and learning routes in \fBovn\-ic\fR daemon\[char46]
+.IP "\fBoptions : ic-route-filter-tag\fR: optional string"
+This option expects a name of a filtered route-tag that\(cqs present in the Logical Router Port\[char46] If set, it causes any route learned by the Logical Router Port with the \fBroute\-tag\fR present in the external_ids register of the advertised route entry in the \fBRoute\fR table of the \fBOVN_IC_Southbound\fR database, will be filtered and not learned by the \fBovn\-ic\fR daemon\[char46]
 .ST "Attachment:"
 .PP
 .PP
@@ -2842,6 +2857,9 @@ optional string
 \fBbfd\fR
 optional weak reference to \fBBFD\fR
 .TQ 3.00in
+\fBselection_fields\fR
+set of strings, one of \fBeth_dst\fR, \fBeth_src\fR, \fBip_dst\fR, \fBip_proto\fR, \fBip_src\fR, \fBtp_dst\fR, or \fBtp_src\fR
+.TQ 3.00in
 \fBroute_table\fR
 string
 .TQ 3.00in
@@ -2886,6 +2904,12 @@ Nexthop IP address for this route\[char46] Nexthop IP address should be the IP a
 The name of the \fBLogical_Router_Port\fR via which the packet needs to be sent out\[char46] This is optional and when not specified, OVN will automatically figure this out based on the \fBnexthop\fR\[char46] When this is specified and there are multiple IP addresses on the router port and none of them are in the same subnet of \fBnexthop\fR, OVN chooses the first IP address as the one via which the \fBnexthop\fR is reachable\[char46]
 .IP "\fBbfd\fR: optional weak reference to \fBBFD\fR"
 Reference to \fBBFD\fR row if the route has associated a BFD session
+.IP "\fBselection_fields\fR: set of strings, one of \fBeth_dst\fR, \fBeth_src\fR, \fBip_dst\fR, \fBip_proto\fR, \fBip_src\fR, \fBtp_dst\fR, or \fBtp_src\fR"
+ECMP routes use OpenFlow groups of type \fBselect\fR to pick a nexthop among the list of available nexthops\[char46] OVS supports two selection methods: \fBdp_hash\fR and \fBhash\fR for hash computation and selecting the buckets of a group\[char46] OVN by default uses \fBdp_hash\fR\[char46] In order to use the \fBhash\fR selection method, specify the allowed match fields in selection fields\[char46] Please see the OVS documentation (man ovs-ofctl) for more details on selection methods and fields\[char46]
+.IP
+To match on Layer 4 ports use \fBtp_src\fR and \fBtp_dst\fR\[char46] This match is applicable only for TCP, UDP, SCTP and will be ignored for all other IP packets\[char46] When matching on Layer 4 ports, match on ip_proto will be implicitly added in the select action\[char46]
+.IP
+Example: \fB{ip_proto,ip_src,ip_dst}\fR for a 3-tuple match\[char46] Example: \fB{ip_proto,ip_src,ip_dst,tp_src,tp_dst}\fR for a 5-tuple match\[char46]
 .IP "\fBroute_table\fR: string"
 Any string to place route to separate routing table\[char46] If Logical Router Port has configured value in \fBoptions:route_table\fR other than empty string, OVN performs route lookup for all packets entering Logical Router ingress pipeline from this port in the following manner:
 .RS
