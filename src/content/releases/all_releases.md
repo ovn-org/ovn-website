@@ -15,11 +15,6 @@ For more details, see [24.03 ](../24.03)
 
 
 
-### OVN 23.09
-For more details, see [23.09 ](../23.09)
-
-
-
 ### OVN 22.03
 For more details, see [22.03 ](../22.03)
 
@@ -29,6 +24,11 @@ The following OVN release series are no longer supported. This means that they
 will not receive any future bug fixes, including critical or security fixes.
 It is not recommended to use these unless you absolutely must. Use these at
 your own risk.
+
+### OVN 23.09
+For more details, see [23.09 ](../23.09)
+
+
 
 ### OVN 23.06
 For more details, see [23.06 ](../23.06)
