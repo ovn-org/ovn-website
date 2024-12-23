@@ -163,6 +163,10 @@ TABLE SUMMARY
                  IP to MAC bindings
        Chassis_Template_Var
                  Chassis_Template_Var configuration.
+       Advertised_Route
+                 Advertised_Route configuration.
+       Learned_Route
+                 Learned_Route configuration.
 
 SB_Global TABLE
        Southbound  configuration  for  an OVN system. This table must have ex‐
@@ -4095,4 +4099,69 @@ Chassis_Template_Var TABLE
        variables: map of string-string pairs
               The set of variable values for a given chassis.
 
-Open vSwitch 24.09.90          DB Schema 20.37.0                     ovn-sb(5)
+Advertised_Route TABLE
+       Each  record represents a route that should be exported from ovn to the
+       outside network fabric. It is populated by ovn-northd based on the  ad‐
+       dresses,   routes   and   NAT   Entries   of   a   OVN_Northbound.Logi�‐
+       cal_Router_Port.
+
+   Summary:
+       datapath                      Datapath_Binding
+       logical_port                  Port_Binding
+       ip_prefix                     string
+       tracked_port                  optional Port_Binding
+       external_ids                  map of string-string pairs
+
+   Details:
+       datapath: Datapath_Binding
+              The datapath belonging to the OVN_Northbound.Logical_Router that
+              this route is valid for.
+
+       logical_port: Port_Binding
+              This is the Port_Binding that the router will send  packets  out
+              that are received for the below prefix.
+
+       ip_prefix: string
+              IP prefix of this route (e.g. 192.168.100.0/24).
+
+       tracked_port: optional Port_Binding
+              In  combination  with  a host ip_prefix this tracks the port OVN
+              will forward the packets for this destination  to.  If  set  the
+              ip_prefix  will  always  contain  a  /32 (for ipv4) or /128 (for
+              ipv6) prefix. An announcing chassis can use this information  to
+              check  if this destination is local and adjust the route priori‐
+              ties based on that.
+
+       external_ids: map of string-string pairs
+              See External IDs at the beginning of this document.
+
+Learned_Route TABLE
+       Each record represents a route that learned by ovn using  some  dynamic
+       routing  logic  outside  of ovn. It is populated by ovn-controller with
+       routes it learns locally.
+
+   Summary:
+       datapath                      Datapath_Binding
+       logical_port                  Port_Binding
+       ip_prefix                     string
+       nexthop                       string
+       external_ids                  map of string-string pairs
+
+   Details:
+       datapath: Datapath_Binding
+              The datapath belonging to the OVN_Northbound.Logical_Router that
+              this route is valid for.
+
+       logical_port: Port_Binding
+              This is the Port_Binding that the route was learned on.
+
+       ip_prefix: string
+              IP prefix of this route (e.g. 192.168.100.0/24).
+
+       nexthop: string
+              This is the nexthop ip we learned from outside of OVN.
+
+       external_ids: map of string-string pairs
+              See External IDs at the beginning of this document.
+
+Open vSwitch 24.09.90          DB Schema 20.38.0                     ovn-sb(5)

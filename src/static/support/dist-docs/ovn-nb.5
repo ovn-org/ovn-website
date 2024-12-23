@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nb" 5 " DB Schema 7.7.0" "Open vSwitch 24.09.90" "Open vSwitch Manual"
+.TH "ovn-nb" 5 " DB Schema 7.8.0" "Open vSwitch 24.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -2497,7 +2497,7 @@ Exactly one \fBLogical_Router\fR row must reference a given logical router port\
 string (must be unique within table)
 .TQ 3.00in
 \fBnetworks\fR
-set of 1 or more strings
+set of strings
 .TQ 3.00in
 \fBmac\fR
 string
@@ -2592,9 +2592,6 @@ optional string
 \fBoptions : gateway_mtu_bypass\fR
 optional string
 .TQ 2.75in
-\fBoptions : centralize_routing\fR
-optional string, either \fBtrue\fR or \fBfalse\fR
-.TQ 2.75in
 \fBoptions : ic-route-tag\fR
 optional string
 .TQ 2.75in
@@ -2629,8 +2626,8 @@ A name for the logical router port\[char46]
 In addition to provide convenience for human interaction with the northbound database, this column is used as reference by its patch port in \fBLogical_Switch_Port\fR or another logical router port in \fBLogical_Router_Port\fR\[char46]
 .IP
 A logical router port may not have the same name as a logical switch port, but the database schema cannot enforce this\[char46]
-.IP "\fBnetworks\fR: set of 1 or more strings"
-The IP addresses and netmasks of the router\[char46] For example, \fB192\[char46]168\[char46]0\[char46]1/24\fR indicates that the router\(cqs IP address is 192\[char46]168\[char46]0\[char46]1 and that packets destined to 192\[char46]168\[char46]0\[char46]\fIx\fR should be routed to this port\[char46]
+.IP "\fBnetworks\fR: set of strings"
+The IP addresses and netmasks of the router\[char46] For example, \fB192\[char46]168\[char46]0\[char46]1/24\fR indicates that the router\(cqs IP address is 192\[char46]168\[char46]0\[char46]1 and that packets destined to 192\[char46]168\[char46]0\[char46]\fIx\fR should be routed to this port\[char46] These are optional\[char46]
 .IP
 A logical router port always adds a link-local IPv6 address (fe80::/64) automatically generated from the interface\(cqs MAC address using the modified EUI\-64 format\[char46]
 .IP "\fBmac\fR: string"
@@ -2782,18 +2779,6 @@ This option expects a comma-separated list of routing, and routing-related proto
 .RE
 .IP "\fBoptions : gateway_mtu_bypass\fR: optional string"
 When configured, represents a match expression, in the same expression language used for the \fBmatch\fR column in the OVN Southbound database\(cqs \fBLogical_Flow\fR table\[char46] Packets matching this expression will bypass the length check configured through the \fBoptions:gateway_mtu\fR option\[char46]
-.IP "\fBoptions : centralize_routing\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
-This option is applicable only if the router port is a distributed gateway port i\[char46]e if the \fBha_chassis_group\fR column or \fBgateway_chassis\fR is set\[char46]
-.IP
-If set to \fBtrue\fR, routing for the router port\(cqs networks (set in the column \fBnetworks\fR) is centralized on the gateway chassis which claims this distributed gateway port\[char46]
-.IP
-Additionally for this option to take effect, below conditions must be met:
-.RS
-.IP \(bu
-The Logical router has only one distributed gateway port\[char46]
-.IP \(bu
-The router port\(cqs peer logical switch has no localnet ports\[char46]
-.RE
 .IP "\fBoptions : ic-route-tag\fR: optional string"
 This option expects a name of a route-tag that\(cqs present in the Logical Router Port\[char46] If set, it causes any route advertised by the Logical Router Port to include the \fBroute\-tag\fR in the \fB external_ids \fR register of the advertised route entry in the \fBRoute\fR table of the \fBOVN_IC_Southbound\fR database\[char46] This allows to tag and filter route tags in the process of advertising and learning routes in \fBovn\-ic\fR daemon\[char46]
 .IP "\fBoptions : ic-route-filter-tag\fR: optional string"
