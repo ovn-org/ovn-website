@@ -2752,7 +2752,7 @@ If set to \fBtrue\fR, enable IPv6 prefix delegation state machine on this logica
 .IP "\fBoptions : prefix\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 If set to \fBtrue\fR, this interface will receive an IPv6 prefix according to RFC3663
 .IP "\fBoptions : route_table\fR: optional string"
-Designates lookup Logical_Router_Static_Routes with specified \fBroute_table\fR value\[char46] Routes to directly connected networks from same Logical Router and routes without \fBroute_table\fR option set have higher priority than routes with \fBroute_table\fR option set\[char46]
+Designates lookup for \fBLogical_Router_Static_Routes\fR with the specified \fBroute_table\fR value\[char46] See detailed explanation for routes lookup behavior in \fBLogical_Router_Static_Route:route_table\fR field description\[char46]
 .IP "\fBoptions : gateway_mtu\fR: optional string, containing an integer, in range 68 to 65,535"
 If set, logical flows will be added to router pipeline to check packet length\[char46] If packet length is greater than the value set, ICMPv4 type 3 (Destination Unreachable) code 4 (Fragmentation Needed and Don\(cqt Fragment was Set) or ICMPv6 type 2 (Packet Too Big) code 0 (no route to destination) packets will be generated\[char46] This allows for Path MTU Discovery\[char46]
 .IP "\fBoptions : routing-protocol-redirect\fR: optional string"
@@ -2887,13 +2887,17 @@ The name of the \fBLogical_Router_Port\fR via which the packet needs to be sent 
 .IP "\fBbfd\fR: optional weak reference to \fBBFD\fR"
 Reference to \fBBFD\fR row if the route has associated a BFD session
 .IP "\fBroute_table\fR: string"
-Any string to place route to separate routing table\[char46] If Logical Router Port has configured value in \fBoptions:route_table\fR other than empty string, OVN performs route lookup for all packets entering Logical Router ingress pipeline from this port in the following manner:
+Specify any string to assign a route to a separate routing table\[char46] When a Logical Router Port has a configured value in \fBoptions:route_table\fR, only static routes with the same routing table value are considered\[char46] A more detailed description of the route lookup behavior is provided below:
+.IP
+When a packet enters Logical Router (\fBLR\fR), it examines the following list of routes:
 .RS
 .IP \(bu
-1\[char46] First lookup among \(dqglobal\(dq routes: routes without \fBroute_table\fR value set and routes to directly connected networks\[char46]
+All routes to directly connected networks of the \fBLR\fR (including networks that are learned from other availability zones within the same \fBLR\fR through OVN-IC)\[char46]
 .IP \(bu
-2\[char46] Next lookup among routes with same \fBroute_table\fR value as specified in LRP\(cqs options:route_table field\[char46]
+All static routes of the \fBLR\fR that have the same \fBroute_table\fR field value as that of the Logical Router Port\(cqs \fBoptions:route_table\fR (If the option is absent, static routes with an empty \fBroute_table\fR field are considered)\[char46]
 .RE
+.IP
+From the resulting list of routes, the route with the longest prefix match takes precedence over others\[char46]
 .IP "\fBexternal_ids : ic-learned-route\fR: optional string"
 \fBovn\-ic\fR populates this key if the route is learned from the global \fBOVN_IC_Southbound\fR database\[char46] In this case the value will be set to the uuid of the row in \fBRoute\fR table of the \fBOVN_IC_Southbound\fR database\[char46]
 .ST "Common Columns:"
