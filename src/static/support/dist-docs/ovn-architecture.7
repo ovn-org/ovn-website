@@ -1056,12 +1056,12 @@ RBAC configuration for the OVN southbound database is maintained by ovn-northd\[
 Enabling RBAC for ovn-controller connections to the southbound database requires the following steps:
 .RS
 .IP 1. .4in
-Creating SSL certificates for each chassis with the certificate CN field set to the chassis name (e\[char46]g\[char46] for a chassis with \fBexternal\-ids:system\-id=chassis\-1\fR, via the command \(dq\fBovs\-pki \-u req+sign chassis\-1 switch\fR\(dq)\[char46]
+Creating SSL/TLS certificates for each chassis with the certificate CN field set to the chassis name (e\[char46]g\[char46] for a chassis with \fBexternal\-ids:system\-id=chassis\-1\fR, via the command \(dq\fBovs\-pki \-u req+sign chassis\-1 switch\fR\(dq)\[char46]
 .IP 2. .4in
-Configuring each ovn-controller to use SSL when connecting to the southbound database (e\[char46]g\[char46] via \(dq\fBovs\-vsctl set open \[char46]
+Configuring each ovn-controller to use SSL/TLS when connecting to the southbound database (e\[char46]g\[char46] via \(dq\fBovs\-vsctl set open \[char46]
 external\-ids:ovn\-remote=ssl:x\[char46]x\[char46]x\[char46]x:6642\fR\(dq)\[char46]
 .IP 3. .4in
-Configuring a southbound database SSL remote with \(dqovn-controller\(dq role (e\[char46]g\[char46] via \(dq\fBovn\-sbctl set\-connection role=ovn\-controller
+Configuring a southbound database SSL/TLS remote with \(dqovn-controller\(dq role (e\[char46]g\[char46] via \(dq\fBovn\-sbctl set\-connection role=ovn\-controller
 pssl:6642\fR\(dq)\[char46]
 .RE
 .SS "Encrypt Tunnel Traffic with IPsec"
@@ -1076,7 +1076,7 @@ The tunnel traffic is encrypted with IPsec\[char46] The CMS sets the \fBipsec\fR
 When CMS updates the \fBipsec\fR column in the northbound \fBNB_Global\fR table, \fBovn\-northd\fR copies the value to the \fBipsec\fR column in the southbound \fBSB_Global\fR table\[char46] \fBovn\-controller\fR in each chassis monitors the southbound database and sets the options of the OVS tunnel interface accordingly\[char46] OVS tunnel interface options are monitored by the \fBovs\-monitor\-ipsec\fR daemon which configures IKE daemon to set up IPsec connections\[char46]
 .PP
 .PP
-Chassis authenticates each other by using certificate\[char46] The authentication succeeds if the other end in tunnel presents a certificate signed by a trusted CA and the common name (CN) matches the expected chassis name\[char46] The SSL certificates used in role-based access controls (RBAC) can be used in IPsec\[char46] Or use \fBovs\-pki\fR to create different certificates\[char46] The certificate is required to be x\[char46]509 version 3, and with CN field and subjectAltName field being set to the chassis name\[char46]
+Chassis authenticates each other by using certificate\[char46] The authentication succeeds if the other end in tunnel presents a certificate signed by a trusted CA and the common name (CN) matches the expected chassis name\[char46] The SSL/TLS certificates used in role-based access controls (RBAC) can be used in IPsec\[char46] Or use \fBovs\-pki\fR to create different certificates\[char46] The certificate is required to be x\[char46]509 version 3, and with CN field and subjectAltName field being set to the chassis name\[char46]
 .PP
 .PP
 The CA certificate, chassis certificate and private key are required to be installed in each chassis before enabling IPsec\[char46] Please see \fBovs\-vswitchd\[char46]conf\[char46]db\fR(5) for setting up CA based IPsec authentication\[char46]

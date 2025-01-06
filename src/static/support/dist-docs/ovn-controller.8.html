@@ -203,34 +203,34 @@
             able; if it is unset, the default is <b>l</b><b>i</b><b>b</b><b>c</b>.
 
    <b>P</b><b>K</b><b>I</b> <b>O</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>
-       PKI  configuration  is required in order to use SSL for the connections
-       to the Northbound and Southbound databases.
+       PKI  configuration  is required in order to use SSL/TLS for the connec‐
+       tions to the Northbound and Southbound databases.
 
               <b>-</b><b>p</b> <u>p</u><u>r</u><u>i</u><u>v</u><u>k</u><u>e</u><u>y</u><u>.</u><u>p</u><u>e</u><u>m</u>
               <b>-</b><b>-</b><b>p</b><b>r</b><b>i</b><b>v</b><b>a</b><b>t</b><b>e</b><b>-</b><b>k</b><b>e</b><b>y</b><b>=</b><u>p</u><u>r</u><u>i</u><u>v</u><u>k</u><u>e</u><u>y</u><u>.</u><u>p</u><u>e</u><u>m</u>
                    Specifies a PEM file containing the  private  key  used  as
-                   identity for outgoing SSL connections.
+                   identity for outgoing SSL/TLS connections.
 
               <b>-</b><b>c</b> <u>c</u><u>e</u><u>r</u><u>t</u><u>.</u><u>p</u><u>e</u><u>m</u>
               <b>-</b><b>-</b><b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b><b>c</b><b>a</b><b>t</b><b>e</b><b>=</b><u>c</u><u>e</u><u>r</u><u>t</u><u>.</u><u>p</u><u>e</u><u>m</u>
                    Specifies  a  PEM file containing a certificate that certi‐
                    fies the private key specified on <b>-</b><b>p</b> or <b>-</b><b>-</b><b>p</b><b>r</b><b>i</b><b>v</b><b>a</b><b>t</b><b>e</b><b>-</b><b>k</b><b>e</b><b>y</b> to be
                    trustworthy. The certificate must be signed by the certifi‐
-                   cate authority (CA) that the peer in SSL  connections  will
-                   use to verify it.
+                   cate authority (CA) that the peer  in  SSL/TLS  connections
+                   will use to verify it.
 
               <b>-</b><b>C</b> <u>c</u><u>a</u><u>c</u><u>e</u><u>r</u><u>t</u><u>.</u><u>p</u><u>e</u><u>m</u>
               <b>-</b><b>-</b><b>c</b><b>a</b><b>-</b><b>c</b><b>e</b><b>r</b><b>t</b><b>=</b><u>c</u><u>a</u><u>c</u><u>e</u><u>r</u><u>t</u><u>.</u><u>p</u><u>e</u><u>m</u>
                    Specifies a PEM file containing the CA certificate for ver‐
-                   ifying certificates presented to this program by SSL peers.
-                   (This  may  be  the  same certificate that SSL peers use to
-                   verify the certificate specified on <b>-</b><b>c</b> or <b>-</b><b>-</b><b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b><b>c</b><b>a</b><b>t</b><b>e</b>, or
-                   it may be a different one, depending on the PKI  design  in
-                   use.)
+                   ifying  certificates  presented  to this program by SSL/TLS
+                   peers. (This may be the same certificate that SSL/TLS peers
+                   use to verify the certificate specified on <b>-</b><b>c</b> or <b>-</b><b>-</b><b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b>‐‐
+                   <b>c</b><b>a</b><b>t</b><b>e</b>, or it may be a different one, depending  on  the  PKI
+                   design in use.)
 
               <b>-</b><b>C</b> <b>n</b><b>o</b><b>n</b><b>e</b>
               <b>-</b><b>-</b><b>c</b><b>a</b><b>-</b><b>c</b><b>e</b><b>r</b><b>t</b><b>=</b><b>n</b><b>o</b><b>n</b><b>e</b>
-                   Disables  verification  of  certificates  presented  by SSL
+                   Disables  verification of certificates presented by SSL/TLS
                    peers. This introduces a security risk,  because  it  means
                    that  certificates  cannot be verified to be those of known
                    trusted hosts.
@@ -239,37 +239,38 @@
                      When <u>c</u><u>a</u><u>c</u><u>e</u><u>r</u><u>t</u><u>.</u><u>p</u><u>e</u><u>m</u> exists, this option has the  same  effect
                      as  <b>-</b><b>C</b>  or <b>-</b><b>-</b><b>c</b><b>a</b><b>-</b><b>c</b><b>e</b><b>r</b><b>t</b>. If it does not exist, then the exe‐
                      cutable will attempt to obtain the  CA  certificate  from
-                     the  SSL  peer on its first SSL connection and save it to
-                     the named PEM file. If it is successful, it will  immedi‐
-                     ately drop the connection and reconnect, and from then on
-                     all  SSL  connections must be authenticated by a certifi‐
-                     cate signed by the CA certificate thus obtained.
+                     the SSL/TLS peer on its first SSL/TLS connection and save
+                     it  to  the  named PEM file. If it is successful, it will
+                     immediately drop the connection and reconnect,  and  from
+                     then  on all SSL/TLS connections must be authenticated by
+                     a certificate signed by the CA certificate thus obtained.
 
-                     This option exposes the SSL connection to  a  man-in-the-
-                     middle  attack  obtaining the initial CA certificate, but
-                     it may be useful for bootstrapping.
+                     This option exposes the SSL/TLS connection to  a  man-in-
+                     the-middle  attack  obtaining the initial CA certificate,
+                     but it may be useful for bootstrapping.
 
-                     This option is only useful if the SSL peer sends  its  CA
-                     certificate as part of the SSL certificate chain. The SSL
-                     protocol  does not require the server to send the CA cer‐
-                     tificate.
+                     This option is only useful if the SSL/TLS peer sends  its
+                     CA  certificate as part of the SSL/TLS certificate chain.
+                     SSL/TLS protocols do not require the server to  send  the
+                     CA certificate.
 
                      This option is mutually exclusive with <b>-</b><b>C</b> and <b>-</b><b>-</b><b>c</b><b>a</b><b>-</b><b>c</b><b>e</b><b>r</b><b>t</b>.
 
               <b>-</b><b>-</b><b>p</b><b>e</b><b>e</b><b>r</b><b>-</b><b>c</b><b>a</b><b>-</b><b>c</b><b>e</b><b>r</b><b>t</b><b>=</b><u>p</u><u>e</u><u>e</u><u>r</u><u>-</u><u>c</u><u>a</u><u>c</u><u>e</u><u>r</u><u>t</u><u>.</u><u>p</u><u>e</u><u>m</u>
                      Specifies a PEM file that contains one or more additional
-                     certificates to send to SSL peers. <u>p</u><u>e</u><u>e</u><u>r</u><u>-</u><u>c</u><u>a</u><u>c</u><u>e</u><u>r</u><u>t</u><u>.</u><u>p</u><u>e</u><u>m</u> should
-                     be the CA certificate used to sign the program’s own cer‐
-                     tificate, that is, the certificate  specified  on  <b>-</b><b>c</b>  or
-                     <b>-</b><b>-</b><b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b><b>c</b><b>a</b><b>t</b><b>e</b>.  If  the  program’s  certificate  is self-
+                     certificates  to  send  to SSL/TLS peers. <u>p</u><u>e</u><u>e</u><u>r</u><u>-</u><u>c</u><u>a</u><u>c</u><u>e</u><u>r</u><u>t</u><u>.</u><u>p</u><u>e</u><u>m</u>
+                     should be the CA certificate used to sign  the  program’s
+                     own certificate, that is, the certificate specified on <b>-</b><b>c</b>
+                     or  <b>-</b><b>-</b><b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b><b>c</b><b>a</b><b>t</b><b>e</b>.  If the program’s certificate is self-
                      signed,  then  <b>-</b><b>-</b><b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b><b>c</b><b>a</b><b>t</b><b>e</b>  and  <b>-</b><b>-</b><b>p</b><b>e</b><b>e</b><b>r</b><b>-</b><b>c</b><b>a</b><b>-</b><b>c</b><b>e</b><b>r</b><b>t</b>  should
                      specify the same file.
 
                      This  option  is  not useful in normal operation, because
-                     the SSL peer must already have the CA certificate for the
-                     peer to have any confidence in  the  program’s  identity.
-                     However,  this  offers  a  way  for a new installation to
-                     bootstrap the CA certificate on its first SSL connection.
+                     the SSL/TLS peer must already have the CA certificate for
+                     the peer to have any confidence in  the  program’s  iden‐
+                     tity.  However,  this offers a way for a new installation
+                     to bootstrap the CA certificate on its first SSL/TLS con‐
+                     nection.
 
    <b>O</b><b>t</b><b>h</b><b>e</b><b>r</b> <b>O</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>
        <b>-</b><b>-</b><b>u</b><b>n</b><b>i</b><b>x</b><b>c</b><b>t</b><b>l</b><b>=</b><u>s</u><u>o</u><u>c</u><u>k</u><u>e</u><u>t</u>
@@ -609,12 +610,13 @@
 
               <b>p</b><b>r</b><b>i</b><b>v</b><b>a</b><b>t</b><b>e</b><b>_</b><b>k</b><b>e</b><b>y</b>, <b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b><b>c</b><b>a</b><b>t</b><b>e</b>, <b>c</b><b>a</b><b>_</b><b>c</b><b>e</b><b>r</b><b>t</b>, and <b>b</b><b>o</b><b>o</b><b>t</b><b>s</b><b>t</b><b>r</b><b>a</b><b>p</b><b>_</b><b>c</b><b>a</b><b>_</b><b>c</b><b>e</b><b>r</b><b>t</b> from
               <b>S</b><b>S</b><b>L</b> table
-                     These  values provide the SSL configuration used for con‐
-                     necting to the OVN southbound database server when an SSL
-                     connection type is  configured  via  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>r</b><b>e</b>‐‐
-                     <b>m</b><b>o</b><b>t</b><b>e</b>.  Note  that this SSL configuration can also be pro‐
-                     vided via command-line options, the configuration in  the
-                     database takes precedence if both are present.
+                     These  values  provide the SSL/TLS configuration used for
+                     connecting to the OVN southbound database server when  an
+                     SSL/TLS   connection   type   is  configured  via  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b>‐‐
+                     <b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>r</b><b>e</b><b>m</b><b>o</b><b>t</b><b>e</b>. Note that this SSL/TLS  configuration
+                     can  also  be provided via command-line options, the con‐
+                     figuration in the database takes precedence if  both  are
+                     present.
 
 <b>O</b><b>P</b><b>E</b><b>N</b> <b>V</b><b>S</b><b>W</b><b>I</b><b>T</b><b>C</b><b>H</b> <b>D</b><b>A</b><b>T</b><b>A</b><b>B</b><b>A</b><b>S</b><b>E</b> <b>U</b><b>S</b><b>A</b><b>G</b><b>E</b>
        <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  uses  a number of <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b> keys in the Open vSwitch

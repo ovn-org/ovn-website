@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-ic-nb" 5 " DB Schema 1.1.0" "Open vSwitch 24.09.90" "Open vSwitch Manual"
+.TH "ovn-ic-nb" 5 " DB Schema 1.2.0" "Open vSwitch 24.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -156,7 +156,7 @@ If the value is nonzero, then it will be forced to a value of at least 1000 ms\[
 .IP "\fBconnections\fR: set of \fBConnection\fRs"
 Database clients to which the Open vSwitch database server should connect or on which it should listen, along with options for how these connections should be configured\[char46] See the \fBConnection\fR table for more information\[char46]
 .IP "\fBssl\fR: optional \fBSSL\fR"
-Global SSL configuration\[char46]
+Global SSL/TLS configuration\[char46]
 .bp
 .SH "Transit_Switch TABLE"
 .PP
@@ -194,7 +194,7 @@ See \fBExternal IDs\fR at the beginning of this document\[char46]
 .bp
 .SH "SSL TABLE"
 .PP
-SSL configuration for ovn-nb database access\[char46]
+SSL/TLS configuration for ovn-nb database access\[char46]
 .SS "Summary:
 .TQ 3.00in
 \fBprivate_key\fR
@@ -214,6 +214,9 @@ string
 .TQ 3.00in
 \fBssl_ciphers\fR
 string
+.TQ 3.00in
+\fBssl_ciphersuites\fR
+string
 .TQ .25in
 \fICommon Columns:\fR
 .RS .25in
@@ -223,19 +226,25 @@ map of string-string pairs
 .RE
 .SS "Details:
 .IP "\fBprivate_key\fR: string"
-Name of a PEM file containing the private key used as the switch\(cqs identity for SSL connections to the controller\[char46]
+Name of a PEM file containing the private key used as the switch\(cqs identity for SSL/TLS connections to the controller\[char46]
 .IP "\fBcertificate\fR: string"
 Name of a PEM file containing a certificate, signed by the certificate authority (CA) used by the controller and manager, that certifies the switch\(cqs private key, identifying a trustworthy switch\[char46]
 .IP "\fBca_cert\fR: string"
 Name of a PEM file containing the CA certificate used to verify that the switch is connected to a trustworthy controller\[char46]
 .IP "\fBbootstrap_ca_cert\fR: boolean"
-If set to \fBtrue\fR, then Open vSwitch will attempt to obtain the CA certificate from the controller on its first SSL connection and save it to the named PEM file\[char46] If it is successful, it will immediately drop the connection and reconnect, and from then on all SSL connections must be authenticated by a certificate signed by the CA certificate thus obtained\[char46] \fBThis option exposes the
-SSL connection to a man\-in\-the\-middle attack obtaining the initial
+If set to \fBtrue\fR, then Open vSwitch will attempt to obtain the CA certificate from the controller on its first SSL/TLS connection and save it to the named PEM file\[char46] If it is successful, it will immediately drop the connection and reconnect, and from then on all SSL/TLS connections must be authenticated by a certificate signed by the CA certificate thus obtained\[char46] \fBThis option exposes the
+SSL/TLS connection to a man\-in\-the\-middle attack obtaining the initial
 CA certificate\[char46]\fR It may still be useful for bootstrapping\[char46]
 .IP "\fBssl_protocols\fR: string"
-List of SSL protocols to be enabled for SSL connections\[char46] The default when this option is omitted is \fBTLSv1,TLSv1\[char46]1,TLSv1\[char46]2\fR\[char46]
+Range or a comma- or space-delimited list of the SSL/TLS protocols to enable for SSL/TLS connections\[char46]
+.IP
+Supported protocols include \fBTLSv1\fR (deprecated), \fBTLSv1\[char46]1\fR (deprecated), \fBTLSv1\[char46]2\fR and \fBTLSv1\[char46]3\fR\[char46] Ranges can be provided in a form of two protocol names separated with a dash (\fBTLSv1\[char46]1\-TLSv1\[char46]2\fR), or as a single protocol name with a plus sign (\fBTLSv1\[char46]2+\fR)\[char46] The value can be a list of protocols or exactly one range\[char46] The range is a preferred way of specifying protocols and the configuration always behaves as if the range between the minimum and the maximum specified version is provided, i\[char46]e\[char46], if the value is set to \fBTLSv1\[char46]1,TLSv1\[char46]3\fR, the \fBTLSv1\[char46]2\fR will also be enabled as if it was a range\[char46] Regardless of order, the highest protocol supported by both sides will be chosen when making the connection\[char46]
+.IP
+The default when this option is omitted is \fBTLSv1\[char46]2+\fR\[char46]
 .IP "\fBssl_ciphers\fR: string"
-List of ciphers (in OpenSSL cipher string format) to be supported for SSL connections\[char46] The default when this option is omitted is \fBHIGH:!aNULL:!MD5\fR\[char46]
+List of ciphers (in OpenSSL cipher string format) to be supported for SSL/TLS connections with TLSv1\[char46]2 and earlier\[char46] The default when this option is omitted is \fBDEFAULT:@SECLEVEL=2\fR\[char46]
+.IP "\fBssl_ciphersuites\fR: string"
+List of ciphersuites (in OpenSSL ciphersuites string format) to be supported for SSL/TLS connections with TLSv1\[char46]3 and later\[char46] Default value from OpenSSL will be used when this option is omitted\[char46]
 .ST "Common Columns:"
 .PP
 The overall purpose of these columns is described under \fBCommon
@@ -325,11 +334,11 @@ The following connection methods are currently supported:
 .RS
 .TP
 \fBssl:\fIhost\fB\fR[\fB:\fIport\fB\fR]
-The specified SSL \fIport\fR on the host at the given \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address\[char46] A valid SSL configuration must be provided when this form is used, this configuration can be specified via command-line options or the \fBSSL\fR table\[char46]
+The specified SSL/TLS \fIport\fR on the host at the given \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address\[char46] A valid SSL/TLS configuration must be provided when this form is used, this configuration can be specified via command-line options or the \fBSSL\fR table\[char46]
 .IP
 If \fIport\fR is not specified, it defaults to 6640\[char46]
 .IP
-SSL support is an optional feature that is not always built as part of Open vSwitch\[char46]
+SSL/TLS support is an optional feature that is not always built as part of OVN or Open vSwitch\[char46]
 .TP
 \fBtcp:\fIhost\fB\fR[\fB:\fIport\fB\fR]
 The specified TCP \fIport\fR on the host at the given \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address\[char46] If \fIhost\fR is an IPv6 address, wrap it in square brackets, e\[char46]g\[char46] \fBtcp:[::1]:6640\fR\[char46]
@@ -337,11 +346,11 @@ The specified TCP \fIport\fR on the host at the given \fIhost\fR, which can eith
 If \fIport\fR is not specified, it defaults to 6640\[char46]
 .TP
 \fBpssl:\fR[\fIport\fR][\fB:\fIhost\fB\fR]
-Listens for SSL connections on the specified TCP \fIport\fR\[char46] Specify 0 for \fIport\fR to have the kernel automatically choose an available port\[char46] If \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address, is specified, then connections are restricted to the resolved or specified local IPaddress (either IPv4 or IPv6 address)\[char46] If \fIhost\fR is an IPv6 address, wrap in square brackets, e\[char46]g\[char46] \fBpssl:6640:[::1]\fR\[char46] If \fIhost\fR is not specified then it listens only on IPv4 (but not IPv6) addresses\[char46] A valid SSL configuration must be provided when this form is used, this can be specified either via command-line options or the \fBSSL\fR table\[char46]
+Listens for SSL/TLS connections on the specified TCP \fIport\fR\[char46] Specify 0 for \fIport\fR to have the kernel automatically choose an available port\[char46] If \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address, is specified, then connections are restricted to the resolved or specified local IPaddress (either IPv4 or IPv6 address)\[char46] If \fIhost\fR is an IPv6 address, wrap in square brackets, e\[char46]g\[char46] \fBpssl:6640:[::1]\fR\[char46] If \fIhost\fR is not specified then it listens only on IPv4 (but not IPv6) addresses\[char46] A valid SSL/TLS configuration must be provided when this form is used, this can be specified either via command-line options or the \fBSSL\fR table\[char46]
 .IP
 If \fIport\fR is not specified, it defaults to 6640\[char46]
 .IP
-SSL support is an optional feature that is not always built as part of Open vSwitch\[char46]
+SSL/TLS support is an optional feature that is not always built as part of OVN or Open vSwitch\[char46]
 .TP
 \fBptcp:\fR[\fIport\fR][\fB:\fIhost\fB\fR]
 Listens for connections on the specified TCP \fIport\fR\[char46] Specify 0 for \fIport\fR to have the kernel automatically choose an available port\[char46] If \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address, is specified, then connections are restricted to the resolved or specified local IP address (either IPv4 or IPv6 address)\[char46] If \fIhost\fR is an IPv6 address, wrap it in square brackets, e\[char46]g\[char46] \fBptcp:6640:[::1]\fR\[char46] If \fIhost\fR is not specified then it listens only on IPv4 addresses\[char46]

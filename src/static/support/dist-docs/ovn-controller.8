@@ -131,46 +131,46 @@ The default is taken from the \fBOVS_SYSLOG_METHOD\fR environment variable; if i
 .SS "PKI Options"
 .PP
 .PP
-PKI configuration is required in order to use SSL for the connections to the Northbound and Southbound databases\[char46]
+PKI configuration is required in order to use SSL/TLS for the connections to the Northbound and Southbound databases\[char46]
 .RS
 .TP
 \fB\-p\fR \fIprivkey\[char46]pem\fR
 .TQ .5in
 \fB\-\-private\-key=\fR\fIprivkey\[char46]pem\fR
-Specifies a PEM file containing the private key used as identity for outgoing SSL connections\[char46]
+Specifies a PEM file containing the private key used as identity for outgoing SSL/TLS connections\[char46]
 .TP
 \fB\-c\fR \fIcert\[char46]pem\fR
 .TQ .5in
 \fB\-\-certificate=\fR\fIcert\[char46]pem\fR
-Specifies a PEM file containing a certificate that certifies the private key specified on \fB\-p\fR or \fB\-\-private\-key\fR to be trustworthy\[char46] The certificate must be signed by the certificate authority (CA) that the peer in SSL connections will use to verify it\[char46]
+Specifies a PEM file containing a certificate that certifies the private key specified on \fB\-p\fR or \fB\-\-private\-key\fR to be trustworthy\[char46] The certificate must be signed by the certificate authority (CA) that the peer in SSL/TLS connections will use to verify it\[char46]
 .TP
 \fB\-C\fR \fIcacert\[char46]pem\fR
 .TQ .5in
 \fB\-\-ca\-cert=\fR\fIcacert\[char46]pem\fR
-Specifies a PEM file containing the CA certificate for verifying certificates presented to this program by SSL peers\[char46] (This may be the same certificate that SSL peers use to verify the certificate specified on \fB\-c\fR or \fB\-\-certificate\fR, or it may be a different one, depending on the PKI design in use\[char46])
+Specifies a PEM file containing the CA certificate for verifying certificates presented to this program by SSL/TLS peers\[char46] (This may be the same certificate that SSL/TLS peers use to verify the certificate specified on \fB\-c\fR or \fB\-\-certificate\fR, or it may be a different one, depending on the PKI design in use\[char46])
 .TP
 \fB\-C none\fR
 .TQ .5in
 \fB\-\-ca\-cert=none\fR
-Disables verification of certificates presented by SSL peers\[char46] This introduces a security risk, because it means that certificates cannot be verified to be those of known trusted hosts\[char46]
+Disables verification of certificates presented by SSL/TLS peers\[char46] This introduces a security risk, because it means that certificates cannot be verified to be those of known trusted hosts\[char46]
 .RE
 .RS
 .TP
 \fB\-\-bootstrap\-ca\-cert=\fR\fIcacert\[char46]pem\fR
-When \fIcacert\[char46]pem\fR exists, this option has the same effect as \fB\-C\fR or \fB\-\-ca\-cert\fR\[char46] If it does not exist, then the executable will attempt to obtain the CA certificate from the SSL peer on its first SSL connection and save it to the named PEM file\[char46] If it is successful, it will immediately drop the connection and reconnect, and from then on all SSL connections must be authenticated by a certificate signed by the CA certificate thus obtained\[char46]
+When \fIcacert\[char46]pem\fR exists, this option has the same effect as \fB\-C\fR or \fB\-\-ca\-cert\fR\[char46] If it does not exist, then the executable will attempt to obtain the CA certificate from the SSL/TLS peer on its first SSL/TLS connection and save it to the named PEM file\[char46] If it is successful, it will immediately drop the connection and reconnect, and from then on all SSL/TLS connections must be authenticated by a certificate signed by the CA certificate thus obtained\[char46]
 .IP
-This option exposes the SSL connection to a man-in-the-middle attack obtaining the initial CA certificate, but it may be useful for bootstrapping\[char46]
+This option exposes the SSL/TLS connection to a man-in-the-middle attack obtaining the initial CA certificate, but it may be useful for bootstrapping\[char46]
 .IP
-This option is only useful if the SSL peer sends its CA certificate as part of the SSL certificate chain\[char46] The SSL protocol does not require the server to send the CA certificate\[char46]
+This option is only useful if the SSL/TLS peer sends its CA certificate as part of the SSL/TLS certificate chain\[char46] SSL/TLS protocols do not require the server to send the CA certificate\[char46]
 .IP
 This option is mutually exclusive with \fB\-C\fR and \fB\-\-ca\-cert\fR\[char46]
 .RE
 .RS
 .TP
 \fB\-\-peer\-ca\-cert=\fR\fIpeer-cacert\[char46]pem\fR
-Specifies a PEM file that contains one or more additional certificates to send to SSL peers\[char46] \fIpeer-cacert\[char46]pem\fR should be the CA certificate used to sign the program\(cqs own certificate, that is, the certificate specified on \fB\-c\fR or \fB\-\-certificate\fR\[char46] If the program\(cqs certificate is self-signed, then \fB\-\-certificate\fR and \fB\-\-peer\-ca\-cert\fR should specify the same file\[char46]
+Specifies a PEM file that contains one or more additional certificates to send to SSL/TLS peers\[char46] \fIpeer-cacert\[char46]pem\fR should be the CA certificate used to sign the program\(cqs own certificate, that is, the certificate specified on \fB\-c\fR or \fB\-\-certificate\fR\[char46] If the program\(cqs certificate is self-signed, then \fB\-\-certificate\fR and \fB\-\-peer\-ca\-cert\fR should specify the same file\[char46]
 .IP
-This option is not useful in normal operation, because the SSL peer must already have the CA certificate for the peer to have any confidence in the program\(cqs identity\[char46] However, this offers a way for a new installation to bootstrap the CA certificate on its first SSL connection\[char46]
+This option is not useful in normal operation, because the SSL/TLS peer must already have the CA certificate for the peer to have any confidence in the program\(cqs identity\[char46] However, this offers a way for a new installation to bootstrap the CA certificate on its first SSL/TLS connection\[char46]
 .RE
 .SS "Other Options"
 .TP
@@ -329,7 +329,7 @@ This value is read from local OVS integration bridge row of \fBBridge\fR table a
 This value is populated in \fBexternal_ids:iface-types\fR of the \fBChassis\fR table in the OVN_Southbound database\[char46]
 .TP
 \fBprivate_key\fR, \fBcertificate\fR, \fBca_cert\fR, and \fBbootstrap_ca_cert\fR from \fBSSL\fR table
-These values provide the SSL configuration used for connecting to the OVN southbound database server when an SSL connection type is configured via \fBexternal_ids:ovn\-remote\fR\[char46] Note that this SSL configuration can also be provided via command-line options, the configuration in the database takes precedence if both are present\[char46]
+These values provide the SSL/TLS configuration used for connecting to the OVN southbound database server when an SSL/TLS connection type is configured via \fBexternal_ids:ovn\-remote\fR\[char46] Note that this SSL/TLS configuration can also be provided via command-line options, the configuration in the database takes precedence if both are present\[char46]
 .RE
 .SH "OPEN VSWITCH DATABASE USAGE"
 .PP

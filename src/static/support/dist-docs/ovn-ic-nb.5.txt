@@ -101,7 +101,7 @@ IC_NB_Global TABLE
               tion table for more information.
 
        ssl: optional SSL
-              Global SSL configuration.
+              Global SSL/TLS configuration.
 
 Transit_Switch TABLE
        Each  row represents one transit logical switch for interconnection be‐
@@ -128,7 +128,7 @@ Transit_Switch TABLE
               See External IDs at the beginning of this document.
 
 SSL TABLE
-       SSL configuration for ovn-nb database access.
+       SSL/TLS configuration for ovn-nb database access.
 
    Summary:
        private_key                   string
@@ -137,13 +137,14 @@ SSL TABLE
        bootstrap_ca_cert             boolean
        ssl_protocols                 string
        ssl_ciphers                   string
+       ssl_ciphersuites              string
        Common Columns:
          external_ids                map of string-string pairs
 
    Details:
        private_key: string
               Name of a PEM file  containing  the  private  key  used  as  the
-              switch’s identity for SSL connections to the controller.
+              switch’s identity for SSL/TLS connections to the controller.
 
        certificate: string
               Name  of a PEM file containing a certificate, signed by the cer‐
@@ -157,23 +158,43 @@ SSL TABLE
 
        bootstrap_ca_cert: boolean
               If set to true, then Open vSwitch will attempt to obtain the  CA
-              certificate  from the controller on its first SSL connection and
-              save it to the named PEM file. If it is successful, it will  im‐
-              mediately  drop  the  connection and reconnect, and from then on
-              all SSL connections  must  be  authenticated  by  a  certificate
+              certificate  from the controller on its first SSL/TLS connection
+              and save it to the named PEM file. If it is successful, it  will
+              immediately  drop the connection and reconnect, and from then on
+              all SSL/TLS connections must be authenticated by  a  certificate
               signed  by the CA certificate thus obtained. This option exposes
-              the SSL connection to a man-in-the-middle attack  obtaining  the
-              initial  CA  certificate.  It may still be useful for bootstrap‐
-              ping.
+              the SSL/TLS connection to a man-in-the-middle  attack  obtaining
+              the  initial  CA  certificate.  It may still be useful for boot‐
+              strapping.
 
        ssl_protocols: string
-              List of SSL protocols to be enabled for SSL connections. The de‐
-              fault when this option is omitted is TLSv1,TLSv1.1,TLSv1.2.
+              Range or a comma- or space-delimited list of the SSL/TLS  proto‐
+              cols to enable for SSL/TLS connections.
+
+              Supported  protocols include TLSv1 (deprecated), TLSv1.1 (depre‐
+              cated), TLSv1.2 and TLSv1.3. Ranges can be provided in a form of
+              two protocol names separated with a dash  (TLSv1.1-TLSv1.2),  or
+              as a single protocol name with a plus sign (TLSv1.2+). The value
+              can  be a list of protocols or exactly one range. The range is a
+              preferred way of specifying protocols and the configuration  al‐
+              ways behaves as if the range between the minimum and the maximum
+              specified  version  is  provided,  i.e.,  if the value is set to
+              TLSv1.1,TLSv1.3, the TLSv1.2 will also be enabled as if it was a
+              range. Regardless of order, the highest  protocol  supported  by
+              both sides will be chosen when making the connection.
+
+              The default when this option is omitted is TLSv1.2+.
 
        ssl_ciphers: string
-              List of ciphers (in OpenSSL cipher string  format)  to  be  sup‐
-              ported  for  SSL  connections.  The  default when this option is
-              omitted is HIGH:!aNULL:!MD5.
+              List  of  ciphers  (in  OpenSSL cipher string format) to be sup‐
+              ported for SSL/TLS connections with TLSv1.2 and earlier. The de‐
+              fault when this option is omitted is DEFAULT:@SECLEVEL=2.
+
+       ssl_ciphersuites: string
+              List of ciphersuites (in OpenSSL ciphersuites string format)  to
+              be supported for SSL/TLS connections with TLSv1.3 and later. De‐
+              fault  value from OpenSSL will be used when this option is omit‐
+              ted.
 
      Common Columns:
 
@@ -227,20 +248,20 @@ Connection TABLE
               The following connection methods are currently supported:
 
               ssl:host[:port]
-                     The  specified  SSL  port  on the host at the given host,
+                     The specified SSL/TLS port on the host at the given host,
                      which can either be a DNS name (if built with unbound li‐
-                     brary) or an IP address. A valid SSL  configuration  must
-                     be  provided  when  this form is used, this configuration
-                     can be specified via command-line options or the SSL  ta‐
-                     ble.
+                     brary)  or  an  IP address. A valid SSL/TLS configuration
+                     must be provided when this form is used, this  configura‐
+                     tion can be specified via command-line options or the SSL
+                     table.
 
                      If port is not specified, it defaults to 6640.
 
-                     SSL  support  is  an  optional feature that is not always
-                     built as part of Open vSwitch.
+                     SSL/TLS support is an optional feature that is not always
+                     built as part of OVN or Open vSwitch.
 
               tcp:host[:port]
-                     The specified TCP port on the host  at  the  given  host,
+                     The  specified  TCP  port  on the host at the given host,
                      which can either be a DNS name (if built with unbound li‐
                      brary) or an IP address. If host is an IPv6 address, wrap
                      it in square brackets, e.g. tcp:[::1]:6640.
@@ -248,8 +269,8 @@ Connection TABLE
                      If port is not specified, it defaults to 6640.
 
               pssl:[port][:host]
-                     Listens  for  SSL  connections on the specified TCP port.
-                     Specify 0 for  port  to  have  the  kernel  automatically
+                     Listens for SSL/TLS  connections  on  the  specified  TCP
+                     port. Specify 0 for port to have the kernel automatically
                      choose  an available port. If host, which can either be a
                      DNS name (if built with unbound library)  or  an  IP  ad‐
                      dress,  is  specified, then connections are restricted to
@@ -257,45 +278,45 @@ Connection TABLE
                      IPv6 address). If host is an IPv6 address, wrap in square
                      brackets, e.g. pssl:6640:[::1]. If host is not  specified
                      then  it listens only on IPv4 (but not IPv6) addresses. A
-                     valid SSL configuration must be provided when  this  form
-                     is  used,  this  can be specified either via command-line
-                     options or the SSL table.
+                     valid SSL/TLS configuration must be  provided  when  this
+                     form  is  used, this can be specified either via command-
+                     line options or the SSL table.
 
                      If port is not specified, it defaults to 6640.
 
-                     SSL support is an optional feature  that  is  not  always
-                     built as part of Open vSwitch.
+                     SSL/TLS support is an optional feature that is not always
+                     built as part of OVN or Open vSwitch.
 
               ptcp:[port][:host]
-                     Listens  for connections on the specified TCP port. Spec‐
+                     Listens for connections on the specified TCP port.  Spec‐
                      ify 0 for port to have the kernel automatically choose an
-                     available port. If host, which can either be a  DNS  name
-                     (if  built  with  unbound  library)  or an IP address, is
-                     specified, then connections are  restricted  to  the  re‐
+                     available  port.  If host, which can either be a DNS name
+                     (if built with unbound library)  or  an  IP  address,  is
+                     specified,  then  connections  are  restricted to the re‐
                      solved or specified local IP address (either IPv4 or IPv6
-                     address).  If  host is an IPv6 address, wrap it in square
-                     brackets, e.g. ptcp:6640:[::1]. If host is not  specified
+                     address). If host is an IPv6 address, wrap it  in  square
+                     brackets,  e.g. ptcp:6640:[::1]. If host is not specified
                      then it listens only on IPv4 addresses.
 
                      If port is not specified, it defaults to 6640.
 
-              When  multiple clients are configured, the target values must be
+              When multiple clients are configured, the target values must  be
               unique. Duplicate target values yield unspecified results.
 
      Client Failure Detection and Handling:
 
        max_backoff: optional integer, at least 1,000
-              Maximum number of milliseconds to wait  between  connection  at‐
+              Maximum  number  of  milliseconds to wait between connection at‐
               tempts. Default is implementation-specific.
 
        inactivity_probe: optional integer
               Maximum number of milliseconds of idle time on connection to the
-              client  before  sending  an  inactivity  probe  message. If Open
-              vSwitch does not communicate with the client for  the  specified
-              number  of  seconds,  it will send a probe. If a response is not
-              received for the same additional amount of  time,  Open  vSwitch
-              assumes  the  connection  has been broken and attempts to recon‐
-              nect. Default is implementation-specific. A value of 0  disables
+              client before sending  an  inactivity  probe  message.  If  Open
+              vSwitch  does  not communicate with the client for the specified
+              number of seconds, it will send a probe. If a  response  is  not
+              received  for  the  same additional amount of time, Open vSwitch
+              assumes the connection has been broken and  attempts  to  recon‐
+              nect.  Default is implementation-specific. A value of 0 disables
               inactivity probes.
 
      Status:
@@ -304,12 +325,12 @@ Connection TABLE
        in the status columns may be updated depends on the target type.
 
        When target specifies a connection method that listens for inbound con‐
-       nections  (e.g.  ptcp:  or punix:), both n_connections and is_connected
+       nections (e.g. ptcp: or punix:), both  n_connections  and  is_connected
        may also be updated while the remaining key-value pairs are omitted.
 
-       On the other hand, when target specifies an  outbound  connection,  all
-       key-value  pairs  may  be  updated, except the above-mentioned two key-
-       value pairs associated with inbound connection targets. They are  omit‐
+       On  the  other  hand, when target specifies an outbound connection, all
+       key-value pairs may be updated, except  the  above-mentioned  two  key-
+       value  pairs associated with inbound connection targets. They are omit‐
        ted.
 
        is_connected: boolean
@@ -317,7 +338,7 @@ Connection TABLE
 
        status : last_error: optional string
               A human-readable description of the last error on the connection
-              to  the  manager; i.e. strerror(errno). This key will exist only
+              to the manager; i.e. strerror(errno). This key will  exist  only
               if an error has occurred.
 
        status : state: optional string, one of ACTIVE, BACKOFF, CONNECTING,
@@ -336,7 +357,7 @@ Connection TABLE
 
               IDLE   Connection is idle. Waiting for response to keep-alive.
 
-              These values may change in the future. They  are  provided  only
+              These  values  may  change in the future. They are provided only
               for human consumption.
 
        status : sec_since_connect: optional string, containing an integer, at
@@ -347,45 +368,45 @@ Connection TABLE
 
        status : sec_since_disconnect: optional string, containing an integer,
        at least 0
-              The  amount of time since this client last disconnected from the
-              database (in seconds). Value is empty if client has  never  dis‐
+              The amount of time since this client last disconnected from  the
+              database  (in  seconds). Value is empty if client has never dis‐
               connected.
 
        status : locks_held: optional string
-              Space-separated  list  of the names of OVSDB locks that the con‐
-              nection holds. Omitted if  the  connection  does  not  hold  any
+              Space-separated list of the names of OVSDB locks that  the  con‐
+              nection  holds.  Omitted  if  the  connection  does not hold any
               locks.
 
        status : locks_waiting: optional string
-              Space-separated  list  of the names of OVSDB locks that the con‐
-              nection is currently waiting to acquire. Omitted if the  connec‐
+              Space-separated list of the names of OVSDB locks that  the  con‐
+              nection  is currently waiting to acquire. Omitted if the connec‐
               tion is not waiting for any locks.
 
        status : locks_lost: optional string
-              Space-separated  list  of the names of OVSDB locks that the con‐
-              nection has had stolen by another OVSDB client.  Omitted  if  no
+              Space-separated list of the names of OVSDB locks that  the  con‐
+              nection  has  had  stolen by another OVSDB client. Omitted if no
               locks have been stolen from this connection.
 
        status : n_connections: optional string, containing an integer, at
        least 2
-              When  target  specifies a connection method that listens for in‐
-              bound connections (e.g. ptcp: or pssl:) and more than  one  con‐
-              nection  is  actually  active, the value is the number of active
+              When target specifies a connection method that listens  for  in‐
+              bound  connections  (e.g. ptcp: or pssl:) and more than one con‐
+              nection is actually active, the value is the  number  of  active
               connections. Otherwise, this key-value pair is omitted.
 
        status : bound_port: optional string, containing an integer
               When target is ptcp: or pssl:, this is the TCP port on which the
-              OVSDB server is listening. (This  is  particularly  useful  when
-              target  specifies a port of 0, allowing the kernel to choose any
+              OVSDB  server  is  listening.  (This is particularly useful when
+              target specifies a port of 0, allowing the kernel to choose  any
               available port.)
 
      Common Columns:
 
-       The overall purpose of these columns is described under Common  Columns
+       The  overall purpose of these columns is described under Common Columns
        at the beginning of this document.
 
        external_ids: map of string-string pairs
 
        other_config: map of string-string pairs
 
-Open vSwitch 24.09.90           DB Schema 1.1.0                   ovn-ic-nb(5)
+Open vSwitch 24.09.90           DB Schema 1.2.0                   ovn-ic-nb(5)

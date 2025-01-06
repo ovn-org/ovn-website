@@ -501,7 +501,7 @@ NB_Global TABLE
               tion table for more information.
 
        ssl: optional SSL
-              Global SSL configuration.
+              Global SSL/TLS configuration.
 
      Security Configurations:
 
@@ -4086,20 +4086,20 @@ Connection TABLE
               The following connection methods are currently supported:
 
               ssl:host[:port]
-                     The specified SSL port on the host  at  the  given  host,
+                     The specified SSL/TLS port on the host at the given host,
                      which can either be a DNS name (if built with unbound li‐
-                     brary)  or  an IP address. A valid SSL configuration must
-                     be provided when this form is  used,  this  configuration
-                     can  be specified via command-line options or the SSL ta‐
-                     ble.
+                     brary) or an IP address. A  valid  SSL/TLS  configuration
+                     must  be provided when this form is used, this configura‐
+                     tion can be specified via command-line options or the SSL
+                     table.
 
                      If port is not specified, it defaults to 6640.
 
-                     SSL support is an optional feature  that  is  not  always
-                     built as part of Open vSwitch.
+                     SSL/TLS support is an optional feature that is not always
+                     built as part of OVN or Open vSwitch.
 
               tcp:host[:port]
-                     The  specified  TCP  port  on the host at the given host,
+                     The specified TCP port on the host  at  the  given  host,
                      which can either be a DNS name (if built with unbound li‐
                      brary) or an IP address. If host is an IPv6 address, wrap
                      it in square brackets, e.g. tcp:[::1]:6640.
@@ -4107,8 +4107,8 @@ Connection TABLE
                      If port is not specified, it defaults to 6640.
 
               pssl:[port][:host]
-                     Listens for SSL connections on the  specified  TCP  port.
-                     Specify  0  for  port  to  have  the kernel automatically
+                     Listens  for  SSL/TLS  connections  on  the specified TCP
+                     port. Specify 0 for port to have the kernel automatically
                      choose an available port. If host, which can either be  a
                      DNS  name  (if  built  with unbound library) or an IP ad‐
                      dress, is specified, then connections are  restricted  to
@@ -4116,45 +4116,45 @@ Connection TABLE
                      IPv6 address). If host is an IPv6 address, wrap in square
                      brackets,  e.g. pssl:6640:[::1]. If host is not specified
                      then it listens only on IPv4 (but not IPv6) addresses.  A
-                     valid  SSL  configuration must be provided when this form
-                     is used, this can be specified  either  via  command-line
-                     options or the SSL table.
+                     valid  SSL/TLS  configuration  must be provided when this
+                     form is used, this can be specified either  via  command-
+                     line options or the SSL table.
 
                      If port is not specified, it defaults to 6640.
 
-                     SSL  support  is  an  optional feature that is not always
-                     built as part of Open vSwitch.
+                     SSL/TLS support is an optional feature that is not always
+                     built as part of OVN or Open vSwitch.
 
               ptcp:[port][:host]
-                     Listens for connections on the specified TCP port.  Spec‐
+                     Listens  for connections on the specified TCP port. Spec‐
                      ify 0 for port to have the kernel automatically choose an
-                     available  port.  If host, which can either be a DNS name
-                     (if built with unbound library)  or  an  IP  address,  is
-                     specified,  then  connections  are  restricted to the re‐
+                     available port. If host, which can either be a  DNS  name
+                     (if  built  with  unbound  library)  or an IP address, is
+                     specified, then connections are  restricted  to  the  re‐
                      solved or specified local IP address (either IPv4 or IPv6
-                     address). If host is an IPv6 address, wrap it  in  square
-                     brackets,  e.g. ptcp:6640:[::1]. If host is not specified
+                     address).  If  host is an IPv6 address, wrap it in square
+                     brackets, e.g. ptcp:6640:[::1]. If host is not  specified
                      then it listens only on IPv4 addresses.
 
                      If port is not specified, it defaults to 6640.
 
-              When multiple clients are configured, the target values must  be
+              When  multiple clients are configured, the target values must be
               unique. Duplicate target values yield unspecified results.
 
      Client Failure Detection and Handling:
 
        max_backoff: optional integer, at least 1,000
-              Maximum  number  of  milliseconds to wait between connection at‐
+              Maximum number of milliseconds to wait  between  connection  at‐
               tempts. Default is implementation-specific.
 
        inactivity_probe: optional integer
               Maximum number of milliseconds of idle time on connection to the
-              client before sending  an  inactivity  probe  message.  If  Open
-              vSwitch  does  not communicate with the client for the specified
-              number of seconds, it will send a probe. If a  response  is  not
-              received  for  the  same additional amount of time, Open vSwitch
-              assumes the connection has been broken and  attempts  to  recon‐
-              nect.  Default is implementation-specific. A value of 0 disables
+              client  before  sending  an  inactivity  probe  message. If Open
+              vSwitch does not communicate with the client for  the  specified
+              number  of  seconds,  it will send a probe. If a response is not
+              received for the same additional amount of  time,  Open  vSwitch
+              assumes  the  connection  has been broken and attempts to recon‐
+              nect. Default is implementation-specific. A value of 0  disables
               inactivity probes.
 
      Status:
@@ -4163,12 +4163,12 @@ Connection TABLE
        in the status columns may be updated depends on the target type.
 
        When target specifies a connection method that listens for inbound con‐
-       nections (e.g. ptcp: or punix:), both  n_connections  and  is_connected
+       nections  (e.g.  ptcp:  or punix:), both n_connections and is_connected
        may also be updated while the remaining key-value pairs are omitted.
 
-       On  the  other  hand, when target specifies an outbound connection, all
-       key-value pairs may be updated, except  the  above-mentioned  two  key-
-       value  pairs associated with inbound connection targets. They are omit‐
+       On the other hand, when target specifies an  outbound  connection,  all
+       key-value  pairs  may  be  updated, except the above-mentioned two key-
+       value pairs associated with inbound connection targets. They are  omit‐
        ted.
 
        is_connected: boolean
@@ -4176,7 +4176,7 @@ Connection TABLE
 
        status : last_error: optional string
               A human-readable description of the last error on the connection
-              to the manager; i.e. strerror(errno). This key will  exist  only
+              to  the  manager; i.e. strerror(errno). This key will exist only
               if an error has occurred.
 
        status : state: optional string, one of ACTIVE, BACKOFF, CONNECTING,
@@ -4195,7 +4195,7 @@ Connection TABLE
 
               IDLE   Connection is idle. Waiting for response to keep-alive.
 
-              These  values  may  change in the future. They are provided only
+              These values may change in the future. They  are  provided  only
               for human consumption.
 
        status : sec_since_connect: optional string, containing an integer, at
@@ -4206,48 +4206,48 @@ Connection TABLE
 
        status : sec_since_disconnect: optional string, containing an integer,
        at least 0
-              The amount of time since this client last disconnected from  the
-              database  (in  seconds). Value is empty if client has never dis‐
+              The  amount of time since this client last disconnected from the
+              database (in seconds). Value is empty if client has  never  dis‐
               connected.
 
        status : locks_held: optional string
-              Space-separated list of the names of OVSDB locks that  the  con‐
-              nection  holds.  Omitted  if  the  connection  does not hold any
+              Space-separated  list  of the names of OVSDB locks that the con‐
+              nection holds. Omitted if  the  connection  does  not  hold  any
               locks.
 
        status : locks_waiting: optional string
-              Space-separated list of the names of OVSDB locks that  the  con‐
-              nection  is currently waiting to acquire. Omitted if the connec‐
+              Space-separated  list  of the names of OVSDB locks that the con‐
+              nection is currently waiting to acquire. Omitted if the  connec‐
               tion is not waiting for any locks.
 
        status : locks_lost: optional string
-              Space-separated list of the names of OVSDB locks that  the  con‐
-              nection  has  had  stolen by another OVSDB client. Omitted if no
+              Space-separated  list  of the names of OVSDB locks that the con‐
+              nection has had stolen by another OVSDB client.  Omitted  if  no
               locks have been stolen from this connection.
 
        status : n_connections: optional string, containing an integer, at
        least 2
-              When target specifies a connection method that listens  for  in‐
-              bound  connections  (e.g. ptcp: or pssl:) and more than one con‐
-              nection is actually active, the value is the  number  of  active
+              When  target  specifies a connection method that listens for in‐
+              bound connections (e.g. ptcp: or pssl:) and more than  one  con‐
+              nection  is  actually  active, the value is the number of active
               connections. Otherwise, this key-value pair is omitted.
 
        status : bound_port: optional string, containing an integer
               When target is ptcp: or pssl:, this is the TCP port on which the
-              OVSDB  server  is  listening.  (This is particularly useful when
-              target specifies a port of 0, allowing the kernel to choose  any
+              OVSDB server is listening. (This  is  particularly  useful  when
+              target  specifies a port of 0, allowing the kernel to choose any
               available port.)
 
      Common Columns:
 
-       The  overall purpose of these columns is described under Common Columns
+       The overall purpose of these columns is described under Common  Columns
        at the beginning of this document.
 
        external_ids: map of string-string pairs
 
        other_config: map of string-string pairs
 DNS TABLE
-       Each row in this table stores the DNS records. The  Logical_Switch  ta‐
+       Each  row  in this table stores the DNS records. The Logical_Switch ta‐
        ble’s dns_records references these records.
 
    Summary:
@@ -4259,8 +4259,8 @@ DNS TABLE
        records: map of string-string pairs
               Key-value pair of DNS records with DNS query name as the key and
               value as a string of IP address(es) separated by comma or space.
-              For  PTR  requests,  the  key-value pair can be Reverse IPv4 ad�‐
-              dress.in-addr.arpa and the value DNS domain name. For  IPv6  ad‐
+              For PTR requests, the key-value pair can  be  Reverse  IPv4  ad�‐
+              dress.in-addr.arpa  and  the value DNS domain name. For IPv6 ad‐
               dresses, the key has to be Reverse IPv6 address.ip6.arpa.
 
               Example:  "vm1.ovn.org" = "10.0.0.4 aef0::4"
@@ -4268,20 +4268,20 @@ DNS TABLE
               Example:  "4.0.0.10.in-addr.arpa" = "vm1.ovn.org"
 
        options : ovn-owned: optional string
-              If  set  to  true, then the OVN will be the main responsible for
+              If set to true, then the OVN will be the  main  responsible  for
               DNS Records within this row.
 
-              A DNS row with this option set to true can be  created  for  do‐
-              mains  that  the  user needs to configure locally and don’t care
-              about IPv6 only interested in IPv4 or vice versa. This will  let
-              ovn  send  IPv4 DNS reply and reject/ignore IPv6 queries to save
+              A  DNS  row  with this option set to true can be created for do‐
+              mains that the user needs to configure locally  and  don’t  care
+              about  IPv6 only interested in IPv4 or vice versa. This will let
+              ovn send IPv4 DNS reply and reject/ignore IPv6 queries  to  save
               the waiting for a timeout on those uninteresting queries.
 
        external_ids: map of string-string pairs
               See External IDs at the beginning of this document.
 
 SSL TABLE
-       SSL configuration for ovn-nb database access.
+       SSL/TLS configuration for ovn-nb database access.
 
    Summary:
        private_key                   string
@@ -4290,52 +4290,73 @@ SSL TABLE
        bootstrap_ca_cert             boolean
        ssl_protocols                 string
        ssl_ciphers                   string
+       ssl_ciphersuites              string
        Common Columns:
          external_ids                map of string-string pairs
 
    Details:
        private_key: string
-              Name of a PEM file  containing  the  private  key  used  as  the
-              switch’s identity for SSL connections to the controller.
+              Name  of  a  PEM  file  containing  the  private key used as the
+              switch’s identity for SSL/TLS connections to the controller.
 
        certificate: string
-              Name  of a PEM file containing a certificate, signed by the cer‐
+              Name of a PEM file containing a certificate, signed by the  cer‐
               tificate authority (CA) used by the controller and manager, that
-              certifies the switch’s private key,  identifying  a  trustworthy
+              certifies  the  switch’s  private key, identifying a trustworthy
               switch.
 
        ca_cert: string
-              Name  of a PEM file containing the CA certificate used to verify
+              Name of a PEM file containing the CA certificate used to  verify
               that the switch is connected to a trustworthy controller.
 
        bootstrap_ca_cert: boolean
-              If set to true, then Open vSwitch will attempt to obtain the  CA
-              certificate  from the controller on its first SSL connection and
-              save it to the named PEM file. If it is successful, it will  im‐
-              mediately  drop  the  connection and reconnect, and from then on
-              all SSL connections  must  be  authenticated  by  a  certificate
-              signed  by the CA certificate thus obtained. This option exposes
-              the SSL connection to a man-in-the-middle attack  obtaining  the
-              initial  CA  certificate.  It may still be useful for bootstrap‐
-              ping.
+              If  set to true, then Open vSwitch will attempt to obtain the CA
+              certificate from the controller on its first SSL/TLS  connection
+              and  save it to the named PEM file. If it is successful, it will
+              immediately drop the connection and reconnect, and from then  on
+              all  SSL/TLS  connections must be authenticated by a certificate
+              signed by the CA certificate thus obtained. This option  exposes
+              the  SSL/TLS  connection to a man-in-the-middle attack obtaining
+              the initial CA certificate. It may still  be  useful  for  boot‐
+              strapping.
 
        ssl_protocols: string
-              List of SSL protocols to be enabled for SSL connections. The de‐
-              fault when this option is omitted is TLSv1,TLSv1.1,TLSv1.2.
+              Range  or a comma- or space-delimited list of the SSL/TLS proto‐
+              cols to enable for SSL/TLS connections.
+
+              Supported protocols include TLSv1 (deprecated), TLSv1.1  (depre‐
+              cated), TLSv1.2 and TLSv1.3. Ranges can be provided in a form of
+              two  protocol  names separated with a dash (TLSv1.1-TLSv1.2), or
+              as a single protocol name with a plus sign (TLSv1.2+). The value
+              can be a list of protocols or exactly one range. The range is  a
+              preferred  way of specifying protocols and the configuration al‐
+              ways behaves as if the range between the minimum and the maximum
+              specified version is provided, i.e., if  the  value  is  set  to
+              TLSv1.1,TLSv1.3, the TLSv1.2 will also be enabled as if it was a
+              range.  Regardless  of  order, the highest protocol supported by
+              both sides will be chosen when making the connection.
+
+              The default when this option is omitted is TLSv1.2+.
 
        ssl_ciphers: string
               List of ciphers (in OpenSSL cipher string  format)  to  be  sup‐
-              ported  for  SSL  connections.  The  default when this option is
-              omitted is HIGH:!aNULL:!MD5.
+              ported for SSL/TLS connections with TLSv1.2 and earlier. The de‐
+              fault when this option is omitted is DEFAULT:@SECLEVEL=2.
+
+       ssl_ciphersuites: string
+              List  of ciphersuites (in OpenSSL ciphersuites string format) to
+              be supported for SSL/TLS connections with TLSv1.3 and later. De‐
+              fault value from OpenSSL will be used when this option is  omit‐
+              ted.
 
      Common Columns:
 
-       The overall purpose of these columns is described under Common  Columns
+       The  overall purpose of these columns is described under Common Columns
        at the beginning of this document.
 
        external_ids: map of string-string pairs
 Gateway_Chassis TABLE
-       Association  of  a  chassis to a logical router port. The traffic going
+       Association of a chassis to a logical router port.  The  traffic  going
        out through an specific router port will be redirected to a chassis, or
        a set of them in high availability configurations.
 
@@ -4356,11 +4377,11 @@ Gateway_Chassis TABLE
 
        chassis_name: string
               Name of the chassis that we want to redirect traffic through for
-              the  associated  logical  router  port. The value must match the
+              the associated logical router port. The  value  must  match  the
               name column of the Chassis table in the OVN_Southbound database.
 
        priority: integer, in range 0 to 32,767
-              This is the priority of a chassis among all Gateway_Chassis  be‐
+              This  is the priority of a chassis among all Gateway_Chassis be‐
               longing to the same logical router port.
 
        options: map of string-string pairs
@@ -4373,12 +4394,12 @@ Gateway_Chassis TABLE
 
 HA_Chassis_Group TABLE
        Table representing a group of chassis which can provide high availabil‐
-       ity  services.  Each  chassis  in the group is represented by the table
-       HA_Chassis. The HA chassis with highest priority  will  be  the  active
-       chassis  of this group. If the active chassis failover is detected, the
-       HA chassis with the next higher priority takes over the  responsibility
-       of  providing the HA. If a distributed gateway router port references a
-       row in this table, then the active HA chassis in  this  group  provides
+       ity services. Each chassis in the group is  represented  by  the  table
+       HA_Chassis.  The  HA  chassis  with highest priority will be the active
+       chassis of this group. If the active chassis failover is detected,  the
+       HA  chassis with the next higher priority takes over the responsibility
+       of providing the HA. If a distributed gateway router port references  a
+       row  in  this  table, then the active HA chassis in this group provides
        the gateway functionality.
 
    Summary:
@@ -4408,12 +4429,12 @@ HA_Chassis TABLE
 
    Details:
        chassis_name: string
-              Name  of  the chassis which is part of the HA chassis group. The
-              value must match the name column of the  Chassis  table  in  the
+              Name of the chassis which is part of the HA chassis  group.  The
+              value  must  match  the  name column of the Chassis table in the
               OVN_Southbound database.
 
        priority: integer, in range 0 to 32,767
-              Priority  of  the chassis. Chassis with highest priority will be
+              Priority of the chassis. Chassis with highest priority  will  be
               the active chassis.
 
      Common Columns:
@@ -4422,13 +4443,13 @@ HA_Chassis TABLE
               See External IDs at the beginning of this document.
 
 BFD TABLE
-       Contains BFD parameter for ovn-controller BFD  configuration.  OVN  BFD
+       Contains  BFD  parameter  for ovn-controller BFD configuration. OVN BFD
        implementation is used to provide detection of failures in the path be‐
-       tween  adjacent  forwarding  engines, including the OVN interfaces. OVN
-       BFD provides link status info to OVN northd in order to update  logical
-       flows  according  to the status of BFD endpoints. In the current imple‐
-       mentation OVN BFD is used to check next-hop  status  for  ECMP  routes.
-       Please  note  BFD table refers to OVN BFD implementation and not to OVS
+       tween adjacent forwarding engines, including the  OVN  interfaces.  OVN
+       BFD  provides link status info to OVN northd in order to update logical
+       flows according to the status of BFD endpoints. In the  current  imple‐
+       mentation  OVN  BFD  is  used to check next-hop status for ECMP routes.
+       Please note BFD table refers to OVN BFD implementation and not  to  OVS
        legacy one.
 
    Summary:
@@ -4456,21 +4477,21 @@ BFD TABLE
               BFD peer IP address.
 
        min_tx: optional integer, at least 1
-              This is the minimum interval, in milliseconds,  that  the  local
-              system  would like to use when transmitting BFD Control packets,
-              less any jitter applied. The value  zero  is  reserved.  Default
+              This  is  the  minimum interval, in milliseconds, that the local
+              system would like to use when transmitting BFD Control  packets,
+              less  any  jitter  applied.  The value zero is reserved. Default
               value is 1000 ms.
 
        min_rx: optional integer
-              This  is the minimum interval, in milliseconds, between received
-              BFD Control packets that this system is capable  of  supporting,
-              less  any  jitter  applied by the sender. If this value is zero,
-              the transmitting system does not want the remote system to  send
+              This is the minimum interval, in milliseconds, between  received
+              BFD  Control  packets that this system is capable of supporting,
+              less any jitter applied by the sender. If this  value  is  zero,
+              the  transmitting system does not want the remote system to send
               any periodic BFD Control packets.
 
        detect_mult: optional integer, at least 1
-              Detection  time  multiplier.  The  negotiated transmit interval,
-              multiplied by this value, provides the Detection  Time  for  the
+              Detection time multiplier.  The  negotiated  transmit  interval,
+              multiplied  by  this  value, provides the Detection Time for the
               receiving system in Asynchronous mode. Default value is 5.
 
        options: map of string-string pairs
@@ -4506,7 +4527,7 @@ Static_MAC_Binding TABLE
    Details:
      Configuration:
 
-       ovn-northd  reads  configuration  from these columns and propagates the
+       ovn-northd reads configuration from these columns  and  propagates  the
        value to SBDB.
 
        logical_port: string
@@ -4522,19 +4543,19 @@ Static_MAC_Binding TABLE
               Override dynamically learnt MACs.
 
 Chassis_Template_Var TABLE
-       One record per chassis, each containing a map, variables, between  tem‐
-       plate  variable names and their value for that specific chassis. A tem‐
+       One  record per chassis, each containing a map, variables, between tem‐
+       plate variable names and their value for that specific chassis. A  tem‐
        plate variable has a name and potentially different values on different
-       hypervisors in the OVN cluster. For example, two  rows,  R1  =  (.chas�‐
-       sis=C1,  variables={(N: V1)} and R2 = (.chassis=C2, variables={(N: V2)}
+       hypervisors  in  the  OVN  cluster. For example, two rows, R1 = (.chas�‐
+       sis=C1, variables={(N: V1)} and R2 = (.chassis=C2, variables={(N:  V2)}
        will make ovn-controller running on chassis C1 and C2 interpret the to‐
-       ken N either as V1 (on C1) or as V2 (on C2). Users can  refer  to  tem‐
+       ken  N  either  as V1 (on C1) or as V2 (on C2). Users can refer to tem‐
        plate variables from within other logical components, e.g., within ACL,
-       QoS  or  Logical_Router_Policy  matches  or  from Load_Balancer VIP and
+       QoS or Logical_Router_Policy matches  or  from  Load_Balancer  VIP  and
        backend definitions.
 
-       If a template variable is referenced on a chassis for which that  vari‐
-       able  is  not  defined then ovn-controller running on that chassis will
+       If  a template variable is referenced on a chassis for which that vari‐
+       able is not defined then ovn-controller running on  that  chassis  will
        just interpret it as a raw string literal.
 
    Summary:
@@ -4557,7 +4578,7 @@ Chassis_Template_Var TABLE
 
 Sampling_App TABLE
    Summary:
-       type                          string, one of acl-est, acl-new, or  drop
+       type                          string,  one of acl-est, acl-new, or drop
                                      (must be unique within table)
        id                            integer, in range 1 to 255
        Common Columns:
@@ -4566,11 +4587,11 @@ Sampling_App TABLE
    Details:
        type: string, one of acl-est, acl-new, or drop (must be unique within
        table)
-              The  type of the application to be configured for sampling. Cur‐
+              The type of the application to be configured for sampling.  Cur‐
               rently supported options are: "drop", "acl-new", "acl-est".
 
        id: integer, in range 1 to 255
-              The identifier to be encoded in the samples generated  for  this
+              The  identifier  to be encoded in the samples generated for this
               type of application. This identifier is used as part of the sam‐
               ple’s observation domain ID.
 
@@ -4579,4 +4600,4 @@ Sampling_App TABLE
        external_ids: map of string-string pairs
               See External IDs at the beginning of this document.
 
-Open vSwitch 24.09.90           DB Schema 7.8.0                      ovn-nb(5)
+Open vSwitch 24.09.90           DB Schema 7.9.0                      ovn-nb(5)

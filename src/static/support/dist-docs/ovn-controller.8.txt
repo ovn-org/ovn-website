@@ -202,34 +202,34 @@ OPTIONS
             able; if it is unset, the default is libc.
 
    PKI Options
-       PKI  configuration  is required in order to use SSL for the connections
-       to the Northbound and Southbound databases.
+       PKI  configuration  is required in order to use SSL/TLS for the connec‐
+       tions to the Northbound and Southbound databases.
 
               -p privkey.pem
               --private-key=privkey.pem
                    Specifies a PEM file containing the  private  key  used  as
-                   identity for outgoing SSL connections.
+                   identity for outgoing SSL/TLS connections.
 
               -c cert.pem
               --certificate=cert.pem
                    Specifies  a  PEM file containing a certificate that certi‐
                    fies the private key specified on -p or --private-key to be
                    trustworthy. The certificate must be signed by the certifi‐
-                   cate authority (CA) that the peer in SSL  connections  will
-                   use to verify it.
+                   cate authority (CA) that the peer  in  SSL/TLS  connections
+                   will use to verify it.
 
               -C cacert.pem
               --ca-cert=cacert.pem
                    Specifies a PEM file containing the CA certificate for ver‐
-                   ifying certificates presented to this program by SSL peers.
-                   (This  may  be  the  same certificate that SSL peers use to
-                   verify the certificate specified on -c or --certificate, or
-                   it may be a different one, depending on the PKI  design  in
-                   use.)
+                   ifying  certificates  presented  to this program by SSL/TLS
+                   peers. (This may be the same certificate that SSL/TLS peers
+                   use to verify the certificate specified on -c or --certifi�‐
+                   cate, or it may be a different one, depending  on  the  PKI
+                   design in use.)
 
               -C none
               --ca-cert=none
-                   Disables  verification  of  certificates  presented  by SSL
+                   Disables  verification of certificates presented by SSL/TLS
                    peers. This introduces a security risk,  because  it  means
                    that  certificates  cannot be verified to be those of known
                    trusted hosts.
@@ -238,37 +238,38 @@ OPTIONS
                      When cacert.pem exists, this option has the  same  effect
                      as  -C  or --ca-cert. If it does not exist, then the exe‐
                      cutable will attempt to obtain the  CA  certificate  from
-                     the  SSL  peer on its first SSL connection and save it to
-                     the named PEM file. If it is successful, it will  immedi‐
-                     ately drop the connection and reconnect, and from then on
-                     all  SSL  connections must be authenticated by a certifi‐
-                     cate signed by the CA certificate thus obtained.
+                     the SSL/TLS peer on its first SSL/TLS connection and save
+                     it  to  the  named PEM file. If it is successful, it will
+                     immediately drop the connection and reconnect,  and  from
+                     then  on all SSL/TLS connections must be authenticated by
+                     a certificate signed by the CA certificate thus obtained.
 
-                     This option exposes the SSL connection to  a  man-in-the-
-                     middle  attack  obtaining the initial CA certificate, but
-                     it may be useful for bootstrapping.
+                     This option exposes the SSL/TLS connection to  a  man-in-
+                     the-middle  attack  obtaining the initial CA certificate,
+                     but it may be useful for bootstrapping.
 
-                     This option is only useful if the SSL peer sends  its  CA
-                     certificate as part of the SSL certificate chain. The SSL
-                     protocol  does not require the server to send the CA cer‐
-                     tificate.
+                     This option is only useful if the SSL/TLS peer sends  its
+                     CA  certificate as part of the SSL/TLS certificate chain.
+                     SSL/TLS protocols do not require the server to  send  the
+                     CA certificate.
 
                      This option is mutually exclusive with -C and --ca-cert.
 
               --peer-ca-cert=peer-cacert.pem
                      Specifies a PEM file that contains one or more additional
-                     certificates to send to SSL peers. peer-cacert.pem should
-                     be the CA certificate used to sign the program’s own cer‐
-                     tificate, that is, the certificate  specified  on  -c  or
-                     --certificate.  If  the  program’s  certificate  is self-
+                     certificates  to  send  to SSL/TLS peers. peer-cacert.pem
+                     should be the CA certificate used to sign  the  program’s
+                     own certificate, that is, the certificate specified on -c
+                     or  --certificate.  If the program’s certificate is self-
                      signed,  then  --certificate  and  --peer-ca-cert  should
                      specify the same file.
 
                      This  option  is  not useful in normal operation, because
-                     the SSL peer must already have the CA certificate for the
-                     peer to have any confidence in  the  program’s  identity.
-                     However,  this  offers  a  way  for a new installation to
-                     bootstrap the CA certificate on its first SSL connection.
+                     the SSL/TLS peer must already have the CA certificate for
+                     the peer to have any confidence in  the  program’s  iden‐
+                     tity.  However,  this offers a way for a new installation
+                     to bootstrap the CA certificate on its first SSL/TLS con‐
+                     nection.
 
    Other Options
        --unixctl=socket
@@ -608,12 +609,13 @@ CONFIGURATION
 
               private_key, certificate, ca_cert, and bootstrap_ca_cert from
               SSL table
-                     These  values provide the SSL configuration used for con‐
-                     necting to the OVN southbound database server when an SSL
-                     connection type is  configured  via  external_ids:ovn-re�‐
-                     mote.  Note  that this SSL configuration can also be pro‐
-                     vided via command-line options, the configuration in  the
-                     database takes precedence if both are present.
+                     These  values  provide the SSL/TLS configuration used for
+                     connecting to the OVN southbound database server when  an
+                     SSL/TLS   connection   type   is  configured  via  exter�‐
+                     nal_ids:ovn-remote. Note that this SSL/TLS  configuration
+                     can  also  be provided via command-line options, the con‐
+                     figuration in the database takes precedence if  both  are
+                     present.
 
 OPEN VSWITCH DATABASE USAGE
        ovn-controller  uses  a number of external_ids keys in the Open vSwitch
