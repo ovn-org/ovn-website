@@ -932,8 +932,8 @@
                      when  a  packet is received from ramp switch VXLAN tunnel
                      by an OVN hypervisor, the packet is resubmitted to  table
                      8  to  determine  the  output  port(s);  when  the packet
-                     reaches table 39, these packets are resubmitted to  table
-                     40  for  local  delivery  by checking a MLF_RCV_FROM_RAMP
+                     reaches table 42, these packets are resubmitted to  table
+                     43  for  local  delivery  by checking a MLF_RCV_FROM_RAMP
                      flag, which is set when the packet arrives  from  a  ramp
                      tunnel.
 
@@ -1009,17 +1009,17 @@
                   logical output port is known. These  pieces  of  information
                   are  obtained  from  the  tunnel encapsulation metadata (see
                   <b>T</b><b>u</b><b>n</b><b>n</b><b>e</b><b>l</b> <b>E</b><b>n</b><b>c</b><b>a</b><b>p</b><b>s</b><b>u</b><b>l</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> for encoding details).  Then  the  ac‐
-                  tions  resubmit  to  table  38  to  enter the logical egress
+                  tions  resubmit  to  table  45  to  enter the logical egress
                   pipeline.
 
-              2.  OpenFlow tables 8 through 31  execute  the  logical  ingress
+              2.  OpenFlow tables 8 through 39  execute  the  logical  ingress
                   pipeline  from  the <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>F</b><b>l</b><b>o</b><b>w</b> table in the OVN Southbound
                   database. These tables are expressed entirely  in  terms  of
                   logical concepts like logical ports and logical datapaths. A
                   big  part  of <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>’s job is to translate them into
                   equivalent OpenFlow (in particular it translates  the  table
-                  numbers:  <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>F</b><b>l</b><b>o</b><b>w</b>  tables  0 through 23 become OpenFlow
-                  tables 8 through 31).
+                  numbers:  <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>F</b><b>l</b><b>o</b><b>w</b>  tables  0 through 29 become OpenFlow
+                  tables 8 through 39).
 
                   Each logical flow maps to one or more OpenFlow flows. An ac‐
                   tual packet ordinarily matches only one of  these,  although
@@ -1051,9 +1051,9 @@
                   describing in more detail:
 
                   <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b><b>:</b>
-                         Implemented by resubmitting the packet to  table  37.
+                         Implemented by resubmitting the packet to  table  40.
                          If the pipeline executes more than one <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b> action,
-                         then  each one is separately resubmitted to table 37.
+                         then  each one is separately resubmitted to table 40.
                          This can be used  to  send  multiple  copies  of  the
                          packet to multiple ports. (If the packet was not mod‐
                          ified  between  the  <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b>  actions, and some of the
@@ -1097,20 +1097,20 @@
                        fields used for the arguments, so that the OVN  actions
                        do not have to be aware of this temporary use.)
 
-              3.  OpenFlow tables 37 through 41 implement the <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b> action in
-                  the  logical ingress pipeline. Specifically, table 37 serves
-                  as an entry point to egress pipeline. Table  37  detects  IP
+              3.  OpenFlow tables 40 through 44 implement the <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b> action in
+                  the  logical ingress pipeline. Specifically, table 40 serves
+                  as an entry point to egress pipeline. Table  40  detects  IP
                   packets  that are too big for a corresponding interface. Ta‐
-                  ble 38 produces ICMPv4 Fragmentation Needed (or  ICMPv6  Too
+                  ble 41 produces ICMPv4 Fragmentation Needed (or  ICMPv6  Too
                   Big) errors and deliver them back to the offending port. ta‐
-                  ble  39 handles packets to remote hypervisors, table 40 han‐
-                  dles packets to the local hypervisor, and  table  41  checks
+                  ble  42 handles packets to remote hypervisors, table 43 han‐
+                  dles packets to the local hypervisor, and  table  44  checks
                   whether  packets  whose  logical ingress and egress port are
                   the same should be discarded.
 
                   Logical patch ports are a special case. Logical patch  ports
                   do  not  have  a physical location and effectively reside on
-                  every hypervisor. Thus, flow table 40, for output  to  ports
+                  every hypervisor. Thus, flow table 43, for output  to  ports
                   on the local hypervisor, naturally implements output to uni‐
                   cast  logical  patch  ports  too. However, applying the same
                   logic to a logical patch port that is part of a logical mul‐
@@ -1118,9 +1118,9 @@
                   visor  that  contains  a logical port in the multicast group
                   will also output the packet to the logical patch port. Thus,
                   multicast groups implement output to logical patch ports  in
-                  table 39.
+                  table 42.
 
-                  Each  flow  in table 39 matches on a logical output port for
+                  Each  flow  in table 42 matches on a logical output port for
                   unicast or multicast logical ports that  include  a  logical
                   port  on  a remote hypervisor. Each flow’s actions implement
                   sending a packet to the port it matches. For unicast logical
@@ -1128,16 +1128,16 @@
                   nel key to the correct value, then send the  packet  on  the
                   tunnel  port to the correct hypervisor. (When the remote hy‐
                   pervisor receives the packet, table 0 there  will  recognize
-                  it  as a tunneled packet and pass it along to table 40.) For
+                  it  as a tunneled packet and pass it along to table 43.) For
                   multicast logical output ports, the actions send one copy of
                   the packet to each remote hypervisor, in the same way as for
                   unicast destinations. If a multicast group includes a  logi‐
                   cal  port or ports on the local hypervisor, then its actions
-                  also resubmit to table 40. Table 39 also includes:
+                  also resubmit to table 43. Table 42 also includes:
 
                   •      A higher-priority rule to match packets received from
                          ramp switch tunnels, based on flag MLF_RCV_FROM_RAMP,
-                         and resubmit these packets to table 40 for local  de‐
+                         and resubmit these packets to table 43 for local  de‐
                          livery.  Packets  received  from  ramp switch tunnels
                          reach here because of a lack of logical  output  port
                          field in the tunnel key and thus these packets needed
@@ -1146,7 +1146,7 @@
 
                   •      A higher-priority rule to match packets received from
                          ports of type <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b>, based on the  logical  input
-                         port,  and resubmit these packets to table 40 for lo‐
+                         port,  and resubmit these packets to table 43 for lo‐
                          cal delivery. Ports of type <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>p</b><b>o</b><b>r</b><b>t</b> exist on  every
                          hypervisor  and  by  definition  their traffic should
                          never go out through a tunnel.
@@ -1162,237 +1162,239 @@
                          nating these packets, the packets only need to be de‐
                          livered to local ports.
 
-                  •      A  fallback  flow that resubmits to table 40 if there
+                  •      A  fallback  flow that resubmits to table 43 if there
                          is no other match.
 
-                  Flows in table 40 resemble those in table 39 but for logical
+                  Flows in table 43 resemble those in table 42 but for logical
                   ports that reside locally rather than remotely. For  unicast
                   logical  output  ports  on the local hypervisor, the actions
-                  just resubmit to table 41. For multicast output  ports  that
+                  just resubmit to table 44. For multicast output  ports  that
                   include  one  or more logical ports on the local hypervisor,
                   for each such logical port <u>P</u>, the actions change the logical
-                  output port to <u>P</u>, then resubmit to table 41.
+                  output port to <u>P</u>, then resubmit to table 44.
 
                   A special case is that when a localnet port  exists  on  the
                   datapath,  remote  port is connected by switching to the lo‐
                   calnet port. In this case, instead of adding a flow in table
-                  39 to reach the remote port, a flow is added in table 40  to
+                  42 to reach the remote port, a flow is added in table 43  to
                   switch  the logical outport to the localnet port, and resub‐
-                  mit to table 40 as if it were unicasted to a logical port on
+                  mit to table 43 as if it were unicasted to a logical port on
                   the local hypervisor.
 
-                  Table 41 matches and drops packets for which the logical in‐
+                  Table 44 matches and drops packets for which the logical in‐
                   put and output ports are the same and the MLF_ALLOW_LOOPBACK
                   flag is not set. It also drops  MLF_LOCAL_ONLY  packets  di‐
-                  rected to a localnet port. It resubmits other packets to ta‐
-                  ble 42.
+                  rected  to  a  localnet  port, provided they aren’t RAs sent
+                  from a gateway or distributed router which  is  checked  via
+                  the  presence of the bitflag MLF_OVERRIDE_LOCAL_ONLY. It re‐
+                  submits other packets to table 46.
 
-              4.  OpenFlow  tables  42  through  62 execute the logical egress
-                  pipeline from the <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>F</b><b>l</b><b>o</b><b>w</b> table in the  OVN  Southbound
-                  database.  The  egress pipeline can perform a final stage of
-                  validation before packet delivery. Eventually, it  may  exe‐
-                  cute  an  <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b>  action, which <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> implements by
-                  resubmitting to table 64. A packet for  which  the  pipeline
-                  never  executes  <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b>  is effectively dropped (although it
+              4.  OpenFlow tables 45 through 62  execute  the  logical  egress
+                  pipeline  from  the <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>F</b><b>l</b><b>o</b><b>w</b> table in the OVN Southbound
+                  database. The egress pipeline can perform a final  stage  of
+                  validation  before  packet delivery. Eventually, it may exe‐
+                  cute an <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b> action, which  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  implements  by
+                  resubmitting  to  table  64. A packet for which the pipeline
+                  never executes <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b> is effectively  dropped  (although  it
                   may have been transmitted through a tunnel across a physical
                   network).
 
                   The egress pipeline cannot change the logical output port or
                   cause further tunneling.
 
-              5.  Table 64 bypasses OpenFlow loopback when  MLF_ALLOW_LOOPBACK
-                  is  set. Logical loopback was handled in table 41, but Open‐
-                  Flow by default  also  prevents  loopback  to  the  OpenFlow
+              5.  Table  64 bypasses OpenFlow loopback when MLF_ALLOW_LOOPBACK
+                  is set. Logical loopback was handled in table 44, but  Open‐
+                  Flow  by  default  also  prevents  loopback  to the OpenFlow
                   ingress port. Thus, when MLF_ALLOW_LOOPBACK is set, OpenFlow
-                  table  64  saves the OpenFlow ingress port, sets it to zero,
-                  resubmits to table 65  for  logical-to-physical  transforma‐
-                  tion,  and  then  restores the OpenFlow ingress port, effec‐
-                  tively disabling OpenFlow loopback  prevents.  When  MLF_AL‐
+                  table 64 saves the OpenFlow ingress port, sets it  to  zero,
+                  resubmits  to  table  65 for logical-to-physical transforma‐
+                  tion, and then restores the OpenFlow  ingress  port,  effec‐
+                  tively  disabling  OpenFlow  loopback prevents. When MLF_AL‐
                   LOW_LOOPBACK is unset, table 64 flow simply resubmits to ta‐
                   ble 65.
 
-              6.  OpenFlow  table 65 performs logical-to-physical translation,
-                  the opposite of table 0. It  matches  the  packet’s  logical
-                  egress  port.  Its actions output the packet to the port at‐
-                  tached to the OVN integration bridge  that  represents  that
-                  logical  port.  If  the  logical  egress port is a container
+              6.  OpenFlow table 65 performs logical-to-physical  translation,
+                  the  opposite  of  table  0. It matches the packet’s logical
+                  egress port. Its actions output the packet to the  port  at‐
+                  tached  to  the  OVN integration bridge that represents that
+                  logical port. If the logical  egress  port  is  a  container
                   nested with a VM, then before sending the packet the actions
                   push on a VLAN header with an appropriate VLAN ID.
 
    <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b> <b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>s</b> <b>a</b><b>n</b><b>d</b> <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b> <b>P</b><b>a</b><b>t</b><b>c</b><b>h</b> <b>P</b><b>o</b><b>r</b><b>t</b><b>s</b>
-       Typically logical routers and logical patch ports do not have a  physi‐
-       cal  location  and  effectively reside on every hypervisor. This is the
-       case for logical  patch  ports  between  logical  routers  and  logical
+       Typically  logical routers and logical patch ports do not have a physi‐
+       cal location and effectively reside on every hypervisor.  This  is  the
+       case  for  logical  patch  ports  between  logical  routers and logical
        switches behind those logical routers, to which VMs (and VIFs) attach.
 
        Consider a packet sent from one virtual machine or container to another
-       VM  or  container  that  resides on a different subnet. The packet will
-       traverse tables 0 to 65 as described in the previous section  <b>A</b><b>r</b><b>c</b><b>h</b><b>i</b><b>t</b><b>e</b><b>c</b>‐‐
-       <b>t</b><b>u</b><b>r</b><b>a</b><b>l</b>  <b>P</b><b>h</b><b>y</b><b>s</b><b>i</b><b>c</b><b>a</b><b>l</b> <b>L</b><b>i</b><b>f</b><b>e</b> <b>C</b><b>y</b><b>c</b><b>l</b><b>e</b> <b>o</b><b>f</b> <b>a</b> <b>P</b><b>a</b><b>c</b><b>k</b><b>e</b><b>t</b>, using the logical datapath rep‐
-       resenting the logical switch that the sender is attached to.  At  table
-       39, the packet will use the fallback flow that resubmits locally to ta‐
-       ble 40 on the same hypervisor. In this case, all of the processing from
+       VM or container that resides on a different  subnet.  The  packet  will
+       traverse  tables 0 to 65 as described in the previous section <b>A</b><b>r</b><b>c</b><b>h</b><b>i</b><b>t</b><b>e</b><b>c</b>‐‐
+       <b>t</b><b>u</b><b>r</b><b>a</b><b>l</b> <b>P</b><b>h</b><b>y</b><b>s</b><b>i</b><b>c</b><b>a</b><b>l</b> <b>L</b><b>i</b><b>f</b><b>e</b> <b>C</b><b>y</b><b>c</b><b>l</b><b>e</b> <b>o</b><b>f</b> <b>a</b> <b>P</b><b>a</b><b>c</b><b>k</b><b>e</b><b>t</b>, using the logical datapath  rep‐
+       resenting  the  logical switch that the sender is attached to. At table
+       42, the packet will use the fallback flow that resubmits locally to ta‐
+       ble 43 on the same hypervisor. In this case, all of the processing from
        table 0 to table 65 occurs on the hypervisor where the sender resides.
 
-       When  the packet reaches table 65, the logical egress port is a logical
-       patch port. <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> implements output to the  logical  patch  is
-       packet  by cloning and resubmitting directly to the first OpenFlow flow
-       table in the ingress pipeline, setting the logical ingress port to  the
-       peer  logical patch port, and using the peer logical patch port’s logi‐
+       When the packet reaches table 65, the logical egress port is a  logical
+       patch  port.  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  implements output to the logical patch is
+       packet by cloning and resubmitting directly to the first OpenFlow  flow
+       table  in the ingress pipeline, setting the logical ingress port to the
+       peer logical patch port, and using the peer logical patch port’s  logi‐
        cal datapath (that represents the logical router).
 
        The packet re-enters the ingress pipeline in order to traverse tables 8
        to 65 again, this time using the logical datapath representing the log‐
        ical router. The processing continues as described in the previous sec‐
-       tion <b>A</b><b>r</b><b>c</b><b>h</b><b>i</b><b>t</b><b>e</b><b>c</b><b>t</b><b>u</b><b>r</b><b>a</b><b>l</b> <b>P</b><b>h</b><b>y</b><b>s</b><b>i</b><b>c</b><b>a</b><b>l</b> <b>L</b><b>i</b><b>f</b><b>e</b> <b>C</b><b>y</b><b>c</b><b>l</b><b>e</b> <b>o</b><b>f</b> <b>a</b>  <b>P</b><b>a</b><b>c</b><b>k</b><b>e</b><b>t</b>.  When  the  packet
-       reaches  table 65, the logical egress port will once again be a logical
-       patch port. In the same manner as described above, this  logical  patch
-       port  will  cause  the packet to be resubmitted to OpenFlow tables 8 to
-       65, this time using  the  logical  datapath  representing  the  logical
+       tion  <b>A</b><b>r</b><b>c</b><b>h</b><b>i</b><b>t</b><b>e</b><b>c</b><b>t</b><b>u</b><b>r</b><b>a</b><b>l</b>  <b>P</b><b>h</b><b>y</b><b>s</b><b>i</b><b>c</b><b>a</b><b>l</b>  <b>L</b><b>i</b><b>f</b><b>e</b>  <b>C</b><b>y</b><b>c</b><b>l</b><b>e</b> <b>o</b><b>f</b> <b>a</b> <b>P</b><b>a</b><b>c</b><b>k</b><b>e</b><b>t</b>. When the packet
+       reaches table 65, the logical egress port will once again be a  logical
+       patch  port.  In the same manner as described above, this logical patch
+       port will cause the packet to be resubmitted to OpenFlow  tables  8  to
+       65,  this  time  using  the  logical  datapath representing the logical
        switch that the destination VM or container is attached to.
 
        The packet traverses tables 8 to 65 a third and final time. If the des‐
-       tination  VM or container resides on a remote hypervisor, then table 39
-       will send the packet on a tunnel port from the sender’s  hypervisor  to
+       tination VM or container resides on a remote hypervisor, then table  39
+       will  send  the packet on a tunnel port from the sender’s hypervisor to
        the remote hypervisor. Finally table 65 will output the packet directly
        to the destination VM or container.
 
-       The  following  sections describe two exceptions, where logical routers
+       The following sections describe two exceptions, where  logical  routers
        and/or logical patch ports are associated with a physical location.
 
      <u>G</u><u>a</u><u>t</u><u>e</u><u>w</u><u>a</u><u>y</u> <u>R</u><u>o</u><u>u</u><u>t</u><u>e</u><u>r</u><u>s</u>
 
-       A <u>g</u><u>a</u><u>t</u><u>e</u><u>w</u><u>a</u><u>y</u> <u>r</u><u>o</u><u>u</u><u>t</u><u>e</u><u>r</u> is a logical router that is bound to a physical  loca‐
-       tion.  This  includes  all  of  the  logical patch ports of the logical
-       router, as well as all of the  peer  logical  patch  ports  on  logical
-       switches.  In the OVN Southbound database, the <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> entries for
-       these logical patch ports use the type <b>l</b><b>3</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b> rather than <b>p</b><b>a</b><b>t</b><b>c</b><b>h</b>,  in
-       order  to  distinguish  that  these  logical patch ports are bound to a
+       A  <u>g</u><u>a</u><u>t</u><u>e</u><u>w</u><u>a</u><u>y</u> <u>r</u><u>o</u><u>u</u><u>t</u><u>e</u><u>r</u> is a logical router that is bound to a physical loca‐
+       tion. This includes all of the  logical  patch  ports  of  the  logical
+       router,  as  well  as  all  of  the peer logical patch ports on logical
+       switches. In the OVN Southbound database, the <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> entries  for
+       these  logical patch ports use the type <b>l</b><b>3</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b> rather than <b>p</b><b>a</b><b>t</b><b>c</b><b>h</b>, in
+       order to distinguish that these logical patch  ports  are  bound  to  a
        chassis.
 
        When a hypervisor processes a packet on a logical datapath representing
-       a logical switch, and the logical egress port is a <b>l</b><b>3</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b> port  rep‐
-       resenting  connectivity  to  a  gateway router, the packet will match a
-       flow in table 39 that sends the packet on a tunnel port to the  chassis
-       where  the  gateway router resides. This processing in table 39 is done
+       a  logical switch, and the logical egress port is a <b>l</b><b>3</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b> port rep‐
+       resenting connectivity to a gateway router, the  packet  will  match  a
+       flow  in table 42 that sends the packet on a tunnel port to the chassis
+       where the gateway router resides. This processing in table 42  is  done
        in the same manner as for VIFs.
 
      <u>D</u><u>i</u><u>s</u><u>t</u><u>r</u><u>i</u><u>b</u><u>u</u><u>t</u><u>e</u><u>d</u> <u>G</u><u>a</u><u>t</u><u>e</u><u>w</u><u>a</u><u>y</u> <u>P</u><u>o</u><u>r</u><u>t</u><u>s</u>
 
-       This section provides additional details on distributed gateway  ports,
+       This  section provides additional details on distributed gateway ports,
        outlined earlier.
 
-       The  primary  design  goal  of distributed gateway ports is to allow as
-       much traffic as possible to be handled locally on the hypervisor  where
-       a  VM  or  container resides. Whenever possible, packets from the VM or
-       container to the outside world should be processed completely  on  that
-       VM’s  or  container’s hypervisor, eventually traversing a localnet port
+       The primary design goal of distributed gateway ports  is  to  allow  as
+       much  traffic as possible to be handled locally on the hypervisor where
+       a VM or container resides. Whenever possible, packets from  the  VM  or
+       container  to  the outside world should be processed completely on that
+       VM’s or container’s hypervisor, eventually traversing a  localnet  port
        instance or a tunnel to the physical network or a different OVN deploy‐
        ment. Whenever possible, packets from the outside world to a VM or con‐
-       tainer should be directed through the physical network directly to  the
+       tainer  should be directed through the physical network directly to the
        VM’s or container’s hypervisor.
 
-       In  order  to allow for the distributed processing of packets described
-       in the paragraph above, distributed gateway ports need  to  be  logical
-       patch  ports  that  effectively reside on every hypervisor, rather than
-       <b>l</b><b>3</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b> ports that are bound to a particular  chassis.  However,  the
-       flows  associated with distributed gateway ports often need to be asso‐
+       In order to allow for the distributed processing of  packets  described
+       in  the  paragraph  above, distributed gateway ports need to be logical
+       patch ports that effectively reside on every  hypervisor,  rather  than
+       <b>l</b><b>3</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b>  ports  that  are bound to a particular chassis. However, the
+       flows associated with distributed gateway ports often need to be  asso‐
        ciated with physical locations, for the following reasons:
 
-              •      The physical network that the localnet port  is  attached
-                     to  typically uses L2 learning. Any Ethernet address used
+              •      The  physical  network that the localnet port is attached
+                     to typically uses L2 learning. Any Ethernet address  used
                      over the distributed gateway port must be restricted to a
-                     single physical location so that upstream L2 learning  is
-                     not  confused.  Traffic  sent out the distributed gateway
-                     port towards the localnet port with a  specific  Ethernet
-                     address  must  be  sent  out one specific instance of the
+                     single  physical location so that upstream L2 learning is
+                     not confused. Traffic sent out  the  distributed  gateway
+                     port  towards  the localnet port with a specific Ethernet
+                     address must be sent out one  specific  instance  of  the
                      distributed gateway port on one specific chassis. Traffic
-                     received from the localnet port (or from  a  VIF  on  the
+                     received  from  the  localnet  port (or from a VIF on the
                      same logical switch as the localnet port) with a specific
                      Ethernet address must be directed to the logical switch’s
                      patch port instance on that specific chassis.
 
-                     Due  to the implications of L2 learning, the Ethernet ad‐
+                     Due to the implications of L2 learning, the Ethernet  ad‐
                      dress and IP address of the distributed gateway port need
-                     to be restricted to a single physical location. For  this
+                     to  be restricted to a single physical location. For this
                      reason, the user must specify one chassis associated with
-                     the  distributed gateway port. Note that traffic travers‐
+                     the distributed gateway port. Note that traffic  travers‐
                      ing the distributed gateway port using other Ethernet ad‐
                      dresses and IP addresses (e.g. one-to-one NAT) is not re‐
                      stricted to this chassis.
 
-                     Replies to ARP and ND requests must be  restricted  to  a
-                     single  physical  location, where the Ethernet address in
-                     the reply resides. This includes ARP and ND  replies  for
+                     Replies  to  ARP  and ND requests must be restricted to a
+                     single physical location, where the Ethernet  address  in
+                     the  reply  resides. This includes ARP and ND replies for
                      the IP address of the distributed gateway port, which are
-                     restricted  to  the chassis that the user associated with
+                     restricted to the chassis that the user  associated  with
                      the distributed gateway port.
 
-              •      In order to support one-to-many SNAT (aka  IP  masquerad‐
-                     ing),  where  multiple logical IP addresses spread across
-                     multiple chassis are mapped to a single external  IP  ad‐
+              •      In  order  to support one-to-many SNAT (aka IP masquerad‐
+                     ing), where multiple logical IP addresses  spread  across
+                     multiple  chassis  are mapped to a single external IP ad‐
                      dress, it will be necessary to handle some of the logical
-                     router  processing on a specific chassis in a centralized
-                     manner. Since the SNAT external IP address  is  typically
+                     router processing on a specific chassis in a  centralized
+                     manner.  Since  the SNAT external IP address is typically
                      the distributed gateway port IP address, and for simplic‐
-                     ity,  the  same  chassis  associated with the distributed
+                     ity, the same chassis  associated  with  the  distributed
                      gateway port is used.
 
-       The details of flow restrictions to specific chassis are  described  in
+       The  details  of flow restrictions to specific chassis are described in
        the <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> documentation.
 
-       While  most  of  the physical location dependent aspects of distributed
-       gateway ports can be handled by  restricting  some  flows  to  specific
+       While most of the physical location dependent  aspects  of  distributed
+       gateway  ports  can  be  handled  by restricting some flows to specific
        chassis, one additional mechanism is required. When a packet leaves the
        ingress pipeline and the logical egress port is the distributed gateway
-       port, one of two different sets of actions is required at table 39:
+       port, one of two different sets of actions is required at table 42:
 
-              •      If  the packet can be handled locally on the sender’s hy‐
-                     pervisor (e.g. one-to-one NAT traffic), then  the  packet
-                     should  just  be  resubmitted locally to table 40, in the
+              •      If the packet can be handled locally on the sender’s  hy‐
+                     pervisor  (e.g.  one-to-one NAT traffic), then the packet
+                     should just be resubmitted locally to table  43,  in  the
                      normal manner for distributed logical patch ports.
 
               •      However, if the packet needs to be handled on the chassis
-                     associated with the distributed gateway port  (e.g.  one-
-                     to-many  SNAT  traffic or non-NAT traffic), then table 39
+                     associated  with  the distributed gateway port (e.g. one-
+                     to-many SNAT traffic or non-NAT traffic), then  table  42
                      must send the packet on a tunnel port to that chassis.
 
        In order to trigger the second set of actions, the <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b> type
-       of southbound <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> has been added. Setting the  logical  egress
-       port  to the type <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b> logical port is simply a way to indi‐
-       cate that although the packet is destined for the  distributed  gateway
-       port,  it  needs  to be redirected to a different chassis. At table 39,
-       packets with this logical egress port are sent to a  specific  chassis,
-       in the same way that table 39 directs packets whose logical egress port
+       of  southbound  <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> has been added. Setting the logical egress
+       port to the type <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b> logical port is simply a way to  indi‐
+       cate  that  although the packet is destined for the distributed gateway
+       port, it needs to be redirected to a different chassis.  At  table  42,
+       packets  with  this logical egress port are sent to a specific chassis,
+       in the same way that table 42 directs packets whose logical egress port
        is a VIF or a type <b>l</b><b>3</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b> port to different chassis. Once the packet
-       arrives at that chassis, table 40 resets the logical egress port to the
-       value  representing  the distributed gateway port. For each distributed
-       gateway port, there is one type <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b> port,  in  addition  to
+       arrives at that chassis, table 43 resets the logical egress port to the
+       value representing the distributed gateway port. For  each  distributed
+       gateway  port,  there  is one type <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b> port, in addition to
        the distributed logical patch port representing the distributed gateway
        port.
 
      <u>H</u><u>i</u><u>g</u><u>h</u> <u>A</u><u>v</u><u>a</u><u>i</u><u>l</u><u>a</u><u>b</u><u>i</u><u>l</u><u>i</u><u>t</u><u>y</u> <u>f</u><u>o</u><u>r</u> <u>D</u><u>i</u><u>s</u><u>t</u><u>r</u><u>i</u><u>b</u><u>u</u><u>t</u><u>e</u><u>d</u> <u>G</u><u>a</u><u>t</u><u>e</u><u>w</u><u>a</u><u>y</u> <u>P</u><u>o</u><u>r</u><u>t</u><u>s</u>
 
-       OVN  allows you to specify a prioritized list of chassis for a distrib‐
+       OVN allows you to specify a prioritized list of chassis for a  distrib‐
        uted gateway port. This is done by associating multiple <b>G</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b><b>_</b><b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>
        rows with a <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> in the <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database.
 
-       When multiple chassis have been specified for a  gateway,  all  chassis
+       When  multiple  chassis  have been specified for a gateway, all chassis
        that may send packets to that gateway will enable BFD on tunnels to all
-       configured  gateway chassis. The current active chassis for the gateway
+       configured gateway chassis. The current active chassis for the  gateway
        is the highest priority gateway chassis that is currently viewed as ac‐
        tive based on BFD status.
 
-       For more information on L3 gateway high availability, please  refer  to
+       For  more  information on L3 gateway high availability, please refer to
        http://docs.ovn.org/en/latest/topics/high-availability.html.
 
      <u>R</u><u>e</u><u>s</u><u>t</u><u>r</u><u>i</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u> <u>o</u><u>f</u> <u>D</u><u>i</u><u>s</u><u>t</u><u>r</u><u>i</u><u>b</u><u>u</u><u>t</u><u>e</u><u>d</u> <u>G</u><u>a</u><u>t</u><u>e</u><u>w</u><u>a</u><u>y</u> <u>P</u><u>o</u><u>r</u><u>t</u><u>s</u>
 
-       Distributed  gateway  ports are used to connect to an external network,
-       which can be a physical network modeled by a logical switch with a  lo‐
-       calnet  port,  and can also be a logical switch that interconnects dif‐
-       ferent OVN deployments (see <b>O</b><b>V</b><b>N</b> <b>D</b><b>e</b><b>p</b><b>l</b><b>o</b><b>y</b><b>m</b><b>e</b><b>n</b><b>t</b><b>s</b>  <b>I</b><b>n</b><b>t</b><b>e</b><b>r</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>).  Usually
-       there  can be many logical routers connected to the same external logi‐
+       Distributed gateway ports are used to connect to an  external  network,
+       which  can be a physical network modeled by a logical switch with a lo‐
+       calnet port, and can also be a logical switch that  interconnects  dif‐
+       ferent  OVN  deployments (see <b>O</b><b>V</b><b>N</b> <b>D</b><b>e</b><b>p</b><b>l</b><b>o</b><b>y</b><b>m</b><b>e</b><b>n</b><b>t</b><b>s</b> <b>I</b><b>n</b><b>t</b><b>e</b><b>r</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>). Usually
+       there can be many logical routers connected to the same external  logi‐
        cal switch, as shown in below diagram.
 
                                      +--LS-EXT-+
@@ -1401,40 +1403,40 @@
                                     LR1  ...  LRn
 
 
-       In this diagram, there are n logical routers  connected  to  a  logical
-       switch  LS-EXT,  each  with a distributed gateway port, so that traffic
+       In  this  diagram,  there  are n logical routers connected to a logical
+       switch LS-EXT, each with a distributed gateway port,  so  that  traffic
        sent to external world is redirected to the gateway chassis that is as‐
        signed to the distributed gateway port of respective logical router.
 
        In the logical topology, nothing can prevent an user to add a route be‐
-       tween the logical routers via the connected distributed  gateway  ports
-       on  LS-EXT.  However,  the route works only if the LS-EXT is a physical
-       network (modeled by a logical switch with a  localnet  port).  In  that
+       tween  the  logical routers via the connected distributed gateway ports
+       on LS-EXT. However, the route works only if the LS-EXT  is  a  physical
+       network  (modeled  by  a  logical switch with a localnet port). In that
        case the packet will be delivered between the gateway chassises through
        the localnet port via physical network. If the LS-EXT is a regular log‐
        ical switch (backed by tunneling only, as in the use case of OVN inter‐
-       connection),  then  the  packet  will  be dropped on the source gateway
-       chassis. The limitation is due the fact that distributed gateway  ports
+       connection), then the packet will be  dropped  on  the  source  gateway
+       chassis.  The limitation is due the fact that distributed gateway ports
        are tied to physical location, and without physical network connection,
-       we  will end up with either dropping the packet or transferring it over
+       we will end up with either dropping the packet or transferring it  over
        the tunnels which could cause bigger problems such as broadcast packets
        being redirect repeatedly by different gateway chassises.
 
-       With the limitation in mind, if a user do want the direct  connectivity
+       With  the limitation in mind, if a user do want the direct connectivity
        between the logical routers, it is better to create an internal logical
-       switch  connected  to  the  logical routers with regular logical router
-       ports, which are completely distributed and the packets don’t  have  to
-       leave  a  chassis  unless necessary, which is more optimal than routing
+       switch connected to the logical routers  with  regular  logical  router
+       ports,  which  are completely distributed and the packets don’t have to
+       leave a chassis unless necessary, which is more  optimal  than  routing
        via the distributed gateway ports.
 
      <u>A</u><u>R</u><u>P</u> <u>r</u><u>e</u><u>q</u><u>u</u><u>e</u><u>s</u><u>t</u> <u>a</u><u>n</u><u>d</u> <u>N</u><u>D</u> <u>N</u><u>S</u> <u>p</u><u>a</u><u>c</u><u>k</u><u>e</u><u>t</u> <u>p</u><u>r</u><u>o</u><u>c</u><u>e</u><u>s</u><u>s</u><u>i</u><u>n</u><u>g</u>
 
-       Due to the fact that ARP requests and ND NA packets are usually  broad‐
-       cast  packets,  for  performance  reasons, OVN deals with requests that
-       target OVN owned IP addresses (i.e., IP  addresses  configured  on  the
-       router  ports,  VIPs, NAT IPs) in a specific way and only forwards them
+       Due  to the fact that ARP requests and ND NA packets are usually broad‐
+       cast packets, for performance reasons, OVN  deals  with  requests  that
+       target  OVN  owned  IP  addresses (i.e., IP addresses configured on the
+       router ports, VIPs, NAT IPs) in a specific way and only  forwards  them
        to the logical router that owns the target IP address. This behavior is
-       different than that of traditional  switches  and  implies  that  other
+       different  than  that  of  traditional  switches and implies that other
        routers/hosts connected to the logical switch will not learn the MAC/IP
        binding from the request packet.
 
@@ -1444,45 +1446,45 @@
      <u>V</u><u>I</u><u>F</u><u>s</u> <u>o</u><u>n</u> <u>t</u><u>h</u><u>e</u> <u>l</u><u>o</u><u>g</u><u>i</u><u>c</u><u>a</u><u>l</u> <u>s</u><u>w</u><u>i</u><u>t</u><u>c</u><u>h</u> <u>c</u><u>o</u><u>n</u><u>n</u><u>e</u><u>c</u><u>t</u><u>e</u><u>d</u> <u>b</u><u>y</u> <u>a</u> <u>d</u><u>i</u><u>s</u><u>t</u><u>r</u><u>i</u><u>b</u><u>u</u><u>t</u><u>e</u><u>d</u> <u>g</u><u>a</u><u>t</u><u>e</u><u>w</u><u>a</u><u>y</u> <u>p</u><u>o</u><u>r</u><u>t</u>
 
        Typically the logical switch connected by a distributed gateway port is
-       for  external connectivity, usually to a physical network through a lo‐
-       calnet port on the logical  switch,  or  to  a  remote  OVN  deployment
-       through  OVN  Interconnection. In these cases there is no VIF ports re‐
+       for external connectivity, usually to a physical network through a  lo‐
+       calnet  port  on  the  logical  switch,  or  to a remote OVN deployment
+       through OVN Interconnection. In these cases there is no VIF  ports  re‐
        quired on the logical switch.
 
-       While not very common, it is still possible to create VIF ports on  the
-       logical  switch connected by a distributed gateway port, but there is a
+       While  not very common, it is still possible to create VIF ports on the
+       logical switch connected by a distributed gateway port, but there is  a
        limitation that the logical ports need to reside on the gateway chassis
        where the distributed gateway port resides to get connectivity to other
        logical switches through the distributed gateway port. There is no lim‐
-       itation for the VIFs to connect within the logical  switch,  or  beyond
-       the  logical  switch  through  other regular distributed logical router
+       itation  for  the  VIFs to connect within the logical switch, or beyond
+       the logical switch through other  regular  distributed  logical  router
        ports.
 
-       A special case is when using distributed gateway ports for  scalability
-       purpose,  as  mentioned  earlier in this document. The logical switches
-       connected by distributed gateway ports are  not  for  connectivity  but
-       just  for  regular VIFs. However, the above limitation usually does not
-       matter because in this use case all the VIFs on the logical switch  are
+       A  special case is when using distributed gateway ports for scalability
+       purpose, as mentioned earlier in this document.  The  logical  switches
+       connected  by  distributed  gateway  ports are not for connectivity but
+       just for regular VIFs. However, the above limitation usually  does  not
+       matter  because in this use case all the VIFs on the logical switch are
        located on the same chassis with the distributed gateway port that con‐
        nects the logical switch.
 
    <b>M</b><b>u</b><b>l</b><b>t</b><b>i</b><b>p</b><b>l</b><b>e</b> <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>n</b><b>e</b><b>t</b> <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b> <b>s</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>e</b><b>s</b> <b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>e</b><b>d</b> <b>t</b><b>o</b> <b>a</b> <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b> <b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>
-       It  is  possible to have multiple logical switches each with a localnet
+       It is possible to have multiple logical switches each with  a  localnet
        port (representing physical networks) connected to a logical router, in
        which one localnet logical switch may provide the external connectivity
-       via a distributed  gateway  port  and  rest  of  the  localnet  logical
-       switches  use VLAN tagging in the physical network. It is expected that
-       <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>-</b><b>m</b><b>a</b><b>p</b><b>p</b><b>i</b><b>n</b><b>g</b><b>s</b> is configured appropriately on the chassis for  all
+       via  a  distributed  gateway  port  and  rest  of  the localnet logical
+       switches use VLAN tagging in the physical network. It is expected  that
+       <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>-</b><b>m</b><b>a</b><b>p</b><b>p</b><b>i</b><b>n</b><b>g</b><b>s</b>  is configured appropriately on the chassis for all
        these localnet networks.
 
      <u>E</u><u>a</u><u>s</u><u>t</u> <u>W</u><u>e</u><u>s</u><u>t</u> <u>r</u><u>o</u><u>u</u><u>t</u><u>i</u><u>n</u><u>g</u>
 
-       East-West  routing  between these localnet VLAN tagged logical switches
-       work almost the same way as normal logical switches. When the VM  sends
+       East-West routing between these localnet VLAN tagged  logical  switches
+       work  almost the same way as normal logical switches. When the VM sends
        such a packet, then:
 
-              1.  It  first  enters  the  ingress  pipeline,  and  then egress
-                  pipeline of the source localnet logical switch datapath.  It
+              1.  It first  enters  the  ingress  pipeline,  and  then  egress
+                  pipeline  of the source localnet logical switch datapath. It
                   then enters the ingress pipeline of the logical router data‐
                   path via the logical router port in the source chassis.
 
@@ -1490,22 +1492,22 @@
 
               3.  From the router datapath, packet enters the ingress pipeline
                   and then egress pipeline of the destination localnet logical
-                  switch  datapath  and  goes out of the integration bridge to
-                  the provider bridge ( belonging to the  destination  logical
-                  switch)  via  the localnet port. While sending the packet to
-                  provider bridge, we also replace router port MAC  as  source
+                  switch datapath and goes out of the  integration  bridge  to
+                  the  provider  bridge ( belonging to the destination logical
+                  switch) via the localnet port. While sending the  packet  to
+                  provider  bridge,  we also replace router port MAC as source
                   MAC with a chassis unique MAC.
 
-                  This  chassis  unique MAC is configured as global ovs config
+                  This chassis unique MAC is configured as global  ovs  config
                   on each chassis (eg. via "<b>o</b><b>v</b><b>s</b><b>-</b><b>v</b><b>s</b><b>c</b><b>t</b><b>l</b> <b>s</b><b>e</b><b>t</b> <b>o</b><b>p</b><b>e</b><b>n</b> <b>.</b> <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>-</b><b>i</b><b>d</b><b>s</b><b>:</b>
                   <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>-</b><b>m</b><b>a</b><b>c</b><b>-</b><b>m</b><b>a</b><b>p</b><b>p</b><b>i</b><b>n</b><b>g</b><b>s</b><b>=</b><b>"</b><b>p</b><b>h</b><b>y</b><b>s</b><b>:</b><b>a</b><b>a</b><b>:</b><b>b</b><b>b</b><b>:</b><b>c</b><b>c</b><b>:</b><b>d</b><b>d</b><b>:</b><b>e</b><b>e</b><b>:</b><b>$</b><b>i</b><b>$</b><b>i</b><b>"</b>").   For
                   more details, see <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>(8).
 
                   If the above is not configured, then source MAC would be the
-                  router  port  MAC. This could create problem if we have more
-                  than one chassis. This is because, since the router port  is
+                  router port MAC. This could create problem if we  have  more
+                  than  one chassis. This is because, since the router port is
                   distributed, the same (MAC,VLAN) tuple will seen by physical
-                  network  from other chassis as well, which could cause these
+                  network from other chassis as well, which could cause  these
                   issues:
 
                   •      Continuous MAC moves in top-of-rack switch (ToR).
@@ -1513,95 +1515,65 @@
                   •      ToR dropping the traffic, which is causing continuous
                          MAC moves.
 
-                  •      ToR blocking the ports from which MAC moves are  hap‐
+                  •      ToR  blocking the ports from which MAC moves are hap‐
                          pening.
 
               4.  The destination chassis receives the packet via the localnet
                   port and sends it to the integration bridge. Before entering
-                  the  integration bridge the source mac of the packet will be
-                  replaced with router port mac again. The packet  enters  the
+                  the integration bridge the source mac of the packet will  be
+                  replaced  with  router port mac again. The packet enters the
                   ingress pipeline and then egress pipeline of the destination
-                  localnet  logical  switch  and finally gets delivered to the
+                  localnet logical switch and finally gets  delivered  to  the
                   destination VM port.
 
      <u>E</u><u>x</u><u>t</u><u>e</u><u>r</u><u>n</u><u>a</u><u>l</u> <u>t</u><u>r</u><u>a</u><u>f</u><u>f</u><u>i</u><u>c</u>
 
-       The following happens when a VM sends an external  traffic  (which  re‐
-       quires  NATting) and the chassis hosting the VM doesn’t have a distrib‐
+       The  following  happens  when a VM sends an external traffic (which re‐
+       quires NATting) and the chassis hosting the VM doesn’t have a  distrib‐
        uted gateway port.
 
-              1.  The packet first  enters  the  ingress  pipeline,  and  then
-                  egress  pipeline of the source localnet logical switch data‐
-                  path. It then enters the ingress  pipeline  of  the  logical
-                  router  datapath  via  the logical router port in the source
+              1.  The  packet  first  enters  the  ingress  pipeline, and then
+                  egress pipeline of the source localnet logical switch  data‐
+                  path.  It  then  enters  the ingress pipeline of the logical
+                  router datapath via the logical router port  in  the  source
                   chassis.
 
-              2.  Routing decision is taken. Since the gateway router  or  the
-                  distributed  gateway port doesn’t reside in the source chas‐
-                  sis, the traffic is redirected to the  gateway  chassis  via
+              2.  Routing  decision  is taken. Since the gateway router or the
+                  distributed gateway port doesn’t reside in the source  chas‐
+                  sis,  the  traffic  is redirected to the gateway chassis via
                   the tunnel port.
 
-              3.  The  gateway chassis receives the packet via the tunnel port
-                  and the packet enters the egress  pipeline  of  the  logical
+              3.  The gateway chassis receives the packet via the tunnel  port
+                  and  the  packet  enters  the egress pipeline of the logical
                   router datapath. NAT rules are applied here. The packet then
-                  enters  the ingress pipeline and then egress pipeline of the
-                  localnet logical switch  datapath  which  provides  external
-                  connectivity  and  finally goes out via the localnet port of
+                  enters the ingress pipeline and then egress pipeline of  the
+                  localnet  logical  switch  datapath  which provides external
+                  connectivity and finally goes out via the localnet  port  of
                   the logical switch which provides external connectivity.
 
-       Although this works, the VM traffic is tunnelled  when  sent  from  the
-       compute  chassis  to the gateway chassis. In order for it to work prop‐
-       erly, the MTU of the localnet logical switches must be lowered  to  ac‐
+       Although  this  works,  the  VM traffic is tunnelled when sent from the
+       compute chassis to the gateway chassis. In order for it to  work  prop‐
+       erly,  the  MTU of the localnet logical switches must be lowered to ac‐
        count for the tunnel encapsulation.
 
-   <b>C</b><b>e</b><b>n</b><b>t</b><b>r</b><b>a</b><b>l</b><b>i</b><b>z</b><b>e</b><b>d</b>  <b>r</b><b>o</b><b>u</b><b>t</b><b>i</b><b>n</b><b>g</b> <b>f</b><b>o</b><b>r</b> <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>n</b><b>e</b><b>t</b> <b>V</b><b>L</b><b>A</b><b>N</b> <b>t</b><b>a</b><b>g</b><b>g</b><b>e</b><b>d</b> <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b> <b>s</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>e</b><b>s</b> <b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>e</b><b>d</b> <b>t</b><b>o</b>
+   <b>C</b><b>e</b><b>n</b><b>t</b><b>r</b><b>a</b><b>l</b><b>i</b><b>z</b><b>e</b><b>d</b> <b>r</b><b>o</b><b>u</b><b>t</b><b>i</b><b>n</b><b>g</b> <b>f</b><b>o</b><b>r</b> <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>n</b><b>e</b><b>t</b> <b>V</b><b>L</b><b>A</b><b>N</b> <b>t</b><b>a</b><b>g</b><b>g</b><b>e</b><b>d</b> <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b> <b>s</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>e</b><b>s</b> <b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>e</b><b>d</b>  <b>t</b><b>o</b>
        <b>a</b> <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b> <b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>
-       To overcome the tunnel encapsulation problem described in the  previous
-       section,  <b>O</b><b>V</b><b>N</b>  supports  the option of enabling centralized routing for
+       To  overcome the tunnel encapsulation problem described in the previous
+       section, <b>O</b><b>V</b><b>N</b> supports the option of enabling  centralized  routing  for
        localnet VLAN tagged logical switches. CMS can configure the option <b>o</b><b>p</b>‐‐
-       <b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>r</b><b>e</b><b>s</b><b>i</b><b>d</b><b>e</b><b>-</b><b>o</b><b>n</b><b>-</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> to <b>t</b><b>r</b><b>u</b><b>e</b> for  each  <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>
-       which  connects  to  the  localnet  VLAN  tagged logical switches. This
-       causes the gateway chassis (hosting the distributed  gateway  port)  to
-       handle  all  the  routing for these networks, making it centralized. It
+       <b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>r</b><b>e</b><b>s</b><b>i</b><b>d</b><b>e</b><b>-</b><b>o</b><b>n</b><b>-</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>  to  <b>t</b><b>r</b><b>u</b><b>e</b> for each <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>
+       which connects to the  localnet  VLAN  tagged  logical  switches.  This
+       causes  the  gateway  chassis (hosting the distributed gateway port) to
+       handle all the routing for these networks, making  it  centralized.  It
        will reply to the ARP requests for the logical router port IPs.
 
-       If the logical router doesn’t have a distributed gateway port  connect‐
-       ing  to  the localnet logical switch which provides external connectiv‐
-       ity, or if it has more than one distributed gateway  ports,  then  this
+       If  the logical router doesn’t have a distributed gateway port connect‐
+       ing to the localnet logical switch which provides  external  connectiv‐
+       ity,  or  if  it has more than one distributed gateway ports, then this
        option is ignored by <b>O</b><b>V</b><b>N</b>.
 
-       The  following happens when a VM sends an east-west traffic which needs
+       The following happens when a VM sends an east-west traffic which  needs
        to be routed:
-
-              1.  The packet first  enters  the  ingress  pipeline,  and  then
-                  egress  pipeline of the source localnet logical switch data‐
-                  path and is sent out via a localnet port of the  source  lo‐
-                  calnet  logical  switch  (instead  of  sending  it to router
-                  pipeline).
-
-              2.  The gateway chassis receives the packet via a localnet  port
-                  of  the  source  localnet logical switch and sends it to the
-                  integration bridge.  The  packet  then  enters  the  ingress
-                  pipeline,  and  then  egress pipeline of the source localnet
-                  logical switch datapath and enters the ingress  pipeline  of
-                  the logical router datapath.
-
-              3.  Routing decision is taken.
-
-              4.  From the router datapath, packet enters the ingress pipeline
-                  and then egress pipeline of the destination localnet logical
-                  switch  datapath. It then goes out of the integration bridge
-                  to the provider bridge ( belonging to the destination  logi‐
-                  cal switch) via a localnet port.
-
-              5.  The  destination  chassis receives the packet via a localnet
-                  port and sends it to the integration bridge. The packet  en‐
-                  ters  the  ingress  pipeline and then egress pipeline of the
-                  destination localnet logical switch and finally delivered to
-                  the destination VM port.
-
-       The following happens when a VM sends an  external  traffic  which  re‐
-       quires NATting:
 
               1.  The  packet  first  enters  the  ingress  pipeline, and then
                   egress pipeline of the source localnet logical switch  data‐
@@ -1616,66 +1588,96 @@
                   logical  switch  datapath and enters the ingress pipeline of
                   the logical router datapath.
 
+              3.  Routing decision is taken.
+
+              4.  From the router datapath, packet enters the ingress pipeline
+                  and then egress pipeline of the destination localnet logical
+                  switch datapath. It then goes out of the integration  bridge
+                  to  the provider bridge ( belonging to the destination logi‐
+                  cal switch) via a localnet port.
+
+              5.  The destination chassis receives the packet via  a  localnet
+                  port  and sends it to the integration bridge. The packet en‐
+                  ters the ingress pipeline and then egress  pipeline  of  the
+                  destination localnet logical switch and finally delivered to
+                  the destination VM port.
+
+       The  following  happens  when  a VM sends an external traffic which re‐
+       quires NATting:
+
+              1.  The packet first  enters  the  ingress  pipeline,  and  then
+                  egress  pipeline of the source localnet logical switch data‐
+                  path and is sent out via a localnet port of the  source  lo‐
+                  calnet  logical  switch  (instead  of  sending  it to router
+                  pipeline).
+
+              2.  The gateway chassis receives the packet via a localnet  port
+                  of  the  source  localnet logical switch and sends it to the
+                  integration bridge.  The  packet  then  enters  the  ingress
+                  pipeline,  and  then  egress pipeline of the source localnet
+                  logical switch datapath and enters the ingress  pipeline  of
+                  the logical router datapath.
+
               3.  Routing decision is taken and NAT rules are applied.
 
               4.  From the router datapath, packet enters the ingress pipeline
-                  and then egress pipeline  of  the  localnet  logical  switch
-                  datapath  which provides external connectivity. It then goes
-                  out of the integration bridge to the  provider  bridge  (be‐
-                  longing  to  the logical switch which provides external con‐
+                  and  then  egress  pipeline  of  the localnet logical switch
+                  datapath which provides external connectivity. It then  goes
+                  out  of  the  integration bridge to the provider bridge (be‐
+                  longing to the logical switch which provides  external  con‐
                   nectivity) via a localnet port.
 
        The following happens for the reverse external traffic.
 
               1.  The gateway chassis receives the packet from a localnet port
-                  of the logical switch which provides external  connectivity.
-                  The  packet then enters the ingress pipeline and then egress
-                  pipeline of the localnet logical switch (which provides  ex‐
-                  ternal  connectivity).  The  packet  then enters the ingress
+                  of  the logical switch which provides external connectivity.
+                  The packet then enters the ingress pipeline and then  egress
+                  pipeline  of the localnet logical switch (which provides ex‐
+                  ternal connectivity). The packet  then  enters  the  ingress
                   pipeline of the logical router datapath.
 
-              2.  The ingress pipeline of the logical router datapath  applies
-                  the  unNATting  rules.  The  packet  then enters the ingress
-                  pipeline and then egress pipeline  of  the  source  localnet
-                  logical  switch.  Since  the source VM doesn’t reside in the
-                  gateway chassis, the packet is sent out via a localnet  port
+              2.  The  ingress pipeline of the logical router datapath applies
+                  the unNATting rules. The  packet  then  enters  the  ingress
+                  pipeline  and  then  egress  pipeline of the source localnet
+                  logical switch. Since the source VM doesn’t  reside  in  the
+                  gateway  chassis, the packet is sent out via a localnet port
                   of the source logical switch.
 
-              3.  The  source  chassis receives the packet via a localnet port
-                  and sends it to the integration bridge.  The  packet  enters
-                  the  ingress pipeline and then egress pipeline of the source
-                  localnet logical switch and finally gets  delivered  to  the
+              3.  The source chassis receives the packet via a  localnet  port
+                  and  sends  it  to the integration bridge. The packet enters
+                  the ingress pipeline and then egress pipeline of the  source
+                  localnet  logical  switch  and finally gets delivered to the
                   source VM port.
 
-       As  an  alternative  to  <b>r</b><b>e</b><b>s</b><b>i</b><b>d</b><b>e</b><b>-</b><b>o</b><b>n</b><b>-</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>, OVN supports VLAN-
-       based redirection. Whereas <b>r</b><b>e</b><b>s</b><b>i</b><b>d</b><b>e</b><b>-</b><b>o</b><b>n</b><b>-</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>  centralizes  all
+       As an alternative to  <b>r</b><b>e</b><b>s</b><b>i</b><b>d</b><b>e</b><b>-</b><b>o</b><b>n</b><b>-</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>,  OVN  supports  VLAN-
+       based  redirection.  Whereas <b>r</b><b>e</b><b>s</b><b>i</b><b>d</b><b>e</b><b>-</b><b>o</b><b>n</b><b>-</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> centralizes all
        router functionality, VLAN-based redirection only changes how OVN redi‐
-       rects  packets to the gateway chassis. By setting <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b><b>-</b><b>t</b><b>y</b><b>p</b><b>e</b>
-       to <b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>d</b> on a distributed gateway port, OVN redirects packets to  the
-       gateway  chassis  using  the <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>n</b><b>e</b><b>t</b> port of the router’s peer logical
+       rects packets to the gateway chassis. By setting  <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b><b>-</b><b>t</b><b>y</b><b>p</b><b>e</b>
+       to  <b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>d</b> on a distributed gateway port, OVN redirects packets to the
+       gateway chassis using the <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>n</b><b>e</b><b>t</b> port of the  router’s  peer  logical
        switch, instead of a tunnel.
 
-       If the logical router doesn’t have a distributed gateway port  connect‐
-       ing  to  the localnet logical switch which provides external connectiv‐
-       ity, or if it has more than one distributed gateway  ports,  then  this
+       If  the logical router doesn’t have a distributed gateway port connect‐
+       ing to the localnet logical switch which provides  external  connectiv‐
+       ity,  or  if  it has more than one distributed gateway ports, then this
        option is ignored by <b>O</b><b>V</b><b>N</b>.
 
        Following happens for bridged redirection:
 
-              1.  On  compute  chassis,  packet passes though logical router’s
+              1.  On compute chassis, packet passes  though  logical  router’s
                   ingress pipeline.
 
-              2.  If logical outport is gateway chassis attached  router  port
-                  then  packet  is  "redirected" to gateway chassis using peer
+              2.  If  logical  outport is gateway chassis attached router port
+                  then packet is "redirected" to gateway  chassis  using  peer
                   logical switch’s localnet port.
 
-              3.  This redirected packet has destination mac  as  router  port
+              3.  This  redirected  packet  has destination mac as router port
                   mac (the one to which gateway chassis is attached). Its VLAN
                   id is that of localnet port (peer logical switch of the log‐
                   ical router port).
 
-              4.  On  the gateway chassis packet will enter the logical router
-                  pipeline again and this  time  it  will  passthrough  egress
+              4.  On the gateway chassis packet will enter the logical  router
+                  pipeline  again  and  this  time  it will passthrough egress
                   pipeline as well.
 
               5.  Reverse traffic packet flows stays the same.
@@ -1683,183 +1685,183 @@
        Some guidelines and expections with bridged redirection:
 
               1.  Since router port mac is destination mac, hence it has to be
-                  ensured  that  physical  network  learns it on ONLY from the
-                  gateway chassis. Which means  that  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>-</b><b>m</b><b>a</b><b>c</b><b>-</b><b>m</b><b>a</b><b>p</b><b>p</b><b>i</b><b>n</b><b>g</b><b>s</b>
+                  ensured that physical network learns it  on  ONLY  from  the
+                  gateway  chassis.  Which means that <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>-</b><b>m</b><b>a</b><b>c</b><b>-</b><b>m</b><b>a</b><b>p</b><b>p</b><b>i</b><b>n</b><b>g</b><b>s</b>
                   should be configure on all the compute nodes, so that physi‐
                   cal network never learn router port mac from compute nodes.
 
-              2.  Since  packet  enters  logical router ingress pipeline twice
-                  (once on compute chassis  and  again  on  gateway  chassis),
+              2.  Since packet enters logical router  ingress  pipeline  twice
+                  (once  on  compute  chassis  and  again on gateway chassis),
                   hence ttl will be decremented twice.
 
-              3.  Default  redirection  type continues to be <b>o</b><b>v</b><b>e</b><b>r</b><b>l</b><b>a</b><b>y</b>. User can
-                  switch the redirect-type  between  <b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>d</b>  and  <b>o</b><b>v</b><b>e</b><b>r</b><b>l</b><b>a</b><b>y</b>  by
+              3.  Default redirection type continues to be <b>o</b><b>v</b><b>e</b><b>r</b><b>l</b><b>a</b><b>y</b>.  User  can
+                  switch  the  redirect-type  between  <b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>d</b>  and <b>o</b><b>v</b><b>e</b><b>r</b><b>l</b><b>a</b><b>y</b> by
                   changing the value of <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b><b>-</b><b>t</b><b>y</b><b>p</b><b>e</b>
 
    <b>L</b><b>i</b><b>f</b><b>e</b> <b>C</b><b>y</b><b>c</b><b>l</b><b>e</b> <b>o</b><b>f</b> <b>a</b> <b>V</b><b>T</b><b>E</b><b>P</b> <b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b>
-       A  gateway  is  a chassis that forwards traffic between the OVN-managed
+       A gateway is a chassis that forwards traffic  between  the  OVN-managed
        part of a logical network and a physical VLAN, extending a tunnel-based
        logical network into a physical network.
 
-       The steps below refer often to details of the  OVN  and  VTEP  database
+       The  steps  below  refer  often to details of the OVN and VTEP database
        schemas. Please see <b>o</b><b>v</b><b>n</b><b>-</b><b>s</b><b>b</b>(5), <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>b</b>(5) and <b>v</b><b>t</b><b>e</b><b>p</b>(5), respectively, for
        the full story on these databases.
 
-              1.  A  VTEP  gateway’s  life cycle begins with the administrator
-                  registering the VTEP gateway as a <b>P</b><b>h</b><b>y</b><b>s</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> table  en‐
-                  try  in the <b>V</b><b>T</b><b>E</b><b>P</b> database. The <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>-</b><b>v</b><b>t</b><b>e</b><b>p</b> connected
-                  to this VTEP database, will recognize the new  VTEP  gateway
+              1.  A VTEP gateway’s life cycle begins  with  the  administrator
+                  registering  the VTEP gateway as a <b>P</b><b>h</b><b>y</b><b>s</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> table en‐
+                  try in the <b>V</b><b>T</b><b>E</b><b>P</b> database. The <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>-</b><b>v</b><b>t</b><b>e</b><b>p</b>  connected
+                  to  this  VTEP database, will recognize the new VTEP gateway
                   and  create  a  new  <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>  table  entry  for  it  in  the
                   <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database.
 
               2.  The administrator can then create a new <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> table
-                  entry, and bind a particular vlan on a VTEP  gateway’s  port
-                  to  any  VTEP  logical switch. Once a VTEP logical switch is
+                  entry,  and  bind a particular vlan on a VTEP gateway’s port
+                  to any VTEP logical switch. Once a VTEP  logical  switch  is
                   bound to a VTEP gateway, the <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>-</b><b>v</b><b>t</b><b>e</b><b>p</b> will detect
-                  it and add its name to the <u>v</u><u>t</u><u>e</u><u>p</u><b>_</b><u>l</u><u>o</u><u>g</u><u>i</u><u>c</u><u>a</u><u>l</u><b>_</b><u>s</u><u>w</u><u>i</u><u>t</u><u>c</u><u>h</u><u>e</u><u>s</u>  column  of
-                  the  <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> table in the <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database. Note, the
-                  <u>t</u><u>u</u><u>n</u><u>n</u><u>e</u><u>l</u><b>_</b><u>k</u><u>e</u><u>y</u> column of VTEP logical switch is  not  filled  at
-                  creation.  The  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>-</b><b>v</b><b>t</b><b>e</b><b>p</b> will set the column when
-                  the corresponding vtep logical switch is  bound  to  an  OVN
+                  it  and  add its name to the <u>v</u><u>t</u><u>e</u><u>p</u><b>_</b><u>l</u><u>o</u><u>g</u><u>i</u><u>c</u><u>a</u><u>l</u><b>_</b><u>s</u><u>w</u><u>i</u><u>t</u><u>c</u><u>h</u><u>e</u><u>s</u> column of
+                  the <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> table in the <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database. Note,  the
+                  <u>t</u><u>u</u><u>n</u><u>n</u><u>e</u><u>l</u><b>_</b><u>k</u><u>e</u><u>y</u>  column  of  VTEP logical switch is not filled at
+                  creation. The <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>-</b><b>v</b><b>t</b><b>e</b><b>p</b> will set the  column  when
+                  the  corresponding  vtep  logical  switch is bound to an OVN
                   logical network.
 
               3.  Now, the administrator can use the CMS to add a VTEP logical
-                  switch  to the OVN logical network. To do that, the CMS must
-                  first create a new <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> table  entry  in  the
+                  switch to the OVN logical network. To do that, the CMS  must
+                  first  create  a  new <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> table entry in the
                   <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database. Then, the <u>t</u><u>y</u><u>p</u><u>e</u> column of this entry
-                  must  be  set  to  "vtep". Next, the <u>v</u><u>t</u><u>e</u><u>p</u><u>-</u><u>l</u><u>o</u><u>g</u><u>i</u><u>c</u><u>a</u><u>l</u><u>-</u><u>s</u><u>w</u><u>i</u><u>t</u><u>c</u><u>h</u> and
+                  must be set to "vtep".  Next,  the  <u>v</u><u>t</u><u>e</u><u>p</u><u>-</u><u>l</u><u>o</u><u>g</u><u>i</u><u>c</u><u>a</u><u>l</u><u>-</u><u>s</u><u>w</u><u>i</u><u>t</u><u>c</u><u>h</u>  and
                   <u>v</u><u>t</u><u>e</u><u>p</u><u>-</u><u>p</u><u>h</u><u>y</u><u>s</u><u>i</u><u>c</u><u>a</u><u>l</u><u>-</u><u>s</u><u>w</u><u>i</u><u>t</u><u>c</u><u>h</u> keys in the <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u> column must also be
-                  specified, since multiple VTEP gateways can  attach  to  the
+                  specified,  since  multiple  VTEP gateways can attach to the
                   same VTEP logical switch. Next, the <u>a</u><u>d</u><u>d</u><u>r</u><u>e</u><u>s</u><u>s</u><u>e</u><u>s</u> column of this
-                  logical  port must be set to "unknown", it will add a prior‐
-                  ity 0 entry  in  "ls_in_l2_lkup"  stage  of  logical  switch
-                  ingress  pipeline.  So,  traffic  with unrecorded mac by OVN
-                  would go through the <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>  to  physical  net‐
+                  logical port must be set to "unknown", it will add a  prior‐
+                  ity  0  entry  in  "ls_in_l2_lkup"  stage  of logical switch
+                  ingress pipeline. So, traffic with  unrecorded  mac  by  OVN
+                  would  go  through  the <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> to physical net‐
                   work.
 
-              4.  The  newly  created logical port in the <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> data‐
-                  base and its  configuration  will  be  passed  down  to  the
-                  <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>  database  as a new <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> table entry.
-                  The <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>-</b><b>v</b><b>t</b><b>e</b><b>p</b> will recognize the change  and  bind
-                  the  logical port to the corresponding VTEP gateway chassis.
-                  Configuration of binding the same VTEP logical switch  to  a
-                  different  OVN logical networks is not allowed and a warning
+              4.  The newly created logical port in the  <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>  data‐
+                  base  and  its  configuration  will  be  passed  down to the
+                  <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database as a new <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>  table  entry.
+                  The  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>-</b><b>v</b><b>t</b><b>e</b><b>p</b>  will recognize the change and bind
+                  the logical port to the corresponding VTEP gateway  chassis.
+                  Configuration  of  binding the same VTEP logical switch to a
+                  different OVN logical networks is not allowed and a  warning
                   will be generated in the log.
 
-              5.  Beside binding to the VTEP  gateway  chassis,  the  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b>‐‐
-                  <b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>-</b><b>v</b><b>t</b><b>e</b><b>p</b>  will  update the <u>t</u><u>u</u><u>n</u><u>n</u><u>e</u><u>l</u><b>_</b><u>k</u><u>e</u><u>y</u> column of the VTEP
-                  logical switch to the corresponding  <b>D</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>  table
+              5.  Beside  binding  to  the  VTEP gateway chassis, the <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b>‐‐
+                  <b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>-</b><b>v</b><b>t</b><b>e</b><b>p</b> will update the <u>t</u><u>u</u><u>n</u><u>n</u><u>e</u><u>l</u><b>_</b><u>k</u><u>e</u><u>y</u> column of  the  VTEP
+                  logical  switch  to the corresponding <b>D</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> table
                   entry’s <u>t</u><u>u</u><u>n</u><u>n</u><u>e</u><u>l</u><b>_</b><u>k</u><u>e</u><u>y</u> for the bound OVN logical network.
 
               6.  Next, the <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>-</b><b>v</b><b>t</b><b>e</b><b>p</b> will keep reacting to the con‐
-                  figuration  change in the <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> in the <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>
-                  database, and updating the <b>U</b><b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>M</b><b>a</b><b>c</b><b>s</b><b>_</b><b>R</b><b>e</b><b>m</b><b>o</b><b>t</b><b>e</b>  table  in  the
-                  <b>V</b><b>T</b><b>E</b><b>P</b>  database.  This  allows the VTEP gateway to understand
-                  where to forward the unicast traffic  coming  from  the  ex‐
+                  figuration change in the <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> in the  <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>
+                  database,  and  updating  the <b>U</b><b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>M</b><b>a</b><b>c</b><b>s</b><b>_</b><b>R</b><b>e</b><b>m</b><b>o</b><b>t</b><b>e</b> table in the
+                  <b>V</b><b>T</b><b>E</b><b>P</b> database. This allows the VTEP  gateway  to  understand
+                  where  to  forward  the  unicast traffic coming from the ex‐
                   tended external network.
 
-              7.  Eventually,  the VTEP gateway’s life cycle ends when the ad‐
+              7.  Eventually, the VTEP gateway’s life cycle ends when the  ad‐
                   ministrator unregisters the VTEP gateway from the <b>V</b><b>T</b><b>E</b><b>P</b> data‐
-                  base. The <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>-</b><b>v</b><b>t</b><b>e</b><b>p</b> will recognize the  event  and
-                  remove  all  related configurations (<b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> table entry and
+                  base.  The  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>-</b><b>v</b><b>t</b><b>e</b><b>p</b> will recognize the event and
+                  remove all related configurations (<b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> table  entry  and
                   port bindings) in the <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database.
 
               8.  When the <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b><b>-</b><b>v</b><b>t</b><b>e</b><b>p</b> is terminated, all related con‐
-                  figurations in the  <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>  database  and  the  <b>V</b><b>T</b><b>E</b><b>P</b>
-                  database  will  be  cleaned, including <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> table entries
-                  for all registered VTEP gateways and  their  port  bindings,
+                  figurations  in  the  <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>  database  and the <b>V</b><b>T</b><b>E</b><b>P</b>
+                  database will be cleaned, including  <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>  table  entries
+                  for  all  registered  VTEP gateways and their port bindings,
                   and  all  <b>U</b><b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>M</b><b>a</b><b>c</b><b>s</b><b>_</b><b>R</b><b>e</b><b>m</b><b>o</b><b>t</b><b>e</b>  table  entries  and  the  <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
                   <b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> tunnel keys.
 
    <b>O</b><b>V</b><b>N</b> <b>D</b><b>e</b><b>p</b><b>l</b><b>o</b><b>y</b><b>m</b><b>e</b><b>n</b><b>t</b><b>s</b> <b>I</b><b>n</b><b>t</b><b>e</b><b>r</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>
        It is not uncommon for an operator to deploy multiple OVN clusters, for
-       two main reasons. Firstly, an operator may prefer  to  deploy  one  OVN
+       two  main  reasons.  Firstly,  an operator may prefer to deploy one OVN
        cluster for each availability zone, e.g. in different physical regions,
-       to  avoid  single  point of failure. Secondly, there is always an upper
+       to avoid single point of failure. Secondly, there is  always  an  upper
        limit for a single OVN control plane to scale.
 
-       Although the control planes of the different  availability  zone  (AZ)s
-       are  independent  from each other, the workloads from different AZs may
-       need to communicate across the zones. The OVN  interconnection  feature
-       provides  a  native  way  to  interconnect  different AZs by L3 routing
-       through transit overlay networks between logical routers  of  different
+       Although  the  control  planes of the different availability zone (AZ)s
+       are independent from each other, the workloads from different  AZs  may
+       need  to  communicate across the zones. The OVN interconnection feature
+       provides a native way to  interconnect  different  AZs  by  L3  routing
+       through  transit  overlay networks between logical routers of different
        AZs.
 
-       A  global OVN Interconnection Northbound database is introduced for the
-       operator (probably through CMS systems) to  configure  transit  logical
-       switches  that  connect  logical  routers from different AZs. A transit
-       switch is similar to a regular logical switch, but it is used  for  in‐
-       terconnection  purpose only. Typically, each transit switch can be used
-       to connect all logical routers that belong to same  tenant  across  all
+       A global OVN Interconnection Northbound database is introduced for  the
+       operator  (probably  through  CMS systems) to configure transit logical
+       switches that connect logical routers from  different  AZs.  A  transit
+       switch  is  similar to a regular logical switch, but it is used for in‐
+       terconnection purpose only. Typically, each transit switch can be  used
+       to  connect  all  logical routers that belong to same tenant across all
        AZs.
 
-       A  dedicated  daemon process <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b>, OVN interconnection controller, in
-       each AZ will consume  this  data  and  populate  corresponding  logical
+       A dedicated daemon process <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b>, OVN interconnection  controller,  in
+       each  AZ  will  consume  this  data  and populate corresponding logical
        switches to their own northbound databases for each AZ, so that logical
-       routers  can  be connected to the transit switch by creating patch port
-       pairs in their northbound databases. Any router ports connected to  the
-       transit  switches  are  considered interconnection ports, which will be
+       routers can be connected to the transit switch by creating  patch  port
+       pairs  in their northbound databases. Any router ports connected to the
+       transit switches are considered interconnection ports,  which  will  be
        exchanged between AZs.
 
        Physically, when workloads from different AZs communicate, packets need
-       to go through multiple hops: source chassis, source  gateway,  destina‐
-       tion  gateway  and  destination  chassis.  All these hops are connected
-       through tunnels so that the packets never  leave  overlay  networks.  A
+       to  go  through multiple hops: source chassis, source gateway, destina‐
+       tion gateway and destination chassis.  All  these  hops  are  connected
+       through  tunnels  so  that  the packets never leave overlay networks. A
        distributed gateway port is required to connect the logical router to a
-       transit  switch,  with a gateway chassis specified, so that the traffic
+       transit switch, with a gateway chassis specified, so that  the  traffic
        can be forwarded through the gateway chassis.
 
-       A global OVN Interconnection Southbound database is introduced for  ex‐
-       changing  control  plane  information between the AZs. The data in this
-       database is populated and consumed by the <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b>, of each AZ. The  main
+       A  global OVN Interconnection Southbound database is introduced for ex‐
+       changing control plane information between the AZs. The  data  in  this
+       database  is populated and consumed by the <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b>, of each AZ. The main
        information in this database includes:
 
               •      Datapath bindings for transit switches, which mainly con‐
-                     tains  the tunnel keys generated for each transit switch.
-                     Separate key ranges are reserved for transit switches  so
-                     that  they  will  never conflict with any tunnel keys lo‐
+                     tains the tunnel keys generated for each transit  switch.
+                     Separate  key ranges are reserved for transit switches so
+                     that they will never conflict with any  tunnel  keys  lo‐
                      cally assigned for datapaths within each AZ.
 
-              •      Availability zones, which are registered by  <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b>  from
+              •      Availability  zones,  which are registered by <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b> from
                      each AZ.
 
-              •      Gateways.  Each  AZ specifies chassises that are supposed
-                     to work as interconnection gateways, and the <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b>  will
-                     populate  this  information to the interconnection south‐
-                     bound DB. The <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b> from all the other  AZs  will  learn
+              •      Gateways. Each AZ specifies chassises that  are  supposed
+                     to  work as interconnection gateways, and the <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b> will
+                     populate this information to the  interconnection  south‐
+                     bound  DB.  The  <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b> from all the other AZs will learn
                      the gateways and populate to their own southbound DB as a
                      chassis.
 
-              •      Port  bindings  for  logical  switch ports created on the
+              •      Port bindings for logical switch  ports  created  on  the
                      transit switch. Each AZ maintains their logical router to
-                     transit switch connections independently, but <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b>  au‐
-                     tomatically  populates  local  port  bindings  on transit
+                     transit  switch connections independently, but <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b> au‐
+                     tomatically populates  local  port  bindings  on  transit
                      switches to the global interconnection southbound DB, and
-                     learns remote port bindings from other AZs  back  to  its
-                     own  northbound and southbound DBs, so that logical flows
+                     learns  remote  port  bindings from other AZs back to its
+                     own northbound and southbound DBs, so that logical  flows
                      can be produced and then translated to OVS flows locally,
                      which finally enables data plane communication.
 
-              •      Routes that are advertised between different AZs. If  en‐
+              •      Routes  that are advertised between different AZs. If en‐
                      abled, routes are automatically exchanged by <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b>. Both
-                     static  routes  and directly connected subnets are adver‐
-                     tised. Options in <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> column of the  <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b>  table
-                     of  <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>B</b>  database control the behavior of route adver‐
+                     static routes and directly connected subnets  are  adver‐
+                     tised.  Options  in <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> column of the <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> table
+                     of <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>B</b> database control the behavior of  route  adver‐
                      tisement, such as enable/disable the advertising/learning
-                     routes, whether default  routes  are  advertised/learned,
+                     routes,  whether  default  routes are advertised/learned,
                      and blacklisted CIDRs. See <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>b</b>(5) for more details.
 
-       The  tunnel keys for transit switch datapaths and related port bindings
-       must be agreed across all AZs. This is ensured by generating and  stor‐
-       ing  the  keys  in  the global interconnection southbound database. Any
+       The tunnel keys for transit switch datapaths and related port  bindings
+       must  be agreed across all AZs. This is ensured by generating and stor‐
+       ing the keys in the global  interconnection  southbound  database.  Any
        <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b> from any AZ can allocate the key, but race conditions are solved
        by enforcing unique index for the column in the database.
 
-       Once each AZ’s NB and SB databases are populated  with  interconnection
-       switches  and ports, and agreed upon the tunnel keys, data plane commu‐
+       Once  each  AZ’s NB and SB databases are populated with interconnection
+       switches and ports, and agreed upon the tunnel keys, data plane  commu‐
        nication between the AZs are established.
 
-       When VXLAN tunneling is enabled in an OVN cluster, due to  the  limited
+       When  VXLAN  tunneling is enabled in an OVN cluster, due to the limited
        range available for VNIs, Interconnection feature is not supported.
 
      <u>A</u> <u>d</u><u>a</u><u>y</u> <u>i</u><u>n</u> <u>t</u><u>h</u><u>e</u> <u>l</u><u>i</u><u>f</u><u>e</u> <u>o</u><u>f</u> <u>a</u> <u>p</u><u>a</u><u>c</u><u>k</u><u>e</u><u>t</u> <u>c</u><u>r</u><u>o</u><u>s</u><u>s</u><u>i</u><u>n</u><u>g</u> <u>A</u><u>Z</u><u>s</u>
@@ -1867,43 +1869,43 @@
               1.  An IP packet is sent out from a VIF on a hypervisor (HV1) of
                   AZ1, with destination IP belonging to a VIF in AZ2.
 
-              2.  In  HV1’s  OVS  flow tables, the packet goes through logical
+              2.  In HV1’s OVS flow tables, the packet  goes  through  logical
                   switch and logical router pipelines, and in a logical router
-                  pipeline, the routing stage finds out the next hop  for  the
-                  destination  IP,  which  belongs  to a remote logical router
-                  port in AZ2, and the output port, which is  a  chassis-redi‐
-                  rect  port  located  on  an  interconnection gateway (GW1 in
+                  pipeline,  the  routing stage finds out the next hop for the
+                  destination IP, which belongs to  a  remote  logical  router
+                  port  in  AZ2, and the output port, which is a chassis-redi‐
+                  rect port located on  an  interconnection  gateway  (GW1  in
                   AZ1), so HV1 sends the packet to GW1 through tunnel.
 
-              3.  On GW1, it continues with the logical router pipe  line  and
-                  switches  to  the transit switch’s pipeline through the peer
-                  port of the chassis redirect port. In the  transit  switch’s
-                  pipeline  it outputs to the remote logical port which is lo‐
+              3.  On  GW1,  it continues with the logical router pipe line and
+                  switches to the transit switch’s pipeline through  the  peer
+                  port  of  the chassis redirect port. In the transit switch’s
+                  pipeline it outputs to the remote logical port which is  lo‐
                   cated on a gateway (GW2) in AZ2, so the GW1 sends the packet
                   to GW2 in tunnel.
 
-              4.  On GW2, it continues with the transit  switch  pipeline  and
-                  switches  to  the  logical  router pipeline through the peer
-                  port, which is a chassis redirect port that  is  located  on
+              4.  On  GW2,  it  continues with the transit switch pipeline and
+                  switches to the logical router  pipeline  through  the  peer
+                  port,  which  is  a chassis redirect port that is located on
                   GW2. The logical router pipeline then forwards the packet to
-                  relevant  logical  pipelines according to the destination IP
-                  address, and figures out the MAC and location of the  desti‐
+                  relevant logical pipelines according to the  destination  IP
+                  address,  and figures out the MAC and location of the desti‐
                   nation VIF port - a hypervisor (HV2). The GW2 then sends the
                   packet to HV2 in tunnel.
 
               5.  On HV2, the packet is delivered to the final destination VIF
-                  port  by  the  logical switch egress pipeline, just the same
+                  port by the logical switch egress pipeline,  just  the  same
                   way as for intra-AZ communications.
 
    <b>N</b><b>a</b><b>t</b><b>i</b><b>v</b><b>e</b> <b>O</b><b>V</b><b>N</b> <b>s</b><b>e</b><b>r</b><b>v</b><b>i</b><b>c</b><b>e</b><b>s</b> <b>f</b><b>o</b><b>r</b> <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b> <b>p</b><b>o</b><b>r</b><b>t</b><b>s</b>
-       To support OVN native services (like DHCP/IPv6 RA/DNS  lookup)  to  the
-       cloud  resources  which  are  external,  OVN  supports <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> logical
+       To  support  OVN  native services (like DHCP/IPv6 RA/DNS lookup) to the
+       cloud resources which  are  external,  OVN  supports  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b>  logical
        ports.
 
        Below are some of the use cases where <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> ports can be used.
 
-              •      VMs connected to SR-IOV nics - Traffic from these VMs  by
-                     passes  the  kernel stack and local <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> do not
+              •      VMs  connected to SR-IOV nics - Traffic from these VMs by
+                     passes the kernel stack and local <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  do  not
                      bind these ports and cannot serve the native services.
 
               •      When CMS supports provisioning baremetal servers.
@@ -1911,51 +1913,51 @@
        OVN will provide the native services if CMS has done the below configu‐
        ration in the <u>O</u><u>V</u><u>N</u> <u>N</u><u>o</u><u>r</u><u>t</u><u>h</u><u>b</u><u>o</u><u>u</u><u>n</u><u>d</u> <u>D</u><u>a</u><u>t</u><u>a</u><u>b</u><u>a</u><u>s</u><u>e</u>.
 
-              •      A row is created in <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>, configuring  the
+              •      A  row is created in <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>, configuring the
                      <b>a</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>e</b><b>s</b> column and setting the <b>t</b><b>y</b><b>p</b><b>e</b> to <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b>.
 
               •      <b>h</b><b>a</b><b>_</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>g</b><b>r</b><b>o</b><b>u</b><b>p</b> column is configured.
 
-              •      The  HA chassis which belongs to the HA chassis group has
+              •      The HA chassis which belongs to the HA chassis group  has
                      the <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>-</b><b>m</b><b>a</b><b>p</b><b>p</b><b>i</b><b>n</b><b>g</b><b>s</b> configured and has proper L2 con‐
-                     nectivity so that it can receive the DHCP and  other  re‐
+                     nectivity  so  that it can receive the DHCP and other re‐
                      lated request packets from these external resources.
 
               •      The Logical_Switch of this port has a <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b><b>n</b><b>e</b><b>t</b> port.
 
-              •      Native  OVN  services are enabled by configuring the DHCP
-                     and other options like the way it is done for the  normal
+              •      Native OVN services are enabled by configuring  the  DHCP
+                     and  other options like the way it is done for the normal
                      logical ports.
 
        It is recommended to use the same HA chassis group for all the external
        ports of a logical switch. Otherwise, the physical switch might see MAC
-       flap  issue when different chassis provide the native services. For ex‐
+       flap issue when different chassis provide the native services. For  ex‐
        ample when supporting native DHCPv4 service, DHCPv4 server mac (config‐
-       ured in <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b><b>_</b><b>m</b><b>a</b><b>c</b> column in  table  <b>D</b><b>H</b><b>C</b><b>P</b><b>_</b><b>O</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>)  originating
-       from  different  ports can cause MAC flap issue. The MAC of the logical
-       router IP(s) can also flap if the same HA chassis group is not set  for
+       ured  in  <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b><b>_</b><b>m</b><b>a</b><b>c</b>  column in table <b>D</b><b>H</b><b>C</b><b>P</b><b>_</b><b>O</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>) originating
+       from different ports can cause MAC flap issue. The MAC of  the  logical
+       router  IP(s) can also flap if the same HA chassis group is not set for
        all the external ports of a logical switch.
 
 <b>S</b><b>E</b><b>C</b><b>U</b><b>R</b><b>I</b><b>T</b><b>Y</b>
    <b>R</b><b>o</b><b>l</b><b>e</b><b>-</b><b>B</b><b>a</b><b>s</b><b>e</b><b>d</b> <b>A</b><b>c</b><b>c</b><b>e</b><b>s</b><b>s</b> <b>C</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>s</b> <b>f</b><b>o</b><b>r</b> <b>t</b><b>h</b><b>e</b> <b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> <b>D</b><b>B</b>
-       In  order  to provide additional security against the possibility of an
-       OVN chassis becoming compromised in such a way as to allow rogue  soft‐
-       ware  to  make arbitrary modifications to the southbound database state
-       and thus disrupt the  OVN  network,  role-based  access  controls  (see
+       In order to provide additional security against the possibility  of  an
+       OVN  chassis becoming compromised in such a way as to allow rogue soft‐
+       ware to make arbitrary modifications to the southbound  database  state
+       and  thus  disrupt  the  OVN  network,  role-based access controls (see
        <b>o</b><b>v</b><b>s</b><b>d</b><b>b</b><b>-</b><b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b><b>(</b><b>1</b><b>)</b> for additional details) are provided for the southbound
        database.
 
-       The  implementation  of  role-based access controls (RBAC) requires the
-       addition of two tables to an OVSDB schema: the <b>R</b><b>B</b><b>A</b><b>C</b><b>_</b><b>R</b><b>o</b><b>l</b><b>e</b>  table,  which
-       is  indexed  by  role name and maps the the names of the various tables
+       The implementation of role-based access controls  (RBAC)  requires  the
+       addition  of  two tables to an OVSDB schema: the <b>R</b><b>B</b><b>A</b><b>C</b><b>_</b><b>R</b><b>o</b><b>l</b><b>e</b> table, which
+       is indexed by role name and maps the the names of  the  various  tables
        that may be modifiable for a given role to individual rows in a permis‐
-       sions table containing detailed permission information for  that  role,
-       and  the  permission table itself which consists of rows containing the
+       sions  table  containing detailed permission information for that role,
+       and the permission table itself which consists of rows  containing  the
        following information:
 
               <b>T</b><b>a</b><b>b</b><b>l</b><b>e</b> <b>N</b><b>a</b><b>m</b><b>e</b>
                      The name of the associated table. This column exists pri‐
-                     marily as an aid for humans reading the contents of  this
+                     marily  as an aid for humans reading the contents of this
                      table.
 
               <b>A</b><b>u</b><b>t</b><b>h</b> <b>C</b><b>r</b><b>i</b><b>t</b><b>e</b><b>r</b><b>i</b><b>a</b>
@@ -1964,37 +1966,37 @@
                      The contents of at least one of the columns or column:key
                      values in a row to be modified, inserted, or deleted must
                      be equal to the ID of the client attempting to act on the
-                     row  in order for the authorization check to pass. If the
-                     authorization criteria is empty,  authorization  checking
-                     is  disabled and all clients for the role will be treated
+                     row in order for the authorization check to pass. If  the
+                     authorization  criteria  is empty, authorization checking
+                     is disabled and all clients for the role will be  treated
                      as authorized.
 
               <b>I</b><b>n</b><b>s</b><b>e</b><b>r</b><b>t</b><b>/</b><b>D</b><b>e</b><b>l</b><b>e</b><b>t</b><b>e</b>
                      Row insertion/deletion permission; boolean value indicat‐
                      ing whether insertion and deletion of rows is allowed for
-                     the associated table. If true, insertion and deletion  of
+                     the  associated table. If true, insertion and deletion of
                      rows is allowed for authorized clients.
 
               <b>U</b><b>p</b><b>d</b><b>a</b><b>t</b><b>a</b><b>b</b><b>l</b><b>e</b> <b>C</b><b>o</b><b>l</b><b>u</b><b>m</b><b>n</b><b>s</b>
-                     A  set of strings containing the names of columns or col‐
-                     umn:key pairs that may be updated or  mutated  by  autho‐
-                     rized  clients. Modifications to columns within a row are
-                     only permitted  when  the  authorization  check  for  the
+                     A set of strings containing the names of columns or  col‐
+                     umn:key  pairs  that  may be updated or mutated by autho‐
+                     rized clients. Modifications to columns within a row  are
+                     only  permitted  when  the  authorization  check  for the
                      client passes and all columns to be modified are included
                      in this set of modifiable columns.
 
-       RBAC  configuration  for  the  OVN southbound database is maintained by
+       RBAC configuration for the OVN southbound  database  is  maintained  by
        ovn-northd. With RBAC enabled, modifications are only permitted for the
-       <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>, <b>E</b><b>n</b><b>c</b><b>a</b><b>p</b>, <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>,  and  <b>M</b><b>A</b><b>C</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>  tables,  and  are  re‐
+       <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>,  <b>E</b><b>n</b><b>c</b><b>a</b><b>p</b>,  <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>,  and  <b>M</b><b>A</b><b>C</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>  tables,  and are re‐
        stricted as follows:
 
               <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>
                      <b>A</b><b>u</b><b>t</b><b>h</b><b>o</b><b>r</b><b>i</b><b>z</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b>: client ID must match the chassis name.
 
-                     <b>I</b><b>n</b><b>s</b><b>e</b><b>r</b><b>t</b><b>/</b><b>D</b><b>e</b><b>l</b><b>e</b><b>t</b><b>e</b>:  authorized row insertion and deletion are
+                     <b>I</b><b>n</b><b>s</b><b>e</b><b>r</b><b>t</b><b>/</b><b>D</b><b>e</b><b>l</b><b>e</b><b>t</b><b>e</b>: authorized row insertion and deletion  are
                      permitted.
 
-                     <b>U</b><b>p</b><b>d</b><b>a</b><b>t</b><b>e</b>: The columns  <b>n</b><b>b</b><b>_</b><b>c</b><b>f</b><b>g</b>,  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>,  <b>e</b><b>n</b><b>c</b><b>a</b><b>p</b><b>s</b>,  and
+                     <b>U</b><b>p</b><b>d</b><b>a</b><b>t</b><b>e</b>:  The  columns  <b>n</b><b>b</b><b>_</b><b>c</b><b>f</b><b>g</b>,  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>, <b>e</b><b>n</b><b>c</b><b>a</b><b>p</b><b>s</b>, and
                      <b>v</b><b>t</b><b>e</b><b>p</b><b>_</b><b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>s</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>e</b><b>s</b> may be modified when authorized.
 
               <b>E</b><b>n</b><b>c</b><b>a</b><b>p</b>  <b>A</b><b>u</b><b>t</b><b>h</b><b>o</b><b>r</b><b>i</b><b>z</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b>: client ID must match the chassis name.
@@ -2002,16 +2004,16 @@
                      <b>I</b><b>n</b><b>s</b><b>e</b><b>r</b><b>t</b><b>/</b><b>D</b><b>e</b><b>l</b><b>e</b><b>t</b><b>e</b>: row insertion and row deletion are permit‐
                      ted.
 
-                     <b>U</b><b>p</b><b>d</b><b>a</b><b>t</b><b>e</b>:  The  columns  <b>t</b><b>y</b><b>p</b><b>e</b>, <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>, and <b>i</b><b>p</b> can be modi‐
+                     <b>U</b><b>p</b><b>d</b><b>a</b><b>t</b><b>e</b>: The columns <b>t</b><b>y</b><b>p</b><b>e</b>, <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>, and <b>i</b><b>p</b>  can  be  modi‐
                      fied.
 
               <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>
-                     <b>A</b><b>u</b><b>t</b><b>h</b><b>o</b><b>r</b><b>i</b><b>z</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b>: disabled (all clients are  considered  au‐
-                     thorized.  A  future enhancement may add columns (or keys
-                     to <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>) in order to control  which  chassis  are
+                     <b>A</b><b>u</b><b>t</b><b>h</b><b>o</b><b>r</b><b>i</b><b>z</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b>:  disabled  (all clients are considered au‐
+                     thorized. A future enhancement may add columns  (or  keys
+                     to  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>)  in  order to control which chassis are
                      allowed to bind each port.
 
-                     <b>I</b><b>n</b><b>s</b><b>e</b><b>r</b><b>t</b><b>/</b><b>D</b><b>e</b><b>l</b><b>e</b><b>t</b><b>e</b>:  row  insertion/deletion are not permitted
+                     <b>I</b><b>n</b><b>s</b><b>e</b><b>r</b><b>t</b><b>/</b><b>D</b><b>e</b><b>l</b><b>e</b><b>t</b><b>e</b>: row insertion/deletion are  not  permitted
                      (ovn-northd maintains rows in this table.
 
                      <b>U</b><b>p</b><b>d</b><b>a</b><b>t</b><b>e</b>: Only modifications to the <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> column are per‐
@@ -2023,7 +2025,7 @@
 
                      <b>I</b><b>n</b><b>s</b><b>e</b><b>r</b><b>t</b><b>/</b><b>D</b><b>e</b><b>l</b><b>e</b><b>t</b><b>e</b>: row insertion/deletion are permitted.
 
-                     <b>U</b><b>p</b><b>d</b><b>a</b><b>t</b><b>e</b>: The columns <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b>, <b>i</b><b>p</b>, <b>m</b><b>a</b><b>c</b>,  and  <b>d</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b>
+                     <b>U</b><b>p</b><b>d</b><b>a</b><b>t</b><b>e</b>:  The  columns <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b>, <b>i</b><b>p</b>, <b>m</b><b>a</b><b>c</b>, and <b>d</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b>
                      may be modified by ovn-controller.
 
               <b>I</b><b>G</b><b>M</b><b>P</b><b>_</b><b>G</b><b>r</b><b>o</b><b>u</b><b>p</b>
@@ -2039,42 +2041,42 @@
        requires the following steps:
 
               1.  Creating SSL/TLS certificates for each chassis with the cer‐
-                  tificate  CN field set to the chassis name (e.g. for a chas‐
-                  sis with <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>-</b><b>i</b><b>d</b><b>s</b><b>:</b><b>s</b><b>y</b><b>s</b><b>t</b><b>e</b><b>m</b><b>-</b><b>i</b><b>d</b><b>=</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>-</b><b>1</b>, via  the  command
+                  tificate CN field set to the chassis name (e.g. for a  chas‐
+                  sis  with  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>-</b><b>i</b><b>d</b><b>s</b><b>:</b><b>s</b><b>y</b><b>s</b><b>t</b><b>e</b><b>m</b><b>-</b><b>i</b><b>d</b><b>=</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>-</b><b>1</b>, via the command
                   "<b>o</b><b>v</b><b>s</b><b>-</b><b>p</b><b>k</b><b>i</b> <b>-</b><b>u</b> <b>r</b><b>e</b><b>q</b><b>+</b><b>s</b><b>i</b><b>g</b><b>n</b> <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>-</b><b>1</b> <b>s</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b>").
 
               2.  Configuring each ovn-controller to use SSL/TLS when connect‐
                   ing to the southbound database (e.g. via "<b>o</b><b>v</b><b>s</b><b>-</b><b>v</b><b>s</b><b>c</b><b>t</b><b>l</b> <b>s</b><b>e</b><b>t</b> <b>o</b><b>p</b><b>e</b><b>n</b>
                   <b>.</b>  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>-</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>r</b><b>e</b><b>m</b><b>o</b><b>t</b><b>e</b><b>=</b><b>s</b><b>s</b><b>l</b><b>:</b><b>x</b><b>.</b><b>x</b><b>.</b><b>x</b><b>.</b><b>x</b><b>:</b><b>6</b><b>6</b><b>4</b><b>2</b>").
 
-              3.  Configuring  a southbound database SSL/TLS remote with "ovn-
-                  controller"  role  (e.g.   via   "<b>o</b><b>v</b><b>n</b><b>-</b><b>s</b><b>b</b><b>c</b><b>t</b><b>l</b>   <b>s</b><b>e</b><b>t</b><b>-</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>
+              3.  Configuring a southbound database SSL/TLS remote with  "ovn-
+                  controller"   role   (e.g.   via  "<b>o</b><b>v</b><b>n</b><b>-</b><b>s</b><b>b</b><b>c</b><b>t</b><b>l</b>  <b>s</b><b>e</b><b>t</b><b>-</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>
                   <b>r</b><b>o</b><b>l</b><b>e</b><b>=</b><b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> <b>p</b><b>s</b><b>s</b><b>l</b><b>:</b><b>6</b><b>6</b><b>4</b><b>2</b>").
 
    <b>E</b><b>n</b><b>c</b><b>r</b><b>y</b><b>p</b><b>t</b> <b>T</b><b>u</b><b>n</b><b>n</b><b>e</b><b>l</b> <b>T</b><b>r</b><b>a</b><b>f</b><b>f</b><b>i</b><b>c</b> <b>w</b><b>i</b><b>t</b><b>h</b> <b>I</b><b>P</b><b>s</b><b>e</b><b>c</b>
-       OVN  tunnel  traffic  goes through physical routers and switches. These
-       physical devices could be untrusted  (devices  in  public  network)  or
-       might  be  compromised.  Enabling  encryption to the tunnel traffic can
+       OVN tunnel traffic goes through physical routers  and  switches.  These
+       physical  devices  could  be  untrusted  (devices in public network) or
+       might be compromised. Enabling encryption to  the  tunnel  traffic  can
        prevent the traffic data from being monitored and manipulated.
 
        The tunnel traffic is encrypted with IPsec. The CMS sets the <b>i</b><b>p</b><b>s</b><b>e</b><b>c</b> col‐
        umn in the northbound <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> table to enable or disable IPsec encry‐
-       tion. If <b>i</b><b>p</b><b>s</b><b>e</b><b>c</b> is true, all OVN tunnels will be encrypted. If <b>i</b><b>p</b><b>s</b><b>e</b><b>c</b>  is
+       tion.  If <b>i</b><b>p</b><b>s</b><b>e</b><b>c</b> is true, all OVN tunnels will be encrypted. If <b>i</b><b>p</b><b>s</b><b>e</b><b>c</b> is
        false, no OVN tunnels will be encrypted.
 
-       When  CMS  updates  the <b>i</b><b>p</b><b>s</b><b>e</b><b>c</b> column in the northbound <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> table,
-       <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> copies the value to  the  <b>i</b><b>p</b><b>s</b><b>e</b><b>c</b>  column  in  the  southbound
+       When CMS updates the <b>i</b><b>p</b><b>s</b><b>e</b><b>c</b> column in the  northbound  <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b>  table,
+       <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>  copies  the  value  to  the  <b>i</b><b>p</b><b>s</b><b>e</b><b>c</b> column in the southbound
        <b>S</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> table. <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> in each chassis monitors the southbound
-       database  and sets the options of the OVS tunnel interface accordingly.
-       OVS tunnel interface options are  monitored  by  the  <b>o</b><b>v</b><b>s</b><b>-</b><b>m</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b><b>-</b><b>i</b><b>p</b><b>s</b><b>e</b><b>c</b>
+       database and sets the options of the OVS tunnel interface  accordingly.
+       OVS  tunnel  interface  options  are monitored by the <b>o</b><b>v</b><b>s</b><b>-</b><b>m</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b><b>-</b><b>i</b><b>p</b><b>s</b><b>e</b><b>c</b>
        daemon which configures IKE daemon to set up IPsec connections.
 
-       Chassis  authenticates each other by using certificate. The authentica‐
-       tion succeeds if the other end in tunnel presents a certificate  signed
-       by  a  trusted CA and the common name (CN) matches the expected chassis
-       name. The SSL/TLS  certificates  used  in  role-based  access  controls
-       (RBAC)  can  be  used in IPsec. Or use <b>o</b><b>v</b><b>s</b><b>-</b><b>p</b><b>k</b><b>i</b> to create different cer‐
-       tificates. The certificate is required to be x.509 version 3, and  with
+       Chassis authenticates each other by using certificate. The  authentica‐
+       tion  succeeds if the other end in tunnel presents a certificate signed
+       by a trusted CA and the common name (CN) matches the  expected  chassis
+       name.  The  SSL/TLS  certificates  used  in  role-based access controls
+       (RBAC) can be used in IPsec. Or use <b>o</b><b>v</b><b>s</b><b>-</b><b>p</b><b>k</b><b>i</b> to  create  different  cer‐
+       tificates.  The certificate is required to be x.509 version 3, and with
        CN field and subjectAltName field being set to the chassis name.
 
        The CA certificate, chassis certificate and private key are required to
@@ -2083,26 +2085,26 @@
 
 <b>D</b><b>E</b><b>S</b><b>I</b><b>G</b><b>N</b> <b>D</b><b>E</b><b>C</b><b>I</b><b>S</b><b>I</b><b>O</b><b>N</b><b>S</b>
    <b>T</b><b>u</b><b>n</b><b>n</b><b>e</b><b>l</b> <b>E</b><b>n</b><b>c</b><b>a</b><b>p</b><b>s</b><b>u</b><b>l</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>
-       In general, OVN annotates logical network packets that  it  sends  from
-       one  hypervisor to another with the following three pieces of metadata,
+       In  general,  OVN  annotates logical network packets that it sends from
+       one hypervisor to another with the following three pieces of  metadata,
        which are encoded in an encapsulation-specific fashion:
 
-              •      24-bit logical datapath identifier, from  the  <b>t</b><b>u</b><b>n</b><b>n</b><b>e</b><b>l</b><b>_</b><b>k</b><b>e</b><b>y</b>
+              •      24-bit  logical  datapath identifier, from the <b>t</b><b>u</b><b>n</b><b>n</b><b>e</b><b>l</b><b>_</b><b>k</b><b>e</b><b>y</b>
                      column in the OVN Southbound <b>D</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> table.
 
-              •      15-bit  logical ingress port identifier. ID 0 is reserved
-                     for internal use within OVN. IDs 1 through 32767,  inclu‐
-                     sive,  may  be  assigned  to  logical ports (see the <b>t</b><b>u</b><b>n</b>‐‐
+              •      15-bit logical ingress port identifier. ID 0 is  reserved
+                     for  internal use within OVN. IDs 1 through 32767, inclu‐
+                     sive, may be assigned to  logical  ports  (see  the  <b>t</b><b>u</b><b>n</b>‐‐
                      <b>n</b><b>e</b><b>l</b><b>_</b><b>k</b><b>e</b><b>y</b> column in the OVN Southbound <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> table).
 
-              •      16-bit logical egress  port  identifier.  IDs  0  through
+              •      16-bit  logical  egress  port  identifier.  IDs 0 through
                      32767 have the same meaning as for logical ingress ports.
-                     IDs  32768  through  65535, inclusive, may be assigned to
-                     logical multicast groups (see the  <b>t</b><b>u</b><b>n</b><b>n</b><b>e</b><b>l</b><b>_</b><b>k</b><b>e</b><b>y</b>  column  in
+                     IDs 32768 through 65535, inclusive, may  be  assigned  to
+                     logical  multicast  groups  (see the <b>t</b><b>u</b><b>n</b><b>n</b><b>e</b><b>l</b><b>_</b><b>k</b><b>e</b><b>y</b> column in
                      the OVN Southbound <b>M</b><b>u</b><b>l</b><b>t</b><b>i</b><b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>G</b><b>r</b><b>o</b><b>u</b><b>p</b> table).
 
-       When  VXLAN  is  enabled  on  any hypervisor in a cluster, datapath and
-       egress port identifier ranges are reduced to 12-bits. This is done  be‐
+       When VXLAN is enabled on any hypervisor  in  a  cluster,  datapath  and
+       egress  port identifier ranges are reduced to 12-bits. This is done be‐
        cause only STT and Geneve provide the large space for metadata (over 32
        bits per packet). The mode with reduced ranges is called <b>V</b><b>X</b><b>L</b><b>A</b><b>N</b> <b>m</b><b>o</b><b>d</b><b>e</b>. To
        accommodate for VXLAN, 24 bits available are split as follows:
@@ -2113,45 +2115,45 @@
 
               •      12-bit logical egress port identifier. IDs 0 through 2047
                      are used for unicast output ports. IDs 2048 through 4095,
-                     inclusive,  may  be  assigned to logical multicast groups
-                     (see the <b>t</b><b>u</b><b>n</b><b>n</b><b>e</b><b>l</b><b>_</b><b>k</b><b>e</b><b>y</b> column in the OVN  Southbound  <b>M</b><b>u</b><b>l</b><b>t</b><b>i</b>‐‐
-                     <b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>G</b><b>r</b><b>o</b><b>u</b><b>p</b>  table).  For  multicast  group tunnel keys, a
-                     special mapping scheme is used  to  internally  transform
-                     from  internal  OVN  16-bit  keys to 12-bit values before
-                     sending packets through a VXLAN  tunnel,  and  back  from
-                     12-bit  tunnel keys to 16-bit values when receiving pack‐
+                     inclusive, may be assigned to  logical  multicast  groups
+                     (see  the  <b>t</b><b>u</b><b>n</b><b>n</b><b>e</b><b>l</b><b>_</b><b>k</b><b>e</b><b>y</b> column in the OVN Southbound <b>M</b><b>u</b><b>l</b><b>t</b><b>i</b>‐‐
+                     <b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>G</b><b>r</b><b>o</b><b>u</b><b>p</b> table). For multicast  group  tunnel  keys,  a
+                     special  mapping  scheme  is used to internally transform
+                     from internal OVN 16-bit keys  to  12-bit  values  before
+                     sending  packets  through  a  VXLAN tunnel, and back from
+                     12-bit tunnel keys to 16-bit values when receiving  pack‐
                      ets from a VXLAN tunnel.
 
               •      No logical ingress port identifier.
 
        The limited space available for metadata when VXLAN tunnels are enabled
-       in a cluster put the following  functional  limitations  onto  features
+       in  a  cluster  put  the following functional limitations onto features
        available to users:
 
               •      The maximum number of networks is reduced to 4096.
 
-              •      The  maximum  number  of  ports per network is reduced to
+              •      The maximum number of ports per  network  is  reduced  to
                      2048.
 
-              •      ACLs matching against logical  ingress  port  identifiers
+              •      ACLs  matching  against  logical ingress port identifiers
                      are not supported.
 
               •      OVN interconnection feature is not supported.
 
-       In  addition  to  functional limitations described above, the following
+       In addition to functional limitations described  above,  the  following
        should be considered before enabling it in your cluster:
 
-              •      STT and Geneve use randomized UDP  or  TCP  source  ports
-                     that  allows  efficient distribution among multiple paths
+              •      STT  and  Geneve  use  randomized UDP or TCP source ports
+                     that allows efficient distribution among  multiple  paths
                      in environments that use ECMP in their underlay.
 
-              •      NICs are available to offload STT and  Geneve  encapsula‐
+              •      NICs  are  available to offload STT and Geneve encapsula‐
                      tion and decapsulation.
 
        Due to its flexibility, the preferred encapsulation between hypervisors
        is Geneve. For Geneve encapsulation, OVN transmits the logical datapath
-       identifier  in  the  Geneve  VNI. OVN transmits the logical ingress and
-       logical egress ports in a TLV with  class  0x0102,  type  0x80,  and  a
+       identifier in the Geneve VNI. OVN transmits  the  logical  ingress  and
+       logical  egress  ports  in  a  TLV  with class 0x0102, type 0x80, and a
        32-bit value encoded as follows, from MSB to LSB:
 
          1       15          16
@@ -2161,7 +2163,7 @@
          0
 
 
-       Support  for STT encapsulation is deprecated. While using STT on setups
+       Support for STT encapsulation is deprecated. While using STT on  setups
        that didn’t migrate to Geneve yet, OVN encodes all three pieces of log‐
        ical metadata in the STT 64-bit tunnel ID as follows, from MSB to LSB:
 
@@ -2173,16 +2175,16 @@
 
 
        For connecting to gateways, in addition to Geneve and STT, OVN supports
-       VXLAN, because only  VXLAN  support  is  common  on  top-of-rack  (ToR)
+       VXLAN,  because  only  VXLAN  support  is  common  on top-of-rack (ToR)
        switches. Currently, gateways have a feature set that matches the capa‐
-       bilities  as  defined by the VTEP schema, so fewer bits of metadata are
-       necessary. In the future, gateways that do not  support  encapsulations
-       with  large  amounts of metadata may continue to have a reduced feature
+       bilities as defined by the VTEP schema, so fewer bits of  metadata  are
+       necessary.  In  the future, gateways that do not support encapsulations
+       with large amounts of metadata may continue to have a  reduced  feature
        set.
 
-       <b>V</b><b>X</b><b>L</b><b>A</b><b>N</b> <b>m</b><b>o</b><b>d</b><b>e</b> is recommended to be disabled if VXLAN encap at  hypervisors
-       is  needed  only  to  support HW VTEP L2 Gateway functionality. See man
-       ovn-nb(5) for table <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> column <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> key  <b>v</b><b>x</b><b>l</b><b>a</b><b>n</b><b>_</b><b>m</b><b>o</b><b>d</b><b>e</b>  for  more
+       <b>V</b><b>X</b><b>L</b><b>A</b><b>N</b>  <b>m</b><b>o</b><b>d</b><b>e</b> is recommended to be disabled if VXLAN encap at hypervisors
+       is needed only to support HW VTEP L2  Gateway  functionality.  See  man
+       ovn-nb(5)  for  table  <b>N</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> column <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> key <b>v</b><b>x</b><b>l</b><b>a</b><b>n</b><b>_</b><b>m</b><b>o</b><b>d</b><b>e</b> for more
        details.
 
 OVN 24.09.90                   OVN Architecture            <u>o</u><u>v</u><u>n</u><u>-</u><u>a</u><u>r</u><u>c</u><u>h</u><u>i</u><u>t</u><u>e</u><u>c</u><u>t</u><u>u</u><u>r</u><u>e</u>(7)
