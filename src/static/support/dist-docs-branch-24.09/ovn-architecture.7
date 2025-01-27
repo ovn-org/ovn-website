@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-architecture" 7 "OVN Architecture" "OVN 24\[char46]09\[char46]2" "OVN Manual"
+.TH "ovn-architecture" 7 "OVN Architecture" "OVN 24\[char46]09\[char46]3" "OVN Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -625,7 +625,7 @@ Flows in table 40 resemble those in table 39 but for logical ports that reside l
 .IP
 A special case is that when a localnet port exists on the datapath, remote port is connected by switching to the localnet port\[char46] In this case, instead of adding a flow in table 39 to reach the remote port, a flow is added in table 40 to switch the logical outport to the localnet port, and resubmit to table 40 as if it were unicasted to a logical port on the local hypervisor\[char46]
 .IP
-Table 41 matches and drops packets for which the logical input and output ports are the same and the MLF_ALLOW_LOOPBACK flag is not set\[char46] It also drops MLF_LOCAL_ONLY packets directed to a localnet port\[char46] It resubmits other packets to table 42\[char46]
+Table 41 matches and drops packets for which the logical input and output ports are the same and the MLF_ALLOW_LOOPBACK flag is not set\[char46] It also drops MLF_LOCAL_ONLY packets directed to a localnet port, provided they aren\(cqt RAs sent from a gateway or distributed router which is checked via the presence of the bitflag MLF_OVERRIDE_LOCAL_ONLY\[char46] It resubmits other packets to table 42\[char46]
 .IP 4. .4in
 OpenFlow tables 42 through 62 execute the logical egress pipeline from the \fBLogical_Flow\fR table in the OVN Southbound database\[char46] The egress pipeline can perform a final stage of validation before packet delivery\[char46] Eventually, it may execute an \fBoutput\fR action, which \fBovn\-controller\fR implements by resubmitting to table 64\[char46] A packet for which the pipeline never executes \fBoutput\fR is effectively dropped (although it may have been transmitted through a tunnel across a physical network)\[char46]
 .IP
