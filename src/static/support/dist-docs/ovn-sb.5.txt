@@ -167,6 +167,8 @@ TABLE SUMMARY
                  Advertised_Route configuration.
        Learned_Route
                  Learned_Route configuration.
+       ECMP_Nexthop
+                 ECMP_Nexthop configuration.
 
 SB_Global TABLE
        Southbound  configuration  for  an OVN system. This table must have ex‐
@@ -4185,4 +4187,38 @@ Learned_Route TABLE
        external_ids: map of string-string pairs
               See External IDs at the beginning of this document.
 
-Open vSwitch 24.09.90          DB Schema 20.39.0                     ovn-sb(5)
+ECMP_Nexthop TABLE
+       Each record in this table represents an active next-hop for ECMP routes
+       created  with  --ecmp-symmetric-reply  option  that  are  committed  by
+       ovn-northd to ovs connection tracker. The ECMP_Nexthop table is used by
+       ovn-controller to track active ct entries and to flush stale ones.
+
+   Summary:
+       nexthop                       string
+       port                          Port_Binding
+       datapath                      Datapath_Binding
+       mac                           string
+       external_ids                  map of string-string pairs
+
+   Details:
+       nexthop: string
+              Nexthop  IP  address  for  this  ECMP  route. Nexthop IP address
+              should be the IP address of a connected router port  or  the  IP
+              address of an external device used as nexthop for the given des‐
+              tination.
+
+       port: Port_Binding
+              The reference to Port_Binding table for the port used to connect
+              to the configured next-hop.
+
+       datapath: Datapath_Binding
+              The  reference  to Datapath_Binding table for the datapath where
+              the port used to connect to the configured next-hop is running.
+
+       mac: string
+              Nexthop mac address.
+
+       external_ids: map of string-string pairs
+              See External IDs at the beginning of this document.
+
+Open vSwitch 24.09.90          DB Schema 20.40.0                     ovn-sb(5)

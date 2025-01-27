@@ -168,6 +168,8 @@
                  Advertised_Route configuration.
        <b>L</b><b>e</b><b>a</b><b>r</b><b>n</b><b>e</b><b>d</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b>
                  Learned_Route configuration.
+       <b>E</b><b>C</b><b>M</b><b>P</b><b>_</b><b>N</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b>
+                 ECMP_Nexthop configuration.
 
 <b>S</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
        Southbound  configuration  for  an OVN system. This table must have ex‐
@@ -4186,5 +4188,39 @@
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
               See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
 
-Open vSwitch 24.09.90          DB Schema 20.39.0                     <u>o</u><u>v</u><u>n</u><u>-</u><u>s</u><u>b</u>(5)
+<b>E</b><b>C</b><b>M</b><b>P</b><b>_</b><b>N</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
+       Each record in this table represents an active next-hop for ECMP routes
+       created  with  <b>-</b><b>-</b><b>e</b><b>c</b><b>m</b><b>p</b><b>-</b><b>s</b><b>y</b><b>m</b><b>m</b><b>e</b><b>t</b><b>r</b><b>i</b><b>c</b><b>-</b><b>r</b><b>e</b><b>p</b><b>l</b><b>y</b>  option  that  are  committed  by
+       <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> to <b>o</b><b>v</b><b>s</b> connection tracker. The <b>E</b><b>C</b><b>M</b><b>P</b><b>_</b><b>N</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b> table is used by
+       <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> to track active ct entries and to flush stale ones.
+
+   <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
+       <b>n</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b>                       string
+       <b>p</b><b>o</b><b>r</b><b>t</b>                          <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>
+       <b>d</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b>                      <b>D</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>
+       <b>m</b><b>a</b><b>c</b>                           string
+       <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>                  map of string-string pairs
+
+   <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
+       <b>n</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b>: string
+              Nexthop  IP  address  for  this  ECMP  route. Nexthop IP address
+              should be the IP address of a connected router port  or  the  IP
+              address of an external device used as nexthop for the given des‐
+              tination.
+
+       <b>p</b><b>o</b><b>r</b><b>t</b>: <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>
+              The reference to <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> table for the port used to connect
+              to the configured next-hop.
+
+       <b>d</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b>: <b>D</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>
+              The  reference  to <b>D</b><b>a</b><b>t</b><b>a</b><b>p</b><b>a</b><b>t</b><b>h</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> table for the datapath where
+              the port used to connect to the configured next-hop is running.
+
+       <b>m</b><b>a</b><b>c</b>: string
+              Nexthop mac address.
+
+       <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
+              See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
+
+Open vSwitch 24.09.90          DB Schema 20.40.0                     <u>o</u><u>v</u><u>n</u><u>-</u><u>s</u><u>b</u>(5)
 </pre></body></html>
