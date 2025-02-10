@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nb" 5 " DB Schema 7.9.0" "Open vSwitch 24.09.90" "Open vSwitch Manual"
+.TH "ovn-nb" 5 " DB Schema 7.11.0" "Open vSwitch 24.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -650,7 +650,7 @@ Default value is \fBfalse\fR\[char46] If set to \fBtrue\fR the SNAT and DNAT hap
 .IP "\fBoptions : northd-backoff-interval-ms\fR: optional string"
 Maximum interval that the northd incremental engine is delayed by in milliseconds\[char46] Setting the value to nonzero delays the next northd engine run by the previous run time, capped by the specified value\[char46] If the value is zero the engine won\(cqt be delayed at all\[char46] The recommended period is smaller than 500 ms, beyond that the latency of SB changes would be very noticeable\[char46]
 .IP "\fBoptions : vxlan_mode\fR: optional string"
-By default if at least one chassis in OVN cluster has VXLAN encap, northd will run in a \fBVXLAN mode\fR\[char46] See man ovn-architecture(7) \fBTunnel Encapsulations\fR paragraph for more details\[char46] In case VXLAN encaps are needed on chassis only to support HW VTEP functionality and main encap type is GENEVE or STT, set this option to \fBfalse\fR to use default non-\fBVXLAN mode\fR tunnel IDs allocation logic\[char46]
+By default if at least one chassis in OVN cluster has VXLAN encap, northd will run in a \fBVXLAN mode\fR\[char46] See man ovn-architecture(7) \fBTunnel Encapsulations\fR paragraph for more details\[char46] In case VXLAN encaps are needed on chassis only to support HW VTEP functionality and main encap type is GENEVE or STT, set this option to \fBfalse\fR to use default non-\fBVXLAN mode\fR tunnel IDs allocation logic\[char46] Please consider when OVN is running in \fBOVN\-interconnect\fR mode and it is using \fBVXLAN\fR encapsulation type, the max number of non-transit logical switches and logical routers is reduced to 1024\[char46] Plese note, in order to enable \fBVXLAN\fR encapsulation type for for cross-AZ traffic, \fBvxlan_mode\fR parameter in \fBIC_NB_Global TABLE\fR must be set to true\[char46]
 .IP "\fBoptions : always_tunnel\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 If set to true, then the traffic destined to a VIF of a provider logical switch (having a localnet port) will be tunnelled instead of sending it via the localnet port\[char46] This option will be useful if CMS wants to connect overlay logical switches (without localnet port) and provider logical switches to a router\[char46] Without this option set, the traffic path will be a mix of tunnelling and localnet ports (since routing is distributed) resulting in the leakage of the router port mac address to the upstream switches and undefined behavior if NATting is involed\[char46] This option is disabled by default\[char46]
 .IP "\fBoptions : ecmp_nexthop_monitor_enable\fR: optional string"
@@ -953,6 +953,9 @@ optional string
 .TQ 2.75in
 \fBother_config : interconn-ts\fR
 optional string
+.TQ 2.75in
+\fBother_config : ic-vxlan_mode\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
 .RE
 .TQ .25in
 \fITunnel Key:\fR
@@ -1083,6 +1086,8 @@ Configures the source IPv6 address for queries originated by the logical switch\
 .PP
 .IP "\fBother_config : interconn-ts\fR: optional string"
 The \fBname\fR of corresponding transit switch in \fBOVN_IC_Northbound\fR database\[char46] This kind of logical switch is created and controlled by \fBovn\-ic\fR\[char46]
+.IP "\fBother_config : ic-vxlan_mode\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+\fBic\-vxlan_mode\fR is set to true by \fBovn\-ic\fR when it runs \fBVXLAN\fR as encapsulation protocol for cross-AZ traffic\[char46] Default value is false\[char46]
 .ST "Tunnel Key:"
 .PP
 .IP "\fBother_config : requested-tnl-key\fR: optional string, containing an integer, in range 1 to 16,777,215"
@@ -1281,6 +1286,9 @@ optional string
 \fBport_security\fR
 set of strings
 .RE
+.TQ 3.00in
+\fBpeer\fR
+optional string
 .TQ .25in
 \fIDHCP:\fR
 .RS .25in
@@ -1338,6 +1346,9 @@ A VM (or VIF) interface\[char46]
 .TP
 \fBrouter\fR
 A connection to a logical router\[char46] The value of \fBoptions:router-port\fR specifies the \fBname\fR of the \fBLogical_Router_Port\fR to which this logical switch port is connected\[char46]
+.TP
+\fBswitch\fR
+A connection to another logical switch\[char46] The value of \fBpeer\fR specifies the \fBname\fR of the \fBLogical_Switch_Port\fR to which this logical switch port is connected\[char46] Such ports always have an implicit \(dqunknown\(dq address, because the address information is not leaked between directly connected switches\[char46]
 .TP
 \fBlocalnet\fR
 A connection to a locally accessible network from \fBovn\-controller\fR instances that have a corresponding bridge mapping\[char46] A logical switch can have multiple \fBlocalnet\fR ports attached\[char46] This type is used to model direct connectivity to existing networks\[char46] In this case, each chassis should have a mapping for one of the physical networks only\[char46] Note: nothing said above implies that a chassis cannot be plugged to multiple physical networks as long as they belong to different switches\[char46]
@@ -1624,6 +1635,10 @@ This adds further restrictions to the first example\[char46] The host may send I
 \fB\(dq80:fa:5b:12:42:ba\(dq, \(dq80:fa:5b:06:72:b7 192\[char46]168\[char46]1\[char46]10/24\(dq\fR
 The host may send traffic from and receive traffic to the specified MAC addresses, and to receive traffic to Ethernet multicast and broadcast addresses, but not otherwise\[char46] With MAC 80:fa:5b:12:42:ba, the host may send traffic from and receive traffic to any L3 address\[char46] With MAC 80:fa:5b:06:72:b7, the host may send IPv4 packets from or receive IPv4 packets to only 192\[char46]168\[char46]1\[char46]10, except that it may also receive IPv4 packets to 192\[char46]168\[char46]1\[char46]255 (based on the subnet mask), 255\[char46]255\[char46]255\[char46]255, and any address in 224\[char46]0\[char46]0\[char46]0/4\[char46] The host may not send or receive any IPv6 (including IPv6 Neighbor Discovery) traffic\[char46]
 .RE
+.IP "\fBpeer\fR: optional string"
+For a switch port used to connect two logical switches, this identifies the other switch port in the pair by \fBname\fR\[char46]
+.IP
+For a switch port attached to a logical router, this column is empty\[char46]
 .ST "DHCP:"
 .PP
 .IP "\fBdhcpv4_options\fR: optional weak reference to \fBDHCP_Options\fR"
@@ -1802,7 +1817,7 @@ map of string-string pairs
 .RE
 .TQ 3.00in
 \fBselection_fields\fR
-set of strings, one of \fBeth_dst\fR, \fBeth_src\fR, \fBip_dst\fR, \fBip_src\fR, \fBtp_dst\fR, or \fBtp_src\fR
+set of strings, one of \fBeth_dst\fR, \fBeth_src\fR, \fBip_dst\fR, \fBip_src\fR, \fBipv6_dst\fR, \fBipv6_src\fR, \fBtp_dst\fR, or \fBtp_src\fR
 .TQ .25in
 \fICommon Columns:\fR
 .RS .25in
@@ -1869,11 +1884,13 @@ Maps from endpoint IP to a colon-separated pair of logical port name and source 
 For example, in the example above, IP to port mappings might be defined as \fB10\[char46]0\[char46]0\[char46]4\fR=\fBsw0\-p1:10\[char46]0\[char46]0\[char46]2\fR and \fB20\[char46]0\[char46]0\[char46]4\fR=\fBsw1\-p1:20\[char46]0\[char46]0\[char46]2\fR, if the values given were suitable ports and IP addresses\[char46]
 .IP
 For IPv6 IP to port mappings might be defined as \fB[2001::1]\fR=\fBsw0\-p1:[2002::1]\fR\[char46]
-.IP "\fBselection_fields\fR: set of strings, one of \fBeth_dst\fR, \fBeth_src\fR, \fBip_dst\fR, \fBip_src\fR, \fBtp_dst\fR, or \fBtp_src\fR"
+.IP "\fBselection_fields\fR: set of strings, one of \fBeth_dst\fR, \fBeth_src\fR, \fBip_dst\fR, \fBip_src\fR, \fBipv6_dst\fR, \fBipv6_src\fR, \fBtp_dst\fR, or \fBtp_src\fR"
 OVN native load balancers are supported using the OpenFlow groups of type \fBselect\fR\[char46] OVS supports two selection methods: \fBdp_hash\fR and \fBhash (with optional fields
 specified)\fR in selecting the buckets of a group\[char46] Please see the OVS documentation (man ovs-ofctl) for more details on the selection methods\[char46] Each endpoint IP (and port if set) is mapped to a bucket in the group flow\[char46]
 .IP
 CMS can choose the \fBhash\fR selection method by setting the selection fields in this column\[char46] \fBovs\-vswitchd\fR uses the specified fields in generating the hash\[char46]
+.IP
+Example: \fB{ip_proto,ip_src,ip_dst}\fR for a 3-tuple match\[char46] Example: \fB{ip_proto,ipv6_src,ipv6_dst}\fR for an IPv6 match\[char46] Example: \fB{ip_proto,ip_src,ip_dst,tp_src,tp_dst}\fR\[char46] Example: \fB{ip_src,ip_dst,ipv6_src,ipv6_dst,tp_src,tp_dst}\fR\[char46]
 .IP
 \fBdp_hash\fR selection method uses the assistance of datapath to calculate the hash and it is expected to be faster than \fBhash\fR selection method\[char46] So CMS should take this into consideration before using the \fBhash\fR method\[char46] Please consult the OVS documentation and OVS sources for the implementation details\[char46]
 .ST "Common Columns:"
@@ -2035,6 +2052,9 @@ integer, in range 0 to 3
 .TQ 2.75in
 \fBoptions : apply-after-lb\fR
 optional string
+.TQ 2.75in
+\fBoptions : persist-established\fR
+optional string
 .RE
 .TQ .25in
 \fILogging:\fR
@@ -2133,6 +2153,12 @@ If set to true, the ACL will be applied after load balancing stage\[char46] Supp
 The main use case of this option is to support ACLs matching on the destination IP address of the packet for the backend IPs of load balancers\[char46]
 .IP
 \fBOVN\fR will apply the \fBfrom\-lport\fR ACLs in two stages\[char46] ACLs without this option \fBapply\-after\-lb\fR set, will be applied before the load balancer stage and ACLs with this option set will be applied after the load balancer stage\[char46] The priorities are indepedent between these stages and may not be obvious to the CMS\[char46] Hence CMS should be extra careful when using this option and should carefully evaluate the priorities of all the ACLs and the default deny/allow ACLs if any\[char46]
+.IP "\fBoptions : persist-established\fR: optional string"
+This option applies only to ACLs whose \fBaction\fR is set to \fBallow\-related\fR\[char46]
+.IP
+\fBallow\-related\fR ACLs create a conntrack entry when a packet matches the ACL\(cqs \fBmatch\fR column\[char46] Typically, traffic must continue to match these conditions in order to continue to be allowed by the ACL\[char46] With this option set to \fBtrue\fR, then the ACL match is bypassed once the original match occurs\[char46] Instead, a mark bit in the conntrack entry is used to allow the traffic\[char46] This means that traffic will continue to be allowed even if the ACL\(cqs match changes and no longer matches the established traffic\[char46]
+.IP
+The traffic will stop being allowed automatically if this option is set to \fBfalse\fR, if the ACL\(cqs \fBaction\fR is changed to something other than \fBallow\-related\fR, or if the ACL is destroyed\[char46]
 .ST "Logging:"
 .PP
 .PP
@@ -2411,6 +2437,10 @@ integer
 .TQ 3.00in
 \fBexternal_ids\fR
 map of string-string pairs
+.TQ .25in
+\fITransit router:\fR
+.RS .25in
+.RE
 .SS "Details:
 .IP "\fBname\fR: string (must be unique within table)"
 Represents the name of the mirror\[char46]
@@ -2424,6 +2454,17 @@ The value of this field specifies the mirror type - \fBgre\fR, \fBerspan\fR or \
 The value of this field represents the tunnel ID\[char46] If the configured tunnel type is \fBgre\fR, this field represents the \fBGRE\fR key value and if the configured tunnel type is \fBerspan\fR it represents the \fBerspan_idx\fR value\[char46] It is ignored if the type is \fBlocal\fR\[char46]
 .IP "\fBexternal_ids\fR: map of string-string pairs"
 See \fBExternal IDs\fR at the beginning of this document\[char46]
+.ST "Transit router:"
+.PP
+.PP
+.PP
+In order to achieve status of \fBTransit Router\fR for \fBLogical_Router\fR there needs to be at least one \fBLogical_Router_Port\fR that is considered remote\[char46] The LRP can be \fBremote\fR only if it has \fBoptions:requested\-chassis\fR set to chassis that is considered remote\[char46] See \fBLogical_Router_Port\fR for more details\[char46]
+.PP
+.PP
+In order for the \fBTransit Router\fR to work properly all the tunnel keys for the \fBTransit Router\fR itself and the remote ports keys needs to match in all AZs e\[char46]g\[char46] TR in AZ1 and AZ2 needs to have the same tunnel key\[char46] Remote port for AZ2 in AZ1 needs to have the same tunnel key as local port in AZ2 and vice vers\[char46]
+.PP
+.PP
+The \fBTransit Router\fR behaves as distributed router which means that it has the same limitations for stateful flows like \fBNAT and LBs\fR and it will lose the CT state between AZs\[char46]
 .bp
 .SH "Meter TABLE"
 .PP
@@ -2601,6 +2642,9 @@ optional string
 optional string
 .TQ 2.75in
 \fBoptions : ic-route-filter-tag\fR
+optional string
+.TQ 2.75in
+\fBoptions : requested-chassis\fR
 optional string
 .RE
 .TQ .25in
@@ -2788,6 +2832,10 @@ When configured, represents a match expression, in the same expression language 
 This option expects a name of a route-tag that\(cqs present in the Logical Router Port\[char46] If set, it causes any route advertised by the Logical Router Port to include the \fBroute\-tag\fR in the \fB external_ids \fR register of the advertised route entry in the \fBRoute\fR table of the \fBOVN_IC_Southbound\fR database\[char46] This allows to tag and filter route tags in the process of advertising and learning routes in \fBovn\-ic\fR daemon\[char46]
 .IP "\fBoptions : ic-route-filter-tag\fR: optional string"
 This option expects a name of a filtered route-tag that\(cqs present in the Logical Router Port\[char46] If set, it causes any route learned by the Logical Router Port with the \fBroute\-tag\fR present in the external_ids register of the advertised route entry in the \fBRoute\fR table of the \fBOVN_IC_Southbound\fR database, will be filtered and not learned by the \fBovn\-ic\fR daemon\[char46]
+.IP "\fBoptions : requested-chassis\fR: optional string"
+If set, identifies a specific chassis (by name or hostname) that is allowed to bind this port\[char46] This option is valid only for chassis that have \fBoptions:is\-remote=true\fR, in other words for chassis that are in different Availability zone\[char46] The option accepts only single value\[char46]
+.IP
+By assigning remote chassis the \fBLogical_Router\fR gains status of \fBTransit Router\fR see \fBLogical_Router\fR table for more details\[char46]
 .ST "Attachment:"
 .PP
 .PP
@@ -2848,7 +2896,7 @@ optional string
 optional weak reference to \fBBFD\fR
 .TQ 3.00in
 \fBselection_fields\fR
-set of strings, one of \fBeth_dst\fR, \fBeth_src\fR, \fBip_dst\fR, \fBip_proto\fR, \fBip_src\fR, \fBtp_dst\fR, or \fBtp_src\fR
+set of strings, one of \fBeth_dst\fR, \fBeth_src\fR, \fBip_dst\fR, \fBip_proto\fR, \fBip_src\fR, \fBipv6_dst\fR, \fBipv6_src\fR, \fBtp_dst\fR, or \fBtp_src\fR
 .TQ 3.00in
 \fBroute_table\fR
 string
@@ -2894,12 +2942,12 @@ Nexthop IP address for this route\[char46] Nexthop IP address should be the IP a
 The name of the \fBLogical_Router_Port\fR via which the packet needs to be sent out\[char46] This is optional and when not specified, OVN will automatically figure this out based on the \fBnexthop\fR\[char46] When this is specified and there are multiple IP addresses on the router port and none of them are in the same subnet of \fBnexthop\fR, OVN chooses the first IP address as the one via which the \fBnexthop\fR is reachable\[char46]
 .IP "\fBbfd\fR: optional weak reference to \fBBFD\fR"
 Reference to \fBBFD\fR row if the route has associated a BFD session
-.IP "\fBselection_fields\fR: set of strings, one of \fBeth_dst\fR, \fBeth_src\fR, \fBip_dst\fR, \fBip_proto\fR, \fBip_src\fR, \fBtp_dst\fR, or \fBtp_src\fR"
+.IP "\fBselection_fields\fR: set of strings, one of \fBeth_dst\fR, \fBeth_src\fR, \fBip_dst\fR, \fBip_proto\fR, \fBip_src\fR, \fBipv6_dst\fR, \fBipv6_src\fR, \fBtp_dst\fR, or \fBtp_src\fR"
 ECMP routes use OpenFlow groups of type \fBselect\fR to pick a nexthop among the list of available nexthops\[char46] OVS supports two selection methods: \fBdp_hash\fR and \fBhash\fR for hash computation and selecting the buckets of a group\[char46] OVN by default uses \fBdp_hash\fR\[char46] In order to use the \fBhash\fR selection method, specify the allowed match fields in selection fields\[char46] Please see the OVS documentation (man ovs-ofctl) for more details on selection methods and fields\[char46]
 .IP
 To match on Layer 4 ports use \fBtp_src\fR and \fBtp_dst\fR\[char46] This match is applicable only for TCP, UDP, SCTP and will be ignored for all other IP packets\[char46] When matching on Layer 4 ports, match on ip_proto will be implicitly added in the select action\[char46]
 .IP
-Example: \fB{ip_proto,ip_src,ip_dst}\fR for a 3-tuple match\[char46] Example: \fB{ip_proto,ip_src,ip_dst,tp_src,tp_dst}\fR for a 5-tuple match\[char46]
+Example: \fB{ip_proto,ip_src,ip_dst}\fR for a 3-tuple match\[char46] Example: \fB{ip_proto,ipv6_src,ipv6_dst}\fR for an IPv6 match\[char46] Example: \fB{ip_proto,ip_src,ip_dst,tp_src,tp_dst}\fR\[char46] Example: \fB{ip_src,ip_dst,ipv6_src,ipv6_dst,tp_src,tp_dst}\fR\[char46]
 .IP "\fBroute_table\fR: string"
 Specify any string to assign a route to a separate routing table\[char46] When a Logical Router Port has a configured value in \fBoptions:route_table\fR, only static routes with the same routing table value are considered\[char46] A more detailed description of the route lookup behavior is provided below:
 .IP
@@ -2951,11 +2999,17 @@ Each row in this table represents one routing policy for a logical router that p
 \fBpriority\fR
 integer, in range 0 to 32,767
 .TQ 3.00in
+\fBchain\fR
+optional string
+.TQ 3.00in
 \fBmatch\fR
 string
 .TQ 3.00in
 \fBaction\fR
-string, one of \fBallow\fR, \fBdrop\fR, or \fBreroute\fR
+string, one of \fBallow\fR, \fBdrop\fR, \fBjump\fR, or \fBreroute\fR
+.TQ 3.00in
+\fBjump_chain\fR
+optional string
 .TQ 3.00in
 \fBnexthop\fR
 optional string
@@ -2977,12 +3031,14 @@ map of string-string pairs
 .RE
 .SS "Details:
 .IP "\fBpriority\fR: integer, in range 0 to 32,767"
-The routing policy\(cqs priority\[char46] Rules with numerically higher priority take precedence over those with lower\[char46] A rule is uniquely identified by the priority and match string\[char46]
+The routing policy\(cqs priority\[char46] Rules with numerically higher priority take precedence over those with lower\[char46] A rule is uniquely identified by the priority, chain and match string\[char46]
+.IP "\fBchain\fR: optional string"
+The routing policy rule\(cqs chain name\[char46] Only rules with empty chain name are traversed by default\[char46] Other chains are traversed as response to jump action\[char46]
 .IP "\fBmatch\fR: string"
 The packets that the routing policy should match, in the same expression language used for the \fBmatch\fR column in the OVN Southbound database\(cqs \fBLogical_Flow\fR table\[char46]
 .IP
 By default all traffic is allowed\[char46] When writing a more restrictive policy, it is important to remember to allow flows such as ARP and IPv6 neighbor discovery packets\[char46]
-.IP "\fBaction\fR: string, one of \fBallow\fR, \fBdrop\fR, or \fBreroute\fR"
+.IP "\fBaction\fR: string, one of \fBallow\fR, \fBdrop\fR, \fBjump\fR, or \fBreroute\fR"
 The action to take when the routing policy matches:
 .RS
 .IP \(bu
@@ -2991,7 +3047,11 @@ The action to take when the routing policy matches:
 \fBdrop\fR: Silently drop the packet\[char46]
 .IP \(bu
 \fBreroute\fR: Reroute packet to \fBnexthop\fR or \fBnexthops\fR\[char46]
+.IP \(bu
+\fBjump\fR: Start examining rules that have the same \fBchain\fR value as specified in \fBjump_chain\fR\[char46]
 .RE
+.IP "\fBjump_chain\fR: optional string"
+The routing policy rule\(cqs chain name selected to be examined next\[char46]
 .IP "\fBnexthop\fR: optional string"
 Note: This column is deprecated in favor of \fBnexthops\fR\[char46]
 .IP
