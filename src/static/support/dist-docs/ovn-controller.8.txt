@@ -349,39 +349,42 @@ CONFIGURATION
 
               external_ids:ovn-monitor-all
                      A boolean value that tells if ovn-controller should moni‐
-                     tor all records of tables  in  ovs-database.  If  set  to
-                     false,  it will conditionally monitor the records that is
-                     needed in the current chassis.
+                     tor all records of most  tables  in  the  OVN  Southbound
+                     database. The only exception is the Chassis_Private table
+                     for  which ovn-controller always monitors only the record
+                     that is relevant to the local chassis. If this option  is
+                     set  to  false, ovn-controller will conditionally monitor
+                     only the records that are needed for the local chassis.
 
                      It is more efficient to set it to true in use cases where
                      the chassis would anyway need  to  monitor  most  of  the
                      records  in OVN Southbound database, which would save the
                      overhead of conditions processing, especially for  server
-                     side. Typically, set it to true for environments that all
-                     workloads need to be reachable from each other.
+                     side.  Typically,  set  it to true for environments where
+                     all workloads need to be reachable from each other.
 
-                     NOTE:  for efficiency and scalability in common scenarios
+                     NOTE: for efficiency and scalability in common  scenarios
                      ovn-controller  unconditionally  monitors  all  sub-ports
-                     (ports  with parent_port set) regardless of the ovn-moni�‐
+                     (ports with parent_port set) regardless of the  ovn-moni�‐
                      tor-all value.
 
                      Default value is false.
 
               external_ids:ovn-remote-probe-interval
-                     The inactivity probe interval of the  connection  to  the
-                     OVN  database,  in milliseconds. If the value is zero, it
+                     The  inactivity  probe  interval of the connection to the
+                     OVN database, in milliseconds. If the value is  zero,  it
                      disables the connection keepalive feature.
 
-                     If the value is nonzero, then it  will  be  forced  to  a
+                     If  the  value  is  nonzero,  then it will be forced to a
                      value of at least 1000 ms.
 
               external_ids:ovn-encap-type
-                     The  encapsulation type that a chassis should use to con‐
-                     nect to this node. Multiple encapsulation  types  may  be
+                     The encapsulation type that a chassis should use to  con‐
+                     nect  to  this  node. Multiple encapsulation types may be
                      specified with a comma-separated list. Each listed encap‐
                      sulation type will be paired with ovn-encap-ip.
 
-                     Supported  tunnel  types  for  connecting hypervisors and
+                     Supported tunnel types  for  connecting  hypervisors  and
                      gateways are geneve, vxlan, and stt.
 
                      stt tunnel type is deprecated.
@@ -391,29 +394,29 @@ CONFIGURATION
                      visors will be reduced versus other tunnel formats.
 
               external_ids:ovn-encap-ip
-                     The IP address that a chassis should use  to  connect  to
-                     this  node  using encapsulation types specified by exter�‐
+                     The  IP  address  that a chassis should use to connect to
+                     this node using encapsulation types specified  by  exter�‐
                      nal_ids:ovn-encap-type. Multiple encapsulation IPs may be
                      specified with a comma-separated list.
 
-                     In  scenarios  where  multiple  encapsulation   IPs   are
+                     In   scenarios   where  multiple  encapsulation  IPs  are
                      present, distinct tunnels are established for each remote
-                     chassis.  These  tunnels  are  differentiated  by setting
-                     unique options:local_ip and options:remote_ip  values  in
+                     chassis. These  tunnels  are  differentiated  by  setting
+                     unique  options:local_ip  and options:remote_ip values in
                      the tunnel interface. When transmitting a packet to a re‐
-                     mote  chassis, the selection of local_ip is guided by the
+                     mote chassis, the selection of local_ip is guided by  the
                      Interface:external_ids:encap-ip  from  the  local  OVSDB,
                      corresponding to the VIF originating the packet, if spec‐
                      ified. The Interface:external_ids:encap-ip setting of the
-                     VIF  is  also  populated to the Port_Binding table in the
-                     OVN SB database via the encap column. Consequently,  when
+                     VIF is also populated to the Port_Binding  table  in  the
+                     OVN  SB database via the encap column. Consequently, when
                      a remote chassis needs to send a packet to a port-binding
                      associated with this VIF, it utilizes the tunnel with the
-                     appropriate  options:remote_ip  that  matches  the  ip in
-                     Port_Binding:encap. This mechanism is particularly  bene‐
+                     appropriate options:remote_ip  that  matches  the  ip  in
+                     Port_Binding:encap.  This mechanism is particularly bene‐
                      ficial for chassis with multiple physical interfaces des‐
-                     ignated  for tunneling, where each interface is optimized
-                     for handling specific traffic associated with  particular
+                     ignated for tunneling, where each interface is  optimized
+                     for  handling specific traffic associated with particular
                      VIFs.
 
               external_ids:ovn-encap-ip-default
@@ -421,31 +424,31 @@ CONFIGURATION
                      cates the default one.
 
               external_ids:ovn-encap-df_default
-                     indicates  the  DF flag handling of the encapulation. Set
+                     indicates the DF flag handling of the  encapulation.  Set
                      to true to set the DF flag for new data paths or false to
                      clear the DF flag.
 
               external_ids:ovn-bridge-mappings
-                     A list of key-value pairs that  map  a  physical  network
-                     name  to a local ovs bridge that provides connectivity to
-                     that network. An example value mapping two physical  net‐
-                     work   names   to   two   ovs  bridges  would  be:  phys�‐
+                     A  list  of  key-value  pairs that map a physical network
+                     name to a local ovs bridge that provides connectivity  to
+                     that  network. An example value mapping two physical net‐
+                     work  names  to  two  ovs   bridges   would   be:   phys�‐
                      net1:br-eth0,physnet2:br-eth1.
 
               external_ids:ovn-encap-csum
                      ovn-encap-csum indicates that encapsulation checksums can
-                     be transmitted and received with reasonable  performance.
+                     be  transmitted and received with reasonable performance.
                      It is a hint to senders transmitting data to this chassis
-                     that  they  should use checksums to protect OVN metadata.
-                     Set to true to enable or false to disable.  Depending  on
-                     the  capabilities of the network interface card, enabling
-                     encapsulation checksum may  incur  performance  loss.  In
+                     that they should use checksums to protect  OVN  metadata.
+                     Set  to  true to enable or false to disable. Depending on
+                     the capabilities of the network interface card,  enabling
+                     encapsulation  checksum  may  incur  performance loss. In
                      such cases, encapsulation checksums can be disabled.
 
               external_ids:ovn-encap-tos
-                     ovn-encap-tos  indicates  the  value to be applied to OVN
-                     tunnel  interface’s  option:tos  as  specified   in   the
-                     Open_vSwitch  database  Interface  table. Please refer to
+                     ovn-encap-tos indicates the value to be  applied  to  OVN
+                     tunnel   interface’s   option:tos  as  specified  in  the
+                     Open_vSwitch database Interface table.  Please  refer  to
                      Open VSwitch Manual for details.
 
               external_ids:ovn-cms-options
@@ -454,138 +457,143 @@ CONFIGURATION
                      would be: cms_option1,cms_option2:foo.
 
               external_ids:ovn-transport-zones
-                     The transport  zone(s)  that  this  chassis  belongs  to.
-                     Transport  zones  is  a way to group different chassis so
-                     that tunnels are only formed between members of the  same
-                     group(s).  Multiple transport zones may be specified with
+                     The  transport  zone(s)  that  this  chassis  belongs to.
+                     Transport zones is a way to group  different  chassis  so
+                     that  tunnels are only formed between members of the same
+                     group(s). Multiple transport zones may be specified  with
                      a comma-separated list. For example: tz1,tz2,tz3.
 
-                     If not set, the Chassis will be considered part of a  de‐
+                     If  not set, the Chassis will be considered part of a de‐
                      fault transport zone.
 
               external_ids:ovn-chassis-mac-mappings
                      A list of key-value pairs that map a chassis specific mac
-                     to  a physical network name. An example value mapping two
-                     chassis macs to two  physical  network  names  would  be:
+                     to a physical network name. An example value mapping  two
+                     chassis  macs  to  two  physical  network names would be:
                      physnet1:aa:bb:cc:dd:ee:ff,physnet2:a1:b2:c3:d4:e5:f6.
-                     These  are  the  macs  that ovn-controller will replace a
-                     router port mac with, if packet is going from a  distrib‐
+                     These are the macs that  ovn-controller  will  replace  a
+                     router  port mac with, if packet is going from a distrib‐
                      uted router port on vlan type logical switch.
 
               external_ids:ovn-is-interconn
-                     The  boolean  flag indicates if the chassis is used as an
+                     The boolean flag indicates if the chassis is used  as  an
                      interconnection gateway.
 
               external_ids:ovn-match-northd-version
-                     The boolean flag indicates  if  ovn-controller  needs  to
+                     The  boolean  flag  indicates  if ovn-controller needs to
                      check ovn-northd version. If this flag is set to true and
-                     the  ovn-northd�’s  version  (reported  in  the Southbound
-                     database) doesn’t match with the ovn-controller�’s  inter‐
-                     nal  version, then it will stop processing the southbound
-                     and local Open  vSwitch  database  changes.  The  default
+                     the ovn-northd�’s  version  (reported  in  the  Southbound
+                     database)  doesn’t match with the ovn-controller�’s inter‐
+                     nal version, then it will stop processing the  southbound
+                     and  local  Open  vSwitch  database  changes. The default
                      value is considered false if this option is not defined.
 
               external_ids:ovn-ofctrl-wait-before-clear
-                     The  time, in milliseconds, to wait before clearing flows
+                     The time, in milliseconds, to wait before clearing  flows
                      in  OVS  after  OpenFlow  connection/reconnection  during
-                     ovn-controller  initialization.  The purpose of this wait
-                     is to give time for ovn-controller  to  compute  the  new
-                     flows  before clearing existing ones, to avoid data plane
-                     down time during ovn-controller restart/upgrade at  large
+                     ovn-controller initialization. The purpose of  this  wait
+                     is  to  give  time  for ovn-controller to compute the new
+                     flows before clearing existing ones, to avoid data  plane
+                     down  time during ovn-controller restart/upgrade at large
                      scale environments where recomputing the flows takes more
-                     than  a  few  seconds or even longer. It is difficult for
-                     ovn-controller to determine when the new flows  computing
-                     is  completed, because of the dynamics in the cloud envi‐
+                     than a few seconds or even longer. It  is  difficult  for
+                     ovn-controller  to determine when the new flows computing
+                     is completed, because of the dynamics in the cloud  envi‐
                      ronments, which is why this configuration is provided for
                      users to adjust based on the scale of the environment. By
-                     default, it is 0, which  means  clearing  existing  flows
+                     default,  it  is  0,  which means clearing existing flows
                      without waiting. Not setting the value, or setting it too
-                     small,  may  result  in  data  plane down time during up‐
+                     small, may result in data  plane  down  time  during  up‐
                      grade/restart, while setting it too big may result in un‐
-                     necessary extra control plane  latency  of  applying  new
-                     changes  of  CMS during upgrade/restart. In most cases, a
-                     slightly bigger value is not harmful, because  the  extra
-                     control  plane latency happens only once during the Open‐
-                     Flow connection. To get a reasonable range of  the  value
+                     necessary  extra  control  plane  latency of applying new
+                     changes of CMS during upgrade/restart. In most  cases,  a
+                     slightly  bigger  value is not harmful, because the extra
+                     control plane latency happens only once during the  Open‐
+                     Flow  connection.  To get a reasonable range of the value
                      setting, it is recommended to run the below commands on a
                      node in the target environment and then set this configu‐
-                     ration  to twice the value of Maximum shown in the output
+                     ration to twice the value of Maximum shown in the  output
                      of the second command.
 
                      •      ovn-appctl -t ovn-controller inc-engine/recompute
 
-                     •      ovn-appctl   -t   ovn-controller    stopwatch/show
+                     •      ovn-appctl    -t   ovn-controller   stopwatch/show
                             flow-generation
 
               external_ids:ovn-enable-lflow-cache
-                     The  boolean  flag indicates if ovn-controller should en‐
-                     able/disable the logical flow  in-memory  cache  it  uses
+                     The boolean flag indicates if ovn-controller  should  en‐
+                     able/disable  the  logical  flow  in-memory cache it uses
                      when processing Southbound database logical flow changes.
                      By default caching is enabled.
 
               external_ids:ovn-limit-lflow-cache
-                     When  used, this configuration value determines the maxi‐
-                     mum number of logical flow cache  entries  ovn-controller
+                     When used, this configuration value determines the  maxi‐
+                     mum  number  of logical flow cache entries ovn-controller
                      may create when the logical flow cache is enabled. By de‐
                      fault the size of the cache is unlimited.
 
               external_ids:ovn-memlimit-lflow-cache-kb
-                     When  used, this configuration value determines the maxi‐
+                     When used, this configuration value determines the  maxi‐
                      mum size of the logical flow cache (in KB) ovn-controller
                      may create when the logical flow cache is enabled. By de‐
                      fault the size of the cache is unlimited.
 
               external_ids:ovn-trim-limit-lflow-cache
                      When used, this configuration value sets the minimum num‐
-                     ber of entries in the logical flow  cache  starting  with
-                     which  automatic memory trimming is performed. By default
+                     ber  of  entries  in the logical flow cache starting with
+                     which automatic memory trimming is performed. By  default
                      this is set to 10000 entries.
 
               external_ids:ovn-trim-wmark-perc-lflow-cache
-                     When used, this configuration value sets  the  percentage
-                     from  the high watermark number of entries in the logical
-                     flow cache under which automatic memory trimming is  per‐
-                     formed.  E.g., if the trim watermark percentage is set to
+                     When  used,  this configuration value sets the percentage
+                     from the high watermark number of entries in the  logical
+                     flow  cache under which automatic memory trimming is per‐
+                     formed. E.g., if the trim watermark percentage is set  to
                      50%, automatic memory trimming happens only when the num‐
-                     ber of entries in the logical flow cache gets reduced  to
-                     less  than  half  of the last measured high watermark. By
+                     ber  of entries in the logical flow cache gets reduced to
+                     less than half of the last measured  high  watermark.  By
                      default this is set to 50.
 
               external_ids:ovn-trim-timeout-ms
-                     When used, this configuration value specifies  the  time,
+                     When  used,  this configuration value specifies the time,
                      in milliseconds, since the last logical flow cache opera‐
-                     tion  after which ovn-controller performs memory trimming
+                     tion after which ovn-controller performs memory  trimming
                      regardless of how many entries there are in the cache. By
                      default this is set to 30000 (30 seconds).
 
               external_ids:garp-max-timeout-sec
                      When used, this configuration value specifies the maximum
                      timeout (in seconds) between two consecutive GARP packets
-                     sent by ovn-controller. ovn-controller by  default  sends
-                     just  4 GARP packets with an exponential backoff timeout.
-                     Setting external_ids:garp-max-timeout-sec allows  to  cap
-                     for  the  exponential  backoff  used by ovn-controller to
+                     sent  by  ovn-controller. ovn-controller by default sends
+                     just 4 GARP packets with an exponential backoff  timeout.
+                     Setting  external_ids:garp-max-timeout-sec  allows to cap
+                     for the exponential backoff  used  by  ovn-controller  to
                      send GARPs packets.
 
               external_ids:arp-nd-max-timeout-sec
                      When used, this configuration value specifies the maximum
                      timeout (in seconds) between two consecutive ARP/ND pack‐
-                     ets sent by ovn-controller to resolve  ECMP  nexthop  mac
-                     address.  ovn-controller  by  default  continuously sends
-                     ARP/ND  packets.  Setting   external_ids:arp-nd-max-time�‐
+                     ets  sent  by  ovn-controller to resolve ECMP nexthop mac
+                     address. ovn-controller  by  default  continuously  sends
+                     ARP/ND   packets.  Setting  external_ids:arp-nd-max-time�‐
                      out-sec allows to cap for the exponential backoff used by
                      ovn-controller
                       to send ARPs/NDs packets.
 
               external_ids:ovn-bridge-remote
-                     Connection  to  the  OVN management bridge in OvS. It de‐
+                     Connection to the OVN management bridge in  OvS.  It  de‐
                      faults to unix:br-int.mgmt when not specified.
 
               external_ids:ovn-bridge-remote-probe-interval
-                     The inactivity probe interval of the  connection  to  the
-                     OVN  management  bridge,  in milliseconds. It defaults to
-                     zero. If the value is zero, it  disables  the  inactivity
+                     The  inactivity  probe  interval of the connection to the
+                     OVN management bridge, in milliseconds.  It  defaults  to
+                     zero.  If  the  value is zero, it disables the inactivity
                      probe.
+
+              external_ids:dynamic-routing-port-mapping
+                     This setting works together with the Northbound  dynamic-
+                     routing-port-name option on Logical_Router_Ports. See the
+                     ovn-nb(5) for more details.
 
        Most  of  configuration options listed above can also be set for a par‐
        ticular chassis name (see  external_ids:system-id   for  more  informa‐
@@ -836,4 +844,4 @@ RUNTIME MANAGEMENT COMMANDS
               inc-engine/clear-stats
                      Reset ovn-controller engine counters.
 
-OVN 24.09.90                    ovn-controller               ovn-controller(8)
+OVN 25.03.90                    ovn-controller               ovn-controller(8)

@@ -2477,6 +2477,12 @@ Logical_Router TABLE
                                      optional string
          options : ct-zone-limit     optional string, containing  an  integer,
                                      in range 0 to 4,294,967,295
+         options : dynamic-routing   optional string, either true or false
+         options : dynamic-routing-redistribute
+                                     optional string
+         options : dynamic-routing-vrf-name
+                                     optional string
+         options : ct-commit-all     optional string, either true or false
        Common Columns:
          external_ids                map of string-string pairs
 
@@ -2687,6 +2693,95 @@ Logical_Router TABLE
               CT  zone limit value for given Logical_Router. The value 0 means
               unlimited. When the option is not present the limit is  not  set
               and the zone limit is derived from OvS default datapath limit.
+
+       options : dynamic-routing: optional string, either true or false
+              If  set  to true then this Logical_Router can participate in dy‐
+              namic routing with components outside of OVN. It  will  synchro‐
+              nize all routes to the soutbound Advertised_Route table that are
+              relevant for the router. This includes:
+
+              •      all "connected" routes implicitly created by networks as‐
+                     sociated with this Logical Router
+
+              •      all  Logical_Router_Static_Route that are applied to this
+                     Logical Router
+       Users will need to use the following settings to  opt  into  individual
+       route types that should be advertised. See:
+
+              •      options:dynamic-routing-redistribute on Logical_Router
+
+              •      options:dynamic-routing-redistribute       on       Logi‐
+                     cal_Router_Port
+
+       options : dynamic-routing-redistribute: optional string
+              Only relevant if options:dynamic-routing is set to true.
+
+              This is a list of elements separated by ,.
+
+              If connected is in the list then  northd  will  synchronize  all
+              "connected"  routes  to  the  southbound Advertised_Route table.
+              "Connected" here means routes implicitly created by networks as‐
+              sociated with the LRPs.
+
+              If connected-as-host is in the list then northd  will  enumerate
+              all  actively used individual IPs of a "connected" route and an‐
+              nounce these IPs as host routes instead of announcing  the  sub‐
+              net.  This includes LSP and LRP addresses on the network as well
+              as NAT entries of remove Logical_Routers on this  network.  Set‐
+              ting  this  implies  the  setting connected. This setting can be
+              used to:
+
+              •      allow the fabric outside of OVN to drop  traffic  towards
+                     IP  addresses  that  are  not actually used. This traffic
+                     would otherwise hit this LR and then be dropped.
+
+              •      If this LR has multiple LRPs connected to the  fabric  on
+                     different  chassis:  allows  the fabric outside of OVN to
+                     steer packets to the chassis  which  already  hosts  this
+                     backing ip address.
+
+              If  static is in the list then northd will synchronize all Logi�‐
+              cal_Router_Static_Route to the southbound  Advertised_Route  ta‐
+              ble.
+
+              If  lb  is in the list then northd will create entries in Adver�‐
+              tised_Route table for each Load Balancer VIP on this router  and
+              it’s neighboring routers. Neighboring routers are those that are
+              either  directly  connected,  via  Logical Router Port, or those
+              that are connected via shared Logical Switch.
+
+              If nat is in the list then northd will create entries in  Adver�‐
+              tised_Route  table for each NAT’s external IP on this router and
+              it’s neighboring routers. Neighboring routers are those that are
+              either directly connected, via Logical  Router  Port,  or  those
+              that are connected via shared Logical Switch.
+
+              This  value  can  be  overwritten  on  a per LRP basis using op�‐
+              tions:dynamic-routing-redistribute on the Logical_Router_Port.
+
+       options : dynamic-routing-vrf-name: optional string
+              Only relevant if options:dynamic-routing is set to true.
+
+              This defines the name of the vrf the ovn-controller will use  to
+              advertise  and  learn  routes.  If not set the vrf will be named
+              "ovnvrf" with the datapath id of the Logical Router appended  to
+              it.
+
+              The  vrf name must be a valid linux interface name. If it is too
+              long the generated name will be used instead.
+
+              The vrf table id is not affected by this  setting.  For  details
+              see options:dynamic-routing-maintain-vrf on the Logical_Router.
+
+       options : ct-commit-all: optional string, either true or false
+              When enabled the LR will commit traffic in a zone that is state‐
+              ful.  The traffic is not commited to both zones but it is selec‐
+              tive based whether there is stateful DNAT/SNAT or both. The com‐
+              mit all will prevent issues with ct.inv packets as it will  pre‐
+              vent  the  commit  of  reply traffic, which could happen in some
+              cases. This also helps with HWOL as there shouldn’t be any match
+              on ct.new for established sessions as we will commit  everything
+              in addition to already existing stateful NATs and LBs.
 
      Common Columns:
 
@@ -2952,6 +3047,12 @@ Logical_Router_Port TABLE
          options : ic-route-filter-tag
                                      optional string
          options : requested-chassis
+                                     optional string
+         options : dynamic-routing-redistribute
+                                     optional string
+         options : dynamic-routing-maintain-vrf
+                                     optional string, either true or false
+         options : dynamic-routing-port-name
                                      optional string
        Attachment:
          peer                        optional string
@@ -3295,6 +3396,94 @@ Logical_Router_Port TABLE
 
               By  assigning  remote chassis the Logical_Router gains status of
               Transit Router see Logical_Router table for more details.
+
+       options : dynamic-routing-redistribute: optional string
+              Only relevant if options:dynamic-routing on the respective Logi‐
+              cal_Router is set to true.
+
+              This is a list of elements separated by ,.
+
+              If connected is in the list then  northd  will  synchronize  all
+              "connected"  routes  to  the  southbound Advertised_Route table.
+              "Connected" here means routes implicitly created by networks as‐
+              sociated with the LRPs.
+
+              If connected-as-host is in the list then northd  will  enumerate
+              all  actively used individual IPs of a "connected" route and an‐
+              nounce these IPs as host routes instead of announcing  the  sub‐
+              net.  This includes LSP and LRP addresses on the network as well
+              as NAT entries of remove Logical_Routers on this  network.  Set‐
+              ting  this  implies  the  setting connected. This setting can be
+              used to:
+
+              •      allow the fabric outside of OVN to drop  traffic  towards
+                     IP  addresses  that  are  not actually used. This traffic
+                     would otherwise hit this LR and then be dropped.
+
+              •      If this LR has multiple LRPs connected to the  fabric  on
+                     different  chassis:  allows  the fabric outside of OVN to
+                     steer packets to the chassis  which  already  hosts  this
+                     backing ip address.
+
+              If  static is in the list then northd will synchronize all Logi�‐
+              cal_Router_Static_Route to the southbound  Advertised_Route  ta‐
+              ble.
+
+              If  lb  is in the list then northd will create entries in Adver�‐
+              tised_Route table for each Load  Balancer  VIP  on  this  port’s
+              router,  and  it’s  neighboring routers. Neighboring routers are
+              those that are either directly connected to this Logical  Router
+              Port, or those that are connected via shared Logical Switch.
+
+              If  nat is in the list then northd will create entries in Adver�‐
+              tised_Route table for each NAT’s  external  IP  on  this  port’s
+              router,  and  it’s  neighboring routers. Neighboring routers are
+              those that are either directly connected to this Logical  Router
+              Port, or those that are connected via shared Logical Switch.
+
+              If  not  set the value from options:dynamic-routing-redistribute
+              on the Logical_Router will be used.
+
+       options : dynamic-routing-maintain-vrf: optional string, either true or
+       false
+              Only relevant if options:dynamic-routing on the respective Logi‐
+              cal_Router is set to true.
+
+              If this LRP is bound to a specific  chassis  then  the  ovn-con‐
+              troller  of this chassis will maintain a vrf. This vrf will con‐
+              tain all the routes that should be announced from this LRP.  Un‐
+              less  options:dynamic-routing-vrf-name  is  set  the vrf will be
+              named "ovnvrf" with the datapath id of the  Logical  Router  ap‐
+              pended to it.
+
+              If  the  setting is not set or false the ovn-controller will ex‐
+              pect this VRF to already exist.  Some  tooling  outside  of  OVN
+              needs to ensure this.
+
+              The  VRF  table  ID  is  the same as the tunnel key of the Logi‐
+              cal_Router datapath. If this setting is false the  tooling  out‐
+              side of OVN needs to ensure that this is the case.
+
+       options : dynamic-routing-port-name: optional string
+              Only relevant if options:dynamic-routing on the respective Logi‐
+              cal_Router is set to true. Only learn routes associated with the
+              interface  locally  bound to the LSP or LRP specified here. This
+              allows a single chassis to learn different  routes  on  separate
+              LRPs bound to this chassis. This is usefully e.g. in the case of
+              a  chassis  with multiple links towards the network fabric where
+              all of them run BGP individually. This option allows to  have  a
+              1:1  mapping between a single LRP and an individual link. If the
+              port referenced by this name is bound locally  on  the  ovn-con‐
+              troller  we  lookup  the linux interface name of this port. This
+              interface name is then used for the  route  filtering,  so  only
+              routes  that  have this interface as nexthop will be learned. As
+              there might not always be such a  port  bound  on  the  ovn-con‐
+              troller this value can also be an arbitrary string. The ovn-con‐
+              troller  will lookup the port name in the local external_ids:dy�‐
+              namic-routing-port-mapping. This is a list separated by  ,  that
+              contains  port=interfacename pairs. If a match is found in there
+              the configured interface name is used instead of the autodiscov‐
+              ery. Also it is then irrelevant if the port is bound locally.
 
      Attachment:
 
@@ -4707,4 +4896,4 @@ Sampling_App TABLE
        external_ids: map of string-string pairs
               See External IDs at the beginning of this document.
 
-Open vSwitch 24.09.90           DB Schema 7.11.0                     ovn-nb(5)
+Open vSwitch 25.03.90           DB Schema 7.11.0                     ovn-nb(5)

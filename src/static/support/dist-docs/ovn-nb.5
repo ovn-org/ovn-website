@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nb" 5 " DB Schema 7.11.0" "Open vSwitch 24.09.90" "Open vSwitch Manual"
+.TH "ovn-nb" 5 " DB Schema 7.11.0" "Open vSwitch 25.03.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -2266,6 +2266,18 @@ optional string
 .TQ 2.75in
 \fBoptions : ct-zone-limit\fR
 optional string, containing an integer, in range 0 to 4,294,967,295
+.TQ 2.75in
+\fBoptions : dynamic-routing\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 2.75in
+\fBoptions : dynamic-routing-redistribute\fR
+optional string
+.TQ 2.75in
+\fBoptions : dynamic-routing-vrf-name\fR
+optional string
+.TQ 2.75in
+\fBoptions : ct-commit-all\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
 .RE
 .TQ .25in
 \fICommon Columns:\fR
@@ -2358,6 +2370,53 @@ Example: \fB192\[char46]168\[char46]0\[char46]0/16:300;192\[char46]168\[char46]1
 This sets a threshold of 300 seconds for MAC bindings with IP addresses in the 192\[char46]168\[char46]0\[char46]0/16 range, excluding the 192\[char46]168\[char46]1\[char46]0/24 range (for which the aging is disabled), a threshold of 600 seconds for MAC bindings with IP addresses in the fe80::/10 IPv6 range, and a default threshold of 1200 seconds for all other MAC bindings\[char46]
 .IP "\fBoptions : ct-zone-limit\fR: optional string, containing an integer, in range 0 to 4,294,967,295"
 CT zone \fBlimit\fR value for given \fBLogical_Router\fR\[char46] The value 0 means unlimited\[char46] When the option is not present the limit is not set and the zone limit is derived from OvS default datapath limit\[char46]
+.IP "\fBoptions : dynamic-routing\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+If set to \fBtrue\fR then this \fBLogical_Router\fR can participate in dynamic routing with components outside of OVN\[char46] It will synchronize all routes to the soutbound \fBAdvertised_Route\fR table that are relevant for the router\[char46] This includes:
+.RS
+.IP \(bu
+all \(dqconnected\(dq routes implicitly created by networks associated with this Logical Router
+.IP \(bu
+all \fBLogical_Router_Static_Route\fR that are applied to this Logical Router
+.RE
+Users will need to use the following settings to opt into individual route types that should be advertised\[char46] See:
+.RS
+.IP \(bu
+\fBoptions:dynamic-routing-redistribute\fR on Logical_Router
+.IP \(bu
+\fBoptions:dynamic-routing-redistribute\fR on Logical_Router_Port
+.RE
+.IP "\fBoptions : dynamic-routing-redistribute\fR: optional string"
+Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
+.IP
+This is a list of elements separated by \fB,\fR\[char46]
+.IP
+If \fBconnected\fR is in the list then northd will synchronize all \(dqconnected\(dq routes to the southbound \fBAdvertised_Route\fR table\[char46] \(dqConnected\(dq here means routes implicitly created by networks associated with the LRPs\[char46]
+.IP
+If \fBconnected\-as\-host\fR is in the list then northd will enumerate all actively used individual IPs of a \(dqconnected\(dq route and announce these IPs as host routes instead of announcing the subnet\[char46] This includes LSP and LRP addresses on the network as well as NAT entries of remove Logical_Routers on this network\[char46] Setting this implies the setting \fBconnected\fR\[char46] This setting can be used to:
+.RS
+.IP \(bu
+allow the fabric outside of OVN to drop traffic towards IP addresses that are not actually used\[char46] This traffic would otherwise hit this LR and then be dropped\[char46]
+.IP \(bu
+If this LR has multiple LRPs connected to the fabric on different chassis: allows the fabric outside of OVN to steer packets to the chassis which already hosts this backing ip address\[char46]
+.RE
+.IP
+If \fBstatic\fR is in the list then northd will synchronize all \fBLogical_Router_Static_Route\fR to the southbound \fBAdvertised_Route\fR table\[char46]
+.IP
+If \fBlb\fR is in the list then northd will create entries in \fBAdvertised_Route\fR table for each Load Balancer VIP on this router and it\(cqs neighboring routers\[char46] Neighboring routers are those that are either directly connected, via Logical Router Port, or those that are connected via shared Logical Switch\[char46]
+.IP
+If \fBnat\fR is in the list then northd will create entries in \fBAdvertised_Route\fR table for each NAT\(cqs external IP on this router and it\(cqs neighboring routers\[char46] Neighboring routers are those that are either directly connected, via Logical Router Port, or those that are connected via shared Logical Switch\[char46]
+.IP
+This value can be overwritten on a per LRP basis using \fBoptions:dynamic-routing-redistribute\fR on the Logical_Router_Port\[char46]
+.IP "\fBoptions : dynamic-routing-vrf-name\fR: optional string"
+Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
+.IP
+This defines the name of the vrf the ovn-controller will use to advertise and learn routes\[char46] If not set the vrf will be named \(dqovnvrf\(dq with the datapath id of the Logical Router appended to it\[char46]
+.IP
+The vrf name must be a valid linux interface name\[char46] If it is too long the generated name will be used instead\[char46]
+.IP
+The vrf table id is not affected by this setting\[char46] For details see \fBoptions:dynamic-routing-maintain-vrf\fR on the Logical_Router\[char46]
+.IP "\fBoptions : ct-commit-all\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+When enabled the LR will commit traffic in a zone that is stateful\[char46] The traffic is not commited to both zones but it is selective based whether there is stateful DNAT/SNAT or both\[char46] The commit all will prevent issues with \fBct\[char46]inv\fR packets as it will prevent the commit of reply traffic, which could happen in some cases\[char46] This also helps with HWOL as there shouldn\(cqt be any match on ct\[char46]new for established sessions as we will commit everything in addition to already existing stateful NATs and LBs\[char46]
 .ST "Common Columns:"
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
@@ -2646,6 +2705,15 @@ optional string
 .TQ 2.75in
 \fBoptions : requested-chassis\fR
 optional string
+.TQ 2.75in
+\fBoptions : dynamic-routing-redistribute\fR
+optional string
+.TQ 2.75in
+\fBoptions : dynamic-routing-maintain-vrf\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 2.75in
+\fBoptions : dynamic-routing-port-name\fR
+optional string
 .RE
 .TQ .25in
 \fIAttachment:\fR
@@ -2836,6 +2904,38 @@ This option expects a name of a filtered route-tag that\(cqs present in the Logi
 If set, identifies a specific chassis (by name or hostname) that is allowed to bind this port\[char46] This option is valid only for chassis that have \fBoptions:is\-remote=true\fR, in other words for chassis that are in different Availability zone\[char46] The option accepts only single value\[char46]
 .IP
 By assigning remote chassis the \fBLogical_Router\fR gains status of \fBTransit Router\fR see \fBLogical_Router\fR table for more details\[char46]
+.IP "\fBoptions : dynamic-routing-redistribute\fR: optional string"
+Only relevant if \fBoptions:dynamic-routing\fR on the respective Logical_Router is set to \fBtrue\fR\[char46]
+.IP
+This is a list of elements separated by \fB,\fR\[char46]
+.IP
+If \fBconnected\fR is in the list then northd will synchronize all \(dqconnected\(dq routes to the southbound \fBAdvertised_Route\fR table\[char46] \(dqConnected\(dq here means routes implicitly created by networks associated with the LRPs\[char46]
+.IP
+If \fBconnected\-as\-host\fR is in the list then northd will enumerate all actively used individual IPs of a \(dqconnected\(dq route and announce these IPs as host routes instead of announcing the subnet\[char46] This includes LSP and LRP addresses on the network as well as NAT entries of remove Logical_Routers on this network\[char46] Setting this implies the setting \fBconnected\fR\[char46] This setting can be used to:
+.RS
+.IP \(bu
+allow the fabric outside of OVN to drop traffic towards IP addresses that are not actually used\[char46] This traffic would otherwise hit this LR and then be dropped\[char46]
+.IP \(bu
+If this LR has multiple LRPs connected to the fabric on different chassis: allows the fabric outside of OVN to steer packets to the chassis which already hosts this backing ip address\[char46]
+.RE
+.IP
+If \fBstatic\fR is in the list then northd will synchronize all \fBLogical_Router_Static_Route\fR to the southbound \fBAdvertised_Route\fR table\[char46]
+.IP
+If \fBlb\fR is in the list then northd will create entries in \fBAdvertised_Route\fR table for each Load Balancer VIP on this port\(cqs router, and it\(cqs neighboring routers\[char46] Neighboring routers are those that are either directly connected to this Logical Router Port, or those that are connected via shared Logical Switch\[char46]
+.IP
+If \fBnat\fR is in the list then northd will create entries in \fBAdvertised_Route\fR table for each NAT\(cqs external IP on this port\(cqs router, and it\(cqs neighboring routers\[char46] Neighboring routers are those that are either directly connected to this Logical Router Port, or those that are connected via shared Logical Switch\[char46]
+.IP
+If not set the value from \fBoptions:dynamic-routing-redistribute\fR on the Logical_Router will be used\[char46]
+.IP "\fBoptions : dynamic-routing-maintain-vrf\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+Only relevant if \fBoptions:dynamic-routing\fR on the respective Logical_Router is set to \fBtrue\fR\[char46]
+.IP
+If this LRP is bound to a specific chassis then the ovn-controller of this chassis will maintain a vrf\[char46] This vrf will contain all the routes that should be announced from this LRP\[char46] Unless \fBoptions:dynamic-routing-vrf-name\fR is set the vrf will be named \(dqovnvrf\(dq with the datapath id of the Logical Router appended to it\[char46]
+.IP
+If the setting is not set or false the ovn-controller will expect this VRF to already exist\[char46] Some tooling outside of OVN needs to ensure this\[char46]
+.IP
+The VRF table ID is the same as the tunnel key of the Logical_Router datapath\[char46] If this setting is false the tooling outside of OVN needs to ensure that this is the case\[char46]
+.IP "\fBoptions : dynamic-routing-port-name\fR: optional string"
+Only relevant if \fBoptions:dynamic-routing\fR on the respective Logical_Router is set to \fBtrue\fR\[char46] Only learn routes associated with the interface locally bound to the LSP or LRP specified here\[char46] This allows a single chassis to learn different routes on separate LRPs bound to this chassis\[char46] This is usefully e\[char46]g\[char46] in the case of a chassis with multiple links towards the network fabric where all of them run BGP individually\[char46] This option allows to have a 1:1 mapping between a single LRP and an individual link\[char46] If the port referenced by this name is bound locally on the ovn-controller we lookup the linux interface name of this port\[char46] This interface name is then used for the route filtering, so only routes that have this interface as nexthop will be learned\[char46] As there might not always be such a port bound on the ovn-controller this value can also be an arbitrary string\[char46] The ovn-controller will lookup the port name in the local \fBexternal_ids:dynamic-routing-port-mapping\fR\[char46] This is a list separated by \fB,\fR that contains \fBport=interfacename\fR pairs\[char46] If a match is found in there the configured interface name is used instead of the autodiscovery\[char46] Also it is then irrelevant if the port is bound locally\[char46]
 .ST "Attachment:"
 .PP
 .PP
