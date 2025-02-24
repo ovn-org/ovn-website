@@ -328,7 +328,7 @@ One priority\-0 fallback flow that matches all packets and advances to the next 
 .ST "Ingress Table 2: Lookup MAC address learning table"
 .PP
 .PP
-This table looks up the MAC learning table of the logical switch datapath to check if the \fBport\-mac\fR pair is present or not\[char46] MAC is learnt for logical switch VIF ports whose port security is disabled and \(cqunknown\(cq address setn as well as for localnet ports with option localnet_learn_fdb\[char46] A localnet port entry does not overwrite a VIF port entry\[char46]
+This table looks up the MAC learning table of the logical switch datapath to check if the \fBport\-mac\fR pair is present or not\[char46] MAC is learnt for logical switch VIF ports whose port security is disabled and \(cqunknown\(cq address setn as well as for localnet ports with option localnet_learn_fdb\[char46] A localnet port entry does not overwrite a VIF port entry\[char46] Logical switch ports with type \fBswitch\fR have implicit \(cqunknown\(cq addresses and so they are also eligible for MAC learning\[char46]
 .RS
 .IP \(bu
 For each such VIF logical port \fIp\fR whose port security is disabled and \(cqunknown\(cq address set following flow is added\[char46]
@@ -348,7 +348,7 @@ One priority\-0 fallback flow that matches all packets and advances to the next 
 .ST "Ingress Table 3: Learn MAC of \(cqunknown\(cq ports\[char46]"
 .PP
 .PP
-This table learns the MAC addresses seen on the VIF logical ports whose port security is disabled and \(cqunknown\(cq address set as well as on localnet ports with localnet_learn_fdb option set if the \fBlookup_fdb\fR action returned false in the previous table\[char46] For localnet ports (with flags\[char46]localnet = 1), lookup_fdb returns true if (port, mac) is found or if a mac is found for a port of type vif\[char46]
+This table learns the MAC addresses seen on the VIF or \(cqswitch\(cq logical ports whose port security is disabled and \(cqunknown\(cq address set (note: \(cqswitch\(cq ports have implicit \(cqunknown\(cq addresses) as well as on localnet ports with localnet_learn_fdb option set if the \fBlookup_fdb\fR action returned false in the previous table\[char46] For localnet ports (with flags\[char46]localnet = 1), lookup_fdb returns true if (port, mac) is found or if a mac is found for a port of type vif\[char46]
 .RS
 .IP \(bu
 For each such VIF logical port \fIp\fR whose port security is disabled and \(cqunknown\(cq address set and localnet port following flow is added\[char46]
@@ -1191,7 +1191,17 @@ Priority 50 flow with the match \fBoutport == none\fR and drops the packets\[cha
 .IP \(bu
 One priority\-0 fallback flow that outputs the packet to the egress stage with the outport learnt from \fBget_fdb\fR action\[char46]
 .RE
-.ST "Egress Table 0: \fBto\-lport\fI Pre-ACLs"
+.ST "Egress Table 0: Lookup MAC address learning table"
+.PP
+.PP
+This is similar to ingress table \fBLookup MAC address learning table
+\fR with the difference that MAC address learning lookup is only happening for ports with type \fBremote\fR whose port security is disabled and \(cqunknown\(cq address set\[char46] This stage facilitates MAC learning on a transit switch connecting multiple availability zones\[char46]
+.ST "Egress Table 1: Learn MAC of \(cqunknown\(cq ports\[char46]"
+.PP
+.PP
+This is similar to ingress table \fBLearn MAC of \(cqunknown\(cq ports
+\fR with the difference that MAC address learning is only happening for ports with type \fBremote\fR whose port security is disabled and \(cqunknown\(cq address set\[char46] This stage facilitates MAC learning on a transit switch connecting multiple availability zones\[char46]
+.ST "Egress Table 2: \fBto\-lport\fI Pre-ACLs"
 .PP
 .PP
 This is similar to ingress table \fBPre\-ACLs\fR except for \fBto\-lport\fR traffic\[char46]
@@ -1201,7 +1211,7 @@ This table also has a priority\-110 flow with the match \fBeth\[char46]src == \f
 .PP
 .PP
 This table also has a priority\-110 flow with the match \fBoutport == \fII\fB\fR for all logical switch datapaths to move traffic to the next table\[char46] Where \fII\fR is the peer of a logical router port\[char46] This flow is added to skip the connection tracking of packets which will be entering logical router datapath from logical switch datapath for routing\[char46]
-.ST "Egress Table 1: Pre-LB"
+.ST "Egress Table 3: Pre-LB"
 .PP
 .PP
 This table is similar to ingress table \fBPre\-LB\fR\[char46] It contains a priority\-0 flow that simply moves traffic to the next table\[char46] Moreover it contains two priority\-110 flows to move multicast, IPv6 Neighbor Discovery and MLD traffic to the next table\[char46] If any load balancing rules exist for the datapath, a priority\-100 flow is added with a match of \fBip\fR and action of \fBreg0[2] = 1; next;\fR to act as a hint for table \fBPre\-stateful\fR to send IP packets to the connection tracker for packet de-fragmentation and possibly DNAT the destination VIP to one of the selected backend for already committed load balanced traffic\[char46]
@@ -1211,7 +1221,7 @@ This table also has a priority\-110 flow with the match \fBeth\[char46]src == \f
 .PP
 .PP
 This table also has a priority\-110 flow with the match \fBoutport == \fII\fB\fR for all logical switch datapaths to move traffic to the next table, and, if there are no stateful_acl, clear the ct_state\[char46] Where \fII\fR is the peer of a logical router port\[char46] This flow is added to skip the connection tracking of packets which will be entering logical router datapath from logical switch datapath for routing\[char46]
-.ST "Egress Table 2: Pre-stateful"
+.ST "Egress Table 4: Pre-stateful"
 .PP
 .PP
 This is similar to ingress table \fBPre\-stateful\fR\[char46] This table adds the below 3 logical flows\[char46]
@@ -1223,11 +1233,11 @@ A priority\-100 flow sends the packets to connection tracker based on a hint pro
 .IP \(bu
 A priority\-0 flow that matches all packets to advance to the next table\[char46]
 .RE
-.ST "Egress Table 3: \fBfrom\-lport\fI ACL hints"
+.ST "Egress Table 5: \fBfrom\-lport\fI ACL hints"
 .PP
 .PP
 This is similar to ingress table \fBACL hints\fR\[char46]
-.ST "Egress Table 4: \fBto\-lport\fI ACL evaluation"
+.ST "Egress Table 6: \fBto\-lport\fI ACL evaluation"
 .PP
 .PP
 This is similar to ingress table \fBACL eval\fR except for \fBto\-lport\fR ACLs\[char46] As a reminder, these flows use the following register bits to indicate their verdicts\[char46] \fBAllow\-type\fR ACLs set \fBreg8[16]\fR, \fBdrop\fR ACLs set \fBreg8[17]\fR, and \fBreject\fR ACLs set \fBreg8[18]\fR\[char46]
@@ -1248,23 +1258,23 @@ A priority 34000 logical flow is added for each logical switch datapath configur
 .IP \(bu
 A priority 34000 logical flow is added for each logical switch datapath with the match \fBeth\[char46]src = \fIE\fB\fR to allow the service monitor request packet generated by \fBovn\-controller\fR with the action \fBnext\fR, where \fIE\fR is the service monitor mac defined in the \fBoptions:svc_monitor_mac\fR column of \fBNB_Global\fR table\[char46] This is indicated by setting the allow bit\[char46]
 .RE
-.ST "Egress Table 5: \fBto\-lport\fI ACL sampling"
+.ST "Egress Table 7: \fBto\-lport\fI ACL sampling"
 .PP
 .PP
 This is similar to ingress table \fBACL sampling\fR\[char46]
-.ST "Egress Table 6: \fBto\-lport\fI ACL action"
+.ST "Egress Table 8: \fBto\-lport\fI ACL action"
 .PP
 .PP
 This is similar to ingress table \fBACL action\fR\[char46]
-.ST "Egress Table 7: \fBto\-lport\fI QoS"
+.ST "Egress Table 9: \fBto\-lport\fI QoS"
 .PP
 .PP
 This is similar to ingress table \fBQoS\fR except they apply to \fBto\-lport\fR QoS rules\[char46]
-.ST "Egress Table 8: Stateful"
+.ST "Egress Table 10: Stateful"
 .PP
 .PP
 This is similar to ingress table \fBStateful\fR except that there are no rules added for load balancing new connections\[char46]
-.ST "Egress Table 9: Egress Port Security - check"
+.ST "Egress Table 11: Egress Port Security - check"
 .PP
 .PP
 This is similar to the port security logic in table \fBIngress Port Security check\fR except that action \fBcheck_out_port_sec\fR is used to check the port security rules\[char46] This table adds the below logical flows\[char46]
@@ -1274,7 +1284,7 @@ A priority 100 flow which matches on the multicast traffic and applies the actio
 .IP \(bu
 A priority 0 logical flow is added which matches on all the packets and applies the action \fBREGBIT_PORT_SEC_DROP\(dq = check_out_port_sec(); next;\(dq\fR\[char46] The action \fBcheck_out_port_sec\fR applies the port security rules based on the addresses defined in the \fBport_security\fR column of \fBLogical_Switch_Port\fR table before delivering the packet to the \fBoutport\fR\[char46]
 .RE
-.ST "Egress Table 10: Egress Port Security - Apply"
+.ST "Egress Table 12: Egress Port Security - Apply"
 .PP
 .PP
 This is similar to the ingress port security logic in ingress table \fBA Ingress Port Security \- Apply\fR\[char46] This table drops the packets if the port security check failed in the previous stage i\[char46]e the register bit \fBREGBIT_PORT_SEC_DROP\fR is set to 1\[char46]
