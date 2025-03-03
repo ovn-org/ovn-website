@@ -3270,18 +3270,19 @@ Logical_Router_Port TABLE
 
        ipv6_ra_configs : send_periodic: optional string
               If set to true, then this router interface will send router  ad‐
-              vertisements periodically. The default is false.
+              vertisements   periodically.   This  option  has  no  effect  if
+              ipv6_ra_configs:address_mode is not set. The default is false.
 
        ipv6_ra_configs : max_interval: optional string
-              The  maximum  number of seconds to wait between sending periodic
+              The maximum number of seconds to wait between  sending  periodic
               router advertisements. This option has no effect if ipv6_ra_con�‐
               figs:send_periodic is false. The default is 600.
 
        ipv6_ra_configs : min_interval: optional string
-              The minimum number of seconds to wait between  sending  periodic
+              The  minimum  number of seconds to wait between sending periodic
               router advertisements. This option has no effect if ipv6_ra_con�‐
-              figs:send_periodic   is  false.  The  default  is  one-third  of
-              ipv6_ra_configs:max_interval, i.e. 200 seconds if  that  key  is
+              figs:send_periodic  is  false.  The  default  is  one-third   of
+              ipv6_ra_configs:max_interval,  i.e.  200  seconds if that key is
               unset.
 
        ipv6_ra_configs : rdnss: optional string
@@ -3289,7 +3290,7 @@ Logical_Router_Port TABLE
               ment OVN supports just one RDNSS server.
 
        ipv6_ra_configs : dnssl: optional string
-              DNS  Search  List  announced  in RA packets. Multiple DNS Search
+              DNS Search List announced in RA  packets.  Multiple  DNS  Search
               List must be ’comma’ separated (e.g. "a.b.c, d.e.f")
 
      Options:
@@ -3300,25 +3301,25 @@ Logical_Router_Port TABLE
               If set to true, multicast traffic (including reports) are uncon‐
               ditionally forwarded to the specific port.
 
-              This option applies when the port is part of  a  logical  router
+              This  option  applies  when the port is part of a logical router
               which has options:mcast_relay set to true.
 
               Default: false.
 
        options : requested-tnl-key: optional string, containing an integer, in
        range 1 to 32,767
-              Configures  the  port  binding  tunnel key for the port. Usually
-              this is not needed because ovn-northd will assign an unique  key
-              for   each  port  by  itself.  However,  if  it  is  configured,
+              Configures the port binding tunnel key  for  the  port.  Usually
+              this  is not needed because ovn-northd will assign an unique key
+              for  each  port  by  itself.  However,  if  it  is   configured,
               ovn-northd honors the configured value.
 
        options : prefix_delegation: optional string, either true or false
-              If set to true, enable IPv6 prefix delegation state  machine  on
-              this  logical  router  port (RFC3633). IPv6 prefix delegation is
+              If  set  to true, enable IPv6 prefix delegation state machine on
+              this logical router port (RFC3633). IPv6  prefix  delegation  is
               available just on a gateway router or on a gateway router port.
 
        options : prefix: optional string, either true or false
-              If set to true, this interface will receive an IPv6  prefix  ac‐
+              If  set  to true, this interface will receive an IPv6 prefix ac‐
               cording to RFC3663
 
        options : route_table: optional string
@@ -3329,17 +3330,14 @@ Logical_Router_Port TABLE
 
        options : gateway_mtu: optional string, containing an integer, in range
        68 to 65,535
-              If set, logical flows will be added to router pipeline to  check
-              packet  length.  If packet length is greater than the value set,
-              ICMPv4 type 3 (Destination Unreachable)  code  4  (Fragmentation
-              Needed  and Don’t Fragment was Set) or ICMPv6 type 2 (Packet Too
+              If  set, logical flows will be added to router pipeline to check
+              packet length. If packet length is greater than the  value  set,
+              ICMPv4  type  3  (Destination Unreachable) code 4 (Fragmentation
+              Needed and Don’t Fragment was Set) or ICMPv6 type 2 (Packet  Too
               Big) code 0 (no route to destination) packets will be generated.
               This allows for Path MTU Discovery.
 
        options : routing-protocol-redirect: optional string
-              NOTE: this feature is experimental and may  be  subject  to  re‐
-              moval/change in the future.
-
               This  option  expects  a  name  of  a Logical Switch Port that’s
               present in the peer’s Logical Switch.  If  set,  it  causes  any
               traffic  that’s  destined for Logical Router Port’s IP addresses
@@ -3351,17 +3349,35 @@ Logical_Router_Port TABLE
               dresses.
 
        options : routing-protocols: optional string
-              NOTE: this feature is experimental and may  be  subject  to  re‐
-              moval/change in the future.
-
               This option expects a comma-separated list of routing, and rout‐
               ing-related protocols, whose control plane traffic will be redi‐
-              rected  to a port specified in routing-protocol-redirect option.
+              rected to a port specified in routing-protocol-redirect  option.
               Currently supported options are:
 
               •      BGP (forwards TCP port 179)
 
               •      BFD (forwards UDP port 3784)
+
+              Note that for BGP to work in "unnumbered mode" (advertising IPv4
+              routes  over  IPv6  network, with automatic on-link peer discov‐
+              ery), Logical Router Port needs to enable  sending  of  periodic
+              IPv6  Router  Announcements  (see the ipv6_ra_configs:send_peri�‐
+              odic). Recommended minimal configuration of periodic RAs for BGP
+              unnumbered:
+
+              •      ipv6_ra_configs:address_mode = slaac (Any valid value  is
+                     OK, but the option needs to be set)
+
+              •      ipv6_ra_configs:send_periodic = true
+
+              •      ipv6_ra_configs:max_interval = 10
+
+              •      ipv6_ra_configs:min_interval = 5
+       Feel free to adjust max and min interval values, but be aware that they
+       influence  speed  at which the initial BGP session is established. With
+       the above values, the session will be established in 5 to  10  seconds.
+       Please  refer  to RFC 8950 for more details about advertising IPv4 net‐
+       works over IPv6 next-hop addresses.
 
        options : gateway_mtu_bypass: optional string
               When configured, represents a match expression, in the same  ex‐

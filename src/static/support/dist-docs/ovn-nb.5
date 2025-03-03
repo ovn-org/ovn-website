@@ -2850,7 +2850,7 @@ LOW: mapped to 0x11 in RA PRF field
 .IP "\fBipv6_ra_configs : mtu\fR: optional string"
 The recommended MTU for the link\[char46] Default is 0, which means no MTU Option will be included in RA packet replied by ovn-controller\[char46] Per RFC 2460, the mtu value is recommended no less than 1280, so any mtu value less than 1280 will be considered as no MTU Option\[char46]
 .IP "\fBipv6_ra_configs : send_periodic\fR: optional string"
-If set to true, then this router interface will send router advertisements periodically\[char46] The default is false\[char46]
+If set to true, then this router interface will send router advertisements periodically\[char46] This option has no effect if \fBipv6_ra_configs:address_mode\fR is not set\[char46] The default is false\[char46]
 .IP "\fBipv6_ra_configs : max_interval\fR: optional string"
 The maximum number of seconds to wait between sending periodic router advertisements\[char46] This option has no effect if \fBipv6_ra_configs:send_periodic\fR is false\[char46] The default is 600\[char46]
 .IP "\fBipv6_ra_configs : min_interval\fR: optional string"
@@ -2881,12 +2881,8 @@ Designates lookup for \fBLogical_Router_Static_Routes\fR with the specified \fBr
 .IP "\fBoptions : gateway_mtu\fR: optional string, containing an integer, in range 68 to 65,535"
 If set, logical flows will be added to router pipeline to check packet length\[char46] If packet length is greater than the value set, ICMPv4 type 3 (Destination Unreachable) code 4 (Fragmentation Needed and Don\(cqt Fragment was Set) or ICMPv6 type 2 (Packet Too Big) code 0 (no route to destination) packets will be generated\[char46] This allows for Path MTU Discovery\[char46]
 .IP "\fBoptions : routing-protocol-redirect\fR: optional string"
-NOTE: this feature is experimental and may be subject to removal/change in the future\[char46]
-.IP
 This option expects a name of a Logical Switch Port that\(cqs present in the peer\(cqs Logical Switch\[char46] If set, it causes any traffic that\(cqs destined for Logical Router Port\(cqs IP addresses (including its IPv6 LLA) and the ports associated with routing protocols defined ip \fBrouting\-protocols\fR option, to be redirected to the specified Logical Switch Port\[char46] This allows external routing daemons to be bound to a port in OVN\(cqs Logical Switch and act as if they were listening on Logical Router Port\(cqs IP addresses\[char46]
 .IP "\fBoptions : routing-protocols\fR: optional string"
-NOTE: this feature is experimental and may be subject to removal/change in the future\[char46]
-.IP
 This option expects a comma-separated list of routing, and routing-related protocols, whose control plane traffic will be redirected to a port specified in \fBrouting\-protocol\-redirect\fR option\[char46] Currently supported options are:
 .RS
 .IP \(bu
@@ -2894,6 +2890,19 @@ This option expects a comma-separated list of routing, and routing-related proto
 .IP \(bu
 \fBBFD\fR (forwards UDP port 3784)
 .RE
+.IP
+Note that for BGP to work in \(dqunnumbered mode\(dq (advertising IPv4 routes over IPv6 network, with automatic on-link peer discovery), Logical Router Port needs to enable sending of periodic IPv6 Router Announcements (see the \fBipv6_ra_configs:send_periodic\fR)\[char46] Recommended minimal configuration of periodic RAs for BGP unnumbered:
+.RS
+.IP \(bu
+\fBipv6_ra_configs:address_mode\fR = \fBslaac\fR (Any valid value is OK, but the option needs to be set)
+.IP \(bu
+\fBipv6_ra_configs:send_periodic\fR = \fBtrue\fR
+.IP \(bu
+\fBipv6_ra_configs:max_interval\fR = \fB10\fR
+.IP \(bu
+\fBipv6_ra_configs:min_interval\fR = \fB5\fR
+.RE
+Feel free to adjust max and min interval values, but be aware that they influence speed at which the initial BGP session is established\[char46] With the above values, the session will be established in 5 to 10 seconds\[char46] Please refer to RFC 8950 for more details about advertising IPv4 networks over IPv6 next-hop addresses\[char46]
 .IP "\fBoptions : gateway_mtu_bypass\fR: optional string"
 When configured, represents a match expression, in the same expression language used for the \fBmatch\fR column in the OVN Southbound database\(cqs \fBLogical_Flow\fR table\[char46] Packets matching this expression will bypass the length check configured through the \fBoptions:gateway_mtu\fR option\[char46]
 .IP "\fBoptions : ic-route-tag\fR: optional string"
