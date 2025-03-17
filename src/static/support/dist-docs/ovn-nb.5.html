@@ -2486,6 +2486,7 @@
          <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>c</b><b>t</b><b>-</b><b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b><b>-</b><b>a</b><b>l</b><b>l</b>     optional string, either <b>t</b><b>r</b><b>u</b><b>e</b> or <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>
        <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
          <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>                map of string-string pairs
+       <u>T</u><u>r</u><u>a</u><u>n</u><u>s</u><u>i</u><u>t</u> <u>r</u><u>o</u><u>u</u><u>t</u><u>e</u><u>r</u><u>:</u>
 
    <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
        <b>p</b><b>o</b><b>r</b><b>t</b><b>s</b>: set of <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>s
@@ -2789,6 +2790,24 @@
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
               See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
 
+     <u>T</u><u>r</u><u>a</u><u>n</u><u>s</u><u>i</u><u>t</u> <u>r</u><u>o</u><u>u</u><u>t</u><u>e</u><u>r</u><u>:</u>
+
+       In  order  to achieve status of <b>T</b><b>r</b><b>a</b><b>n</b><b>s</b><b>i</b><b>t</b> <b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> for <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> there
+       needs to be at least one <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> that is considered remote.
+       The LRP can be <b>r</b><b>e</b><b>m</b><b>o</b><b>t</b><b>e</b> only if it has <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>r</b><b>e</b><b>q</b><b>u</b><b>e</b><b>s</b><b>t</b><b>e</b><b>d</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>  set  to
+       chassis that is considered remote. See <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> for more de‐
+       tails.
+
+       In  order  for  the <b>T</b><b>r</b><b>a</b><b>n</b><b>s</b><b>i</b><b>t</b> <b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> to work properly all the tunnel keys
+       for the <b>T</b><b>r</b><b>a</b><b>n</b><b>s</b><b>i</b><b>t</b> <b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> itself and the remote ports keys needs to  match
+       in  all  AZs  e.g. TR in AZ1 and AZ2 needs to have the same tunnel key.
+       Remote port for AZ2 in AZ1 needs to have the same tunnel key  as  local
+       port in AZ2 and vice vers.
+
+       The  <b>T</b><b>r</b><b>a</b><b>n</b><b>s</b><b>i</b><b>t</b>  <b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>  behaves as distributed router which means that it
+       has the same limitations for stateful flows like <b>N</b><b>A</b><b>T</b>  <b>a</b><b>n</b><b>d</b>  <b>L</b><b>B</b><b>s</b>  and  it
+       will lose the CT state between AZs.
+
 <b>Q</b><b>o</b><b>S</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
        Each  row  in  this  table represents one QoS rule for a logical switch
        that points to it through its <b>q</b><b>o</b><b>s</b><b>_</b><b>r</b><b>u</b><b>l</b><b>e</b><b>s</b> column. Two types  of  QoS  are
@@ -2868,7 +2887,6 @@
        <b>t</b><b>y</b><b>p</b><b>e</b>                          string, one of <b>e</b><b>r</b><b>s</b><b>p</b><b>a</b><b>n</b>, <b>g</b><b>r</b><b>e</b>, or <b>l</b><b>o</b><b>c</b><b>a</b><b>l</b>
        <b>i</b><b>n</b><b>d</b><b>e</b><b>x</b>                         integer
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>                  map of string-string pairs
-       <u>T</u><u>r</u><u>a</u><u>n</u><u>s</u><u>i</u><u>t</u> <u>r</u><u>o</u><u>u</u><u>t</u><u>e</u><u>r</u><u>:</u>
 
    <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
        <b>n</b><b>a</b><b>m</b><b>e</b>: string (must be unique within table)
@@ -2900,24 +2918,6 @@
 
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
               See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
-
-     <u>T</u><u>r</u><u>a</u><u>n</u><u>s</u><u>i</u><u>t</u> <u>r</u><u>o</u><u>u</u><u>t</u><u>e</u><u>r</u><u>:</u>
-
-       In order to achieve status of <b>T</b><b>r</b><b>a</b><b>n</b><b>s</b><b>i</b><b>t</b> <b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> for  <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>  there
-       needs to be at least one <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> that is considered remote.
-       The  LRP  can be <b>r</b><b>e</b><b>m</b><b>o</b><b>t</b><b>e</b> only if it has <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>r</b><b>e</b><b>q</b><b>u</b><b>e</b><b>s</b><b>t</b><b>e</b><b>d</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> set to
-       chassis that is considered remote. See <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> for more de‐
-       tails.
-
-       In order for the <b>T</b><b>r</b><b>a</b><b>n</b><b>s</b><b>i</b><b>t</b> <b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> to work properly all  the  tunnel  keys
-       for  the <b>T</b><b>r</b><b>a</b><b>n</b><b>s</b><b>i</b><b>t</b> <b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> itself and the remote ports keys needs to match
-       in all AZs e.g. TR in AZ1 and AZ2 needs to have the  same  tunnel  key.
-       Remote  port  for AZ2 in AZ1 needs to have the same tunnel key as local
-       port in AZ2 and vice vers.
-
-       The <b>T</b><b>r</b><b>a</b><b>n</b><b>s</b><b>i</b><b>t</b> <b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> behaves as distributed router which  means  that  it
-       has  the  same  limitations  for stateful flows like <b>N</b><b>A</b><b>T</b> <b>a</b><b>n</b><b>d</b> <b>L</b><b>B</b><b>s</b> and it
-       will lose the CT state between AZs.
 
 <b>M</b><b>e</b><b>t</b><b>e</b><b>r</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
        Each row in this table represents a meter that can be used for  QoS  or

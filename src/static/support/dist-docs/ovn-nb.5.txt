@@ -2485,6 +2485,7 @@ Logical_Router TABLE
          options : ct-commit-all     optional string, either true or false
        Common Columns:
          external_ids                map of string-string pairs
+       Transit router:
 
    Details:
        ports: set of Logical_Router_Ports
@@ -2788,6 +2789,24 @@ Logical_Router TABLE
        external_ids: map of string-string pairs
               See External IDs at the beginning of this document.
 
+     Transit router:
+
+       In  order  to achieve status of Transit Router for Logical_Router there
+       needs to be at least one Logical_Router_Port that is considered remote.
+       The LRP can be remote only if it has options:requested-chassis  set  to
+       chassis that is considered remote. See Logical_Router_Port for more de‐
+       tails.
+
+       In  order  for  the Transit Router to work properly all the tunnel keys
+       for the Transit Router itself and the remote ports keys needs to  match
+       in  all  AZs  e.g. TR in AZ1 and AZ2 needs to have the same tunnel key.
+       Remote port for AZ2 in AZ1 needs to have the same tunnel key  as  local
+       port in AZ2 and vice vers.
+
+       The  Transit  Router  behaves as distributed router which means that it
+       has the same limitations for stateful flows like NAT  and  LBs  and  it
+       will lose the CT state between AZs.
+
 QoS TABLE
        Each  row  in  this  table represents one QoS rule for a logical switch
        that points to it through its qos_rules column. Two types  of  QoS  are
@@ -2867,7 +2886,6 @@ Mirror TABLE
        type                          string, one of erspan, gre, or local
        index                         integer
        external_ids                  map of string-string pairs
-       Transit router:
 
    Details:
        name: string (must be unique within table)
@@ -2899,24 +2917,6 @@ Mirror TABLE
 
        external_ids: map of string-string pairs
               See External IDs at the beginning of this document.
-
-     Transit router:
-
-       In order to achieve status of Transit Router for  Logical_Router  there
-       needs to be at least one Logical_Router_Port that is considered remote.
-       The  LRP  can be remote only if it has options:requested-chassis set to
-       chassis that is considered remote. See Logical_Router_Port for more de‐
-       tails.
-
-       In order for the Transit Router to work properly all  the  tunnel  keys
-       for  the Transit Router itself and the remote ports keys needs to match
-       in all AZs e.g. TR in AZ1 and AZ2 needs to have the  same  tunnel  key.
-       Remote  port  for AZ2 in AZ1 needs to have the same tunnel key as local
-       port in AZ2 and vice vers.
-
-       The Transit Router behaves as distributed router which  means  that  it
-       has  the  same  limitations  for stateful flows like NAT and LBs and it
-       will lose the CT state between AZs.
 
 Meter TABLE
        Each row in this table represents a meter that can be used for  QoS  or

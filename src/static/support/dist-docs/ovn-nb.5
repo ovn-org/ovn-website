@@ -2286,6 +2286,10 @@ optional string, either \fBtrue\fR or \fBfalse\fR
 \fBexternal_ids\fR
 map of string-string pairs
 .RE
+.TQ .25in
+\fITransit router:\fR
+.RS .25in
+.RE
 .SS "Details:
 .IP "\fBports\fR: set of \fBLogical_Router_Port\fRs"
 The router\(cqs ports\[char46]
@@ -2421,6 +2425,17 @@ When enabled the LR will commit traffic in a zone that is stateful\[char46] The 
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
 See \fBExternal IDs\fR at the beginning of this document\[char46]
+.ST "Transit router:"
+.PP
+.PP
+.PP
+In order to achieve status of \fBTransit Router\fR for \fBLogical_Router\fR there needs to be at least one \fBLogical_Router_Port\fR that is considered remote\[char46] The LRP can be \fBremote\fR only if it has \fBoptions:requested\-chassis\fR set to chassis that is considered remote\[char46] See \fBLogical_Router_Port\fR for more details\[char46]
+.PP
+.PP
+In order for the \fBTransit Router\fR to work properly all the tunnel keys for the \fBTransit Router\fR itself and the remote ports keys needs to match in all AZs e\[char46]g\[char46] TR in AZ1 and AZ2 needs to have the same tunnel key\[char46] Remote port for AZ2 in AZ1 needs to have the same tunnel key as local port in AZ2 and vice vers\[char46]
+.PP
+.PP
+The \fBTransit Router\fR behaves as distributed router which means that it has the same limitations for stateful flows like \fBNAT and LBs\fR and it will lose the CT state between AZs\[char46]
 .bp
 .SH "QoS TABLE"
 .PP
@@ -2496,10 +2511,6 @@ integer
 .TQ 3.00in
 \fBexternal_ids\fR
 map of string-string pairs
-.TQ .25in
-\fITransit router:\fR
-.RS .25in
-.RE
 .SS "Details:
 .IP "\fBname\fR: string (must be unique within table)"
 Represents the name of the mirror\[char46]
@@ -2513,17 +2524,6 @@ The value of this field specifies the mirror type - \fBgre\fR, \fBerspan\fR or \
 The value of this field represents the tunnel ID\[char46] If the configured tunnel type is \fBgre\fR, this field represents the \fBGRE\fR key value and if the configured tunnel type is \fBerspan\fR it represents the \fBerspan_idx\fR value\[char46] It is ignored if the type is \fBlocal\fR\[char46]
 .IP "\fBexternal_ids\fR: map of string-string pairs"
 See \fBExternal IDs\fR at the beginning of this document\[char46]
-.ST "Transit router:"
-.PP
-.PP
-.PP
-In order to achieve status of \fBTransit Router\fR for \fBLogical_Router\fR there needs to be at least one \fBLogical_Router_Port\fR that is considered remote\[char46] The LRP can be \fBremote\fR only if it has \fBoptions:requested\-chassis\fR set to chassis that is considered remote\[char46] See \fBLogical_Router_Port\fR for more details\[char46]
-.PP
-.PP
-In order for the \fBTransit Router\fR to work properly all the tunnel keys for the \fBTransit Router\fR itself and the remote ports keys needs to match in all AZs e\[char46]g\[char46] TR in AZ1 and AZ2 needs to have the same tunnel key\[char46] Remote port for AZ2 in AZ1 needs to have the same tunnel key as local port in AZ2 and vice vers\[char46]
-.PP
-.PP
-The \fBTransit Router\fR behaves as distributed router which means that it has the same limitations for stateful flows like \fBNAT and LBs\fR and it will lose the CT state between AZs\[char46]
 .bp
 .SH "Meter TABLE"
 .PP
