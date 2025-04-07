@@ -1690,6 +1690,8 @@ L3 admission control: A priority\-100 flow drops packets that match any of the f
 A priority\-100 flow parses DHCPv6 replies from IPv6 prefix delegation routers (\fBudp\[char46]src == 547 &&
 udp\[char46]dst == 546\fR)\[char46] The \fBhandle_dhcpv6_reply\fR is used to send IPv6 prefix delegation messages to the delegation router\[char46]
 .IP \(bu
+For each load balancer applied to this logical router configured with \fBVIP\fR template, a priority\-100 flow matching \fBip4\[char46]dst\fR or \fBip6\[char46]dst\fR with the configured load balancer \fBVIP\fR and action \fBnext;\fR\[char46] These flows avoid dropping the packet if the \fBVIP\fR is set to one of the router IPs\[char46]
+.IP \(bu
 ICMP echo reply\[char46] These flows reply to ICMP echo requests received for the router\(cqs IP address\[char46] Let \fIA\fR be an IP address owned by a router port\[char46] Then, for each \fIA\fR that is an IPv4 address, a priority\-90 flow matches on \fBip4\[char46]dst == \fIA\fB\fR and \fBicmp4\[char46]type == 8 && icmp4\[char46]code == 0\fR (ICMP echo request)\[char46] For each \fIA\fR that is an IPv6 address, a priority\-90 flow matches on \fBip6\[char46]dst == \fIA\fB\fR and \fBicmp6\[char46]type == 128 && icmp6\[char46]code == 0\fR (ICMPv6 echo request)\[char46] The port of the router that receives the echo request does not matter\[char46] Also, the \fBip\[char46]ttl\fR of the echo request packet is not checked, so it complies with RFC 1812, section 4\[char46]2\[char46]2\[char46]9\[char46] Flows for ICMPv4 echo requests use the following actions:
 .IP
 .nf
@@ -2710,7 +2712,33 @@ A priority\-50 logical flow with match \fBoutport == \fIGW\fB\fR has actions \fB
 .IP \(bu
 A priority\-0 logical flow with match \fB1\fR has actions \fBnext;\fR\[char46]
 .RE
-.ST "Ingress Table 24: ARP Request"
+.ST "Ingress Table 24: Network ID"
+.PP
+.PP
+This table contains flows that set \fBflags\[char46]network_id\fR for IP packets:
+.RS
+.IP \(bu
+A priority\-110 flow with match:
+.RS
+.IP \(bu
+for IPv4: \fBoutport == \fIP\fB &&
+REG_NEXT_HOP_IPV4 == \fII\fB/\fIC\fB &&
+ip4\fR
+.IP \(bu
+for IPv6: \fBoutport == \fIP\fB &&
+REG_NEXT_HOP_IPV6 == \fII\fB/\fIC\fB &&
+ip6\fR
+.RE
+.IP
+and actions \fBflags\[char46]network_id = \fIN\fB; next;\fR\[char46] Where \fIP\fR is the outport, \fII\fR/\fIC\fR is a network CIDR of the port \fIP\fR, and \fIN\fR is the network id (index)\[char46] There is one flow like this per router port\(cqs network\[char46]
+.IP
+\fBflags\[char46]network_id\fR is 4 bits, and thus only 16 networks can be indexed\[char46] If the number of networks is greater than 16, networks 17 and up will have the actions \fBflags\[char46]network_id = 0; next;\fR and only the lexicographically first IP will be considered for SNAT for those networks\[char46]
+.IP \(bu
+A lower priority\-105 flow with match \fB1\fR and actions \fBflags\[char46]network_id = 0; next;\fR\[char46] This is for the case that the next-hop doesn\(cqt belong to any of the port networks, so \fBflags\[char46]network_id\fR should be set to zero\[char46]
+.IP \(bu
+Catch-all: A priority\-0 flow with match \fB1\fR has actions \fBnext;\fR\[char46]
+.RE
+.ST "Ingress Table 25: ARP Request"
 .PP
 .PP
 In the common case where the Ethernet destination has been resolved, this table outputs the packet\[char46] Otherwise, it composes and sends an ARP or IPv6 Neighbor Solicitation request\[char46] It holds the following flows:
@@ -2849,10 +2877,11 @@ If the Gateway router in the OVN Northbound database has been configured to forc
 .IP \(bu
 If a load balancer configured to skip snat has been applied to the Gateway router pipeline, a priority\-120 flow matches \fBflags\[char46]skip_snat_for_lb == 1 && ip\fR with an action \fBnext;\fR\[char46]
 .IP \(bu
-If the Gateway router in the OVN Northbound database has been configured to force SNAT a packet (that has been previously load-balanced) using router IP (i\[char46]e \fBoptions\fR:lb_force_snat_ip=router_ip), then for each logical router port \fIP\fR attached to the Gateway router, a priority\-110 flow matches \fBflags\[char46]force_snat_for_lb == 1 && outport == \fIP\fB
-\fR with an action \fBct_snat(\fIR\fB);\fR where \fIR\fR is the IP configured on the router port\[char46] If \fBR\fR is an IPv4 address then the match will also include \fBip4\fR and if it is an IPv6 address, then the match will also include \fBip6\fR\[char46]
+If the Gateway router in the OVN Northbound database has been configured to force SNAT a packet (that has been previously load-balanced) using router IP (i\[char46]e \fBoptions\fR:lb_force_snat_ip=router_ip), then for each logical router port \fIP\fR attached to the Gateway router, and for each network configured for this port, a priority\-110 flow matches \fBflags\[char46]force_snat_for_lb == 1\fR && \fBip4\fR && \fBflags\[char46]network_id == \fIN\fB\fR && \fBoutport == \fIP\fB\fR, where \fIN\fR is the network index, with an action \fBct_snat(\fIR\fB);\fR where \fIR\fR is the IP configured on the router port\[char46] A similar flow is created for IPv6, with \fBip6\fR instead of \fBip4\fR\[char46] \fIN\fR, the network index, will be 0 for networks 17 and up\[char46]
 .IP
-If the logical router port \fIP\fR is configured with multiple IPv4 and multiple IPv6 addresses, only the first IPv4 and first IPv6 address is considered\[char46]
+If the logical router port \fIP\fR is configured with multiple IPv4 and multiple IPv6 addresses, the IPv4 and IPv6 address within the same network as the next-hop will be chosen as \fIR\fR for SNAT\[char46] However, if there are more than 16 networks configured, the lexicographically first IP will be considered for SNAT for networks 17 and up\[char46]
+.IP \(bu
+A priority\-105 flow matches the old behavior for if northd is upgraded before controller and \fBflags\[char46]network_id\fR is not recognized\[char46] It is only added if there\(cqs at least one network configured (excluding LLA for IPv6)\[char46] It matches on: \fBflags\[char46]force_snat_for_lb == 1\fR && \fBip4\fR && \fBoutport == \fIP\fB\fR, with action: \fBct_snat(\fIR\fB)\fR\[char46] \fIR\fR is the lexicographically first IP address configured\[char46] There is a similar flow for IPv6 with \fBip6\fR instead of \fBip4\fR\[char46]
 .IP \(bu
 If the Gateway router in the OVN Northbound database has been configured to force SNAT a packet (that has been previously load-balanced) to \fIB\fR, a priority\-100 flow matches \fBflags\[char46]force_snat_for_lb == 1 && ip\fR with an action \fBct_snat(\fIB\fB);\fR\[char46]
 .IP \(bu
