@@ -533,12 +533,12 @@ A field that denotes the logical datapath through which a packet is being proces
 logical input port field
 A field that denotes the logical port from which the packet entered the logical datapath\[char46] OVN stores this in Open vSwitch extension register number 14\[char46]
 .IP
-Geneve and STT tunnels pass this field as part of the tunnel key\[char46] Ramp switch VXLAN tunnels do not explicitly carry a logical input port, but since they are used to communicate with gateways that from OVN\(cqs perspective consist of only a single logical port, so that OVN can set the logical input port field to this one on ingress to the OVN logical pipeline\[char46] As for regular VXLAN tunnels, they don\(cqt carry input port field at all\[char46] This puts additional limitations on cluster capabilities that are described in \fBTunnel Encapsulations\fR section\[char46]
+Geneve tunnels pass this field as part of the tunnel key\[char46] Ramp switch VXLAN tunnels do not explicitly carry a logical input port, but since they are used to communicate with gateways that from OVN\(cqs perspective consist of only a single logical port, so that OVN can set the logical input port field to this one on ingress to the OVN logical pipeline\[char46] As for regular VXLAN tunnels, they don\(cqt carry input port field at all\[char46] This puts additional limitations on cluster capabilities that are described in \fBTunnel Encapsulations\fR section\[char46]
 .TP
 logical output port field
 A field that denotes the logical port from which the packet will leave the logical datapath\[char46] This is initialized to 0 at the beginning of the logical ingress pipeline\[char46] OVN stores this in Open vSwitch extension register number 15\[char46]
 .IP
-Geneve, STT and regular VXLAN tunnels pass this field as part of the tunnel key\[char46] Ramp switch VXLAN tunnels do not transmit the logical output port field, and since they do not carry a logical output port field in the tunnel key, when a packet is received from ramp switch VXLAN tunnel by an OVN hypervisor, the packet is resubmitted to table 8 to determine the output port(s); when the packet reaches table 42, these packets are resubmitted to table 43 for local delivery by checking a MLF_RCV_FROM_RAMP flag, which is set when the packet arrives from a ramp tunnel\[char46]
+Geneve and regular VXLAN tunnels pass this field as part of the tunnel key\[char46] Ramp switch VXLAN tunnels do not transmit the logical output port field, and since they do not carry a logical output port field in the tunnel key, when a packet is received from ramp switch VXLAN tunnel by an OVN hypervisor, the packet is resubmitted to table 8 to determine the output port(s); when the packet reaches table 42, these packets are resubmitted to table 43 for local delivery by checking a MLF_RCV_FROM_RAMP flag, which is set when the packet arrives from a ramp tunnel\[char46]
 .TP
 conntrack zone field for logical ports
 A field that denotes the connection tracking zone for logical ports\[char46] The value only has local significance and is not meaningful between chassis\[char46] This is initialized to 0 at the beginning of the logical ingress pipeline\[char46] OVN stores this in the lower 16 bits of the Open vSwitch extension register number 13\[char46]
@@ -1095,7 +1095,7 @@ In general, OVN annotates logical network packets that it sends from one hypervi
 .RE
 .PP
 .PP
-When VXLAN is enabled on any hypervisor in a cluster, datapath and egress port identifier ranges are reduced to 12-bits\[char46] This is done because only STT and Geneve provide the large space for metadata (over 32 bits per packet)\[char46] The mode with reduced ranges is called \fBVXLAN mode\fR\[char46] To accommodate for VXLAN, 24 bits available are split as follows:
+When VXLAN is enabled on any hypervisor in a cluster, datapath and egress port identifier ranges are reduced to 12-bits\[char46] This is done because only Geneve provides the large space for metadata (over 32 bits per packet)\[char46] The mode with reduced ranges is called \fBVXLAN mode\fR\[char46] To accommodate for VXLAN, 24 bits available are split as follows:
 .RS
 .IP \(bu
 12-bit logical datapath identifier, derived from the \fBtunnel_key\fR column in the OVN Southbound \fBDatapath_Binding\fR table\[char46]
@@ -1122,9 +1122,9 @@ OVN interconnection feature is not supported\[char46]
 In addition to functional limitations described above, the following should be considered before enabling it in your cluster:
 .RS
 .IP \(bu
-STT and Geneve use randomized UDP or TCP source ports that allows efficient distribution among multiple paths in environments that use ECMP in their underlay\[char46]
+Geneve uses randomized UDP or TCP source ports that allows efficient distribution among multiple paths in environments that use ECMP in their underlay\[char46]
 .IP \(bu
-NICs are available to offload STT and Geneve encapsulation and decapsulation\[char46]
+NICs are available to offload Geneve encapsulation and decapsulation\[char46]
 .RE
 .PP
 .PP
@@ -1166,48 +1166,7 @@ line <-> invis "" above from B0.nw + (0,textht) to B2.ne + (0,textht)
 \}
 .PP
 .PP
-Support for STT encapsulation is deprecated\[char46] While using STT on setups that didn\(cqt migrate to Geneve yet, OVN encodes all three pieces of logical metadata in the STT 64-bit tunnel ID as follows, from MSB to LSB:
-.PP
-.\" check if in troff mode (TTY)
-.if t \{
-.PS
-boxht = .2
-textht = 1/6
-fillval = .2
-[
-B0: box "reserved" width .5
-B1: box "ingress port" width .75
-B2: box "egress port" width .75
-B3: box "datapath" width 1.25
-"9" at B0.n above
-"0" at B0.s below
-"15" at B1.n above
-"" at B1.s below
-"16" at B2.n above
-"" at B2.s below
-"24" at B3.n above
-"" at B3.s below
-line <-> invis "" above from B0.nw + (0,textht) to B3.ne + (0,textht)
-]
-.PE
-\}
-.\" check if in nroff mode:
-.if n \{
-.nf
-\fL    9          15          16         24
-.br
-\fL+--------+------------+-----------+--------+
-.br
-\fL|reserved|ingress port|egress port|datapath|
-.br
-\fL+--------+------------+-----------+--------+
-.br
-\fL    0
-.fi
-\}
-.PP
-.PP
-For connecting to gateways, in addition to Geneve and STT, OVN supports VXLAN, because only VXLAN support is common on top-of-rack (ToR) switches\[char46] Currently, gateways have a feature set that matches the capabilities as defined by the VTEP schema, so fewer bits of metadata are necessary\[char46] In the future, gateways that do not support encapsulations with large amounts of metadata may continue to have a reduced feature set\[char46]
+For connecting to gateways, in addition to Geneve, OVN supports VXLAN, because VXLAN-only support is common on top-of-rack (ToR) switches\[char46] Currently, gateways have a feature set that matches the capabilities as defined by the VTEP schema, so fewer bits of metadata are necessary\[char46] In the future, gateways that do not support encapsulations with large amounts of metadata may continue to have a reduced feature set\[char46]
 .PP
 .PP
 \fBVXLAN mode\fR is recommended to be disabled if VXLAN encap at hypervisors is needed only to support HW VTEP L2 Gateway functionality\[char46] See man ovn-nb(5) for table \fBNB_Global\fR column \fBoptions\fR key \fBvxlan_mode\fR for more details\[char46]

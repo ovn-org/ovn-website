@@ -650,7 +650,7 @@ Default value is \fBfalse\fR\[char46] If set to \fBtrue\fR the SNAT and DNAT hap
 .IP "\fBoptions : northd-backoff-interval-ms\fR: optional string"
 Maximum interval that the northd incremental engine is delayed by in milliseconds\[char46] Setting the value to nonzero delays the next northd engine run by the previous run time, capped by the specified value\[char46] If the value is zero the engine won\(cqt be delayed at all\[char46] The recommended period is smaller than 500 ms, beyond that the latency of SB changes would be very noticeable\[char46]
 .IP "\fBoptions : vxlan_mode\fR: optional string"
-By default if at least one chassis in OVN cluster has VXLAN encap, northd will run in a \fBVXLAN mode\fR\[char46] See man ovn-architecture(7) \fBTunnel Encapsulations\fR paragraph for more details\[char46] In case VXLAN encaps are needed on chassis only to support HW VTEP functionality and main encap type is GENEVE or STT, set this option to \fBfalse\fR to use default non-\fBVXLAN mode\fR tunnel IDs allocation logic\[char46] Please consider when OVN is running in \fBOVN\-interconnect\fR mode and it is using \fBVXLAN\fR encapsulation type, the max number of non-transit logical switches and logical routers is reduced to 1024\[char46] Plese note, in order to enable \fBVXLAN\fR encapsulation type for for cross-AZ traffic, \fBvxlan_mode\fR parameter in \fBIC_NB_Global TABLE\fR must be set to true\[char46]
+By default if at least one chassis in OVN cluster has VXLAN encap, northd will run in a \fBVXLAN mode\fR\[char46] See man ovn-architecture(7) \fBTunnel Encapsulations\fR paragraph for more details\[char46] In case VXLAN encaps are needed on chassis only to support HW VTEP functionality and main encap type is GENEVE, set this option to \fBfalse\fR to use default non-\fBVXLAN mode\fR tunnel IDs allocation logic\[char46] Please consider when OVN is running in \fBOVN\-interconnect\fR mode and it is using \fBVXLAN\fR encapsulation type, the max number of non-transit logical switches and logical routers is reduced to 1024\[char46] Plese note, in order to enable \fBVXLAN\fR encapsulation type for for cross-AZ traffic, \fBvxlan_mode\fR parameter in \fBIC_NB_Global TABLE\fR must be set to true\[char46]
 .IP "\fBoptions : always_tunnel\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 If set to true, then the traffic destined to a VIF of a provider logical switch (having a localnet port) will be tunnelled instead of sending it via the localnet port\[char46] This option will be useful if CMS wants to connect overlay logical switches (without localnet port) and provider logical switches to a router\[char46] Without this option set, the traffic path will be a mix of tunnelling and localnet ports (since routing is distributed) resulting in the leakage of the router port mac address to the upstream switches and undefined behavior if NATting is involed\[char46] This option is disabled by default\[char46]
 .IP "\fBoptions : ecmp_nexthop_monitor_enable\fR: optional string"
@@ -806,6 +806,9 @@ optional string
 \fBmeters : svc-monitor\fR
 optional string
 .TQ 3.00in
+\fBmeters : dhcpv4-relay\fR
+optional string
+.TQ 3.00in
 \fBexternal_ids\fR
 map of string-string pairs
 .SS "Details:
@@ -845,6 +848,8 @@ Rate limiting meter for BFD packets\[char46]
 Rate limiting meter for packets that trigger a reject action
 .IP "\fBmeters : svc-monitor\fR: optional string"
 Rate limiting meter for packets that are arriving to service monitor MAC address\[char46]
+.IP "\fBmeters : dhcpv4-relay\fR: optional string"
+Rate limiting meter for DHCPv4 relay packets (request/response) when DHCPv4 Relay functionality is enabled\[char46]
 .IP "\fBexternal_ids\fR: map of string-string pairs"
 See \fBExternal IDs\fR at the beginning of this document\[char46]
 .bp
@@ -1469,7 +1474,7 @@ When multiple chassis are set for the port, and the logical switch is connected 
 .IP
 If the same host co-hosts more than one controller instance (either belonging to the same or separate clusters), special attention should be given to consistently using unique chassis names used in this option\[char46] It is advised that chassis names - and not host names - are used for this option\[char46]
 .IP "\fBoptions : activation-strategy\fR: optional string"
-If used with multiple chassis set in \fBrequested-chassis\fR, specifies an activation strategy for all additional chassis\[char46] By default, no activation strategy is used, meaning additional port locations are immediately available for use\[char46] When set to \(dqrarp\(dq, the port is blocked for ingress and egress communication until a RARP packet is sent from a new location\[char46] The \(dqrarp\(dq strategy is useful in live migration scenarios for virtual machines\[char46]
+If used with multiple chassis set in \fBrequested-chassis\fR, specifies an activation strategy for all additional chassis\[char46] By default, no activation strategy is used, meaning additional port locations are immediately available for use\[char46] The option supports a comma separated list where you can combine 3 protocols, \(dqrarp\(dq, \(dqgarp\(dq and \(dqna\(dq\[char46] When any of the protocols is set, the port is blocked for ingress and egress communication until a specified protocol packet is sent from a new location\[char46] The activation strategy is useful in live migration scenarios for virtual machines\[char46]
 .IP "\fBoptions : iface-id-ver\fR: optional string"
 If set, this port will be bound by \fBovn\-controller\fR only if this same key and value is configured in the \fBexternal_ids\fR column in the Open_vSwitch database\(cqs \fBInterface\fR table\[char46]
 .IP "\fBoptions : qos_min_rate\fR: optional string"
@@ -3934,11 +3939,11 @@ CA certificate\[char46]\fR It may still be useful for bootstrapping\[char46]
 .IP "\fBssl_protocols\fR: string"
 Range or a comma- or space-delimited list of the SSL/TLS protocols to enable for SSL/TLS connections\[char46]
 .IP
-Supported protocols include \fBTLSv1\fR (deprecated), \fBTLSv1\[char46]1\fR (deprecated), \fBTLSv1\[char46]2\fR and \fBTLSv1\[char46]3\fR\[char46] Ranges can be provided in a form of two protocol names separated with a dash (\fBTLSv1\[char46]1\-TLSv1\[char46]2\fR), or as a single protocol name with a plus sign (\fBTLSv1\[char46]2+\fR)\[char46] The value can be a list of protocols or exactly one range\[char46] The range is a preferred way of specifying protocols and the configuration always behaves as if the range between the minimum and the maximum specified version is provided, i\[char46]e\[char46], if the value is set to \fBTLSv1\[char46]1,TLSv1\[char46]3\fR, the \fBTLSv1\[char46]2\fR will also be enabled as if it was a range\[char46] Regardless of order, the highest protocol supported by both sides will be chosen when making the connection\[char46]
+Supported protocols include \fBTLSv1\[char46]2\fR and \fBTLSv1\[char46]3\fR\[char46] Ranges can be provided in a form of two protocol names separated with a dash (\fBTLSv1\[char46]2\-TLSv1\[char46]3\fR), or as a single protocol name with a plus sign (\fBTLSv1\[char46]2+\fR)\[char46] The value can be a list of protocols or exactly one range\[char46] The range is a preferred way of specifying protocols and the configuration always behaves as if the range between the minimum and the maximum specified version is provided, i\[char46]e\[char46], if the value is set to \fBTLSv1\[char46]X,TLSv1\[char46](X+2)\fR, the \fBTLSv1\[char46](X+1)\fR will also be enabled as if it was a range\[char46] Regardless of order, the highest protocol supported by both sides will be chosen when making the connection\[char46]
 .IP
 The default when this option is omitted is \fBTLSv1\[char46]2+\fR\[char46]
 .IP "\fBssl_ciphers\fR: string"
-List of ciphers (in OpenSSL cipher string format) to be supported for SSL/TLS connections with TLSv1\[char46]2 and earlier\[char46] The default when this option is omitted is \fBDEFAULT:@SECLEVEL=2\fR\[char46]
+List of ciphers (in OpenSSL cipher string format) to be supported for SSL/TLS connections with TLSv1\[char46]2\[char46] The default when this option is omitted is \fBDEFAULT:@SECLEVEL=2\fR\[char46]
 .IP "\fBssl_ciphersuites\fR: string"
 List of ciphersuites (in OpenSSL ciphersuites string format) to be supported for SSL/TLS connections with TLSv1\[char46]3 and later\[char46] Default value from OpenSSL will be used when this option is omitted\[char46]
 .ST "Common Columns:"

@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-sb" 5 " DB Schema 20.41.0" "Open vSwitch 25.03.90" "Open vSwitch Manual"
+.TH "ovn-sb" 5 " DB Schema 21.0.0" "Open vSwitch 25.03.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -751,7 +751,7 @@ The \fBencaps\fR column in the \fBChassis\fR table refers to rows in this table 
 .SS "Summary:
 .TQ 3.00in
 \fBtype\fR
-string, one of \fBgeneve\fR, \fBstt\fR, or \fBvxlan\fR
+string, either \fBgeneve\fR or \fBvxlan\fR
 .TQ 3.00in
 \fBoptions\fR
 map of string-string pairs
@@ -771,8 +771,8 @@ string
 \fBchassis_name\fR
 string
 .SS "Details:
-.IP "\fBtype\fR: string, one of \fBgeneve\fR, \fBstt\fR, or \fBvxlan\fR"
-The encapsulation to use to transmit packets to this chassis\[char46] Hypervisors and gateways must use one of: \fBgeneve\fR, \fBvxlan\fR, or \fBstt\fR\[char46] \fBstt\fR is deprecated\[char46]
+.IP "\fBtype\fR: string, either \fBgeneve\fR or \fBvxlan\fR"
+The encapsulation to use to transmit packets to this chassis\[char46] Hypervisors and gateways must use \fBgeneve\fR or \fBvxlan\fR\[char46]
 .IP "\fBoptions\fR: map of string-string pairs"
 Options for configuring the encapsulation, which may be \fBtype\fR specific\[char46]
 .IP "\fBoptions : csum\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
@@ -786,7 +786,7 @@ Not all devices see such a benefit\[char46] The most notable exception is hardwa
 .IP
 This option applies to \fBgeneve\fR and \fBvxlan\fR encapsulations\[char46]
 .IP "\fBoptions : dst_port\fR: optional string, containing an integer"
-If set, overrides the UDP (for \fBgeneve\fR and \fBvxlan\fR) or TCP (for \fBstt\fR) destination port\[char46]
+If set, overrides the UDP destination port\[char46]
 .IP "\fBoptions : is_default\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 When there are multiple encaps for a chassis with different IPs, this option indicates if the encap is the default one that matches the IP in \fBexternal_ids:ovn-encap-ip-default\fR column of the Open_vSwitch database\(cqs \fBOpen_vSwitch\fR table\[char46]
 .IP "\fBip\fR: string"
@@ -1641,7 +1641,7 @@ This is a logical equivalent of the OpenFlow \fBcheck_pkt_larger\fR action\[char
 .RS
 .TP
 \fBlog(\fIkey\fB=\fIvalue\fB, \fR\[char46]\[char46]\[char46]\fB);\fR
-Causes \fBovn\-controller\fR to log the packet on the chassis that processes it\[char46] Packet logging currently uses the same logging mechanism as other Open vSwitch and OVN messages, which means that whether and where log messages appear depends on the local logging configuration that can be configured with \fBovs\-appctl\fR, etc\[char46]
+Causes \fBovn\-controller\fR to log the packet on the chassis that processes it\[char46] Packet logging currently uses the same logging mechanism as other Open vSwitch and OVN messages, which means that whether and where log messages appear depends on the local logging configuration that can be configured with \fBovn\-appctl\fR, etc\[char46]
 .IP
 The \fBlog\fR action takes zero or more of the following key-value pair arguments that control what is logged:
 .RS
@@ -1920,7 +1920,7 @@ Human-readable explanation of the flow, this is optional and used to provide con
 .IP "\fBexternal_ids : stage-name\fR: optional string"
 Human-readable name for this flow\(cqs stage in the pipeline\[char46]
 .IP "\fBexternal_ids : stage-hint\fR: optional string, containing an uuid"
-UUID of a \fBOVN_Northbound\fR record that caused this logical flow to be created\[char46] Currently used only for attribute of logical flows to northbound \fBACL\fR records\[char46]
+UUID of an \fBOVN_Northbound\fR record that caused this logical flow to be created\[char46]
 .IP "\fBexternal_ids : source\fR: optional string"
 Source file and line number of the code that added this flow to the pipeline\[char46]
 .ST "Common Columns:"
@@ -2389,7 +2389,7 @@ This should only be populated for ports with \fBtype\fR set to \fBchassisredirec
 .IP "\fBup\fR: optional boolean"
 This is set to \fBtrue\fR whenever all OVS flows required by this Port_Binding have been installed\[char46] This is populated by \fBovn\-controller\fR\[char46]
 .IP "\fBtunnel_key\fR: integer, in range 1 to 32,767"
-A number that represents the logical port in the key (e\[char46]g\[char46] STT key or Geneve TLV) field carried within tunnel protocol packets\[char46]
+A number that represents the logical port in the key (e\[char46]g\[char46] Geneve TLV) field carried within tunnel protocol packets\[char46]
 .IP
 The tunnel ID must be unique within the scope of a logical datapath\[char46]
 .IP "\fBmac\fR: set of strings"
@@ -2507,7 +2507,7 @@ If set to a comma separated list, the first entry identifies the main chassis an
 .IP
 When multiple chassis are set for the port, and the logical switch is connected to an external network through a \fBlocalnet\fR port, tunneling is enforced for the port to guarantee delivery of packets directed to the port to all its locations\[char46] This has MTU implications because the network used for tunneling must have MTU larger than \fBlocalnet\fR for stable connectivity\[char46]
 .IP "\fBoptions : activation-strategy\fR: optional string"
-If used with multiple chassis set in \fBrequested-chassis\fR, specifies an activation strategy for all additional chassis\[char46] By default, no activation strategy is used, meaning additional port locations are immediately available for use\[char46] When set to \(dqrarp\(dq, the port is blocked for ingress and egress communication until a RARP packet is sent from a new location\[char46] The \(dqrarp\(dq strategy is useful in live migration scenarios for virtual machines\[char46]
+If used with multiple chassis set in \fBrequested-chassis\fR, specifies an activation strategy for all additional chassis\[char46] By default, no activation strategy is used, meaning additional port locations are immediately available for use\[char46] The option supports a comma separated list where you can combine 3 protocols, \(dqrarp\(dq, \(dqgarp\(dq and \(dqna\(dq\[char46] When any of the protocols is set, the port is blocked for ingress and egress communication until a specified protocol packet is sent from a new location\[char46] The activation strategy is useful in live migration scenarios for virtual machines\[char46]
 .IP "\fBoptions : additional-chassis-activated\fR: optional string"
 When \fBactivation-strategy\fR is set, this option indicates that the port was activated using the strategy specified\[char46]
 .IP "\fBoptions : iface-id-ver\fR: optional string"
@@ -2993,11 +2993,11 @@ CA certificate\[char46]\fR It may still be useful for bootstrapping\[char46]
 .IP "\fBssl_protocols\fR: string"
 Range or a comma- or space-delimited list of the SSL/TLS protocols to enable for SSL/TLS connections\[char46]
 .IP
-Supported protocols include \fBTLSv1\fR (deprecated), \fBTLSv1\[char46]1\fR (deprecated), \fBTLSv1\[char46]2\fR and \fBTLSv1\[char46]3\fR\[char46] Ranges can be provided in a form of two protocol names separated with a dash (\fBTLSv1\[char46]1\-TLSv1\[char46]2\fR), or as a single protocol name with a plus sign (\fBTLSv1\[char46]2+\fR)\[char46] The value can be a list of protocols or exactly one range\[char46] The range is a preferred way of specifying protocols and the configuration always behaves as if the range between the minimum and the maximum specified version is provided, i\[char46]e\[char46], if the value is set to \fBTLSv1\[char46]1,TLSv1\[char46]3\fR, the \fBTLSv1\[char46]2\fR will also be enabled as if it was a range\[char46] Regardless of order, the highest protocol supported by both sides will be chosen when making the connection\[char46]
+Supported protocols include \fBTLSv1\[char46]2\fR and \fBTLSv1\[char46]3\fR\[char46] Ranges can be provided in a form of two protocol names separated with a dash (\fBTLSv1\[char46]2\-TLSv1\[char46]3\fR), or as a single protocol name with a plus sign (\fBTLSv1\[char46]2+\fR)\[char46] The value can be a list of protocols or exactly one range\[char46] The range is a preferred way of specifying protocols and the configuration always behaves as if the range between the minimum and the maximum specified version is provided, i\[char46]e\[char46], if the value is set to \fBTLSv1\[char46]X,TLSv1\[char46](X+2)\fR, the \fBTLSv1\[char46](X+1)\fR will also be enabled as if it was a range\[char46] Regardless of order, the highest protocol supported by both sides will be chosen when making the connection\[char46]
 .IP
 The default when this option is omitted is \fBTLSv1\[char46]2+\fR\[char46]
 .IP "\fBssl_ciphers\fR: string"
-List of ciphers (in OpenSSL cipher string format) to be supported for SSL/TLS connections with TLSv1\[char46]2 and earlier\[char46] The default when this option is omitted is \fBDEFAULT:@SECLEVEL=2\fR\[char46]
+List of ciphers (in OpenSSL cipher string format) to be supported for SSL/TLS connections with TLSv1\[char46]2\[char46] The default when this option is omitted is \fBDEFAULT:@SECLEVEL=2\fR\[char46]
 .IP "\fBssl_ciphersuites\fR: string"
 List of ciphersuites (in OpenSSL ciphersuites string format) to be supported for SSL/TLS connections with TLSv1\[char46]3 and later\[char46] Default value from OpenSSL will be used when this option is omitted\[char46]
 .ST "Common Columns:"
@@ -3465,9 +3465,6 @@ optional \fBLogical_DP_Group\fR
 .TQ 2.75in
 \fBoptions : hairpin_snat_ip\fR
 optional string
-.TQ 2.75in
-\fBoptions : hairpin_orig_tuple\fR
-optional string, either \fBtrue\fR or \fBfalse\fR
 .RE
 .TQ .25in
 \fICommon Columns:\fR
@@ -3495,8 +3492,6 @@ The group of logical router datapaths to which this load balancer applies to\[ch
 .PP
 .IP "\fBoptions : hairpin_snat_ip\fR: optional string"
 IP to be used as source IP for packets that have been hair-pinned after load balancing\[char46] This value is automatically populated by \fBovn\-northd\fR\[char46]
-.IP "\fBoptions : hairpin_orig_tuple\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
-This value is automatically set to \fBtrue\fR by \fBovn\-northd\fR when original destination IP and transport port of the load balanced packets are stored in registers \fBreg1, reg2, xxreg1\fR\[char46]
 .ST "Common Columns:"
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
