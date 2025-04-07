@@ -713,7 +713,7 @@ It is an error if both \fIip\fR and \fIgateway_port\fR are specified and there i
 Lists the NATs on \fIrouter\fR\[char46]
 .SS "Load Balancer Commands"
 .TP
-[\fB\-\-may\-exist\fR | \fB\-\-add\-duplicate\fR | \fB\-\-reject\fR | \fB\-\-event\fR] \fBlb\-add\fR \fIlb\fR \fIvip\fR \fIips\fR [\fIprotocol\fR]
+[\fB\-\-may\-exist\fR | \fB\-\-add\-duplicate\fR | \fB\-\-reject\fR | \fB\-\-event\fR | \fB\-\-template\fR] \fBlb\-add\fR \fIlb\fR \fIvip\fR \fIips\fR [\fIprotocol\fR]
 Creates a new load balancer named \fIlb\fR with the provided \fIvip\fR and \fIips\fR or adds the \fIvip\fR to an existing \fIlb\fR\[char46] \fIvip\fR should be a virtual IP address (or an IP address and a port number with \fB:\fR as a separator)\[char46] Examples for \fIvip\fR are \fB192\[char46]168\[char46]1\[char46]4\fR, \fBfd0f::1\fR, and \fB192\[char46]168\[char46]1\[char46]5:8080\fR\[char46] \fIips\fR should be comma separated IP endpoints (or comma separated IP addresses and port numbers with \fB:\fR as a separator)\[char46] \fIips\fR must be the same address family as \fIvip\fR\[char46] Examples for \fIips\fR are \fB10\[char46]0\[char46]0\[char46]1,10\[char46]0\[char46]0\[char46]2\fRor \fB[fdef::1]:8800,[fdef::2]:8800\fR\[char46]
 .IP
 The optional argument \fIprotocol\fR must be either \fBtcp\fR, \fBudp\fR or \fBsctp\fR\[char46] This argument is useful when a port number is provided as part of the \fIvip\fR\[char46] If the \fIprotocol\fR is unspecified and a port number is provided as part of the \fIvip\fR, OVN assumes the \fIprotocol\fR to be \fBtcp\fR\[char46]
@@ -723,6 +723,9 @@ It is an error if the \fIvip\fR already exists in the load balancer named \fIlb\
 If the load balancer is created with \fB\-\-reject\fR option and it has no active backends, a TCP reset segment (for tcp) or an ICMP port unreachable packet (for all other kind of traffic) will be sent whenever an incoming packet is received for this load-balancer\[char46] Please note using \fB\-\-reject\fR option will disable empty_lb SB controller event for this load balancer\[char46]
 .IP
 If the load balancer is created with \fB\-\-event\fR option and it has no active backends, whenever the lb receives traffic, the event is reported in the Controller_Event table in the SB db\[char46] Please note \fB\-\-event\fR option can\(cqt be specified with \fB\-\-reject\fR one\[char46]
+.IP
+If the load balancer is created with \fB\-\-template\fR option, local template variables may be used as arguments\[char46] These variables are stored in Chassis_Template_Var\[char46] To see the supported variable formats, see \fBovn\-nb\fR(5)\[char46] The following example adds a templated load balancer: \fBovn\-nbctl \-\-template lb\-add lb1
+^vip:^vport ^backend udp ipv4\fR\[char46]
 .IP
 The following example adds a load balancer\[char46]
 .IP
