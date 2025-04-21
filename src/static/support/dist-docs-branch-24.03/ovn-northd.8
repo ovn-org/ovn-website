@@ -2448,12 +2448,16 @@ next;\fR, where \fIE\fR is the ethernet address of the logical router port\[char
 .ST "Ingress Table 18: Check packet length"
 .PP
 .PP
-For distributed logical routers or gateway routers with gateway port configured with \fBoptions:gateway_mtu\fR to a valid integer value, this table adds a priority\-50 logical flow with the match \fBoutport == \fIGW_PORT\fB\fR where \fIGW_PORT\fR is the gateway router port and applies the action \fBcheck_pkt_larger\fR and advances the packet to the next table\[char46]
+For distributed logical routers or gateway routers with gateway port configured with \fBoptions:gateway_mtu\fR to a valid integer value, this table adds a priority\-50 logical flow with the match \fBoutport == \fIGW_PORT\fB\fR where \fIGW_PORT\fR is the gateway router port and applies the actions \fBcheck_pkt_larger\fR and \fBct_state_save\fR and then advances the packet to the next table\[char46]
 .PP
 .nf
 \fB
 .br
-\fBREGBIT_PKT_LARGER = check_pkt_larger(\fR\fIL\fB\fR); next;
+\fBREGBIT_PKT_LARGER = check_pkt_larger(\fR\fIL\fB\fR);
+.br
+\fBREG_CT_STATE = ct_state_save();
+.br
+\fBnext;
 .br
 \fB    \fR
 .fi
