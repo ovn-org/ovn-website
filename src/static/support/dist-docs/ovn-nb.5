@@ -1145,6 +1145,9 @@ optional string
 \fBoptions : exclude-lb-vips-from-garp\fR
 optional string
 .TQ 2.50in
+\fBoptions : exclude-router-ips-from-garp\fR
+optional string
+.TQ 2.50in
 \fBoptions : arp_proxy\fR
 optional string
 .TQ 2.50in
@@ -1424,6 +1427,8 @@ This form of \fBoptions:nat-addresses\fR is only valid for logical switch ports 
 .RE
 .IP "\fBoptions : exclude-lb-vips-from-garp\fR: optional string"
 If \fBoptions:nat-addresses\fR is set to \fBrouter\fR, Gratuitous ARPs will be sent for all SNAT and DNAT external IP addresses defined on the \fBoptions:router-port\fR\(cqs logical router, using the \fBoptions:router-port\fR\(cqs MAC address, not cosidering configured load balancers\[char46]
+.IP "\fBoptions : exclude-router-ips-from-garp\fR: optional string"
+If \fBoptions:nat-addresses\fR is set to \fBrouter\fR, Gratuitous ARPs will not be sent for router port IP addresses and SNAT IP addresses (if SNAT IP is same as the router port IP) defined on its peer router port\[char46] Do not set this option if the router port IPs are also used as SNAT and DNAT IPs\[char46]
 .IP "\fBoptions : arp_proxy\fR: optional string"
 Optional\[char46] A list of MAC and addresses/cidrs or just addresses/cidrs that this logical switch \fBrouter\fR port will reply to ARP/NDP requests\[char46] Examples: \fB169\[char46]254\[char46]239\[char46]254 169\[char46]254\[char46]239\[char46]2\fR, \fB0a:58:a9:fe:01:01 169\[char46]254\[char46]239\[char46]254 169\[char46]254\[char46]239\[char46]2
 169\[char46]254\[char46]238\[char46]0/24\fR, \fBfd7b:6b4d:7b25:d22f::1 fd7b:6b4d:7b25:d22f::2\fR, \fB0a:58:a9:fe:01:01 fd7b:6b4d:7b25:d22f::0/64\fR\[char46] The\fBoptions:router-port\fR\(cqs logical router should have a route to forward packets sent to configured proxy ARP MAC/IPs to an appropriate destination\[char46]
@@ -1950,6 +1955,11 @@ Load balancer template backend supported formats are:
 .fi
 .IP
 where \fBBACKEND_VAR1\fR, \fBPORT_VAR1\fR, \fBBACKEND_VAR2\fR, \fBPORT_VAR2\fR, \fBBACKENDS_VAR1\fR and \fBBACKENDS_VAR2\fR are keys of the \fBChassis_Template_Var\fR \fBvariables\fR records\[char46]
+.IP
+In the above examples, square brackets are only used to indicate choosing between the enclosed options\[char46] But when adding to \fBChassis_Template_Var\fR \fBvariables\fR backend IPv6 addresses must be enclosed in []\[char46] VIPs must not be enclosed in []\[char46] For example: \fB
+lbvip=\(dq3001::10\(dq,lbport=12010,lbback=\(dq[2001::1]\(dq,
+ip6_back=\(dq[2001::1]:12010\(dq
+\fR
 .IP "\fBoptions : address-family\fR: optional string"
 Address family used by the load balancer\[char46] Supported values are \fBipv4\fR and \fBipv6\fR\[char46] The address-family is only used for load balancers with \fBoptions:template=true\fR\[char46] For explicit load balancers, setting the address-family has no effect\[char46]
 .IP "\fBoptions : affinity_timeout\fR: optional string"
