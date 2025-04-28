@@ -434,7 +434,7 @@ LOGICAL FLOW TABLE STRUCTURE
        a priority-120 flow that matches ’recirculated’ icmp{4,6} error ’packet
        too big’ and eth.src == D && outport == P && flags.tunnel_rx == 1 where
        D is the peer logical router port RP mac address, swaps inport and out‐
-       port and applies the action next(pipeline=S_SWITCH_IN_L2_LKUP).
+       port and applies the action next.
 
        For  each  logical switch port P of type router connected to a distrib‐
        uted router a priority-120 flow that matches  ’recirculated’  icmp{4,6}
@@ -442,7 +442,13 @@ LOGICAL FLOW TABLE STRUCTURE
        is  the  peer logical router port RP mac address, swaps inport and out‐
        port and applies the action  next(pipeline=S_SWITCH_IN_L2_LKUP).
 
-       This  table  adds  a  priority-110  flow  that  matches  ’recirculated’
+       For each logical switch port P a priority-110 flow that matches ’recir‐
+       culated’ icmp{4,6} error ’packet too big’ and eth.src == D  &&  outport
+       == P && !is_chassis_resident("P") && flags.tunnel_rx == 1
+        where  D is the logical switch port mac address, swaps inport and out‐
+       port and applies the action next.
+
+       This  table  adds  a  priority-105  flow  that  matches  ’recirculated’
        icmp{4,6} error ’packet too big’ to drop the packet.
 
        This  table  drops the packets if the port security check failed in the
@@ -1925,7 +1931,7 @@ LOGICAL FLOW TABLE STRUCTURE
                      dress and cr-GW is the chassis resident port of GW,  swap
                      inport and outport and stores GW as inport.
 
-                     This  table adds a priority-110 flow that matches ’recir‐
+                     This  table adds a priority-105 flow that matches ’recir‐
                      culated’ icmp{4,6} error ’packet too  big’  to  drop  the
                      packet.
 

@@ -625,8 +625,10 @@ Deletes gateway chassis from \fIport\fR\[char46] It is an error if gateway chass
 Lists all the gateway chassis with priority within \fIport\fR on standard output, one per line, ordered based on priority\[char46]
 .SS "Logical Router Static Route Commands"
 .TP
-[\fB\-\-may\-exist\fR] [\fB\-\-policy\fR=\fIPOLICY\fR] [\fB\-\-ecmp\fR] [\fB\-\-ecmp\-symmetric\-reply\fR] [\fB\-\-bfd[=\fIUUID\fB\fR]] \fBlr\-route\-add\fR \fIrouter\fR \fIprefix\fR \fInexthop\fR [\fIport\fR]
+[\fB\-\-may\-exist\fR] [\fB\-\-policy\fR=\fIPOLICY\fR] [\fB\-\-route\-table\fR=\fIROUTE_TABLE\fR] [\fB\-\-ecmp\fR] [\fB\-\-ecmp\-symmetric\-reply\fR] [\fB\-\-bfd[=\fIUUID\fB\fR]] \fBlr\-route\-add\fR \fIrouter\fR \fIprefix\fR \fInexthop\fR [\fIport\fR]
 Adds the specified route to \fIrouter\fR\[char46] \fIprefix\fR describes an IPv4 or IPv6 prefix for this route, such as \fB192\[char46]168\[char46]100\[char46]0/24\fR\[char46] \fInexthop\fR specifies the gateway to use for this route, which should be the IP address of one of \fIrouter\fR logical router ports or the IP address of a logical port\[char46] If \fIport\fR is specified, packets that match this route will be sent out that port\[char46] When \fIport\fR is omitted, OVN infers the output port based on \fInexthop\fR\[char46] Nexthop can be set to \fIdiscard\fR for dropping packets which match the given route\[char46]
+.IP
+The \fB\-\-route\-table\fR option can be used to assign the given route to a separate routing table \fIROUTE_TABLE\fR instead of the default \fB<main>\fR table\[char46] For a detailed explanation of the route lookup behavior, see the description of the field \fBLogical_Router_Static_Route:route_table\fR in the \fBovn\-nb\fR(5) manpage\[char46]
 .IP
 \fB\-\-policy\fR describes the policy used to make routing decisions\[char46] This should be one of \(dqdst-ip\(dq or \(dqsrc-ip\(dq\[char46] If not specified, the default is \(dqdst-ip\(dq\[char46]
 .IP
@@ -638,8 +640,10 @@ The \fB\-\-ecmp\-symmetric\-reply\fR option makes it so that traffic that arrive
 .IP
 It is an error if a route with \fIprefix\fR and \fIPOLICY\fR already exists, unless \fB\-\-may\-exist\fR, \fB\-\-ecmp\fR, or \fB\-\-ecmp\-symmetric\-reply\fR is specified\[char46] If \fB\-\-may\-exist\fR is specified but not \fB\-\-ecmp\fR or \fB\-\-ecmp\-symmetric\-reply\fR, the existed route will be updated with the new nexthop and port\[char46] If \fB\-\-ecmp\fR or \fB\-\-ecmp\-symmetric\-reply\fR is specified, a new route will be added, regardless of the existed route\[char46], which is useful when adding ECMP routes, i\[char46]e\[char46] routes with same \fIPOLICY\fR and \fIprefix\fR but different \fInexthop\fR and \fIport\fR\[char46]
 .TP
-[\fB\-\-if\-exists\fR] [\fB\-\-policy\fR=\fIPOLICY\fR] \fBlr\-route\-del\fR \fIrouter\fR [\fIprefix\fR [\fInexthop\fR [\fIport\fR]]]
+[\fB\-\-if\-exists\fR] [\fB\-\-policy\fR=\fIPOLICY\fR] [\fB\-\-route\-table\fR=\fIROUTE_TABLE\fR] \fBlr\-route\-del\fR \fIrouter\fR [\fIprefix\fR [\fInexthop\fR [\fIport\fR]]]
 Deletes routes from \fIrouter\fR\[char46] If only \fIrouter\fR is supplied, all the routes from the logical router are deleted\[char46] If \fIPOLICY\fR, \fIprefix\fR, \fInexthop\fR and/or \fIport\fR are also specified, then all the routes that match the conditions will be deleted from the logical router\[char46]
+.IP
+The \fB\-\-route\-table\fR option can be used to delete the given route from the route table \fIROUTE_TABLE\fR instead of the default \fB<main>\fR table\[char46]
 .IP
 It is an error if there is no matching route entry, unless \fB\-\-if\-exists\fR is specified\[char46]
 .TP
@@ -647,10 +651,12 @@ It is an error if there is no matching route entry, unless \fB\-\-if\-exists\fR 
 Lists the routes on \fIrouter\fR\[char46]
 .SS "Logical Router Policy Commands"
 .TP
-[\fB\-\-may\-exist\fR] [\fB\-\-bfd\fR] \fBlr\-policy\-add\fR \fIrouter\fR \fIpriority\fR \fImatch\fR \fIaction\fR [\fInexthop\fR[,\fInexthop\fR,\[char46]\[char46]\[char46]]] [\fIoptions key=value]\fR]
+[\fB\-\-may\-exist\fR] [\fB\-\-bfd\fR] [\fB\-\-route\-table\fR=\fIROUTE_TABLE\fR] \fBlr\-policy\-add\fR \fIrouter\fR \fIpriority\fR \fImatch\fR \fIaction\fR [\fInexthop\fR[,\fInexthop\fR,\[char46]\[char46]\[char46]]] [\fIoptions key=value]\fR]
 Add Policy to \fIrouter\fR which provides a way to configure permit/deny and reroute policies on the router\[char46] Permit/deny policies are similar to OVN ACLs, but exist on the logical-router\[char46] Reroute policies are needed for service-insertion and service-chaining\[char46] \fInexthop\fR is an optional parameter\[char46] It needs to be provided only when \fIaction\fR is \fIreroute\fR\[char46] Multiple \fBnexthops\fR can be specified for ECMP routing\[char46] A policy is uniquely identified by \fIpriority\fR and \fImatch\fR\[char46] Multiple policies can have the same \fIpriority\fR\[char46] \fIoptions\fR sets the router policy options as key-value pair\[char46] The supported option is : \fBpkt_mark\fR\[char46]
 .IP
 If \fB\-\-may\-exist\fR is specified, adding a duplicated routing policy with the same priority and match string is not really created\[char46] Without \fB\-\-may\-exist\fR, adding a duplicated routing policy results in error\[char46]
+.IP
+The \fB\-\-route\-table\fR option can be used to list the routes assigned to route table \fIROUTE_TABLE\fR instead of the default \fB<main>\fR table\[char46]
 .IP
 \fB\-\-bfd\fR option is used to link a BFD session to the OVN reroute policy\[char46] OVN will look for an already running BFD session using next-hop as lookup key in the BFD table\[char46] If the lookup fails, a new entry in the BFD table will be created using the \fInexthop\fR as \fIdst_ip\fR\[char46]
 .IP

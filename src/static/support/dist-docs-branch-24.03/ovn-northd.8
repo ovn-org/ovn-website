@@ -287,15 +287,20 @@ A priority 1 flow is added which matches on all packets for all the logical port
 .PP
 .PP
 For each logical switch port \fIP\fR of type router connected to a gw router a priority\-120 flow that matches \(cqrecirculated\(cq icmp{4,6} error \(cqpacket too big\(cq and \fBeth\[char46]src == \fID\fB &&
-outport == \fIP\fB && flags\[char46]tunnel_rx == 1\fR where \fID\fR is the peer logical router port \fIRP\fR mac address, swaps inport and outport and applies the action \fB
-next(pipeline=S_SWITCH_IN_L2_LKUP)\fR\[char46]
+outport == \fIP\fB && flags\[char46]tunnel_rx == 1\fR where \fID\fR is the peer logical router port \fIRP\fR mac address, swaps inport and outport and applies the action \fBnext\fR\[char46]
 .PP
 .PP
 For each logical switch port \fIP\fR of type router connected to a distributed router a priority\-120 flow that matches \(cqrecirculated\(cq icmp{4,6} error \(cqpacket too big\(cq and \fBeth\[char46]dst == \fID\fB
 && flags\[char46]tunnel_rx == 1\fR where \fID\fR is the peer logical router port \fIRP\fR mac address, swaps inport and outport and applies the action \fB next(pipeline=S_SWITCH_IN_L2_LKUP)\fR\[char46]
 .PP
 .PP
-This table adds a priority\-110 flow that matches \(cqrecirculated\(cq icmp{4,6} error \(cqpacket too big\(cq to drop the packet\[char46]
+For each logical switch port \fIP\fR a priority\-110 flow that matches \(cqrecirculated\(cq icmp{4,6} error \(cqpacket too big\(cq and \fB
+eth\[char46]src == \fID\fB && outport == \fIP\fB &&
+!is_chassis_resident(\(dq\fIP\fB\(dq) && flags\[char46]tunnel_rx == 1
+\fR where \fID\fR is the logical switch port mac address, swaps inport and outport and applies the action \fBnext\fR\[char46]
+.PP
+.PP
+This table adds a priority\-105 flow that matches \(cqrecirculated\(cq icmp{4,6} error \(cqpacket too big\(cq to drop the packet\[char46]
 .PP
 .PP
 This table drops the packets if the port security check failed in the previous stage i\[char46]e the register bit \fBREGBIT_PORT_SEC_DROP\fR is set to 1\[char46]
@@ -1269,7 +1274,7 @@ For the gateway port on a distributed logical router (where one of the logical r
 For each gateway port \fIGW\fR on a distributed logical router a priority\-120 flow that matches \(cqrecirculated\(cq icmp{4,6} error \(cqpacket too big\(cq and \fBeth\[char46]dst == \fID\fB &&
 !is_chassis_resident(\fI cr-GW\fB)\fR where \fID\fR is the gateway port mac address and \fIcr-GW\fR is the chassis resident port of \fIGW\fR, swap inport and outport and stores \fIGW\fR as inport\[char46]
 .IP
-This table adds a priority\-110 flow that matches \(cqrecirculated\(cq icmp{4,6} error \(cqpacket too big\(cq to drop the packet\[char46]
+This table adds a priority\-105 flow that matches \(cqrecirculated\(cq icmp{4,6} error \(cqpacket too big\(cq to drop the packet\[char46]
 .IP
 For a distributed logical router or for gateway router where the port is configured with \fBoptions:gateway_mtu\fR the action of the above flow is modified adding \fBcheck_pkt_larger\fR in order to mark the packet setting \fBREGBIT_PKT_LARGER\fR if the size is greater than the MTU\[char46] If the port is also configured with \fBoptions:gateway_mtu_bypass\fR then another flow is added, with priority\-55, to bypass the \fBcheck_pkt_larger\fR flow\[char46] This is useful for traffic that normally doesn\(cqt need to be fragmented and for which check_pkt_larger, which might not be offloadable, is not really needed\[char46] One such example is TCP traffic\[char46]
 .IP \(bu
