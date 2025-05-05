@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-sb" 5 " DB Schema 21.0.0" "Open vSwitch 25.03.90" "Open vSwitch Manual"
+.TH "ovn-sb" 5 " DB Schema 21.2.0" "Open vSwitch 25.03.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -489,6 +489,9 @@ map of string-string pairs
 .TQ 2.75in
 \fBoptions\fR
 map of string-string pairs
+.TQ 2.75in
+\fBoptions : enable_chassis_nb_cfg_update\fR
+optional string
 .TQ .25in
 \fIOptions for configuring BFD:\fR
 .RS .25in
@@ -551,6 +554,8 @@ See \fBExternal IDs\fR at the beginning of this document\[char46]
 .PP
 .IP "\fBoptions\fR: map of string-string pairs"
 This column provides general key/value settings\[char46] The supported options are described individually below\[char46]
+.IP "\fBoptions : enable_chassis_nb_cfg_update\fR: optional string"
+If set to \fBfalse\fR, ovn-controller will no longer update the \fBnb_cfg\fR column in the \fBChassis_Private\fR table of the \fBOVN_Southbound\fR database\[char46] It will still update the \fBexternal_ids:ovn\-nb\-cfg\fR in the local OVS integration bridge\[char46]
 .ST "Options for configuring BFD:"
 .PP
 .PP
@@ -1908,6 +1913,11 @@ This action executes on the first node (Redirect Chassis node) which processes t
 When this action applied successfully on the DHCP response packet, it updates the destination MAC and destination IP in the packet and stores 1 in R\[char46] \fIrelay-ip\fR and \fIserver-ip\fR are used to validate GIADDR and SERVER-ID in the DHCP response packet\[char46]
 .IP
 When this action failed to apply on the packet, it leaves the packet unchanged and stores 0 in R\[char46]
+.TP
+\fBmirror(\fIP\fB);\fR
+\fBParameters\fR: logical port string field \fIP\fR of type \fBmirror\fR\[char46]
+.IP
+When using an lport mirror, it clones the packet and outputs it to the local/remote chassis through the mirrored port \fIP\fR to the target port\[char46]
 .RE
 .IP "\fBtags\fR: map of string-string pairs"
 Key-value pairs that provide additional information to help ovn-controller processing the logical flow\[char46] Below are the tags used by ovn-controller\[char46]
@@ -1995,7 +2005,7 @@ string, one of \fBboth\fR, \fBfrom\-lport\fR, or \fBto\-lport\fR
 string
 .TQ 3.00in
 \fBtype\fR
-string, one of \fBerspan\fR, \fBgre\fR, or \fBlocal\fR
+string, one of \fBerspan\fR, \fBgre\fR, \fBlocal\fR, or \fBlport\fR
 .TQ 3.00in
 \fBindex\fR
 integer
@@ -2009,8 +2019,8 @@ Represents the name of the mirror\[char46]
 The value of this field represents selection criteria of the mirror\[char46] \fBto\-lport\fR mirrors the packets coming into logical port\[char46] \fBfrom\-lport\fR mirrors the packets going out of logical port\[char46] \fBboth\fR mirrors for both directions\[char46]
 .IP "\fBsink\fR: string"
 The value of this field represents the destination/sink of the mirror\[char46] If the \fItype\fR is \fBgre\fR or \fBerspan\fR, the value indicates the tunnel remote IP (either IPv4 or IPv6)\[char46] For a \fItype\fR of \fBlocal\fR, this field defines a local interface on the OVS integration bridge to be used as the mirror destination\[char46] The interface must possess external-ids:mirror-id that matches this string\[char46]
-.IP "\fBtype\fR: string, one of \fBerspan\fR, \fBgre\fR, or \fBlocal\fR"
-The value of this field specifies the mirror type - \fBgre\fR, \fBerspan\fR or \fBlocal\fR\[char46]
+.IP "\fBtype\fR: string, one of \fBerspan\fR, \fBgre\fR, \fBlocal\fR, or \fBlport\fR"
+The value of this field specifies the mirror type - \fBgre\fR, \fBerspan\fR, \fBlocal\fR or \fBlport\fR\[char46]
 .IP "\fBindex\fR: integer"
 The value of this field represents the tunnel ID\[char46] If the configured tunnel type is \fBgre\fR, this field represents the \fBGRE\fR key value and if the configured tunnel type is \fBerspan\fR it represents the \fBerspan_idx\fR value\[char46] It is ignored if the type is \fBlocal\fR\[char46]
 .IP "\fBexternal_ids\fR: map of string-string pairs"
@@ -2197,6 +2207,9 @@ set of strings
 .TQ 2.75in
 \fBport_security\fR
 set of strings
+.TQ 2.75in
+\fBmirror_port\fR
+optional string
 .TQ 2.75in
 \fBtype\fR
 string
@@ -2401,6 +2414,8 @@ This column is a misnomer as it may contain MAC addresses and IP addresses\[char
 This column controls the addresses from which the host attached to the logical port (``the host\(cq\(cq) is allowed to send packets and to which it is allowed to receive packets\[char46] If this column is empty, all addresses are permitted\[char46]
 .IP
 It is copied from the \fBport_security\fR column in the \fBLogical_Switch_Port\fR table in the Northbound database\[char46] It follows the same format as that column\[char46]
+.IP "\fBmirror_port\fR: optional string"
+Points to mirror target port fot lport mirror type\[char46]
 .IP "\fBtype\fR: string"
 A type for this logical port\[char46] Logical ports can be used to model other types of connectivity into an OVN logical switch\[char46] The following types are defined:
 .RS

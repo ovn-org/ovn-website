@@ -183,6 +183,8 @@ SB_Global TABLE
          options                     map of string-string pairs
        Common options:
          options                     map of string-string pairs
+         options : enable_chassis_nb_cfg_update
+                                     optional string
          Options for configuring BFD:
             options : bfd-min-rx     optional string
             options : bfd-decay-min-rx
@@ -228,6 +230,12 @@ SB_Global TABLE
        options: map of string-string pairs
               This column provides general key/value settings.  The  supported
               options are described individually below.
+
+       options : enable_chassis_nb_cfg_update: optional string
+              If set to false, ovn-controller will no longer update the nb_cfg
+              column  in the Chassis_Private table of the OVN_Southbound data‐
+              base. It will still update the  external_ids:ovn-nb-cfg  in  the
+              local OVS integration bridge.
 
      Options for configuring BFD:
 
@@ -2160,6 +2168,13 @@ Logical_Flow TABLE
                    When this action failed to apply on the packet,  it  leaves
                    the packet unchanged and stores 0 in R.
 
+              mirror(P);
+                   Parameters: logical port string field P of type mirror.
+
+                   When  using  an lport mirror, it clones the packet and out‐
+                   puts it to the local/remote chassis  through  the  mirrored
+                   port P to the target port.
+
        tags: map of string-string pairs
               Key-value pairs that provide additional information to help ovn-
               controller  processing the logical flow. Below are the tags used
@@ -2269,7 +2284,8 @@ Mirror TABLE
        filter                        string,   one  of  both,  from-lport,  or
                                      to-lport
        sink                          string
-       type                          string, one of erspan, gre, or local
+       type                          string, one of  erspan,  gre,  local,  or
+                                     lport
        index                         integer
        external_ids                  map of string-string pairs
 
@@ -2278,22 +2294,22 @@ Mirror TABLE
               Represents the name of the mirror.
 
        filter: string, one of both, from-lport, or to-lport
-              The value of this field represents  selection  criteria  of  the
-              mirror.  to-lport  mirrors the packets coming into logical port.
-              from-lport mirrors the packets going out of logical  port.  both
+              The  value  of  this  field represents selection criteria of the
+              mirror. to-lport mirrors the packets coming into  logical  port.
+              from-lport  mirrors  the packets going out of logical port. both
               mirrors for both directions.
 
        sink: string
-              The  value  of this field represents the destination/sink of the
-              mirror. If the type is gre or erspan, the  value  indicates  the
-              tunnel  remote  IP  (either  IPv4 or IPv6). For a type of local,
-              this field defines a local  interface  on  the  OVS  integration
-              bridge  to be used as the mirror destination. The interface must
+              The value of this field represents the destination/sink  of  the
+              mirror.  If  the  type is gre or erspan, the value indicates the
+              tunnel remote IP (either IPv4 or IPv6). For  a  type  of  local,
+              this  field  defines  a  local  interface on the OVS integration
+              bridge to be used as the mirror destination. The interface  must
               possess external-ids:mirror-id that matches this string.
 
-       type: string, one of erspan, gre, or local
-              The value of this field specifies the mirror type - gre,  erspan
-              or local.
+       type: string, one of erspan, gre, local, or lport
+              The value of this field specifies the mirror type - gre, erspan,
+              local or lport.
 
        index: integer
               The value of this field represents the tunnel ID. If the config‐
@@ -2488,6 +2504,7 @@ Port_Binding TABLE
          tunnel_key                  integer, in range 1 to 32,767
          mac                         set of strings
          port_security               set of strings
+         mirror_port                 optional string
          type                        string
          requested_chassis           optional weak reference to Chassis
          requested_additional_chassis
@@ -2650,6 +2667,9 @@ Port_Binding TABLE
               It  is  copied  from  the  port_security  column  in  the  Logi�‐
               cal_Switch_Port table in the Northbound database. It follows the
               same format as that column.
+
+       mirror_port: optional string
+              Points to mirror target port fot lport mirror type.
 
        type: string
               A type for this logical port. Logical ports can be used to model
@@ -3719,6 +3739,7 @@ Controller_Event TABLE
               Event  sequence  number. Global counter for controller generated
               events. It can be used by the CMS to detect possible duplication
               of the same event.
+
 IP_Multicast TABLE
        IP Multicast configuration options. For now only applicable to IGMP.
 
@@ -4231,4 +4252,4 @@ ACL_ID TABLE
               An identifier corresponding to  a  northbound  allow-established
               ACL.
 
-Open vSwitch 25.03.90           DB Schema 21.0.0                     ovn-sb(5)
+Open vSwitch 25.03.90           DB Schema 21.2.0                     ovn-sb(5)

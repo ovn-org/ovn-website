@@ -325,7 +325,19 @@ A priority\-50 fallback flow that drops the packet if the register bit \fBREGBIT
 .IP \(bu
 One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
 .RE
-.ST "Ingress Table 2: Lookup MAC address learning table"
+.ST "Ingress Table 2: Mirror"
+.PP
+.PP
+Overlay remote mirror table contains the following logical flows:
+.RS
+.IP \(bu
+For each logical switch port with an attached mirror, a logical flow with a priority of 100 is added\[char46] This flow matches all incoming packets to the attached port, clones them, and forwards the cloned packets to the mirror target port\[char46]
+.IP \(bu
+A priority 0 flow is added which matches on all packets and applies the action \fBnext;\fR\[char46]
+.IP \(bu
+A logical flow added for each Mirror Rule in Mirror table attached to logical switch ports, matches all incoming packets that match rules and clones the packet and sends cloned packet to mirror target port\[char46]
+.RE
+.ST "Ingress Table 3: Lookup MAC address learning table"
 .PP
 .PP
 This table looks up the MAC learning table of the logical switch datapath to check if the \fBport\-mac\fR pair is present or not\[char46] MAC is learnt for logical switch VIF ports whose port security is disabled and \(cqunknown\(cq address setn as well as for localnet ports with option localnet_learn_fdb\[char46] A localnet port entry does not overwrite a VIF port entry\[char46] Logical switch ports with type \fBswitch\fR have implicit \(cqunknown\(cq addresses and so they are also eligible for MAC learning\[char46]
@@ -345,7 +357,7 @@ Priority 100 flow with the match \fBinport == \fIp\fB\fR and action \fBflags\[ch
 .IP \(bu
 One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
 .RE
-.ST "Ingress Table 3: Learn MAC of \(cqunknown\(cq ports\[char46]"
+.ST "Ingress Table 4: Learn MAC of \(cqunknown\(cq ports\[char46]"
 .PP
 .PP
 This table learns the MAC addresses seen on the VIF or \(cqswitch\(cq logical ports whose port security is disabled and \(cqunknown\(cq address set (note: \(cqswitch\(cq ports have implicit \(cqunknown\(cq addresses) as well as on localnet ports with localnet_learn_fdb option set if the \fBlookup_fdb\fR action returned false in the previous table\[char46] For localnet ports (with flags\[char46]localnet = 1), lookup_fdb returns true if (port, mac) is found or if a mac is found for a port of type vif\[char46]
@@ -359,14 +371,14 @@ Priority 100 flow with the match \fBinport == \fIp\fB && reg0[11] == 0\fR and ac
 .IP \(bu
 One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
 .RE
-.ST "Ingress Table 4: \fBfrom\-lport\fI Pre-ACLs"
+.ST "Ingress Table 5: \fBfrom\-lport\fI Pre-ACLs"
 .PP
 .PP
 This table prepares flows for possible stateful ACL processing in ingress table \fBACLs\fR\[char46] It contains a priority\-0 flow that simply moves traffic to the next table\[char46] If stateful ACLs are used in the logical datapath, a priority\-100 flow is added that sets a hint (with \fBreg0[0] = 1; next;\fR) for table \fBPre\-stateful\fR to send IP packets to the connection tracker before eventually advancing to ingress table \fBACLs\fR\[char46] If special ports such as route ports or localnet ports can\(cqt use ct(), a priority\-110 flow is added to skip over stateful ACLs\[char46] This priority\-110 flow is not addd for router ports if the option enable_router_port_acl is set to true in \fBoptions:enable_router_port_acl\fR column of \fBLogical_Switch_Port\fR\[char46] Multicast, IPv6 Neighbor Discovery and MLD traffic also skips stateful ACLs\[char46] For \(dqallow-stateless\(dq ACLs, a flow is added to bypass setting the hint for connection tracker processing when there are stateful ACLs or LB rules; \fBREGBIT_ACL_STATELESS\fR is set for traffic matching stateless ACL flows\[char46]
 .PP
 .PP
 This table also has a priority\-110 flow with the match \fBeth\[char46]dst == \fIE\fB\fR for all logical switch datapaths to move traffic to the next table\[char46] Where \fIE\fR is the service monitor mac defined in the \fBoptions:svc_monitor_mac\fR column of \fBNB_Global\fR table\[char46]
-.ST "Ingress Table 5: Pre-LB"
+.ST "Ingress Table 6: Pre-LB"
 .PP
 .PP
 This table prepares flows for possible stateful load balancing processing in ingress table \fBLB\fR and \fBStateful\fR\[char46] It contains a priority\-0 flow that simply moves traffic to the next table\[char46] Moreover it contains two priority\-110 flows to move multicast, IPv6 Neighbor Discovery and MLD traffic to the next table\[char46] It also contains two priority\-110 flows to move stateless traffic, i\[char46]e traffic for which \fBREGBIT_ACL_STATELESS\fR is set, to the next table\[char46] If load balancing rules with virtual IP addresses (and ports) are configured in \fBOVN_Northbound\fR database for a logical switch datapath, a priority\-100 flow is added with the match \fBip\fR to match on IP packets and sets the action \fBreg0[2] = 1; next;\fR to act as a hint for table \fBPre\-stateful\fR to send IP packets to the connection tracker for packet de-fragmentation (and to possibly do DNAT for already established load balanced traffic) before eventually advancing to ingress table \fBStateful\fR\[char46] If controller_event has been enabled and load balancing rules with empty backends have been added in \fBOVN_Northbound\fR, a 130 flow is added to trigger ovn-controller events whenever the chassis receives a packet for that particular VIP\[char46] If \fBevent\-elb\fR meter has been previously created, it will be associated to the empty_lb logical flow
@@ -385,7 +397,7 @@ This table also has a priority\-110 flow with the match \fBeth\[char46]dst == \f
 .PP
 .PP
 This table also has a priority\-110 flow with the match \fBinport == \fII\fB\fR for all logical switch datapaths to move traffic to the next table\[char46] Where \fII\fR is the peer of a logical router port\[char46] This flow is added to skip the connection tracking of packets which enter from logical router datapath to logical switch datapath\[char46]
-.ST "Ingress Table 6: Pre-stateful"
+.ST "Ingress Table 7: Pre-stateful"
 .PP
 .PP
 This table prepares flows for all possible stateful processing in next tables\[char46] It contains a priority\-0 flow that simply moves traffic to the next table\[char46]
@@ -397,7 +409,7 @@ A priority\-110 flow sends the packets that don\(cqt match the above flows to co
 .IP \(bu
 A priority\-100 flow sends the packets to connection tracker based on a hint provided by the previous tables (with a match for \fBreg0[0] == 1\fR) by using the \fBct_next;\fR action\[char46]
 .RE
-.ST "Ingress Table 7: \fBfrom\-lport\fI ACL hints"
+.ST "Ingress Table 8: \fBfrom\-lport\fI ACL hints"
 .PP
 .PP
 This table consists of logical flows that set hints (\fBreg0\fR bits) to be used in the next stage, in the ACL processing table, if stateful ACLs or load balancers are configured\[char46] Multiple hints can be set for the same packet\[char46] The possible hints are:
@@ -434,7 +446,7 @@ A priority\-2 flow that matches on packets that are part of an established sessi
 .IP \(bu
 A priority\-1 flow that matches on packets that are part of an established session that has not been marked as blocked\[char46] This flow sets \fBreg0[10]\fR and then advances to the next table\[char46]
 .RE
-.ST "Ingress table 8: \fBfrom\-lport\fI ACL evaluation before LB"
+.ST "Ingress table 9: \fBfrom\-lport\fI ACL evaluation before LB"
 .PP
 .PP
 Logical flows in this table closely reproduce those in the \fBACL\fR table in the \fBOVN_Northbound\fR database for the \fBfrom\-lport\fR direction without the option \fBapply\-after\-lb\fR set or set to \fBfalse\fR\[char46] The \fBpriority\fR values from the \fBACL\fR table have a limited range and have 1000 added to them to leave room for OVN default flows at both higher and lower priorities\[char46]
@@ -489,7 +501,7 @@ If the logical datapath has any ACL or a load balancer with VIP configured, the 
 .IP \(bu
 A priority 34000 logical flow is added for each logical switch datapath with the match \fBeth\[char46]dst = \fIE\fB\fR to allow the service monitor reply packet destined to \fBovn\-controller\fR that sets the allow bit, where \fIE\fR is the service monitor mac defined in the \fBoptions:svc_monitor_mac\fR column of \fBNB_Global\fR table\[char46]
 .RE
-.ST "Ingress Table 9: \fBfrom\-lport\fI ACL sampling"
+.ST "Ingress Table 10: \fBfrom\-lport\fI ACL sampling"
 .PP
 .PP
 Logical flows in this table sample traffic matched by \fBfrom\-lport\fR ACLs with sampling enabled\[char46]
@@ -503,7 +515,7 @@ For each ACL with sample_est configured a priority 1200 flow is installed that m
 .IP \(bu
 For each ACL with sample_est configured a priority 1200 flow is installed that matches on the saved observation_point_id value for established traffic in the reply direction\[char46] This flow generates a \fBsample()\fR action and then advances the packet to the next table\[char46] Note: this flow is installed in the opposite pipeline (in the ingress pipeline for ACLs applied in the egress direction and in the egress pipeline for ACLs applied in the ingress direction)\[char46]
 .RE
-.ST "Ingress Table 10: \fBfrom\-lport\fI ACL action"
+.ST "Ingress Table 11: \fBfrom\-lport\fI ACL action"
 .PP
 .PP
 Logical flows in this table decide how to proceed based on the values of the allow, drop, and reject bits that may have been set in the previous table\[char46]
@@ -521,7 +533,7 @@ next(pipeline=egress,table=5);}\fR action for SCTP associations\[char46]
 .IP \(bu
 If any ACLs have tiers configured on them, then three priority 500 flows are installed\[char46] If the current tier counter is 0, 1, or 2, then the current tier counter is incremented by one and the packet is sent back to the previous table for re-evaluation\[char46]
 .RE
-.ST "Ingress Table 11: \fBfrom\-lport\fI QoS"
+.ST "Ingress Table 12: \fBfrom\-lport\fI QoS"
 .PP
 .PP
 Logical flows in this table closely reproduce those in the \fBQoS\fR table with the \fBaction\fR or \fBbandwidth\fR column set in the \fBOVN_Northbound\fR database for the \fBfrom\-lport\fR direction\[char46]
@@ -531,7 +543,7 @@ For every qos_rules entry in a logical switch with DSCP marking, packet marking 
 .IP \(bu
 One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
 .RE
-.ST "Ingress Table 12: Load balancing affinity check"
+.ST "Ingress Table 13: Load balancing affinity check"
 .PP
 .PP
 Load balancing affinity check table contains the following logical flows:
@@ -544,7 +556,7 @@ ip6\[char46]dst == \fIVIP\fB&& \fIP\fB &&
 .IP \(bu
 A priority 0 flow is added which matches on all packets and applies the action \fBnext;\fR\[char46]
 .RE
-.ST "Ingress Table 13: LB"
+.ST "Ingress Table 14: LB"
 .RS
 .IP \(bu
 For all the configured load balancing rules for a switch in \fBOVN_Northbound\fR database where a positive affinity timeout is specified in \fBoptions\fR column, that includes a L4 port \fIPORT\fR of protocol \fIP\fR and IP address \fIVIP\fR, a priority\-150 flow is added\[char46] For IPv4 \fIVIPs\fR, the flow matches \fBreg9[6] == 1 && ct\[char46]new && ip &&
@@ -568,7 +580,7 @@ ct_lb_mark(\fIargs\fB)\fR, where \fIargs\fR contains comma separated IP addresse
 .IP \(bu
 If the load balancer is created with \fB\-\-reject\fR option and it has no active backends, a TCP reset segment (for tcp) or an ICMP port unreachable packet (for all other kind of traffic) will be sent whenever an incoming packet is received for this load-balancer\[char46] Please note using \fB\-\-reject\fR option will disable empty_lb SB controller event for this load balancer\[char46]
 .RE
-.ST "Ingress Table 14: Load balancing affinity learn"
+.ST "Ingress Table 15: Load balancing affinity learn"
 .PP
 .PP
 Load balancing affinity learn table contains the following logical flows:
@@ -585,14 +597,14 @@ For all the configured load balancing rules for a switch in \fBOVN_Northbound\fR
 .IP \(bu
 A priority 0 flow is added which matches on all packets and applies the action \fBnext;\fR\[char46]
 .RE
-.ST "Ingress Table 15: Pre-Hairpin"
+.ST "Ingress Table 16: Pre-Hairpin"
 .RS
 .IP \(bu
 If the logical switch has load balancer(s) configured, then a priority\-100 flow is added with the match \fBip && ct\[char46]trk\fR to check if the packet needs to be hairpinned (if after load balancing the destination IP matches the source IP) or not by executing the actions \fBreg0[6] = chk_lb_hairpin();\fR and \fBreg0[12] = chk_lb_hairpin_reply();\fR and advances the packet to the next table\[char46]
 .IP \(bu
 A priority\-0 flow that simply moves traffic to the next table\[char46]
 .RE
-.ST "Ingress Table 16: Nat-Hairpin"
+.ST "Ingress Table 17: Nat-Hairpin"
 .RS
 .IP \(bu
 If the logical switch has load balancer(s) configured, then a priority\-100 flow is added with the match \fBip && ct\[char46]new && ct\[char46]trk &&
@@ -605,7 +617,7 @@ If the logical switch has load balancer(s) configured, then a priority\-90 flow 
 .IP \(bu
 A priority\-0 flow that simply moves traffic to the next table\[char46]
 .RE
-.ST "Ingress Table 17: Hairpin"
+.ST "Ingress Table 18: Hairpin"
 .RS
 .IP \(bu
 If logical switch has attached logical switch port of \fIvtep\fR type, then for each distributed gateway router port \fIRP\fR attached to this logical switch and has chassis redirect port \fIcr-RP\fR, a priority\-2000 flow is added with the match .IP
@@ -626,7 +638,7 @@ A priority\-1 flow that hairpins traffic matched by non-default flows in the Pre
 .IP \(bu
 A priority\-0 flow that simply moves traffic to the next table\[char46]
 .RE
-.ST "Ingress table 18: \fBfrom\-lport\fI ACL evaluation after LB"
+.ST "Ingress table 19: \fBfrom\-lport\fI ACL evaluation after LB"
 .PP
 .PP
 Logical flows in this table closely reproduce those in the \fBACL eval\fR table in the \fBOVN_Northbound\fR database for the \fBfrom\-lport\fR direction with the option \fBapply\-after\-lb\fR set to \fBtrue\fR\[char46] The \fBpriority\fR values from the \fBACL\fR table have a limited range and have 1000 added to them to leave room for OVN default flows at both higher and lower priorities\[char46] The flows in this table indicate the ACL verdict by setting \fBreg8[16]\fR for \fBallow\-type\fR ACLs, \fBreg8[17]\fR for \fBdrop\fR ACLs, and \fBreg8[17]\fR for \fBreject\fR ACLs, and then advancing the packet to the next table\[char46] These will be reffered to as the allow bit, drop bit, and reject bit throughout the documentation for this table and the next one\[char46]
@@ -655,7 +667,7 @@ One priority\-65532 flow matching packets with \fBreg0[17]\fR set (either replie
 .IP \(bu
 One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
 .RE
-.ST "Ingress Table 19: \fBfrom\-lport\fI ACL sampling after LB"
+.ST "Ingress Table 20: \fBfrom\-lport\fI ACL sampling after LB"
 .PP
 .PP
 Logical flows in this table sample traffic matched by \fBfrom\-lport\fR ACLs (evaluation after LB) with sampling enabled\[char46]
@@ -669,7 +681,7 @@ For each ACL with sample_est configured a priority 1200 flow is installed that m
 .IP \(bu
 For each ACL with sample_est configured a priority 1200 flow is installed that matches on the saved observation_point_id value for established traffic in the reply direction\[char46] This flow generates a \fBsample()\fR action and then advances the packet to the next table\[char46] Note: this flow is installed in the opposite pipeline (in the ingress pipeline for ACLs applied in the egress direction and in the egress pipeline for ACLs applied in the ingress direction)\[char46]
 .RE
-.ST "Ingress Table 20: \fBfrom\-lport\fI ACL action after LB"
+.ST "Ingress Table 21: \fBfrom\-lport\fI ACL action after LB"
 .PP
 .PP
 Logical flows in this table decide how to proceed based on the values of the allow, drop, and reject bits that may have been set in the previous table\[char46]
@@ -687,7 +699,7 @@ next(pipeline=egress,table=5);}\fR action for SCTP associations\[char46]
 .IP \(bu
 If any ACLs have tiers configured on them, then three priority 500 flows are installed\[char46] If the current tier counter is 0, 1, or 2, then the current tier counter is incremented by one and the packet is sent back to the previous table for re-evaluation\[char46]
 .RE
-.ST "Ingress Table 21: Stateful"
+.ST "Ingress Table 22: Stateful"
 .RS
 .IP \(bu
 A priority 100 flow is added which commits the packet to the conntrack and sets the most significant 32-bits of \fBct_label\fR with the \fBreg3\fR value based on the hint provided by previous tables (with a match for \fBreg0[1] == 1 && reg0[13] == 1\fR)\[char46] This is used by the \fBACLs\fR with label to commit the label value to conntrack\[char46]
@@ -696,7 +708,7 @@ For \fBACLs\fR without label, a second priority\-100 flow commits packets to con
 .IP \(bu
 A priority\-0 flow that simply moves traffic to the next table\[char46]
 .RE
-.ST "Ingress Table 22: ARP/ND responder"
+.ST "Ingress Table 23: ARP/ND responder"
 .PP
 .PP
 This table implements ARP/ND responder in a logical switch for known IPs\[char46] The advantage of the ARP responder flow is to limit ARP broadcasts by locally responding to ARP requests without the need to send to other hypervisors\[char46] One common case is when the inport is a logical port associated with a VIF and the broadcast is responded to on the local hypervisor rather than broadcast across the whole network and responded to by the destination VM\[char46] This behavior is proxy ARP\[char46]
@@ -935,7 +947,7 @@ These flows are required to respond to an ARP request if an ARP request is sent 
 .IP \(bu
 One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
 .RE
-.ST "Ingress Table 23: DHCP option processing"
+.ST "Ingress Table 24: DHCP option processing"
 .PP
 .PP
 This table adds the DHCPv4 options to a DHCPv4 packet from the logical ports configured with IPv4 address(es) and DHCPv4 options, and similarly for DHCPv6 options\[char46] This table also adds flows for the logical ports of type \fBexternal\fR\[char46]
@@ -971,7 +983,7 @@ For DHCPv6 Solicit/Request/Confirm packets, this transforms the packet into a DH
 .IP \(bu
 A priority\-0 flow that matches all packets to advances to table 16\[char46]
 .RE
-.ST "Ingress Table 24: DHCP responses"
+.ST "Ingress Table 25: DHCP responses"
 .PP
 .PP
 This table implements DHCP responder for the DHCP replies generated by the previous table\[char46]
@@ -1039,7 +1051,7 @@ where \fIE\fR is the server MAC address and \fIS\fR is the server IPv6 LLA addre
 .IP \(bu
 A priority\-0 flow that matches all packets to advances to table 17\[char46]
 .RE
-.ST "Ingress Table 25 DNS Lookup"
+.ST "Ingress Table 26 DNS Lookup"
 .PP
 .PP
 This table looks up and resolves the DNS names to the corresponding configured IP address(es)\[char46]
@@ -1057,7 +1069,7 @@ A priority\-100 logical flow for each logical switch datapath if it is configure
 .IP
 For valid DNS packets, this transforms the packet into a DNS reply if the DNS name can be resolved, and stores 1 into reg0[4]\[char46] For failed DNS resolution or other kinds of packets, it just stores 0 into reg0[4]\[char46] Either way, it continues to the next table\[char46]
 .RE
-.ST "Ingress Table 26 DNS Responses"
+.ST "Ingress Table 27 DNS Responses"
 .PP
 .PP
 This table implements DNS responder for the DNS replies generated by the previous table\[char46]
@@ -1087,7 +1099,7 @@ A priority\-100 logical flow for each logical switch datapath if it is configure
 .IP
 (This terminates ingress packet processing; the packet does not go to the next ingress table\[char46])
 .RE
-.ST "Ingress table 27 External ports"
+.ST "Ingress table 28 External ports"
 .PP
 .PP
 Traffic from the \fBexternal\fR logical ports enter the ingress datapath pipeline via the \fBlocalnet\fR port\[char46] This table adds the below logical flows to handle the traffic from these ports\[char46]
@@ -1103,7 +1115,7 @@ eth\[char46]src == \fIE\fB && eth\[char46]dst == \fIR\fB
 .IP \(bu
 A priority\-0 flow that matches all packets to advances to table 20\[char46]
 .RE
-.ST "Ingress Table 28 Destination Lookup"
+.ST "Ingress Table 29 Destination Lookup"
 .PP
 .PP
 This table implements switching behavior\[char46] It contains these logical flows:
@@ -1169,7 +1181,7 @@ For each forwarding group configured on the logical switch datapath, a priority\
 .IP \(bu
 One priority\-0 fallback flow that matches all packets with the action \fBoutport = get_fdb(eth\[char46]dst); next;\fR\[char46] The action \fBget_fdb\fR gets the port for the \fBeth\[char46]dst\fR in the MAC learning table of the logical switch datapath\[char46] If there is no entry for \fBeth\[char46]dst\fR in the MAC learning table, then it stores \fBnone\fR in the \fBoutport\fR\[char46]
 .RE
-.ST "Ingress Table 29 Destination unknown"
+.ST "Ingress Table 30 Destination unknown"
 .PP
 .PP
 This table handles the packets whose destination was not found or and looked up in the MAC learning table of the logical switch datapath\[char46] It contains the following flows\[char46]
@@ -1266,15 +1278,27 @@ This is similar to ingress table \fBACL sampling\fR\[char46]
 .PP
 .PP
 This is similar to ingress table \fBACL action\fR\[char46]
-.ST "Egress Table 9: \fBto\-lport\fI QoS"
+.ST "Egress Table 9: Mirror"
+.PP
+.PP
+Overlay remote mirror table contains the following logical flows:
+.RS
+.IP \(bu
+For each logical switch port with an attached mirror, a logical flow with a priority of 100 is added\[char46] This flow matches all outcoming packets to the attached port, clones them, and forwards the cloned packets to the mirror target port\[char46]
+.IP \(bu
+A priority 0 flow is added which matches on all packets and applies the action \fBnext;\fR\[char46]
+.IP \(bu
+A logical flow added for each Mirror Rule in Mirror table attached to logical switch ports, matches all outcoming packets that match rules and clones the packet and sends cloned packet to mirror target port\[char46]
+.RE
+.ST "Egress Table 10: \fBto\-lport\fI QoS"
 .PP
 .PP
 This is similar to ingress table \fBQoS\fR except they apply to \fBto\-lport\fR QoS rules\[char46]
-.ST "Egress Table 10: Stateful"
+.ST "Egress Table 11: Stateful"
 .PP
 .PP
 This is similar to ingress table \fBStateful\fR except that there are no rules added for load balancing new connections\[char46]
-.ST "Egress Table 11: Egress Port Security - check"
+.ST "Egress Table 12: Egress Port Security - check"
 .PP
 .PP
 This is similar to the port security logic in table \fBIngress Port Security check\fR except that action \fBcheck_out_port_sec\fR is used to check the port security rules\[char46] This table adds the below logical flows\[char46]
@@ -1284,7 +1308,7 @@ A priority 100 flow which matches on the multicast traffic and applies the actio
 .IP \(bu
 A priority 0 logical flow is added which matches on all the packets and applies the action \fBREGBIT_PORT_SEC_DROP\(dq = check_out_port_sec(); next;\(dq\fR\[char46] The action \fBcheck_out_port_sec\fR applies the port security rules based on the addresses defined in the \fBport_security\fR column of \fBLogical_Switch_Port\fR table before delivering the packet to the \fBoutport\fR\[char46]
 .RE
-.ST "Egress Table 12: Egress Port Security - Apply"
+.ST "Egress Table 13: Egress Port Security - Apply"
 .PP
 .PP
 This is similar to the ingress port security logic in ingress table \fBA Ingress Port Security \- Apply\fR\[char46] This table drops the packets if the port security check failed in the previous stage i\[char46]e the register bit \fBREGBIT_PORT_SEC_DROP\fR is set to 1\[char46]
