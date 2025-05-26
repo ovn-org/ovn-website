@@ -2678,6 +2678,8 @@ Logical_Router_Port TABLE
                                      in range 68 to 65,535
          options : gateway_mtu_bypass
                                      optional string
+         options : centralize_routing
+                                     optional string, either true or false
        Attachment:
          peer                        optional string
        Common Columns:
@@ -2963,27 +2965,44 @@ Logical_Router_Port TABLE
               pression will bypass the length check configured through the op�‐
               tions:gateway_mtu option.
 
+       options : centralize_routing: optional string, either true or false
+              This  option is applicable only if the router port is a distrib‐
+              uted gateway port i.e if the ha_chassis_group  column  or  gate�‐
+              way_chassis is set.
+
+              If  set  to true, routing for the router port’s networks (set in
+              the column networks) is centralized on the gateway chassis which
+              claims this distributed gateway port.
+
+              Additionally for this option to take  effect,  below  conditions
+              must be met:
+
+              •      The Logical router has only one distributed gateway port.
+
+              •      The  router  port’s  peer  logical switch has no localnet
+                     ports.
+
      Attachment:
 
        A given router port serves one of two purposes:
 
               •      To attach a logical switch to a logical router. A logical
-                     router  port  of  this  type is referenced by exactly one
-                     Logical_Switch_Port of type router. The value of name  is
-                     set   as   router-port   in   column   options  of  Logi�‐
+                     router port of this type is  referenced  by  exactly  one
+                     Logical_Switch_Port  of type router. The value of name is
+                     set  as  router-port   in   column   options   of   Logi�‐
                      cal_Switch_Port. In this case peer column is empty.
 
               •      To connect one logical router to another. This requires a
                      pair of logical router ports, each connected to a differ‐
-                     ent router. Each router port in the  pair  specifies  the
+                     ent  router.  Each  router port in the pair specifies the
                      other in its peer column. No Logical_Switch refers to the
                      router port.
 
        peer: optional string
-              For  a  router  port  used  to connect two logical routers, this
+              For a router port used to  connect  two  logical  routers,  this
               identifies the other router port in the pair by name.
 
-              For a router port attached to a logical switch, this  column  is
+              For  a  router port attached to a logical switch, this column is
               empty.
 
      Common Columns:
@@ -2991,7 +3010,7 @@ Logical_Router_Port TABLE
        external_ids: map of string-string pairs
               See External IDs at the beginning of this document.
 
-              The  ovn-northd  program  copies all these pairs into the exter�‐
+              The ovn-northd program copies all these pairs  into  the  exter�‐
               nal_ids column of the Port_Binding table in OVN_Southbound data‐
               base.
 
@@ -3002,20 +3021,20 @@ Logical_Router_Port TABLE
        status : hosting-chassis: optional string
               This option is populated by ovn-northd.
 
-              When a distributed gateway port is bound to a  location  in  the
-              OVN  Southbound  database  Port_Binding ovn-northd will populate
-              this key with the name of the Chassis that is currently  hosting
+              When  a  distributed  gateway port is bound to a location in the
+              OVN Southbound database Port_Binding  ovn-northd  will  populate
+              this  key with the name of the Chassis that is currently hosting
               this port.
 
 Logical_Router_Static_Route TABLE
        Each record represents a static route.
 
-       When  multiple  routes match a packet, the longest-prefix match is cho‐
-       sen. For a given prefix length, a dst-ip  route  is  preferred  over  a
+       When multiple routes match a packet, the longest-prefix match  is  cho‐
+       sen.  For  a  given  prefix  length, a dst-ip route is preferred over a
        src-ip route.
 
-       When  there  are ECMP routes, i.e. multiple routes with same prefix and
-       policy, one of them will be selected based on the  5-tuple  hashing  of
+       When there are ECMP routes, i.e. multiple routes with same  prefix  and
+       policy,  one  of  them will be selected based on the 5-tuple hashing of
        the packet header.
 
    Summary:
@@ -3040,62 +3059,62 @@ Logical_Router_Static_Route TABLE
               IP prefix of this route (e.g. 192.168.100.0/24).
 
        policy: optional string, either dst-ip or src-ip
-              If  it  is  specified, this setting describes the policy used to
-              make routing decisions. This setting must be one of the  follow‐
+              If it is specified, this setting describes the  policy  used  to
+              make  routing decisions. This setting must be one of the follow‐
               ing strings:
 
-              •      src-ip:  This policy sends the packet to the nexthop when
+              •      src-ip: This policy sends the packet to the nexthop  when
                      the packet’s source IP address matches ip_prefix.
 
-              •      dst-ip: This policy sends the packet to the nexthop  when
+              •      dst-ip:  This policy sends the packet to the nexthop when
                      the packet’s destination IP address matches ip_prefix.
 
               If not specified, the default is dst-ip.
 
        nexthop: string
-              Nexthop  IP address for this route. Nexthop IP address should be
+              Nexthop IP address for this route. Nexthop IP address should  be
               the IP address of a connected router port or the IP address of a
               logical port or can be set to discard for dropping packets which
               match the given route.
 
        output_port: optional string
-              The name of the Logical_Router_Port via which the  packet  needs
-              to  be  sent  out.  This is optional and when not specified, OVN
-              will automatically figure this out based on  the  nexthop.  When
-              this  is  specified  and  there are multiple IP addresses on the
-              router port and none of them are in the same subnet of  nexthop,
-              OVN  chooses  the first IP address as the one via which the nex�‐
+              The  name  of the Logical_Router_Port via which the packet needs
+              to be sent out. This is optional and  when  not  specified,  OVN
+              will  automatically  figure  this out based on the nexthop. When
+              this is specified and there are multiple  IP  addresses  on  the
+              router  port and none of them are in the same subnet of nexthop,
+              OVN chooses the first IP address as the one via which  the  nex�‐
               thop is reachable.
 
        bfd: optional weak reference to BFD
               Reference to BFD row if the route has associated a BFD session
 
        route_table: string
-              Specify any string to assign a route to a separate  routing  ta‐
-              ble.  When  a  Logical Router Port has a configured value in op�‐
-              tions:route_table, only static routes with the same routing  ta‐
-              ble  value  are  considered.  A more detailed description of the
+              Specify  any  string to assign a route to a separate routing ta‐
+              ble. When a Logical Router Port has a configured  value  in  op�‐
+              tions:route_table,  only static routes with the same routing ta‐
+              ble value are considered. A more  detailed  description  of  the
               route lookup behavior is provided below:
 
-              When a packet enters Logical Router (LR), it examines  the  fol‐
+              When  a  packet enters Logical Router (LR), it examines the fol‐
               lowing list of routes:
 
-              •      All  routes to directly connected networks of the LR (in‐
+              •      All routes to directly connected networks of the LR  (in‐
                      cluding networks that are learned from other availability
                      zones within the same LR through OVN-IC).
 
-              •      All static routes of the LR that have the same  route_ta�‐
-                     ble  field value as that of the Logical Router Port’s op�‐
+              •      All  static routes of the LR that have the same route_ta�‐
+                     ble field value as that of the Logical Router Port’s  op�‐
                      tions:route_table (If the option is absent, static routes
                      with an empty route_table field are considered).
 
-              From the resulting list of routes, the route  with  the  longest
+              From  the  resulting  list of routes, the route with the longest
               prefix match takes precedence over others.
 
        external_ids : ic-learned-route: optional string
-              ovn-ic  populates  this  key  if  the  route is learned from the
-              global OVN_IC_Southbound database. In this case the  value  will
-              be   set  to  the  uuid  of  the  row  in  Route  table  of  the
+              ovn-ic populates this key if  the  route  is  learned  from  the
+              global  OVN_IC_Southbound  database. In this case the value will
+              be  set  to  the  uuid  of  the  row  in  Route  table  of   the
               OVN_IC_Southbound database.
 
      Common Columns:
@@ -3106,35 +3125,35 @@ Logical_Router_Static_Route TABLE
      Common options:
 
        options: map of string-string pairs
-              This column provides general key/value settings.  The  supported
+              This  column  provides general key/value settings. The supported
               options are described individually below.
 
        options : ecmp_symmetric_reply: optional string
               If true, then new traffic that arrives over this route will have
-              its  reply  traffic bypass ECMP route selection and will be sent
-              out this route instead. Note  that  this  option  overrides  any
-              rules  set  in the Logical_Router_policy table. This option only
-              works on gateway  routers  (routers  that  have  options:chassis
+              its reply traffic bypass ECMP route selection and will  be  sent
+              out  this  route  instead.  Note  that this option overrides any
+              rules set in the Logical_Router_policy table. This  option  only
+              works  on  gateway  routers  (routers  that have options:chassis
               set).
 
        options : origin: optional string
               In case ovn-interconnection has been learned this route, it will
               have its origin set: either "connected" or "static". This key is
-              supposed  to  be  written only by ovn-ic daemon. ovn-northd then
-              checks  this  value  when  generating   Logical   Flows.   Logi�‐
-              cal_Router_Static_Route  records with same ip_prefix within same
-              Logical Router will have next lookup order based on  origin  key
+              supposed to be written only by ovn-ic  daemon.  ovn-northd  then
+              checks   this   value   when  generating  Logical  Flows.  Logi�‐
+              cal_Router_Static_Route records with same ip_prefix within  same
+              Logical  Router  will have next lookup order based on origin key
               value:
 
               1.  connected
 
               2.  static
 Logical_Router_Policy TABLE
-       Each  row  in  this  table  represents one routing policy for a logical
+       Each row in this table represents one  routing  policy  for  a  logical
        router that points to it through its policies column. The action column
-       for the highest-priority  matching  row  in  this  table  determines  a
-       packet’s  treatment. If no row matches, packets are allowed by default.
-       (Default-deny treatment is possible: add a rule with priority 0,  1  as
+       for  the  highest-priority  matching  row  in  this  table determines a
+       packet’s treatment. If no row matches, packets are allowed by  default.
+       (Default-deny  treatment  is possible: add a rule with priority 0, 1 as
        match, and drop as action.)
 
    Summary:
@@ -3150,17 +3169,17 @@ Logical_Router_Policy TABLE
 
    Details:
        priority: integer, in range 0 to 32,767
-              The  routing  policy’s  priority.  Rules with numerically higher
-              priority take precedence  over  those  with  lower.  A  rule  is
+              The routing policy’s priority.  Rules  with  numerically  higher
+              priority  take  precedence  over  those  with  lower.  A rule is
               uniquely identified by the priority and match string.
 
        match: string
-              The  packets  that  the routing policy should match, in the same
-              expression language used for the match column in the OVN  South‐
+              The packets that the routing policy should match,  in  the  same
+              expression  language used for the match column in the OVN South‐
               bound database’s Logical_Flow table.
 
-              By  default all traffic is allowed. When writing a more restric‐
-              tive policy, it is important to remember to allow flows such  as
+              By default all traffic is allowed. When writing a more  restric‐
+              tive  policy, it is important to remember to allow flows such as
               ARP and IPv6 neighbor discovery packets.
 
        action: string, one of allow, drop, or reroute
@@ -3175,13 +3194,13 @@ Logical_Router_Policy TABLE
        nexthop: optional string
               Note: This column is deprecated in favor of nexthops.
 
-              Next-hop  IP  address for this route, which should be the IP ad‐
-              dress of a connected router port or the IP address of a  logical
+              Next-hop IP address for this route, which should be the  IP  ad‐
+              dress  of a connected router port or the IP address of a logical
               port.
 
        nexthops: set of strings
-              Next-hop  ECMP  IP addresses for this route. Each IP in the list
-              should be the IP address of a connected router port  or  the  IP
+              Next-hop ECMP IP addresses for this route. Each IP in  the  list
+              should  be  the  IP address of a connected router port or the IP
               address of a logical port.
 
               One IP from the list is selected as next hop.
@@ -3193,7 +3212,7 @@ Logical_Router_Policy TABLE
        options : pkt_mark: optional string
               Marks the packet with the value specified when the router policy
               is applied. CMS can inspect this packet marker and take some de‐
-              cisions  if desired. This value is not preserved when the packet
+              cisions if desired. This value is not preserved when the  packet
               goes out on the wire.
 
      Common Columns:
@@ -3205,7 +3224,7 @@ NAT TABLE
        Each record represents a NAT rule.
 
    Summary:
-       type                          string, one of  dnat,  dnat_and_snat,  or
+       type                          string,  one  of  dnat, dnat_and_snat, or
                                      snat
        external_ip                   string
        external_mac                  optional string
@@ -3214,7 +3233,7 @@ NAT TABLE
        logical_port                  optional string
        allowed_ext_ips               optional Address_Set
        exempted_ext_ips              optional Address_Set
-       gateway_port                  optional    weak   reference   to   Logi�‐
+       gateway_port                  optional   weak   reference   to    Logi�‐
                                      cal_Router_Port
        options : stateless           optional string
        options : add_route           optional string
@@ -3225,19 +3244,19 @@ NAT TABLE
        type: string, one of dnat, dnat_and_snat, or snat
               Type of the NAT rule.
 
-              •      When type is dnat, the externally visible IP address  ex�‐
-                     ternal_ip  is DNATted to the IP address logical_ip in the
+              •      When  type is dnat, the externally visible IP address ex�‐
+                     ternal_ip is DNATted to the IP address logical_ip in  the
                      logical space.
 
-              •      When type is snat, IP packets with their  source  IP  ad‐
+              •      When  type  is  snat, IP packets with their source IP ad‐
                      dress that either matches the IP address in logical_ip or
-                     is  in  the network provided by logical_ip is SNATed into
+                     is in the network provided by logical_ip is  SNATed  into
                      the IP address in external_ip.
 
               •      When type is dnat_and_snat, the externally visible IP ad‐
                      dress external_ip is DNATted to the IP address logical_ip
-                     in the logical space. In addition, IP  packets  with  the
-                     source  IP address that matches logical_ip is SNATed into
+                     in  the  logical  space. In addition, IP packets with the
+                     source IP address that matches logical_ip is SNATed  into
                      the IP address in external_ip.
 
        external_ip: string
@@ -3246,14 +3265,14 @@ NAT TABLE
        external_mac: optional string
               A MAC address.
 
-              This is only used on the gateway port  on  distributed  routers.
+              This  is  only  used on the gateway port on distributed routers.
               This must be specified in order for the NAT rule to be processed
               in a distributed manner on all chassis. If this is not specified
-              for  a NAT rule on a distributed router, then this NAT rule will
-              be processed in a centralized manner on  the  gateway  port  in‐
+              for a NAT rule on a distributed router, then this NAT rule  will
+              be  processed  in  a  centralized manner on the gateway port in‐
               stance on the gateway chassis.
 
-              This  MAC  address must be unique on the logical switch that the
+              This MAC address must be unique on the logical switch  that  the
               gateway port is attached to. If the MAC address used on the log�‐
               ical_port is globally unique, then that MAC address can be spec‐
               ified as this external_mac.
@@ -3261,8 +3280,8 @@ NAT TABLE
        external_port_range: string
               L4 source port range
 
-              Range of ports, from which a port number  will  be  picked  that
-              will  replace the source port of to be NATed packet. This is ba‐
+              Range  of  ports,  from  which a port number will be picked that
+              will replace the source port of to be NATed packet. This is  ba‐
               sically PAT (port address translation).
 
               Value of the column is in the format, port_lo-port_hi. For exam‐
@@ -3277,88 +3296,88 @@ NAT TABLE
               The name of the logical port where the logical_ip resides.
 
               This is only used on distributed routers. This must be specified
-              in order for the NAT rule to be processed in a distributed  man‐
+              in  order for the NAT rule to be processed in a distributed man‐
               ner on all chassis. If this is not specified for a NAT rule on a
-              distributed  router,  then  this NAT rule will be processed in a
-              centralized manner on the gateway port instance on  the  gateway
+              distributed router, then this NAT rule will be  processed  in  a
+              centralized  manner  on the gateway port instance on the gateway
               chassis.
 
        allowed_ext_ips: optional Address_Set
-              It  represents  Address Set of external ips that NAT rule is ap‐
+              It represents Address Set of external ips that NAT rule  is  ap‐
               plicable to. For SNAT type NAT rules, this refers to destination
-              addresses. For DNAT type NAT rules, this refers  to  source  ad‐
+              addresses.  For  DNAT  type NAT rules, this refers to source ad‐
               dresses.
 
-              This  configuration overrides the default NAT behavior of apply‐
-              ing a rule solely based on internal IP. Without this  configura‐
-              tion,  NAT  happens  without  considering  the  external IP (i.e
-              dest/source for snat/dnat type rule).  With  this  configuration
-              NAT  rule is applied ONLY if external ip is in the input Address
+              This configuration overrides the default NAT behavior of  apply‐
+              ing  a rule solely based on internal IP. Without this configura‐
+              tion, NAT happens  without  considering  the  external  IP  (i.e
+              dest/source  for  snat/dnat  type rule). With this configuration
+              NAT rule is applied ONLY if external ip is in the input  Address
               Set.
 
        exempted_ext_ips: optional Address_Set
-              It represents Address Set of external ips that NAT rule  is  NOT
-              applicable  to. For SNAT type NAT rules, this refers to destina‐
-              tion addresses. For DNAT type NAT rules, this refers  to  source
+              It  represents  Address Set of external ips that NAT rule is NOT
+              applicable to. For SNAT type NAT rules, this refers to  destina‐
+              tion  addresses.  For DNAT type NAT rules, this refers to source
               addresses.
 
-              This  configuration overrides the default NAT behavior of apply‐
-              ing a rule solely based on internal IP. Without this  configura‐
-              tion,  NAT  happens  without  considering  the  external IP (i.e
-              dest/source for snat/dnat type rule).  With  this  configuration
-              NAT  rule  is NOT applied if external ip is in the input Address
+              This configuration overrides the default NAT behavior of  apply‐
+              ing  a rule solely based on internal IP. Without this configura‐
+              tion, NAT happens  without  considering  the  external  IP  (i.e
+              dest/source  for  snat/dnat  type rule). With this configuration
+              NAT rule is NOT applied if external ip is in the  input  Address
               Set.
 
-              If there are NAT rules in a logical router with  overlapping  IP
-              prefixes  (including /32), then usage of exempted_ext_ips should
-              be avoided in following scenario.  a.  SNAT  rule  (let  us  say
-              RULE1)  with logical_ip PREFIX/MASK (let us say 50.0.0.0/24). b.
-              SNAT rule (let us say RULE2) with logical_ip PREFIX/MASK+1  (let
-              us  say  50.0.0.0/25). c. Now, if exempted_ext_ips is associated
+              If  there  are NAT rules in a logical router with overlapping IP
+              prefixes (including /32), then usage of exempted_ext_ips  should
+              be  avoided  in  following  scenario.  a.  SNAT rule (let us say
+              RULE1) with logical_ip PREFIX/MASK (let us say 50.0.0.0/24).  b.
+              SNAT  rule (let us say RULE2) with logical_ip PREFIX/MASK+1 (let
+              us say 50.0.0.0/25). c. Now, if exempted_ext_ips  is  associated
               with RULE2, then a logical ip which matches both 50.0.0.0/24 and
               50.0.0.0/25 may get the RULE2 applied to it instead of RULE1.
 
-              allowed_ext_ips and exempted_ext_ips are mutually  exclusive  to
-              each  other.  If  both Address Sets are set for a rule, then the
+              allowed_ext_ips  and  exempted_ext_ips are mutually exclusive to
+              each other. If both Address Sets are set for a  rule,  then  the
               NAT rule is not considered.
 
        gateway_port: optional weak reference to Logical_Router_Port
-              A distributed gateway  port  in  the  Logical_Router_Port  table
+              A  distributed  gateway  port  in  the Logical_Router_Port table
               where the NAT rule needs to be applied.
 
               When multiple distributed gateway ports are configured on a Log�‐
-              ical_Router,  applying  a  NAT  rule  at each of the distributed
-              gateway ports might not be desired. Consider the  case  where  a
+              ical_Router, applying a NAT rule  at  each  of  the  distributed
+              gateway  ports  might  not be desired. Consider the case where a
               logical router has 2 distributed gateway port, one with networks
-              50.0.0.10/24  and  the  other with networks 60.0.0.10/24. If the
-              logical  router  has  a  NAT  rule  of  type  snat,   logical_ip
-              10.1.1.0/24  and  external_ip 50.1.1.20/24, the rule needs to be
+              50.0.0.10/24 and the other with networks  60.0.0.10/24.  If  the
+              logical   router  has  a  NAT  rule  of  type  snat,  logical_ip
+              10.1.1.0/24 and external_ip 50.1.1.20/24, the rule needs  to  be
               selectively applied on matching packets entering/leaving through
               the distributed gateway port with networks 50.0.0.10/24.
 
               When a logical router has multiple distributed gateway ports and
               this column is not set for a NAT rule, then the rule will be ap‐
-              plied at the distributed gateway port which is in the same  net‐
-              work  as  the external_ip of the NAT rule, if such a router port
-              exists. If logical router has a single distributed gateway  port
-              and  this column is not set for a NAT rule, the rule will be ap‐
+              plied  at the distributed gateway port which is in the same net‐
+              work as the external_ip of the NAT rule, if such a  router  port
+              exists.  If logical router has a single distributed gateway port
+              and this column is not set for a NAT rule, the rule will be  ap‐
               plied at the distributed gateway port even if the router port is
               not in the same network as the external_ip of the NAT rule.
 
        options : stateless: optional string
-              Indicates if a dnat_and_snat  rule  should  lead  to  connection
+              Indicates  if  a  dnat_and_snat  rule  should lead to connection
               tracking state or not.
 
        options : add_route: optional string
-              If  set  to  true, then neighbor routers will have logical flows
-              added that will allow for routing to the NAT  address.  It  also
-              will  have  ARP  resolution logical flows added. By setting this
-              option,  it  means  there  is  no  reason  to  create  a   Logi�‐
-              cal_Router_Static_Route  from  neighbor  routers to this NAT ad‐
-              dress. It also means that no ARP request is required for  neigh‐
-              bor  routers  to  learn the IP-MAC mapping for this NAT address.
+              If set to true, then neighbor routers will  have  logical  flows
+              added  that  will  allow for routing to the NAT address. It also
+              will have ARP resolution logical flows added.  By  setting  this
+              option,   it  means  there  is  no  reason  to  create  a  Logi�‐
+              cal_Router_Static_Route from neighbor routers to  this  NAT  ad‐
+              dress.  It also means that no ARP request is required for neigh‐
+              bor routers to learn the IP-MAC mapping for  this  NAT  address.
               This option only applies to NATs of type dnat and dnat_and_snat.
-              For more information about what flows are added for  IP  routes,
+              For  more  information about what flows are added for IP routes,
               please see the ovn-northd manpage section on IP Routing.
 
      Common Columns:
@@ -3367,13 +3386,13 @@ NAT TABLE
               See External IDs at the beginning of this document.
 
 DHCP_Options TABLE
-       OVN  implements  native  DHCPv4  support which caters to the common use
-       case of providing an IPv4 address to a booting  instance  by  providing
+       OVN implements native DHCPv4 support which caters  to  the  common  use
+       case  of  providing  an IPv4 address to a booting instance by providing
        stateless replies to DHCPv4 requests based on statically configured ad‐
-       dress  mappings. To do this it allows a short list of DHCPv4 options to
+       dress mappings. To do this it allows a short list of DHCPv4 options  to
        be configured and applied at each compute host running ovn-controller.
 
-       OVN also implements native  DHCPv6  support  which  provides  stateless
+       OVN  also  implements  native  DHCPv6  support which provides stateless
        replies to DHCPv6 requests.
 
    Summary:
@@ -3382,7 +3401,7 @@ DHCP_Options TABLE
          Mandatory DHCPv4 options:
             options : server_id      optional string
             options : server_mac     optional string
-            options : lease_time     optional  string,  containing an integer,
+            options : lease_time     optional string, containing  an  integer,
                                      in range 0 to 4,294,967,295
          IPv4 DHCP Options:
             options : router         optional string
@@ -3410,24 +3429,24 @@ DHCP_Options TABLE
                                      optional string, either 0 or 1
             options : ethernet_encap optional string, either 0 or 1
          Integer DHCP Options:
-            options : default_ttl    optional string, containing  an  integer,
+            options : default_ttl    optional  string,  containing an integer,
                                      in range 0 to 255
-            options : tcp_ttl        optional  string,  containing an integer,
+            options : tcp_ttl        optional string, containing  an  integer,
                                      in range 0 to 255
-            options : mtu            optional string, containing  an  integer,
+            options : mtu            optional  string,  containing an integer,
                                      in range 68 to 65,535
-            options : T1             optional  string,  containing an integer,
+            options : T1             optional string, containing  an  integer,
                                      in range 68 to 4,294,967,295
-            options : T2             optional string, containing  an  integer,
+            options : T2             optional  string,  containing an integer,
                                      in range 68 to 4,294,967,295
             options : arp_cache_timeout
-                                     optional  string,  containing an integer,
-                                     in range 0 to 255
-            options : tcp_keepalive_interval
                                      optional string, containing  an  integer,
                                      in range 0 to 255
-            options : netbios_node_type
+            options : tcp_keepalive_interval
                                      optional  string,  containing an integer,
+                                     in range 0 to 255
+            options : netbios_node_type
+                                     optional string, containing  an  integer,
                                      in range 0 to 255
          String DHCP Options:
             options : wpad           optional string
@@ -3461,14 +3480,14 @@ DHCP_Options TABLE
 
    Details:
        cidr: string
-              The DHCPv4/DHCPv6 options will be included if the  logical  port
+              The  DHCPv4/DHCPv6  options will be included if the logical port
               has its IP address in this cidr.
 
      DHCPv4 options:
 
-       The  CMS  should define the set of DHCPv4 options as key/value pairs in
-       the options column of this table. For ovn-controller to  include  these
-       DHCPv4  options, the dhcpv4_options of Logical_Switch_Port should refer
+       The CMS should define the set of DHCPv4 options as key/value  pairs  in
+       the  options  column of this table. For ovn-controller to include these
+       DHCPv4 options, the dhcpv4_options of Logical_Switch_Port should  refer
        to an entry in this table.
 
      Mandatory DHCPv4 options:
@@ -3477,7 +3496,7 @@ DHCP_Options TABLE
 
        options : server_id: optional string
               The IP address for the DHCP server to use. This should be in the
-              subnet of the offered IP. This is also included in the DHCP  of‐
+              subnet  of the offered IP. This is also included in the DHCP of‐
               fer as option 54, ``server identifier.’’
 
        options : server_mac: optional string
@@ -3491,14 +3510,14 @@ DHCP_Options TABLE
 
      IPv4 DHCP Options:
 
-       Below  are  the  supported  DHCPv4 options whose values are an IPv4 ad‐
-       dress, e.g. 192.168.1.1. Some options accept  multiple  IPv4  addresses
-       enclosed  within  curly braces, e.g. {192.168.1.2, 192.168.1.3}. Please
+       Below are the supported DHCPv4 options whose values  are  an  IPv4  ad‐
+       dress,  e.g.  192.168.1.1.  Some options accept multiple IPv4 addresses
+       enclosed within curly braces, e.g. {192.168.1.2,  192.168.1.3}.  Please
        refer to RFC 2132 for more details on DHCPv4 options and their codes.
 
        options : router: optional string
-              The IP address of a gateway for the client to use.  This  should
-              be  in  the subnet of the offered IP. The DHCPv4 option code for
+              The  IP  address of a gateway for the client to use. This should
+              be in the subnet of the offered IP. The DHCPv4 option  code  for
               this option is 3.
 
        options : netmask: optional string
@@ -3535,19 +3554,19 @@ DHCP_Options TABLE
               The DHCPv4 option code for this option is 121.
 
               This option can contain one or more static routes, each of which
-              consists of a destination descriptor and the IP address  of  the
+              consists  of  a destination descriptor and the IP address of the
               router that should be used to reach that destination. Please see
               RFC 3442 for more details.
 
               Example: {30.0.0.0/24,10.0.0.10, 0.0.0.0/0,10.0.0.1}
 
        options : ms_classless_static_route: optional string
-              The  DHCPv4  option  code for this option is 249. This option is
+              The DHCPv4 option code for this option is 249.  This  option  is
               similar to classless_static_route supported by Microsoft Windows
               DHCPv4 clients.
 
        options : next_server: optional string
-              The DHCPv4 option code for setting the "Next server IP  address"
+              The  DHCPv4 option code for setting the "Next server IP address"
               field in the DHCP header.
 
      Boolean DHCP Options:
@@ -3582,14 +3601,14 @@ DHCP_Options TABLE
 
        options : T1: optional string, containing an integer, in range 68 to
        4,294,967,295
-              This  specifies  the time interval from address assignment until
+              This specifies the time interval from address  assignment  until
               the client begins trying to renew its address. The DHCPv4 option
               code for this option is 58.
 
        options : T2: optional string, containing an integer, in range 68 to
        4,294,967,295
-              This specifies the time interval from address  assignment  until
-              the  client  begins trying to rebind its address. The DHCPv4 op‐
+              This  specifies  the time interval from address assignment until
+              the client begins trying to rebind its address. The  DHCPv4  op‐
               tion code for this option is 59.
 
        options : arp_cache_timeout: optional string, containing an integer, in
@@ -3612,30 +3631,30 @@ DHCP_Options TABLE
        These options accept a string value.
 
        options : wpad: optional string
-              The DHCPv4 option code for this option is 252.  This  option  is
-              used  as part of web proxy auto discovery to provide a URL for a
+              The  DHCPv4  option  code for this option is 252. This option is
+              used as part of web proxy auto discovery to provide a URL for  a
               web proxy.
 
        options : bootfile_name: optional string
-              The DHCPv4 option code for this option is  67.  This  option  is
+              The  DHCPv4  option  code  for this option is 67. This option is
               used to identify a bootfile.
 
        options : path_prefix: optional string
               The DHCPv4 option code for this option is 210. In PXELINUX’ case
-              this  option is used to set a common path prefix, instead of de‐
+              this option is used to set a common path prefix, instead of  de‐
               riving it from the bootfile name.
 
        options : tftp_server_address: optional string
-              The DHCPv4 option code for this option is 150. The  option  con‐
-              tains  one  or more IPv4 addresses that the client MAY use. This
+              The  DHCPv4  option code for this option is 150. The option con‐
+              tains one or more IPv4 addresses that the client MAY  use.  This
               option is Cisco proprietary, the IEEE standard that matches with
               this requirement is option 66 (tftp_server).
 
        options : hostname: optional string
-              The DHCPv4 option code for this option is 12. If set,  indicates
-              the  DHCPv4 option "Hostname". Alternatively, this option can be
+              The  DHCPv4 option code for this option is 12. If set, indicates
+              the DHCPv4 option "Hostname". Alternatively, this option can  be
               configured   in   options:hostname   column   in   table   Logi�‐
-              cal_Switch_Port.  If  Hostname  option value is set in both con‐
+              cal_Switch_Port. If Hostname option value is set  in  both  con‐
               flicting  Logical_Switch_Port  and  DHCP_Options  tables,  Logi�‐
               cal_Switch_Port takes precedence.
 
@@ -3645,10 +3664,10 @@ DHCP_Options TABLE
               names via the Domain Name System.
 
        options : bootfile_name_alt: optional string
-              "bootfile_name_alt"  option  is  used to support iPXE. When both
+              "bootfile_name_alt" option is used to support  iPXE.  When  both
               "bootfile_name" and "bootfile_name_alt" are provided by the CMS,
-              "bootfile_name" will be used for option 67 if the  dhcp  request
-              contains  etherboot  option (175), otherwise "bootfile_name_alt"
+              "bootfile_name"  will  be used for option 67 if the dhcp request
+              contains etherboot option (175),  otherwise  "bootfile_name_alt"
               will be used.
 
        options : broadcast_address: optional string
@@ -3664,7 +3683,7 @@ DHCP_Options TABLE
 
       DHCP Options of type domains:
 
-       These options accept string value which is a comma  separated  list  of
+       These  options  accept  string value which is a comma separated list of
        domain names. The domain names are encoded based on RFC 1035.
 
        options : domain_search_list: optional string
@@ -3672,10 +3691,10 @@ DHCP_Options TABLE
 
      DHCPv6 options:
 
-       OVN  also  implements  native DHCPv6 support. The CMS should define the
-       set of DHCPv6 options as key/value pairs.  The  define  DHCPv6  options
-       will  be  included  in  the  DHCPv6  response to the DHCPv6 Solicit/Re‐
-       quest/Confirm packet from the logical ports having the  IPv6  addresses
+       OVN also implements native DHCPv6 support. The CMS  should  define  the
+       set  of  DHCPv6  options  as key/value pairs. The define DHCPv6 options
+       will be included in the  DHCPv6  response  to  the  DHCPv6  Solicit/Re‐
+       quest/Confirm  packet  from the logical ports having the IPv6 addresses
        in the cidr.
 
      Mandatory DHCPv6 options:
@@ -3683,17 +3702,17 @@ DHCP_Options TABLE
        The following options must be defined.
 
        options : server_id: optional string
-              The  Ethernet  address  for the DHCP server to use. This is also
-              included in the DHCPv6 reply as option 2, ``Server  Identifier’’
-              to  carry  a  DUID  identifying  a server between a client and a
-              server. ovn-controller defines DUID based on Link-layer  Address
+              The Ethernet address for the DHCP server to use.  This  is  also
+              included  in the DHCPv6 reply as option 2, ``Server Identifier’’
+              to carry a DUID identifying a server  between  a  client  and  a
+              server.  ovn-controller defines DUID based on Link-layer Address
               [DUID-LL].
 
      IPv6 DHCPv6 options:
 
-       Below  are  the  supported  DHCPv6 options whose values are an IPv6 ad‐
-       dress, e.g. aef0::4. Some options accept multiple  IPv6  addresses  en‐
-       closed  within  curly  braces, e.g. {aef0::4, aef0::5}. Please refer to
+       Below are the supported DHCPv6 options whose values  are  an  IPv6  ad‐
+       dress,  e.g.  aef0::4.  Some options accept multiple IPv6 addresses en‐
+       closed within curly braces, e.g. {aef0::4, aef0::5}.  Please  refer  to
        RFC 3315 for more details on DHCPv6 options and their codes.
 
        options : dns_server: optional string
@@ -3706,21 +3725,21 @@ DHCP_Options TABLE
 
        options : domain_search: optional string
               The DHCPv6 option code for this option is 24. This option speci‐
-              fies the domain search list the client  should  use  to  resolve
+              fies  the  domain  search  list the client should use to resolve
               hostnames with DNS.
 
               Example: "ovn.org".
 
        options : dhcpv6_stateless: optional string
-              This  option specifies the OVN native DHCPv6 will work in state‐
+              This option specifies the OVN native DHCPv6 will work in  state‐
               less mode, which means OVN native DHCPv6 will not offer IPv6 ad‐
-              dresses for VM/VIF ports, but only reply  other  configurations,
-              such  as  DNS  and  domain search list. When setting this option
-              with string value "true", VM/VIF will configure  IPv6  addresses
+              dresses  for  VM/VIF ports, but only reply other configurations,
+              such as DNS and domain search list.  When  setting  this  option
+              with  string  value "true", VM/VIF will configure IPv6 addresses
               by stateless way. Default value for this option is false.
 
        options : fqdn: optional string
-              The  DHCPv6 option code for this option is 39. If set, indicates
+              The DHCPv6 option code for this option is 39. If set,  indicates
               the DHCPv6 option "FQDN".
 
      Common Columns:
@@ -3729,14 +3748,14 @@ DHCP_Options TABLE
               See External IDs at the beginning of this document.
 
 Connection TABLE
-       Configuration for a database connection to  an  Open  vSwitch  database
+       Configuration  for  a  database  connection to an Open vSwitch database
        (OVSDB) client.
 
-       This  table  primarily  configures  the  Open  vSwitch  database server
+       This table  primarily  configures  the  Open  vSwitch  database  server
        (ovsdb-server).
 
-       The Open vSwitch database server can initiate and maintain active  con‐
-       nections  to  remote  clients.  It can also listen for database connec‐
+       The  Open vSwitch database server can initiate and maintain active con‐
+       nections to remote clients. It can also  listen  for  database  connec‐
        tions.
 
    Summary:
@@ -3748,17 +3767,17 @@ Connection TABLE
        Status:
          is_connected                boolean
          status : last_error         optional string
-         status : state              optional string, one of ACTIVE,  BACKOFF,
+         status : state              optional  string, one of ACTIVE, BACKOFF,
                                      CONNECTING, IDLE, or VOID
-         status : sec_since_connect  optional  string,  containing an integer,
+         status : sec_since_connect  optional string, containing  an  integer,
                                      at least 0
          status : sec_since_disconnect
-                                     optional string, containing  an  integer,
+                                     optional  string,  containing an integer,
                                      at least 0
          status : locks_held         optional string
          status : locks_waiting      optional string
          status : locks_lost         optional string
-         status : n_connections      optional  string,  containing an integer,
+         status : n_connections      optional string, containing  an  integer,
                                      at least 2
          status : bound_port         optional string, containing an integer
        Common Columns:
@@ -3774,20 +3793,20 @@ Connection TABLE
               The following connection methods are currently supported:
 
               ssl:host[:port]
-                     The specified SSL port on the host  at  the  given  host,
+                     The  specified  SSL  port  on the host at the given host,
                      which can either be a DNS name (if built with unbound li‐
-                     brary)  or  an IP address. A valid SSL configuration must
-                     be provided when this form is  used,  this  configuration
-                     can  be specified via command-line options or the SSL ta‐
+                     brary) or an IP address. A valid SSL  configuration  must
+                     be  provided  when  this form is used, this configuration
+                     can be specified via command-line options or the SSL  ta‐
                      ble.
 
                      If port is not specified, it defaults to 6640.
 
-                     SSL support is an optional feature  that  is  not  always
+                     SSL  support  is  an  optional feature that is not always
                      built as part of Open vSwitch.
 
               tcp:host[:port]
-                     The  specified  TCP  port  on the host at the given host,
+                     The specified TCP port on the host  at  the  given  host,
                      which can either be a DNS name (if built with unbound li‐
                      brary) or an IP address. If host is an IPv6 address, wrap
                      it in square brackets, e.g. tcp:[::1]:6640.
@@ -3795,54 +3814,54 @@ Connection TABLE
                      If port is not specified, it defaults to 6640.
 
               pssl:[port][:host]
-                     Listens for SSL connections on the  specified  TCP  port.
-                     Specify  0  for  port  to  have  the kernel automatically
-                     choose an available port. If host, which can either be  a
-                     DNS  name  (if  built  with unbound library) or an IP ad‐
-                     dress, is specified, then connections are  restricted  to
+                     Listens  for  SSL  connections on the specified TCP port.
+                     Specify 0 for  port  to  have  the  kernel  automatically
+                     choose  an available port. If host, which can either be a
+                     DNS name (if built with unbound library)  or  an  IP  ad‐
+                     dress,  is  specified, then connections are restricted to
                      the resolved or specified local IPaddress (either IPv4 or
                      IPv6 address). If host is an IPv6 address, wrap in square
-                     brackets,  e.g. pssl:6640:[::1]. If host is not specified
-                     then it listens only on IPv4 (but not IPv6) addresses.  A
-                     valid  SSL  configuration must be provided when this form
-                     is used, this can be specified  either  via  command-line
+                     brackets, e.g. pssl:6640:[::1]. If host is not  specified
+                     then  it listens only on IPv4 (but not IPv6) addresses. A
+                     valid SSL configuration must be provided when  this  form
+                     is  used,  this  can be specified either via command-line
                      options or the SSL table.
 
                      If port is not specified, it defaults to 6640.
 
-                     SSL  support  is  an  optional feature that is not always
+                     SSL support is an optional feature  that  is  not  always
                      built as part of Open vSwitch.
 
               ptcp:[port][:host]
-                     Listens for connections on the specified TCP port.  Spec‐
+                     Listens  for connections on the specified TCP port. Spec‐
                      ify 0 for port to have the kernel automatically choose an
-                     available  port.  If host, which can either be a DNS name
-                     (if built with unbound library)  or  an  IP  address,  is
-                     specified,  then  connections  are  restricted to the re‐
+                     available port. If host, which can either be a  DNS  name
+                     (if  built  with  unbound  library)  or an IP address, is
+                     specified, then connections are  restricted  to  the  re‐
                      solved or specified local IP address (either IPv4 or IPv6
-                     address). If host is an IPv6 address, wrap it  in  square
-                     brackets,  e.g. ptcp:6640:[::1]. If host is not specified
+                     address).  If  host is an IPv6 address, wrap it in square
+                     brackets, e.g. ptcp:6640:[::1]. If host is not  specified
                      then it listens only on IPv4 addresses.
 
                      If port is not specified, it defaults to 6640.
 
-              When multiple clients are configured, the target values must  be
+              When  multiple clients are configured, the target values must be
               unique. Duplicate target values yield unspecified results.
 
      Client Failure Detection and Handling:
 
        max_backoff: optional integer, at least 1,000
-              Maximum  number  of  milliseconds to wait between connection at‐
+              Maximum number of milliseconds to wait  between  connection  at‐
               tempts. Default is implementation-specific.
 
        inactivity_probe: optional integer
               Maximum number of milliseconds of idle time on connection to the
-              client before sending  an  inactivity  probe  message.  If  Open
-              vSwitch  does  not communicate with the client for the specified
-              number of seconds, it will send a probe. If a  response  is  not
-              received  for  the  same additional amount of time, Open vSwitch
-              assumes the connection has been broken and  attempts  to  recon‐
-              nect.  Default is implementation-specific. A value of 0 disables
+              client  before  sending  an  inactivity  probe  message. If Open
+              vSwitch does not communicate with the client for  the  specified
+              number  of  seconds,  it will send a probe. If a response is not
+              received for the same additional amount of  time,  Open  vSwitch
+              assumes  the  connection  has been broken and attempts to recon‐
+              nect. Default is implementation-specific. A value of 0  disables
               inactivity probes.
 
      Status:
@@ -3851,12 +3870,12 @@ Connection TABLE
        in the status columns may be updated depends on the target type.
 
        When target specifies a connection method that listens for inbound con‐
-       nections (e.g. ptcp: or punix:), both  n_connections  and  is_connected
+       nections  (e.g.  ptcp:  or punix:), both n_connections and is_connected
        may also be updated while the remaining key-value pairs are omitted.
 
-       On  the  other  hand, when target specifies an outbound connection, all
-       key-value pairs may be updated, except  the  above-mentioned  two  key-
-       value  pairs associated with inbound connection targets. They are omit‐
+       On the other hand, when target specifies an  outbound  connection,  all
+       key-value  pairs  may  be  updated, except the above-mentioned two key-
+       value pairs associated with inbound connection targets. They are  omit‐
        ted.
 
        is_connected: boolean
@@ -3864,7 +3883,7 @@ Connection TABLE
 
        status : last_error: optional string
               A human-readable description of the last error on the connection
-              to the manager; i.e. strerror(errno). This key will  exist  only
+              to  the  manager; i.e. strerror(errno). This key will exist only
               if an error has occurred.
 
        status : state: optional string, one of ACTIVE, BACKOFF, CONNECTING,
@@ -3883,7 +3902,7 @@ Connection TABLE
 
               IDLE   Connection is idle. Waiting for response to keep-alive.
 
-              These  values  may  change in the future. They are provided only
+              These values may change in the future. They  are  provided  only
               for human consumption.
 
        status : sec_since_connect: optional string, containing an integer, at
@@ -3894,48 +3913,48 @@ Connection TABLE
 
        status : sec_since_disconnect: optional string, containing an integer,
        at least 0
-              The amount of time since this client last disconnected from  the
-              database  (in  seconds). Value is empty if client has never dis‐
+              The  amount of time since this client last disconnected from the
+              database (in seconds). Value is empty if client has  never  dis‐
               connected.
 
        status : locks_held: optional string
-              Space-separated list of the names of OVSDB locks that  the  con‐
-              nection  holds.  Omitted  if  the  connection  does not hold any
+              Space-separated  list  of the names of OVSDB locks that the con‐
+              nection holds. Omitted if  the  connection  does  not  hold  any
               locks.
 
        status : locks_waiting: optional string
-              Space-separated list of the names of OVSDB locks that  the  con‐
-              nection  is currently waiting to acquire. Omitted if the connec‐
+              Space-separated  list  of the names of OVSDB locks that the con‐
+              nection is currently waiting to acquire. Omitted if the  connec‐
               tion is not waiting for any locks.
 
        status : locks_lost: optional string
-              Space-separated list of the names of OVSDB locks that  the  con‐
-              nection  has  had  stolen by another OVSDB client. Omitted if no
+              Space-separated  list  of the names of OVSDB locks that the con‐
+              nection has had stolen by another OVSDB client.  Omitted  if  no
               locks have been stolen from this connection.
 
        status : n_connections: optional string, containing an integer, at
        least 2
-              When target specifies a connection method that listens  for  in‐
-              bound  connections  (e.g. ptcp: or pssl:) and more than one con‐
-              nection is actually active, the value is the  number  of  active
+              When  target  specifies a connection method that listens for in‐
+              bound connections (e.g. ptcp: or pssl:) and more than  one  con‐
+              nection  is  actually  active, the value is the number of active
               connections. Otherwise, this key-value pair is omitted.
 
        status : bound_port: optional string, containing an integer
               When target is ptcp: or pssl:, this is the TCP port on which the
-              OVSDB  server  is  listening.  (This is particularly useful when
-              target specifies a port of 0, allowing the kernel to choose  any
+              OVSDB server is listening. (This  is  particularly  useful  when
+              target  specifies a port of 0, allowing the kernel to choose any
               available port.)
 
      Common Columns:
 
-       The  overall purpose of these columns is described under Common Columns
+       The overall purpose of these columns is described under Common  Columns
        at the beginning of this document.
 
        external_ids: map of string-string pairs
 
        other_config: map of string-string pairs
 DNS TABLE
-       Each row in this table stores the DNS records. The  Logical_Switch  ta‐
+       Each  row  in this table stores the DNS records. The Logical_Switch ta‐
        ble’s dns_records references these records.
 
    Summary:
@@ -3947,8 +3966,8 @@ DNS TABLE
        records: map of string-string pairs
               Key-value pair of DNS records with DNS query name as the key and
               value as a string of IP address(es) separated by comma or space.
-              For  PTR  requests,  the  key-value pair can be Reverse IPv4 ad�‐
-              dress.in-addr.arpa and the value DNS domain name. For  IPv6  ad‐
+              For PTR requests, the key-value pair can  be  Reverse  IPv4  ad�‐
+              dress.in-addr.arpa  and  the value DNS domain name. For IPv6 ad‐
               dresses, the key has to be Reverse IPv6 address.ip6.arpa.
 
               Example:  "vm1.ovn.org" = "10.0.0.4 aef0::4"
@@ -3956,13 +3975,13 @@ DNS TABLE
               Example:  "4.0.0.10.in-addr.arpa" = "vm1.ovn.org"
 
        options : ovn-owned: optional string
-              If  set  to  true, then the OVN will be the main responsible for
+              If set to true, then the OVN will be the  main  responsible  for
               DNS Records within this row.
 
-              A DNS row with this option set to true can be  created  for  do‐
-              mains  that  the  user needs to configure locally and don’t care
-              about IPv6 only interested in IPv4 or vice versa. This will  let
-              ovn  send  IPv4 DNS reply and reject/ignore IPv6 queries to save
+              A  DNS  row  with this option set to true can be created for do‐
+              mains that the user needs to configure locally  and  don’t  care
+              about  IPv6 only interested in IPv4 or vice versa. This will let
+              ovn send IPv4 DNS reply and reject/ignore IPv6 queries  to  save
               the waiting for a timeout on those uninteresting queries.
 
        external_ids: map of string-string pairs
@@ -3983,28 +4002,28 @@ SSL TABLE
 
    Details:
        private_key: string
-              Name of a PEM file  containing  the  private  key  used  as  the
+              Name  of  a  PEM  file  containing  the  private key used as the
               switch’s identity for SSL connections to the controller.
 
        certificate: string
-              Name  of a PEM file containing a certificate, signed by the cer‐
+              Name of a PEM file containing a certificate, signed by the  cer‐
               tificate authority (CA) used by the controller and manager, that
-              certifies the switch’s private key,  identifying  a  trustworthy
+              certifies  the  switch’s  private key, identifying a trustworthy
               switch.
 
        ca_cert: string
-              Name  of a PEM file containing the CA certificate used to verify
+              Name of a PEM file containing the CA certificate used to  verify
               that the switch is connected to a trustworthy controller.
 
        bootstrap_ca_cert: boolean
-              If set to true, then Open vSwitch will attempt to obtain the  CA
-              certificate  from the controller on its first SSL connection and
-              save it to the named PEM file. If it is successful, it will  im‐
-              mediately  drop  the  connection and reconnect, and from then on
-              all SSL connections  must  be  authenticated  by  a  certificate
-              signed  by the CA certificate thus obtained. This option exposes
-              the SSL connection to a man-in-the-middle attack  obtaining  the
-              initial  CA  certificate.  It may still be useful for bootstrap‐
+              If  set to true, then Open vSwitch will attempt to obtain the CA
+              certificate from the controller on its first SSL connection  and
+              save  it to the named PEM file. If it is successful, it will im‐
+              mediately drop the connection and reconnect, and  from  then  on
+              all  SSL  connections  must  be  authenticated  by a certificate
+              signed by the CA certificate thus obtained. This option  exposes
+              the  SSL  connection to a man-in-the-middle attack obtaining the
+              initial CA certificate. It may still be  useful  for  bootstrap‐
               ping.
 
        ssl_protocols: string
@@ -4012,18 +4031,18 @@ SSL TABLE
               fault when this option is omitted is TLSv1,TLSv1.1,TLSv1.2.
 
        ssl_ciphers: string
-              List of ciphers (in OpenSSL cipher string  format)  to  be  sup‐
-              ported  for  SSL  connections.  The  default when this option is
+              List  of  ciphers  (in  OpenSSL cipher string format) to be sup‐
+              ported for SSL connections. The  default  when  this  option  is
               omitted is HIGH:!aNULL:!MD5.
 
      Common Columns:
 
-       The overall purpose of these columns is described under Common  Columns
+       The  overall purpose of these columns is described under Common Columns
        at the beginning of this document.
 
        external_ids: map of string-string pairs
 Gateway_Chassis TABLE
-       Association  of  a  chassis to a logical router port. The traffic going
+       Association of a chassis to a logical router port.  The  traffic  going
        out through an specific router port will be redirected to a chassis, or
        a set of them in high availability configurations.
 
@@ -4044,11 +4063,11 @@ Gateway_Chassis TABLE
 
        chassis_name: string
               Name of the chassis that we want to redirect traffic through for
-              the  associated  logical  router  port. The value must match the
+              the associated logical router port. The  value  must  match  the
               name column of the Chassis table in the OVN_Southbound database.
 
        priority: integer, in range 0 to 32,767
-              This is the priority of a chassis among all Gateway_Chassis  be‐
+              This  is the priority of a chassis among all Gateway_Chassis be‐
               longing to the same logical router port.
 
        options: map of string-string pairs
@@ -4061,11 +4080,11 @@ Gateway_Chassis TABLE
 
 HA_Chassis_Group TABLE
        Table representing a group of chassis which can provide high availabil‐
-       ity  services.  Each  chassis  in the group is represented by the table
-       HA_Chassis. The HA chassis with highest priority will be the master  of
-       this  group. If the master chassis failover is detected, the HA chassis
-       with the next higher priority takes over the responsibility of  provid‐
-       ing  the  HA.  If a distributed gateway router port references a row in
+       ity services. Each chassis in the group is  represented  by  the  table
+       HA_Chassis.  The HA chassis with highest priority will be the master of
+       this group. If the master chassis failover is detected, the HA  chassis
+       with  the next higher priority takes over the responsibility of provid‐
+       ing the HA. If a distributed gateway router port references  a  row  in
        this table, then the master HA chassis in this group provides the gate‐
        way functionality.
 
@@ -4096,12 +4115,12 @@ HA_Chassis TABLE
 
    Details:
        chassis_name: string
-              Name of the chassis which is part of the HA chassis  group.  The
-              value  must  match  the  name column of the Chassis table in the
+              Name  of  the chassis which is part of the HA chassis group. The
+              value must match the name column of the  Chassis  table  in  the
               OVN_Southbound database.
 
        priority: integer, in range 0 to 32,767
-              Priority of the chassis. Chassis with highest priority  will  be
+              Priority  of  the chassis. Chassis with highest priority will be
               the master.
 
      Common Columns:
@@ -4110,13 +4129,13 @@ HA_Chassis TABLE
               See External IDs at the beginning of this document.
 
 BFD TABLE
-       Contains  BFD  parameter  for ovn-controller BFD configuration. OVN BFD
+       Contains BFD parameter for ovn-controller BFD  configuration.  OVN  BFD
        implementation is used to provide detection of failures in the path be‐
-       tween adjacent forwarding engines, including the  OVN  interfaces.  OVN
-       BFD  provides link status info to OVN northd in order to update logical
-       flows according to the status of BFD endpoints. In the  current  imple‐
-       mentation  OVN  BFD  is  used to check next-hop status for ECMP routes.
-       Please note BFD table refers to OVN BFD implementation and not  to  OVS
+       tween  adjacent  forwarding  engines, including the OVN interfaces. OVN
+       BFD provides link status info to OVN northd in order to update  logical
+       flows  according  to the status of BFD endpoints. In the current imple‐
+       mentation OVN BFD is used to check next-hop  status  for  ECMP  routes.
+       Please  note  BFD table refers to OVN BFD implementation and not to OVS
        legacy one.
 
    Summary:
@@ -4144,21 +4163,21 @@ BFD TABLE
               BFD peer IP address.
 
        min_tx: optional integer, at least 1
-              This  is  the  minimum interval, in milliseconds, that the local
-              system would like to use when transmitting BFD Control  packets,
-              less  any  jitter  applied.  The value zero is reserved. Default
+              This is the minimum interval, in milliseconds,  that  the  local
+              system  would like to use when transmitting BFD Control packets,
+              less any jitter applied. The value  zero  is  reserved.  Default
               value is 1000 ms.
 
        min_rx: optional integer
-              This is the minimum interval, in milliseconds, between  received
-              BFD  Control  packets that this system is capable of supporting,
-              less any jitter applied by the sender. If this  value  is  zero,
-              the  transmitting system does not want the remote system to send
+              This  is the minimum interval, in milliseconds, between received
+              BFD Control packets that this system is capable  of  supporting,
+              less  any  jitter  applied by the sender. If this value is zero,
+              the transmitting system does not want the remote system to  send
               any periodic BFD Control packets.
 
        detect_mult: optional integer, at least 1
-              Detection time multiplier.  The  negotiated  transmit  interval,
-              multiplied  by  this  value, provides the Detection Time for the
+              Detection  time  multiplier.  The  negotiated transmit interval,
+              multiplied by this value, provides the Detection  Time  for  the
               receiving system in Asynchronous mode. Default value is 5.
 
        options: map of string-string pairs
@@ -4194,7 +4213,7 @@ Static_MAC_Binding TABLE
    Details:
      Configuration:
 
-       ovn-northd reads configuration from these columns  and  propagates  the
+       ovn-northd  reads  configuration  from these columns and propagates the
        value to SBDB.
 
        logical_port: string
@@ -4210,19 +4229,19 @@ Static_MAC_Binding TABLE
               Override dynamically learnt MACs.
 
 Chassis_Template_Var TABLE
-       One  record per chassis, each containing a map, variables, between tem‐
-       plate variable names and their value for that specific chassis. A  tem‐
+       One record per chassis, each containing a map, variables, between  tem‐
+       plate  variable names and their value for that specific chassis. A tem‐
        plate variable has a name and potentially different values on different
-       hypervisors  in  the  OVN  cluster. For example, two rows, R1 = (.chas�‐
-       sis=C1, variables={(N: V1)} and R2 = (.chassis=C2, variables={(N:  V2)}
+       hypervisors in the OVN cluster. For example, two  rows,  R1  =  (.chas�‐
+       sis=C1,  variables={(N: V1)} and R2 = (.chassis=C2, variables={(N: V2)}
        will make ovn-controller running on chassis C1 and C2 interpret the to‐
-       ken  N  either  as V1 (on C1) or as V2 (on C2). Users can refer to tem‐
+       ken N either as V1 (on C1) or as V2 (on C2). Users can  refer  to  tem‐
        plate variables from within other logical components, e.g., within ACL,
-       QoS or Logical_Router_Policy matches  or  from  Load_Balancer  VIP  and
+       QoS  or  Logical_Router_Policy  matches  or  from Load_Balancer VIP and
        backend definitions.
 
-       If  a template variable is referenced on a chassis for which that vari‐
-       able is not defined then ovn-controller running on  that  chassis  will
+       If a template variable is referenced on a chassis for which that  vari‐
+       able  is  not  defined then ovn-controller running on that chassis will
        just interpret it as a raw string literal.
 
    Summary:

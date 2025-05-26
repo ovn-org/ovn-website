@@ -2679,6 +2679,8 @@
                                      in range 68 to 65,535
          <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b><b>_</b><b>m</b><b>t</b><b>u</b><b>_</b><b>b</b><b>y</b><b>p</b><b>a</b><b>s</b><b>s</b>
                                      optional string
+         <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>c</b><b>e</b><b>n</b><b>t</b><b>r</b><b>a</b><b>l</b><b>i</b><b>z</b><b>e</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>i</b><b>n</b><b>g</b>
+                                     optional string, either <b>t</b><b>r</b><b>u</b><b>e</b> or <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>
        <u>A</u><u>t</u><u>t</u><u>a</u><u>c</u><u>h</u><u>m</u><u>e</u><u>n</u><u>t</u><u>:</u>
          <b>p</b><b>e</b><b>e</b><b>r</b>                        optional string
        <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
@@ -2964,27 +2966,44 @@
               pression will bypass the length check configured through the <b>o</b><b>p</b>‐‐
               <b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b><b>_</b><b>m</b><b>t</b><b>u</b> option.
 
+       <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>c</b><b>e</b><b>n</b><b>t</b><b>r</b><b>a</b><b>l</b><b>i</b><b>z</b><b>e</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>i</b><b>n</b><b>g</b>: optional string, either <b>t</b><b>r</b><b>u</b><b>e</b> or <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>
+              This  option is applicable only if the router port is a distrib‐
+              uted gateway port i.e if the <b>h</b><b>a</b><b>_</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>g</b><b>r</b><b>o</b><b>u</b><b>p</b>  column  or  <b>g</b><b>a</b><b>t</b><b>e</b>‐‐
+              <b>w</b><b>a</b><b>y</b><b>_</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> is set.
+
+              If  set  to <b>t</b><b>r</b><b>u</b><b>e</b>, routing for the router port’s networks (set in
+              the column <b>n</b><b>e</b><b>t</b><b>w</b><b>o</b><b>r</b><b>k</b><b>s</b>) is centralized on the gateway chassis which
+              claims this distributed gateway port.
+
+              Additionally for this option to take  effect,  below  conditions
+              must be met:
+
+              •      The Logical router has only one distributed gateway port.
+
+              •      The  router  port’s  peer  logical switch has no localnet
+                     ports.
+
      <u>A</u><u>t</u><u>t</u><u>a</u><u>c</u><u>h</u><u>m</u><u>e</u><u>n</u><u>t</u><u>:</u>
 
        A given router port serves one of two purposes:
 
               •      To attach a logical switch to a logical router. A logical
-                     router  port  of  this  type is referenced by exactly one
-                     <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> of type <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>. The value of <b>n</b><b>a</b><b>m</b><b>e</b>  is
-                     set   as   <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>-</b><b>p</b><b>o</b><b>r</b><b>t</b>   in   column   <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>  of  <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
+                     router port of this type is  referenced  by  exactly  one
+                     <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>  of type <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>. The value of <b>n</b><b>a</b><b>m</b><b>e</b> is
+                     set  as  <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>-</b><b>p</b><b>o</b><b>r</b><b>t</b>   in   column   <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>   of   <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
                      <b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>. In this case <b>p</b><b>e</b><b>e</b><b>r</b> column is empty.
 
               •      To connect one logical router to another. This requires a
                      pair of logical router ports, each connected to a differ‐
-                     ent router. Each router port in the  pair  specifies  the
+                     ent  router.  Each  router port in the pair specifies the
                      other in its <b>p</b><b>e</b><b>e</b><b>r</b> column. No <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> refers to the
                      router port.
 
        <b>p</b><b>e</b><b>e</b><b>r</b>: optional string
-              For  a  router  port  used  to connect two logical routers, this
+              For a router port used to  connect  two  logical  routers,  this
               identifies the other router port in the pair by <b>n</b><b>a</b><b>m</b><b>e</b>.
 
-              For a router port attached to a logical switch, this  column  is
+              For  a  router port attached to a logical switch, this column is
               empty.
 
      <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
@@ -2992,7 +3011,7 @@
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
               See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
 
-              The  <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>  program  copies all these pairs into the <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b>‐‐
+              The <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> program copies all these pairs  into  the  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b>‐‐
               <b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b> column of the <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> table in <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> data‐
               base.
 
@@ -3003,20 +3022,20 @@
        <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>h</b><b>o</b><b>s</b><b>t</b><b>i</b><b>n</b><b>g</b><b>-</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>: optional string
               This option is populated by <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>.
 
-              When a distributed gateway port is bound to a  location  in  the
-              OVN  Southbound  database  <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b> <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> will populate
-              this key with the name of the Chassis that is currently  hosting
+              When  a  distributed  gateway port is bound to a location in the
+              OVN Southbound database <b>P</b><b>o</b><b>r</b><b>t</b><b>_</b><b>B</b><b>i</b><b>n</b><b>d</b><b>i</b><b>n</b><b>g</b>  <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>  will  populate
+              this  key with the name of the Chassis that is currently hosting
               this port.
 
 <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>S</b><b>t</b><b>a</b><b>t</b><b>i</b><b>c</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
        Each record represents a static route.
 
-       When  multiple  routes match a packet, the longest-prefix match is cho‐
-       sen. For a given prefix length, a <b>d</b><b>s</b><b>t</b><b>-</b><b>i</b><b>p</b>  route  is  preferred  over  a
+       When multiple routes match a packet, the longest-prefix match  is  cho‐
+       sen.  For  a  given  prefix  length, a <b>d</b><b>s</b><b>t</b><b>-</b><b>i</b><b>p</b> route is preferred over a
        <b>s</b><b>r</b><b>c</b><b>-</b><b>i</b><b>p</b> route.
 
-       When  there  are ECMP routes, i.e. multiple routes with same prefix and
-       policy, one of them will be selected based on the  5-tuple  hashing  of
+       When there are ECMP routes, i.e. multiple routes with same  prefix  and
+       policy,  one  of  them will be selected based on the 5-tuple hashing of
        the packet header.
 
    <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
@@ -3041,62 +3060,62 @@
               IP prefix of this route (e.g. 192.168.100.0/24).
 
        <b>p</b><b>o</b><b>l</b><b>i</b><b>c</b><b>y</b>: optional string, either <b>d</b><b>s</b><b>t</b><b>-</b><b>i</b><b>p</b> or <b>s</b><b>r</b><b>c</b><b>-</b><b>i</b><b>p</b>
-              If  it  is  specified, this setting describes the policy used to
-              make routing decisions. This setting must be one of the  follow‐
+              If it is specified, this setting describes the  policy  used  to
+              make  routing decisions. This setting must be one of the follow‐
               ing strings:
 
-              •      <b>s</b><b>r</b><b>c</b><b>-</b><b>i</b><b>p</b>:  This policy sends the packet to the <b>n</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b> when
+              •      <b>s</b><b>r</b><b>c</b><b>-</b><b>i</b><b>p</b>: This policy sends the packet to the <b>n</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b>  when
                      the packet’s source IP address matches <b>i</b><b>p</b><b>_</b><b>p</b><b>r</b><b>e</b><b>f</b><b>i</b><b>x</b>.
 
-              •      <b>d</b><b>s</b><b>t</b><b>-</b><b>i</b><b>p</b>: This policy sends the packet to the <b>n</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b>  when
+              •      <b>d</b><b>s</b><b>t</b><b>-</b><b>i</b><b>p</b>:  This policy sends the packet to the <b>n</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b> when
                      the packet’s destination IP address matches <b>i</b><b>p</b><b>_</b><b>p</b><b>r</b><b>e</b><b>f</b><b>i</b><b>x</b>.
 
               If not specified, the default is <b>d</b><b>s</b><b>t</b><b>-</b><b>i</b><b>p</b>.
 
        <b>n</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b>: string
-              Nexthop  IP address for this route. Nexthop IP address should be
+              Nexthop IP address for this route. Nexthop IP address should  be
               the IP address of a connected router port or the IP address of a
               logical port or can be set to <b>d</b><b>i</b><b>s</b><b>c</b><b>a</b><b>r</b><b>d</b> for dropping packets which
               match the given route.
 
        <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b>: optional string
-              The name of the <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> via which the  packet  needs
-              to  be  sent  out.  This is optional and when not specified, OVN
-              will automatically figure this out based on  the  <b>n</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b>.  When
-              this  is  specified  and  there are multiple IP addresses on the
-              router port and none of them are in the same subnet of  <b>n</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b>,
-              OVN  chooses  the first IP address as the one via which the <b>n</b><b>e</b><b>x</b>‐‐
+              The  name  of the <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> via which the packet needs
+              to be sent out. This is optional and  when  not  specified,  OVN
+              will  automatically  figure  this out based on the <b>n</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b>. When
+              this is specified and there are multiple  IP  addresses  on  the
+              router  port and none of them are in the same subnet of <b>n</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b>,
+              OVN chooses the first IP address as the one via which  the  <b>n</b><b>e</b><b>x</b>‐‐
               <b>t</b><b>h</b><b>o</b><b>p</b> is reachable.
 
        <b>b</b><b>f</b><b>d</b>: optional weak reference to <b>B</b><b>F</b><b>D</b>
               Reference to <b>B</b><b>F</b><b>D</b> row if the route has associated a BFD session
 
        <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>_</b><b>t</b><b>a</b><b>b</b><b>l</b><b>e</b>: string
-              Specify any string to assign a route to a separate  routing  ta‐
-              ble.  When  a  Logical Router Port has a configured value in <b>o</b><b>p</b>‐‐
-              <b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>_</b><b>t</b><b>a</b><b>b</b><b>l</b><b>e</b>, only static routes with the same routing  ta‐
-              ble  value  are  considered.  A more detailed description of the
+              Specify  any  string to assign a route to a separate routing ta‐
+              ble. When a Logical Router Port has a configured  value  in  <b>o</b><b>p</b>‐‐
+              <b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>_</b><b>t</b><b>a</b><b>b</b><b>l</b><b>e</b>,  only static routes with the same routing ta‐
+              ble value are considered. A more  detailed  description  of  the
               route lookup behavior is provided below:
 
-              When a packet enters Logical Router (<b>L</b><b>R</b>), it examines  the  fol‐
+              When  a  packet enters Logical Router (<b>L</b><b>R</b>), it examines the fol‐
               lowing list of routes:
 
-              •      All  routes to directly connected networks of the <b>L</b><b>R</b> (in‐
+              •      All routes to directly connected networks of the <b>L</b><b>R</b>  (in‐
                      cluding networks that are learned from other availability
                      zones within the same <b>L</b><b>R</b> through OVN-IC).
 
-              •      All static routes of the <b>L</b><b>R</b> that have the same  <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>_</b><b>t</b><b>a</b>‐‐
-                     <b>b</b><b>l</b><b>e</b>  field value as that of the Logical Router Port’s <b>o</b><b>p</b>‐‐
+              •      All  static routes of the <b>L</b><b>R</b> that have the same <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>_</b><b>t</b><b>a</b>‐‐
+                     <b>b</b><b>l</b><b>e</b> field value as that of the Logical Router Port’s  <b>o</b><b>p</b>‐‐
                      <b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>_</b><b>t</b><b>a</b><b>b</b><b>l</b><b>e</b> (If the option is absent, static routes
                      with an empty <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>_</b><b>t</b><b>a</b><b>b</b><b>l</b><b>e</b> field are considered).
 
-              From the resulting list of routes, the route  with  the  longest
+              From  the  resulting  list of routes, the route with the longest
               prefix match takes precedence over others.
 
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>-</b><b>l</b><b>e</b><b>a</b><b>r</b><b>n</b><b>e</b><b>d</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b>: optional string
-              <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b>  populates  this  key  if  the  route is learned from the
-              global <b>O</b><b>V</b><b>N</b><b>_</b><b>I</b><b>C</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database. In this case the  value  will
-              be   set  to  the  uuid  of  the  row  in  <b>R</b><b>o</b><b>u</b><b>t</b><b>e</b>  table  of  the
+              <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b> populates this key if  the  route  is  learned  from  the
+              global  <b>O</b><b>V</b><b>N</b><b>_</b><b>I</b><b>C</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>  database. In this case the value will
+              be  set  to  the  uuid  of  the  row  in  <b>R</b><b>o</b><b>u</b><b>t</b><b>e</b>  table  of   the
               <b>O</b><b>V</b><b>N</b><b>_</b><b>I</b><b>C</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database.
 
      <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
@@ -3107,35 +3126,35 @@
      <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>: map of string-string pairs
-              This column provides general key/value settings.  The  supported
+              This  column  provides general key/value settings. The supported
               options are described individually below.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>e</b><b>c</b><b>m</b><b>p</b><b>_</b><b>s</b><b>y</b><b>m</b><b>m</b><b>e</b><b>t</b><b>r</b><b>i</b><b>c</b><b>_</b><b>r</b><b>e</b><b>p</b><b>l</b><b>y</b>: optional string
               If true, then new traffic that arrives over this route will have
-              its  reply  traffic bypass ECMP route selection and will be sent
-              out this route instead. Note  that  this  option  overrides  any
-              rules  set  in the <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>p</b><b>o</b><b>l</b><b>i</b><b>c</b><b>y</b> table. This option only
-              works on gateway  routers  (routers  that  have  <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>
+              its reply traffic bypass ECMP route selection and will  be  sent
+              out  this  route  instead.  Note  that this option overrides any
+              rules set in the <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>p</b><b>o</b><b>l</b><b>i</b><b>c</b><b>y</b> table. This  option  only
+              works  on  gateway  routers  (routers  that have <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>
               set).
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>o</b><b>r</b><b>i</b><b>g</b><b>i</b><b>n</b>: optional string
               In case ovn-interconnection has been learned this route, it will
               have its origin set: either "connected" or "static". This key is
-              supposed  to  be  written only by <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b> daemon. ovn-northd then
-              checks  this  value  when  generating   Logical   Flows.   <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
-              <b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>S</b><b>t</b><b>a</b><b>t</b><b>i</b><b>c</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b>  records with same <b>i</b><b>p</b><b>_</b><b>p</b><b>r</b><b>e</b><b>f</b><b>i</b><b>x</b> within same
-              Logical Router will have next lookup order based on  <b>o</b><b>r</b><b>i</b><b>g</b><b>i</b><b>n</b>  key
+              supposed to be written only by <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b>  daemon.  ovn-northd  then
+              checks   this   value   when  generating  Logical  Flows.  <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
+              <b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>S</b><b>t</b><b>a</b><b>t</b><b>i</b><b>c</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b> records with same <b>i</b><b>p</b><b>_</b><b>p</b><b>r</b><b>e</b><b>f</b><b>i</b><b>x</b> within  same
+              Logical  Router  will have next lookup order based on <b>o</b><b>r</b><b>i</b><b>g</b><b>i</b><b>n</b> key
               value:
 
               1.  connected
 
               2.  static
 <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>l</b><b>i</b><b>c</b><b>y</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
-       Each  row  in  this  table  represents one routing policy for a logical
+       Each row in this table represents one  routing  policy  for  a  logical
        router that points to it through its <b>p</b><b>o</b><b>l</b><b>i</b><b>c</b><b>i</b><b>e</b><b>s</b> column. The <b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b> column
-       for the highest-<b>p</b><b>r</b><b>i</b><b>o</b><b>r</b><b>i</b><b>t</b><b>y</b>  matching  row  in  this  table  determines  a
-       packet’s  treatment. If no row matches, packets are allowed by default.
-       (Default-deny treatment is possible: add a rule with <b>p</b><b>r</b><b>i</b><b>o</b><b>r</b><b>i</b><b>t</b><b>y</b> 0,  <b>1</b>  as
+       for  the  highest-<b>p</b><b>r</b><b>i</b><b>o</b><b>r</b><b>i</b><b>t</b><b>y</b>  matching  row  in  this  table determines a
+       packet’s treatment. If no row matches, packets are allowed by  default.
+       (Default-deny  treatment  is possible: add a rule with <b>p</b><b>r</b><b>i</b><b>o</b><b>r</b><b>i</b><b>t</b><b>y</b> 0, <b>1</b> as
        <b>m</b><b>a</b><b>t</b><b>c</b><b>h</b>, and <b>d</b><b>r</b><b>o</b><b>p</b> as <b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>.)
 
    <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
@@ -3151,17 +3170,17 @@
 
    <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
        <b>p</b><b>r</b><b>i</b><b>o</b><b>r</b><b>i</b><b>t</b><b>y</b>: integer, in range 0 to 32,767
-              The  routing  policy’s  priority.  Rules with numerically higher
-              priority take precedence  over  those  with  lower.  A  rule  is
+              The routing policy’s priority.  Rules  with  numerically  higher
+              priority  take  precedence  over  those  with  lower.  A rule is
               uniquely identified by the priority and match string.
 
        <b>m</b><b>a</b><b>t</b><b>c</b><b>h</b>: string
-              The  packets  that  the routing policy should match, in the same
-              expression language used for the <b>m</b><b>a</b><b>t</b><b>c</b><b>h</b> column in the OVN  South‐
+              The packets that the routing policy should match,  in  the  same
+              expression  language used for the <b>m</b><b>a</b><b>t</b><b>c</b><b>h</b> column in the OVN South‐
               bound database’s <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>F</b><b>l</b><b>o</b><b>w</b> table.
 
-              By  default all traffic is allowed. When writing a more restric‐
-              tive policy, it is important to remember to allow flows such  as
+              By default all traffic is allowed. When writing a more  restric‐
+              tive  policy, it is important to remember to allow flows such as
               ARP and IPv6 neighbor discovery packets.
 
        <b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>: string, one of <b>a</b><b>l</b><b>l</b><b>o</b><b>w</b>, <b>d</b><b>r</b><b>o</b><b>p</b>, or <b>r</b><b>e</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b>
@@ -3176,13 +3195,13 @@
        <b>n</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b>: optional string
               Note: This column is deprecated in favor of <b>n</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b><b>s</b>.
 
-              Next-hop  IP  address for this route, which should be the IP ad‐
-              dress of a connected router port or the IP address of a  logical
+              Next-hop IP address for this route, which should be the  IP  ad‐
+              dress  of a connected router port or the IP address of a logical
               port.
 
        <b>n</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b><b>s</b>: set of strings
-              Next-hop  ECMP  IP addresses for this route. Each IP in the list
-              should be the IP address of a connected router port  or  the  IP
+              Next-hop ECMP IP addresses for this route. Each IP in  the  list
+              should  be  the  IP address of a connected router port or the IP
               address of a logical port.
 
               One IP from the list is selected as next hop.
@@ -3194,7 +3213,7 @@
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>p</b><b>k</b><b>t</b><b>_</b><b>m</b><b>a</b><b>r</b><b>k</b>: optional string
               Marks the packet with the value specified when the router policy
               is applied. CMS can inspect this packet marker and take some de‐
-              cisions  if desired. This value is not preserved when the packet
+              cisions if desired. This value is not preserved when the  packet
               goes out on the wire.
 
      <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
@@ -3206,7 +3225,7 @@
        Each record represents a NAT rule.
 
    <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
-       <b>t</b><b>y</b><b>p</b><b>e</b>                          string, one of  <b>d</b><b>n</b><b>a</b><b>t</b>,  <b>d</b><b>n</b><b>a</b><b>t</b><b>_</b><b>a</b><b>n</b><b>d</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b>,  or
+       <b>t</b><b>y</b><b>p</b><b>e</b>                          string,  one  of  <b>d</b><b>n</b><b>a</b><b>t</b>, <b>d</b><b>n</b><b>a</b><b>t</b><b>_</b><b>a</b><b>n</b><b>d</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b>, or
                                      <b>s</b><b>n</b><b>a</b><b>t</b>
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b>                   string
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>m</b><b>a</b><b>c</b>                  optional string
@@ -3215,7 +3234,7 @@
        <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b>                  optional string
        <b>a</b><b>l</b><b>l</b><b>o</b><b>w</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b><b>s</b>               optional <b>A</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>_</b><b>S</b><b>e</b><b>t</b>
        <b>e</b><b>x</b><b>e</b><b>m</b><b>p</b><b>t</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b><b>s</b>              optional <b>A</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>_</b><b>S</b><b>e</b><b>t</b>
-       <b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b>                  optional    weak   reference   to   <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
+       <b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b>                  optional   weak   reference   to    <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
                                      <b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>l</b><b>e</b><b>s</b><b>s</b>           optional string
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>a</b><b>d</b><b>d</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b>           optional string
@@ -3226,19 +3245,19 @@
        <b>t</b><b>y</b><b>p</b><b>e</b>: string, one of <b>d</b><b>n</b><b>a</b><b>t</b>, <b>d</b><b>n</b><b>a</b><b>t</b><b>_</b><b>a</b><b>n</b><b>d</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b>, or <b>s</b><b>n</b><b>a</b><b>t</b>
               Type of the NAT rule.
 
-              •      When <b>t</b><b>y</b><b>p</b><b>e</b> is <b>d</b><b>n</b><b>a</b><b>t</b>, the externally visible IP address  <b>e</b><b>x</b>‐‐
-                     <b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b>  is DNATted to the IP address <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> in the
+              •      When  <b>t</b><b>y</b><b>p</b><b>e</b> is <b>d</b><b>n</b><b>a</b><b>t</b>, the externally visible IP address <b>e</b><b>x</b>‐‐
+                     <b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> is DNATted to the IP address <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> in  the
                      logical space.
 
-              •      When <b>t</b><b>y</b><b>p</b><b>e</b> is <b>s</b><b>n</b><b>a</b><b>t</b>, IP packets with their  source  IP  ad‐
+              •      When  <b>t</b><b>y</b><b>p</b><b>e</b>  is  <b>s</b><b>n</b><b>a</b><b>t</b>, IP packets with their source IP ad‐
                      dress that either matches the IP address in <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> or
-                     is  in  the network provided by <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> is SNATed into
+                     is in the network provided by <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> is  SNATed  into
                      the IP address in <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b>.
 
               •      When <b>t</b><b>y</b><b>p</b><b>e</b> is <b>d</b><b>n</b><b>a</b><b>t</b><b>_</b><b>a</b><b>n</b><b>d</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b>, the externally visible IP ad‐
                      dress <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> is DNATted to the IP address <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b>
-                     in the logical space. In addition, IP  packets  with  the
-                     source  IP address that matches <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> is SNATed into
+                     in  the  logical  space. In addition, IP packets with the
+                     source IP address that matches <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> is SNATed  into
                      the IP address in <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b>.
 
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b>: string
@@ -3247,14 +3266,14 @@
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>m</b><b>a</b><b>c</b>: optional string
               A MAC address.
 
-              This is only used on the gateway port  on  distributed  routers.
+              This  is  only  used on the gateway port on distributed routers.
               This must be specified in order for the NAT rule to be processed
               in a distributed manner on all chassis. If this is not specified
-              for  a NAT rule on a distributed router, then this NAT rule will
-              be processed in a centralized manner on  the  gateway  port  in‐
+              for a NAT rule on a distributed router, then this NAT rule  will
+              be  processed  in  a  centralized manner on the gateway port in‐
               stance on the gateway chassis.
 
-              This  MAC  address must be unique on the logical switch that the
+              This MAC address must be unique on the logical switch  that  the
               gateway port is attached to. If the MAC address used on the <b>l</b><b>o</b><b>g</b>‐‐
               <b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b> is globally unique, then that MAC address can be spec‐
               ified as this <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>m</b><b>a</b><b>c</b>.
@@ -3262,8 +3281,8 @@
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b><b>_</b><b>r</b><b>a</b><b>n</b><b>g</b><b>e</b>: string
               L4 source port range
 
-              Range of ports, from which a port number  will  be  picked  that
-              will  replace the source port of to be NATed packet. This is ba‐
+              Range  of  ports,  from  which a port number will be picked that
+              will replace the source port of to be NATed packet. This is  ba‐
               sically PAT (port address translation).
 
               Value of the column is in the format, port_lo-port_hi. For exam‐
@@ -3278,88 +3297,88 @@
               The name of the logical port where the <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> resides.
 
               This is only used on distributed routers. This must be specified
-              in order for the NAT rule to be processed in a distributed  man‐
+              in  order for the NAT rule to be processed in a distributed man‐
               ner on all chassis. If this is not specified for a NAT rule on a
-              distributed  router,  then  this NAT rule will be processed in a
-              centralized manner on the gateway port instance on  the  gateway
+              distributed router, then this NAT rule will be  processed  in  a
+              centralized  manner  on the gateway port instance on the gateway
               chassis.
 
        <b>a</b><b>l</b><b>l</b><b>o</b><b>w</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b><b>s</b>: optional <b>A</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>_</b><b>S</b><b>e</b><b>t</b>
-              It  represents  Address Set of external ips that NAT rule is ap‐
+              It represents Address Set of external ips that NAT rule  is  ap‐
               plicable to. For SNAT type NAT rules, this refers to destination
-              addresses. For DNAT type NAT rules, this refers  to  source  ad‐
+              addresses.  For  DNAT  type NAT rules, this refers to source ad‐
               dresses.
 
-              This  configuration overrides the default NAT behavior of apply‐
-              ing a rule solely based on internal IP. Without this  configura‐
-              tion,  NAT  happens  without  considering  the  external IP (i.e
-              dest/source for snat/dnat type rule).  With  this  configuration
-              NAT  rule is applied ONLY if external ip is in the input Address
+              This configuration overrides the default NAT behavior of  apply‐
+              ing  a rule solely based on internal IP. Without this configura‐
+              tion, NAT happens  without  considering  the  external  IP  (i.e
+              dest/source  for  snat/dnat  type rule). With this configuration
+              NAT rule is applied ONLY if external ip is in the input  Address
               Set.
 
        <b>e</b><b>x</b><b>e</b><b>m</b><b>p</b><b>t</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b><b>s</b>: optional <b>A</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>_</b><b>S</b><b>e</b><b>t</b>
-              It represents Address Set of external ips that NAT rule  is  NOT
-              applicable  to. For SNAT type NAT rules, this refers to destina‐
-              tion addresses. For DNAT type NAT rules, this refers  to  source
+              It  represents  Address Set of external ips that NAT rule is NOT
+              applicable to. For SNAT type NAT rules, this refers to  destina‐
+              tion  addresses.  For DNAT type NAT rules, this refers to source
               addresses.
 
-              This  configuration overrides the default NAT behavior of apply‐
-              ing a rule solely based on internal IP. Without this  configura‐
-              tion,  NAT  happens  without  considering  the  external IP (i.e
-              dest/source for snat/dnat type rule).  With  this  configuration
-              NAT  rule  is NOT applied if external ip is in the input Address
+              This configuration overrides the default NAT behavior of  apply‐
+              ing  a rule solely based on internal IP. Without this configura‐
+              tion, NAT happens  without  considering  the  external  IP  (i.e
+              dest/source  for  snat/dnat  type rule). With this configuration
+              NAT rule is NOT applied if external ip is in the  input  Address
               Set.
 
-              If there are NAT rules in a logical router with  overlapping  IP
-              prefixes  (including /32), then usage of <u>e</u><u>x</u><u>e</u><u>m</u><u>p</u><u>t</u><u>e</u><u>d</u><b>_</b><u>e</u><u>x</u><u>t</u><b>_</b><u>i</u><u>p</u><u>s</u> should
-              be avoided in following scenario.  a.  SNAT  rule  (let  us  say
-              RULE1)  with logical_ip PREFIX/MASK (let us say 50.0.0.0/24). b.
-              SNAT rule (let us say RULE2) with logical_ip PREFIX/MASK+1  (let
-              us  say  50.0.0.0/25). c. Now, if exempted_ext_ips is associated
+              If  there  are NAT rules in a logical router with overlapping IP
+              prefixes (including /32), then usage of <u>e</u><u>x</u><u>e</u><u>m</u><u>p</u><u>t</u><u>e</u><u>d</u><b>_</b><u>e</u><u>x</u><u>t</u><b>_</b><u>i</u><u>p</u><u>s</u>  should
+              be  avoided  in  following  scenario.  a.  SNAT rule (let us say
+              RULE1) with logical_ip PREFIX/MASK (let us say 50.0.0.0/24).  b.
+              SNAT  rule (let us say RULE2) with logical_ip PREFIX/MASK+1 (let
+              us say 50.0.0.0/25). c. Now, if exempted_ext_ips  is  associated
               with RULE2, then a logical ip which matches both 50.0.0.0/24 and
               50.0.0.0/25 may get the RULE2 applied to it instead of RULE1.
 
-              <u>a</u><u>l</u><u>l</u><u>o</u><u>w</u><u>e</u><u>d</u><b>_</b><u>e</u><u>x</u><u>t</u><b>_</b><u>i</u><u>p</u><u>s</u> and <u>e</u><u>x</u><u>e</u><u>m</u><u>p</u><u>t</u><u>e</u><u>d</u><b>_</b><u>e</u><u>x</u><u>t</u><b>_</b><u>i</u><u>p</u><u>s</u> are mutually  exclusive  to
-              each  other.  If  both Address Sets are set for a rule, then the
+              <u>a</u><u>l</u><u>l</u><u>o</u><u>w</u><u>e</u><u>d</u><b>_</b><u>e</u><u>x</u><u>t</u><b>_</b><u>i</u><u>p</u><u>s</u>  and  <u>e</u><u>x</u><u>e</u><u>m</u><u>p</u><u>t</u><u>e</u><u>d</u><b>_</b><u>e</u><u>x</u><u>t</u><b>_</b><u>i</u><u>p</u><u>s</u> are mutually exclusive to
+              each other. If both Address Sets are set for a  rule,  then  the
               NAT rule is not considered.
 
        <b>g</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b>: optional weak reference to <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>
-              A distributed gateway  port  in  the  <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>  table
+              A  distributed  gateway  port  in  the <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> table
               where the NAT rule needs to be applied.
 
               When multiple distributed gateway ports are configured on a <b>L</b><b>o</b><b>g</b>‐‐
-              <b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>,  applying  a  NAT  rule  at each of the distributed
-              gateway ports might not be desired. Consider the  case  where  a
+              <b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>, applying a NAT rule  at  each  of  the  distributed
+              gateway  ports  might  not be desired. Consider the case where a
               logical router has 2 distributed gateway port, one with <b>n</b><b>e</b><b>t</b><b>w</b><b>o</b><b>r</b><b>k</b><b>s</b>
-              <b>5</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>.</b><b>1</b><b>0</b><b>/</b><b>2</b><b>4</b>  and  the  other with <b>n</b><b>e</b><b>t</b><b>w</b><b>o</b><b>r</b><b>k</b><b>s</b> <b>6</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>.</b><b>1</b><b>0</b><b>/</b><b>2</b><b>4</b>. If the
-              logical  router  has  a  NAT  rule  of  <b>t</b><b>y</b><b>p</b><b>e</b>  <b>s</b><b>n</b><b>a</b><b>t</b>,   <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b>
-              <b>1</b><b>0</b><b>.</b><b>1</b><b>.</b><b>1</b><b>.</b><b>0</b><b>/</b><b>2</b><b>4</b>  and  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> <b>5</b><b>0</b><b>.</b><b>1</b><b>.</b><b>1</b><b>.</b><b>2</b><b>0</b><b>/</b><b>2</b><b>4</b>, the rule needs to be
+              <b>5</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>.</b><b>1</b><b>0</b><b>/</b><b>2</b><b>4</b> and the other with <b>n</b><b>e</b><b>t</b><b>w</b><b>o</b><b>r</b><b>k</b><b>s</b>  <b>6</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>.</b><b>1</b><b>0</b><b>/</b><b>2</b><b>4</b>.  If  the
+              logical   router  has  a  NAT  rule  of  <b>t</b><b>y</b><b>p</b><b>e</b>  <b>s</b><b>n</b><b>a</b><b>t</b>,  <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b>
+              <b>1</b><b>0</b><b>.</b><b>1</b><b>.</b><b>1</b><b>.</b><b>0</b><b>/</b><b>2</b><b>4</b> and <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> <b>5</b><b>0</b><b>.</b><b>1</b><b>.</b><b>1</b><b>.</b><b>2</b><b>0</b><b>/</b><b>2</b><b>4</b>, the rule needs  to  be
               selectively applied on matching packets entering/leaving through
               the distributed gateway port with <b>n</b><b>e</b><b>t</b><b>w</b><b>o</b><b>r</b><b>k</b><b>s</b> <b>5</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>.</b><b>1</b><b>0</b><b>/</b><b>2</b><b>4</b>.
 
               When a logical router has multiple distributed gateway ports and
               this column is not set for a NAT rule, then the rule will be ap‐
-              plied at the distributed gateway port which is in the same  net‐
-              work  as  the <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> of the NAT rule, if such a router port
-              exists. If logical router has a single distributed gateway  port
-              and  this column is not set for a NAT rule, the rule will be ap‐
+              plied  at the distributed gateway port which is in the same net‐
+              work as the <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> of the NAT rule, if such a  router  port
+              exists.  If logical router has a single distributed gateway port
+              and this column is not set for a NAT rule, the rule will be  ap‐
               plied at the distributed gateway port even if the router port is
               not in the same network as the <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>p</b> of the NAT rule.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>l</b><b>e</b><b>s</b><b>s</b>: optional string
-              Indicates if a dnat_and_snat  rule  should  lead  to  connection
+              Indicates  if  a  dnat_and_snat  rule  should lead to connection
               tracking state or not.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>a</b><b>d</b><b>d</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b>: optional string
-              If  set  to  <b>t</b><b>r</b><b>u</b><b>e</b>, then neighbor routers will have logical flows
-              added that will allow for routing to the NAT  address.  It  also
-              will  have  ARP  resolution logical flows added. By setting this
-              option,  it  means  there  is  no  reason  to  create  a   <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
-              <b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>S</b><b>t</b><b>a</b><b>t</b><b>i</b><b>c</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b>  from  neighbor  routers to this NAT ad‐
-              dress. It also means that no ARP request is required for  neigh‐
-              bor  routers  to  learn the IP-MAC mapping for this NAT address.
+              If set to <b>t</b><b>r</b><b>u</b><b>e</b>, then neighbor routers will  have  logical  flows
+              added  that  will  allow for routing to the NAT address. It also
+              will have ARP resolution logical flows added.  By  setting  this
+              option,   it  means  there  is  no  reason  to  create  a  <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
+              <b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>S</b><b>t</b><b>a</b><b>t</b><b>i</b><b>c</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b> from neighbor routers to  this  NAT  ad‐
+              dress.  It also means that no ARP request is required for neigh‐
+              bor routers to learn the IP-MAC mapping for  this  NAT  address.
               This option only applies to NATs of type <b>d</b><b>n</b><b>a</b><b>t</b> and <b>d</b><b>n</b><b>a</b><b>t</b><b>_</b><b>a</b><b>n</b><b>d</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b>.
-              For more information about what flows are added for  IP  routes,
+              For  more  information about what flows are added for IP routes,
               please see the <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> manpage section on IP Routing.
 
      <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
@@ -3368,13 +3387,13 @@
               See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
 
 <b>D</b><b>H</b><b>C</b><b>P</b><b>_</b><b>O</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
-       OVN  implements  native  DHCPv4  support which caters to the common use
-       case of providing an IPv4 address to a booting  instance  by  providing
+       OVN implements native DHCPv4 support which caters  to  the  common  use
+       case  of  providing  an IPv4 address to a booting instance by providing
        stateless replies to DHCPv4 requests based on statically configured ad‐
-       dress  mappings. To do this it allows a short list of DHCPv4 options to
+       dress mappings. To do this it allows a short list of DHCPv4 options  to
        be configured and applied at each compute host running <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>.
 
-       OVN also implements native  DHCPv6  support  which  provides  stateless
+       OVN  also  implements  native  DHCPv6  support which provides stateless
        replies to DHCPv6 requests.
 
    <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
@@ -3383,7 +3402,7 @@
          <u>M</u><u>a</u><u>n</u><u>d</u><u>a</u><u>t</u><u>o</u><u>r</u><u>y</u> <u>D</u><u>H</u><u>C</u><u>P</u><u>v</u><u>4</u> <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
             <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b><b>_</b><b>i</b><b>d</b>      optional string
             <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b><b>_</b><b>m</b><b>a</b><b>c</b>     optional string
-            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>l</b><b>e</b><b>a</b><b>s</b><b>e</b><b>_</b><b>t</b><b>i</b><b>m</b><b>e</b>     optional  string,  containing an integer,
+            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>l</b><b>e</b><b>a</b><b>s</b><b>e</b><b>_</b><b>t</b><b>i</b><b>m</b><b>e</b>     optional string, containing  an  integer,
                                      in range 0 to 4,294,967,295
          <u>I</u><u>P</u><u>v</u><u>4</u> <u>D</u><u>H</u><u>C</u><u>P</u> <u>O</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
             <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>         optional string
@@ -3411,24 +3430,24 @@
                                      optional string, either <b>0</b> or <b>1</b>
             <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>e</b><b>t</b><b>h</b><b>e</b><b>r</b><b>n</b><b>e</b><b>t</b><b>_</b><b>e</b><b>n</b><b>c</b><b>a</b><b>p</b> optional string, either <b>0</b> or <b>1</b>
          <u>I</u><u>n</u><u>t</u><u>e</u><u>g</u><u>e</u><u>r</u> <u>D</u><u>H</u><u>C</u><u>P</u> <u>O</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
-            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>d</b><b>e</b><b>f</b><b>a</b><b>u</b><b>l</b><b>t</b><b>_</b><b>t</b><b>t</b><b>l</b>    optional string, containing  an  integer,
+            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>d</b><b>e</b><b>f</b><b>a</b><b>u</b><b>l</b><b>t</b><b>_</b><b>t</b><b>t</b><b>l</b>    optional  string,  containing an integer,
                                      in range 0 to 255
-            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>t</b><b>c</b><b>p</b><b>_</b><b>t</b><b>t</b><b>l</b>        optional  string,  containing an integer,
+            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>t</b><b>c</b><b>p</b><b>_</b><b>t</b><b>t</b><b>l</b>        optional string, containing  an  integer,
                                      in range 0 to 255
-            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>m</b><b>t</b><b>u</b>            optional string, containing  an  integer,
+            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>m</b><b>t</b><b>u</b>            optional  string,  containing an integer,
                                      in range 68 to 65,535
-            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>T</b><b>1</b>             optional  string,  containing an integer,
+            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>T</b><b>1</b>             optional string, containing  an  integer,
                                      in range 68 to 4,294,967,295
-            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>T</b><b>2</b>             optional string, containing  an  integer,
+            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>T</b><b>2</b>             optional  string,  containing an integer,
                                      in range 68 to 4,294,967,295
             <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>a</b><b>r</b><b>p</b><b>_</b><b>c</b><b>a</b><b>c</b><b>h</b><b>e</b><b>_</b><b>t</b><b>i</b><b>m</b><b>e</b><b>o</b><b>u</b><b>t</b>
-                                     optional  string,  containing an integer,
-                                     in range 0 to 255
-            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>t</b><b>c</b><b>p</b><b>_</b><b>k</b><b>e</b><b>e</b><b>p</b><b>a</b><b>l</b><b>i</b><b>v</b><b>e</b><b>_</b><b>i</b><b>n</b><b>t</b><b>e</b><b>r</b><b>v</b><b>a</b><b>l</b>
                                      optional string, containing  an  integer,
                                      in range 0 to 255
-            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>n</b><b>e</b><b>t</b><b>b</b><b>i</b><b>o</b><b>s</b><b>_</b><b>n</b><b>o</b><b>d</b><b>e</b><b>_</b><b>t</b><b>y</b><b>p</b><b>e</b>
+            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>t</b><b>c</b><b>p</b><b>_</b><b>k</b><b>e</b><b>e</b><b>p</b><b>a</b><b>l</b><b>i</b><b>v</b><b>e</b><b>_</b><b>i</b><b>n</b><b>t</b><b>e</b><b>r</b><b>v</b><b>a</b><b>l</b>
                                      optional  string,  containing an integer,
+                                     in range 0 to 255
+            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>n</b><b>e</b><b>t</b><b>b</b><b>i</b><b>o</b><b>s</b><b>_</b><b>n</b><b>o</b><b>d</b><b>e</b><b>_</b><b>t</b><b>y</b><b>p</b><b>e</b>
+                                     optional string, containing  an  integer,
                                      in range 0 to 255
          <u>S</u><u>t</u><u>r</u><u>i</u><u>n</u><u>g</u> <u>D</u><u>H</u><u>C</u><u>P</u> <u>O</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
             <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>w</b><b>p</b><b>a</b><b>d</b>           optional string
@@ -3462,14 +3481,14 @@
 
    <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
        <b>c</b><b>i</b><b>d</b><b>r</b>: string
-              The DHCPv4/DHCPv6 options will be included if the  logical  port
+              The  DHCPv4/DHCPv6  options will be included if the logical port
               has its IP address in this <b>c</b><b>i</b><b>d</b><b>r</b>.
 
      <u>D</u><u>H</u><u>C</u><u>P</u><u>v</u><u>4</u> <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
 
-       The  CMS  should define the set of DHCPv4 options as key/value pairs in
-       the <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> column of this table. For <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> to  include  these
-       DHCPv4  options, the <b>d</b><b>h</b><b>c</b><b>p</b><b>v</b><b>4</b><b>_</b><b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> of <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> should refer
+       The CMS should define the set of DHCPv4 options as key/value  pairs  in
+       the  <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>  column of this table. For <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> to include these
+       DHCPv4 options, the <b>d</b><b>h</b><b>c</b><b>p</b><b>v</b><b>4</b><b>_</b><b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> of <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> should  refer
        to an entry in this table.
 
      <u>M</u><u>a</u><u>n</u><u>d</u><u>a</u><u>t</u><u>o</u><u>r</u><u>y</u> <u>D</u><u>H</u><u>C</u><u>P</u><u>v</u><u>4</u> <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
@@ -3478,7 +3497,7 @@
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b><b>_</b><b>i</b><b>d</b>: optional string
               The IP address for the DHCP server to use. This should be in the
-              subnet of the offered IP. This is also included in the DHCP  of‐
+              subnet  of the offered IP. This is also included in the DHCP of‐
               fer as option 54, ``server identifier.’’
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b><b>_</b><b>m</b><b>a</b><b>c</b>: optional string
@@ -3492,14 +3511,14 @@
 
      <u>I</u><u>P</u><u>v</u><u>4</u> <u>D</u><u>H</u><u>C</u><u>P</u> <u>O</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
 
-       Below  are  the  supported  DHCPv4 options whose values are an IPv4 ad‐
-       dress, e.g. <b>1</b><b>9</b><b>2</b><b>.</b><b>1</b><b>6</b><b>8</b><b>.</b><b>1</b><b>.</b><b>1</b>. Some options accept  multiple  IPv4  addresses
-       enclosed  within  curly braces, e.g. <b>{</b><b>1</b><b>9</b><b>2</b><b>.</b><b>1</b><b>6</b><b>8</b><b>.</b><b>1</b><b>.</b><b>2</b><b>,</b> <b>1</b><b>9</b><b>2</b><b>.</b><b>1</b><b>6</b><b>8</b><b>.</b><b>1</b><b>.</b><b>3</b><b>}</b>. Please
+       Below are the supported DHCPv4 options whose values  are  an  IPv4  ad‐
+       dress,  e.g.  <b>1</b><b>9</b><b>2</b><b>.</b><b>1</b><b>6</b><b>8</b><b>.</b><b>1</b><b>.</b><b>1</b>.  Some options accept multiple IPv4 addresses
+       enclosed within curly braces, e.g. <b>{</b><b>1</b><b>9</b><b>2</b><b>.</b><b>1</b><b>6</b><b>8</b><b>.</b><b>1</b><b>.</b><b>2</b><b>,</b>  <b>1</b><b>9</b><b>2</b><b>.</b><b>1</b><b>6</b><b>8</b><b>.</b><b>1</b><b>.</b><b>3</b><b>}</b>.  Please
        refer to RFC 2132 for more details on DHCPv4 options and their codes.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b>: optional string
-              The IP address of a gateway for the client to use.  This  should
-              be  in  the subnet of the offered IP. The DHCPv4 option code for
+              The  IP  address of a gateway for the client to use. This should
+              be in the subnet of the offered IP. The DHCPv4 option  code  for
               this option is 3.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>n</b><b>e</b><b>t</b><b>m</b><b>a</b><b>s</b><b>k</b>: optional string
@@ -3536,19 +3555,19 @@
               The DHCPv4 option code for this option is 121.
 
               This option can contain one or more static routes, each of which
-              consists of a destination descriptor and the IP address  of  the
+              consists  of  a destination descriptor and the IP address of the
               router that should be used to reach that destination. Please see
               RFC 3442 for more details.
 
               Example: <b>{</b><b>3</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>/</b><b>2</b><b>4</b><b>,</b><b>1</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>.</b><b>1</b><b>0</b><b>,</b> <b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>/</b><b>0</b><b>,</b><b>1</b><b>0</b><b>.</b><b>0</b><b>.</b><b>0</b><b>.</b><b>1</b><b>}</b>
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>m</b><b>s</b><b>_</b><b>c</b><b>l</b><b>a</b><b>s</b><b>s</b><b>l</b><b>e</b><b>s</b><b>s</b><b>_</b><b>s</b><b>t</b><b>a</b><b>t</b><b>i</b><b>c</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b>: optional string
-              The  DHCPv4  option  code for this option is 249. This option is
+              The DHCPv4 option code for this option is 249.  This  option  is
               similar to <b>c</b><b>l</b><b>a</b><b>s</b><b>s</b><b>l</b><b>e</b><b>s</b><b>s</b><b>_</b><b>s</b><b>t</b><b>a</b><b>t</b><b>i</b><b>c</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b> supported by Microsoft Windows
               DHCPv4 clients.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>_</b><b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b>: optional string
-              The DHCPv4 option code for setting the "Next server IP  address"
+              The  DHCPv4 option code for setting the "Next server IP address"
               field in the DHCP header.
 
      <u>B</u><u>o</u><u>o</u><u>l</u><u>e</u><u>a</u><u>n</u> <u>D</u><u>H</u><u>C</u><u>P</u> <u>O</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
@@ -3583,14 +3602,14 @@
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>T</b><b>1</b>: optional string, containing an integer, in range 68 to
        4,294,967,295
-              This  specifies  the time interval from address assignment until
+              This specifies the time interval from address  assignment  until
               the client begins trying to renew its address. The DHCPv4 option
               code for this option is 58.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>T</b><b>2</b>: optional string, containing an integer, in range 68 to
        4,294,967,295
-              This specifies the time interval from address  assignment  until
-              the  client  begins trying to rebind its address. The DHCPv4 op‐
+              This  specifies  the time interval from address assignment until
+              the client begins trying to rebind its address. The  DHCPv4  op‐
               tion code for this option is 59.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>a</b><b>r</b><b>p</b><b>_</b><b>c</b><b>a</b><b>c</b><b>h</b><b>e</b><b>_</b><b>t</b><b>i</b><b>m</b><b>e</b><b>o</b><b>u</b><b>t</b>: optional string, containing an integer, in
@@ -3613,30 +3632,30 @@
        These options accept a string value.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>w</b><b>p</b><b>a</b><b>d</b>: optional string
-              The DHCPv4 option code for this option is 252.  This  option  is
-              used  as part of web proxy auto discovery to provide a URL for a
+              The  DHCPv4  option  code for this option is 252. This option is
+              used as part of web proxy auto discovery to provide a URL for  a
               web proxy.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>b</b><b>o</b><b>o</b><b>t</b><b>f</b><b>i</b><b>l</b><b>e</b><b>_</b><b>n</b><b>a</b><b>m</b><b>e</b>: optional string
-              The DHCPv4 option code for this option is  67.  This  option  is
+              The  DHCPv4  option  code  for this option is 67. This option is
               used to identify a bootfile.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>p</b><b>a</b><b>t</b><b>h</b><b>_</b><b>p</b><b>r</b><b>e</b><b>f</b><b>i</b><b>x</b>: optional string
               The DHCPv4 option code for this option is 210. In PXELINUX’ case
-              this  option is used to set a common path prefix, instead of de‐
+              this option is used to set a common path prefix, instead of  de‐
               riving it from the bootfile name.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>t</b><b>f</b><b>t</b><b>p</b><b>_</b><b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b><b>_</b><b>a</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b>: optional string
-              The DHCPv4 option code for this option is 150. The  option  con‐
-              tains  one  or more IPv4 addresses that the client MAY use. This
+              The  DHCPv4  option code for this option is 150. The option con‐
+              tains one or more IPv4 addresses that the client MAY  use.  This
               option is Cisco proprietary, the IEEE standard that matches with
               this requirement is option 66 (tftp_server).
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>h</b><b>o</b><b>s</b><b>t</b><b>n</b><b>a</b><b>m</b><b>e</b>: optional string
-              The DHCPv4 option code for this option is 12. If set,  indicates
-              the  DHCPv4 option "Hostname". Alternatively, this option can be
+              The  DHCPv4 option code for this option is 12. If set, indicates
+              the DHCPv4 option "Hostname". Alternatively, this option can  be
               configured   in   <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>h</b><b>o</b><b>s</b><b>t</b><b>n</b><b>a</b><b>m</b><b>e</b>   column   in   table   <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
-              <b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>.  If  Hostname  option value is set in both con‐
+              <b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>. If Hostname option value is set  in  both  con‐
               flicting  <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>  and  <b>D</b><b>H</b><b>C</b><b>P</b><b>_</b><b>O</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>  tables,  <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
               <b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> takes precedence.
 
@@ -3646,10 +3665,10 @@
               names via the Domain Name System.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>b</b><b>o</b><b>o</b><b>t</b><b>f</b><b>i</b><b>l</b><b>e</b><b>_</b><b>n</b><b>a</b><b>m</b><b>e</b><b>_</b><b>a</b><b>l</b><b>t</b>: optional string
-              "bootfile_name_alt"  option  is  used to support iPXE. When both
+              "bootfile_name_alt" option is used to support  iPXE.  When  both
               "bootfile_name" and "bootfile_name_alt" are provided by the CMS,
-              "bootfile_name" will be used for option 67 if the  dhcp  request
-              contains  etherboot  option (175), otherwise "bootfile_name_alt"
+              "bootfile_name"  will  be used for option 67 if the dhcp request
+              contains etherboot option (175),  otherwise  "bootfile_name_alt"
               will be used.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>b</b><b>r</b><b>o</b><b>a</b><b>d</b><b>c</b><b>a</b><b>s</b><b>t</b><b>_</b><b>a</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b>: optional string
@@ -3665,7 +3684,7 @@
 
       <u>D</u><u>H</u><u>C</u><u>P</u> <u>O</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u> <u>o</u><u>f</u> <u>t</u><u>y</u><u>p</u><u>e</u> <u>d</u><u>o</u><u>m</u><u>a</u><u>i</u><u>n</u><u>s</u><u>:</u>
 
-       These options accept string value which is a comma  separated  list  of
+       These  options  accept  string value which is a comma separated list of
        domain names. The domain names are encoded based on RFC 1035.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>d</b><b>o</b><b>m</b><b>a</b><b>i</b><b>n</b><b>_</b><b>s</b><b>e</b><b>a</b><b>r</b><b>c</b><b>h</b><b>_</b><b>l</b><b>i</b><b>s</b><b>t</b>: optional string
@@ -3673,10 +3692,10 @@
 
      <u>D</u><u>H</u><u>C</u><u>P</u><u>v</u><u>6</u> <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
 
-       OVN  also  implements  native DHCPv6 support. The CMS should define the
-       set of DHCPv6 options as key/value pairs.  The  define  DHCPv6  options
-       will  be  included  in  the  DHCPv6  response to the DHCPv6 Solicit/Re‐
-       quest/Confirm packet from the logical ports having the  IPv6  addresses
+       OVN also implements native DHCPv6 support. The CMS  should  define  the
+       set  of  DHCPv6  options  as key/value pairs. The define DHCPv6 options
+       will be included in the  DHCPv6  response  to  the  DHCPv6  Solicit/Re‐
+       quest/Confirm  packet  from the logical ports having the IPv6 addresses
        in the <b>c</b><b>i</b><b>d</b><b>r</b>.
 
      <u>M</u><u>a</u><u>n</u><u>d</u><u>a</u><u>t</u><u>o</u><u>r</u><u>y</u> <u>D</u><u>H</u><u>C</u><u>P</u><u>v</u><u>6</u> <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
@@ -3684,17 +3703,17 @@
        The following options must be defined.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b><b>_</b><b>i</b><b>d</b>: optional string
-              The  Ethernet  address  for the DHCP server to use. This is also
-              included in the DHCPv6 reply as option 2, ``Server  Identifier’’
-              to  carry  a  DUID  identifying  a server between a client and a
-              server. <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> defines DUID based on Link-layer  Address
+              The Ethernet address for the DHCP server to use.  This  is  also
+              included  in the DHCPv6 reply as option 2, ``Server Identifier’’
+              to carry a DUID identifying a server  between  a  client  and  a
+              server.  <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> defines DUID based on Link-layer Address
               [DUID-LL].
 
      <u>I</u><u>P</u><u>v</u><u>6</u> <u>D</u><u>H</u><u>C</u><u>P</u><u>v</u><u>6</u> <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
 
-       Below  are  the  supported  DHCPv6 options whose values are an IPv6 ad‐
-       dress, e.g. <b>a</b><b>e</b><b>f</b><b>0</b><b>:</b><b>:</b><b>4</b>. Some options accept multiple  IPv6  addresses  en‐
-       closed  within  curly  braces, e.g. <b>{</b><b>a</b><b>e</b><b>f</b><b>0</b><b>:</b><b>:</b><b>4</b><b>,</b> <b>a</b><b>e</b><b>f</b><b>0</b><b>:</b><b>:</b><b>5</b><b>}</b>. Please refer to
+       Below are the supported DHCPv6 options whose values  are  an  IPv6  ad‐
+       dress,  e.g.  <b>a</b><b>e</b><b>f</b><b>0</b><b>:</b><b>:</b><b>4</b>.  Some options accept multiple IPv6 addresses en‐
+       closed within curly braces, e.g. <b>{</b><b>a</b><b>e</b><b>f</b><b>0</b><b>:</b><b>:</b><b>4</b><b>,</b> <b>a</b><b>e</b><b>f</b><b>0</b><b>:</b><b>:</b><b>5</b><b>}</b>.  Please  refer  to
        RFC 3315 for more details on DHCPv6 options and their codes.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>d</b><b>n</b><b>s</b><b>_</b><b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b>: optional string
@@ -3707,21 +3726,21 @@
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>d</b><b>o</b><b>m</b><b>a</b><b>i</b><b>n</b><b>_</b><b>s</b><b>e</b><b>a</b><b>r</b><b>c</b><b>h</b>: optional string
               The DHCPv6 option code for this option is 24. This option speci‐
-              fies the domain search list the client  should  use  to  resolve
+              fies  the  domain  search  list the client should use to resolve
               hostnames with DNS.
 
               Example: <b>"</b><b>o</b><b>v</b><b>n</b><b>.</b><b>o</b><b>r</b><b>g</b><b>"</b>.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>d</b><b>h</b><b>c</b><b>p</b><b>v</b><b>6</b><b>_</b><b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>l</b><b>e</b><b>s</b><b>s</b>: optional string
-              This  option specifies the OVN native DHCPv6 will work in state‐
+              This option specifies the OVN native DHCPv6 will work in  state‐
               less mode, which means OVN native DHCPv6 will not offer IPv6 ad‐
-              dresses for VM/VIF ports, but only reply  other  configurations,
-              such  as  DNS  and  domain search list. When setting this option
-              with string value "true", VM/VIF will configure  IPv6  addresses
+              dresses  for  VM/VIF ports, but only reply other configurations,
+              such as DNS and domain search list.  When  setting  this  option
+              with  string  value "true", VM/VIF will configure IPv6 addresses
               by stateless way. Default value for this option is false.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>f</b><b>q</b><b>d</b><b>n</b>: optional string
-              The  DHCPv6 option code for this option is 39. If set, indicates
+              The DHCPv6 option code for this option is 39. If set,  indicates
               the DHCPv6 option "FQDN".
 
      <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
@@ -3730,14 +3749,14 @@
               See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
 
 <b>C</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
-       Configuration for a database connection to  an  Open  vSwitch  database
+       Configuration  for  a  database  connection to an Open vSwitch database
        (OVSDB) client.
 
-       This  table  primarily  configures  the  Open  vSwitch  database server
+       This table  primarily  configures  the  Open  vSwitch  database  server
        (<b>o</b><b>v</b><b>s</b><b>d</b><b>b</b><b>-</b><b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b>).
 
-       The Open vSwitch database server can initiate and maintain active  con‐
-       nections  to  remote  clients.  It can also listen for database connec‐
+       The  Open vSwitch database server can initiate and maintain active con‐
+       nections to remote clients. It can also  listen  for  database  connec‐
        tions.
 
    <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
@@ -3749,17 +3768,17 @@
        <u>S</u><u>t</u><u>a</u><u>t</u><u>u</u><u>s</u><u>:</u>
          <b>i</b><b>s</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>e</b><b>d</b>                boolean
          <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>a</b><b>s</b><b>t</b><b>_</b><b>e</b><b>r</b><b>r</b><b>o</b><b>r</b>         optional string
-         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b>              optional string, one of <b>A</b><b>C</b><b>T</b><b>I</b><b>V</b><b>E</b>,  <b>B</b><b>A</b><b>C</b><b>K</b><b>O</b><b>F</b><b>F</b>,
+         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b>              optional  string, one of <b>A</b><b>C</b><b>T</b><b>I</b><b>V</b><b>E</b>, <b>B</b><b>A</b><b>C</b><b>K</b><b>O</b><b>F</b><b>F</b>,
                                      <b>C</b><b>O</b><b>N</b><b>N</b><b>E</b><b>C</b><b>T</b><b>I</b><b>N</b><b>G</b>, <b>I</b><b>D</b><b>L</b><b>E</b>, or <b>V</b><b>O</b><b>I</b><b>D</b>
-         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>s</b><b>e</b><b>c</b><b>_</b><b>s</b><b>i</b><b>n</b><b>c</b><b>e</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b>  optional  string,  containing an integer,
+         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>s</b><b>e</b><b>c</b><b>_</b><b>s</b><b>i</b><b>n</b><b>c</b><b>e</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b>  optional string, containing  an  integer,
                                      at least 0
          <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>s</b><b>e</b><b>c</b><b>_</b><b>s</b><b>i</b><b>n</b><b>c</b><b>e</b><b>_</b><b>d</b><b>i</b><b>s</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b>
-                                     optional string, containing  an  integer,
+                                     optional  string,  containing an integer,
                                      at least 0
          <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>o</b><b>c</b><b>k</b><b>s</b><b>_</b><b>h</b><b>e</b><b>l</b><b>d</b>         optional string
          <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>o</b><b>c</b><b>k</b><b>s</b><b>_</b><b>w</b><b>a</b><b>i</b><b>t</b><b>i</b><b>n</b><b>g</b>      optional string
          <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>o</b><b>c</b><b>k</b><b>s</b><b>_</b><b>l</b><b>o</b><b>s</b><b>t</b>         optional string
-         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>n</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>      optional  string,  containing an integer,
+         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>n</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>      optional string, containing  an  integer,
                                      at least 2
          <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>b</b><b>o</b><b>u</b><b>n</b><b>d</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b>         optional string, containing an integer
        <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
@@ -3775,20 +3794,20 @@
               The following connection methods are currently supported:
 
               <b>s</b><b>s</b><b>l</b><b>:</b><u>h</u><u>o</u><u>s</u><u>t</u>[<b>:</b><u>p</u><u>o</u><u>r</u><u>t</u>]
-                     The specified SSL <u>p</u><u>o</u><u>r</u><u>t</u> on the host  at  the  given  <u>h</u><u>o</u><u>s</u><u>t</u>,
+                     The  specified  SSL  <u>p</u><u>o</u><u>r</u><u>t</u>  on the host at the given <u>h</u><u>o</u><u>s</u><u>t</u>,
                      which can either be a DNS name (if built with unbound li‐
-                     brary)  or  an IP address. A valid SSL configuration must
-                     be provided when this form is  used,  this  configuration
-                     can  be specified via command-line options or the <b>S</b><b>S</b><b>L</b> ta‐
+                     brary) or an IP address. A valid SSL  configuration  must
+                     be  provided  when  this form is used, this configuration
+                     can be specified via command-line options or the <b>S</b><b>S</b><b>L</b>  ta‐
                      ble.
 
                      If <u>p</u><u>o</u><u>r</u><u>t</u> is not specified, it defaults to 6640.
 
-                     SSL support is an optional feature  that  is  not  always
+                     SSL  support  is  an  optional feature that is not always
                      built as part of Open vSwitch.
 
               <b>t</b><b>c</b><b>p</b><b>:</b><u>h</u><u>o</u><u>s</u><u>t</u>[<b>:</b><u>p</u><u>o</u><u>r</u><u>t</u>]
-                     The  specified  TCP  <u>p</u><u>o</u><u>r</u><u>t</u>  on the host at the given <u>h</u><u>o</u><u>s</u><u>t</u>,
+                     The specified TCP <u>p</u><u>o</u><u>r</u><u>t</u> on the host  at  the  given  <u>h</u><u>o</u><u>s</u><u>t</u>,
                      which can either be a DNS name (if built with unbound li‐
                      brary) or an IP address. If <u>h</u><u>o</u><u>s</u><u>t</u> is an IPv6 address, wrap
                      it in square brackets, e.g. <b>t</b><b>c</b><b>p</b><b>:</b><b>[</b><b>:</b><b>:</b><b>1</b><b>]</b><b>:</b><b>6</b><b>6</b><b>4</b><b>0</b>.
@@ -3796,54 +3815,54 @@
                      If <u>p</u><u>o</u><u>r</u><u>t</u> is not specified, it defaults to 6640.
 
               <b>p</b><b>s</b><b>s</b><b>l</b><b>:</b>[<u>p</u><u>o</u><u>r</u><u>t</u>][<b>:</b><u>h</u><u>o</u><u>s</u><u>t</u>]
-                     Listens for SSL connections on the  specified  TCP  <u>p</u><u>o</u><u>r</u><u>t</u>.
-                     Specify  0  for  <u>p</u><u>o</u><u>r</u><u>t</u>  to  have  the kernel automatically
-                     choose an available port. If <u>h</u><u>o</u><u>s</u><u>t</u>, which can either be  a
-                     DNS  name  (if  built  with unbound library) or an IP ad‐
-                     dress, is specified, then connections are  restricted  to
+                     Listens  for  SSL  connections on the specified TCP <u>p</u><u>o</u><u>r</u><u>t</u>.
+                     Specify 0 for  <u>p</u><u>o</u><u>r</u><u>t</u>  to  have  the  kernel  automatically
+                     choose  an available port. If <u>h</u><u>o</u><u>s</u><u>t</u>, which can either be a
+                     DNS name (if built with unbound library)  or  an  IP  ad‐
+                     dress,  is  specified, then connections are restricted to
                      the resolved or specified local IPaddress (either IPv4 or
                      IPv6 address). If <u>h</u><u>o</u><u>s</u><u>t</u> is an IPv6 address, wrap in square
-                     brackets,  e.g. <b>p</b><b>s</b><b>s</b><b>l</b><b>:</b><b>6</b><b>6</b><b>4</b><b>0</b><b>:</b><b>[</b><b>:</b><b>:</b><b>1</b><b>]</b>. If <u>h</u><u>o</u><u>s</u><u>t</u> is not specified
-                     then it listens only on IPv4 (but not IPv6) addresses.  A
-                     valid  SSL  configuration must be provided when this form
-                     is used, this can be specified  either  via  command-line
+                     brackets, e.g. <b>p</b><b>s</b><b>s</b><b>l</b><b>:</b><b>6</b><b>6</b><b>4</b><b>0</b><b>:</b><b>[</b><b>:</b><b>:</b><b>1</b><b>]</b>. If <u>h</u><u>o</u><u>s</u><u>t</u> is not  specified
+                     then  it listens only on IPv4 (but not IPv6) addresses. A
+                     valid SSL configuration must be provided when  this  form
+                     is  used,  this  can be specified either via command-line
                      options or the <b>S</b><b>S</b><b>L</b> table.
 
                      If <u>p</u><u>o</u><u>r</u><u>t</u> is not specified, it defaults to 6640.
 
-                     SSL  support  is  an  optional feature that is not always
+                     SSL support is an optional feature  that  is  not  always
                      built as part of Open vSwitch.
 
               <b>p</b><b>t</b><b>c</b><b>p</b><b>:</b>[<u>p</u><u>o</u><u>r</u><u>t</u>][<b>:</b><u>h</u><u>o</u><u>s</u><u>t</u>]
-                     Listens for connections on the specified TCP <u>p</u><u>o</u><u>r</u><u>t</u>.  Spec‐
+                     Listens  for connections on the specified TCP <u>p</u><u>o</u><u>r</u><u>t</u>. Spec‐
                      ify 0 for <u>p</u><u>o</u><u>r</u><u>t</u> to have the kernel automatically choose an
-                     available  port.  If <u>h</u><u>o</u><u>s</u><u>t</u>, which can either be a DNS name
-                     (if built with unbound library)  or  an  IP  address,  is
-                     specified,  then  connections  are  restricted to the re‐
+                     available port. If <u>h</u><u>o</u><u>s</u><u>t</u>, which can either be a  DNS  name
+                     (if  built  with  unbound  library)  or an IP address, is
+                     specified, then connections are  restricted  to  the  re‐
                      solved or specified local IP address (either IPv4 or IPv6
-                     address). If <u>h</u><u>o</u><u>s</u><u>t</u> is an IPv6 address, wrap it  in  square
-                     brackets,  e.g. <b>p</b><b>t</b><b>c</b><b>p</b><b>:</b><b>6</b><b>6</b><b>4</b><b>0</b><b>:</b><b>[</b><b>:</b><b>:</b><b>1</b><b>]</b>. If <u>h</u><u>o</u><u>s</u><u>t</u> is not specified
+                     address).  If  <u>h</u><u>o</u><u>s</u><u>t</u> is an IPv6 address, wrap it in square
+                     brackets, e.g. <b>p</b><b>t</b><b>c</b><b>p</b><b>:</b><b>6</b><b>6</b><b>4</b><b>0</b><b>:</b><b>[</b><b>:</b><b>:</b><b>1</b><b>]</b>. If <u>h</u><u>o</u><u>s</u><u>t</u> is not  specified
                      then it listens only on IPv4 addresses.
 
                      If <u>p</u><u>o</u><u>r</u><u>t</u> is not specified, it defaults to 6640.
 
-              When multiple clients are configured, the <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> values must  be
+              When  multiple clients are configured, the <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> values must be
               unique. Duplicate <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> values yield unspecified results.
 
      <u>C</u><u>l</u><u>i</u><u>e</u><u>n</u><u>t</u> <u>F</u><u>a</u><u>i</u><u>l</u><u>u</u><u>r</u><u>e</u> <u>D</u><u>e</u><u>t</u><u>e</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> <u>a</u><u>n</u><u>d</u> <u>H</u><u>a</u><u>n</u><u>d</u><u>l</u><u>i</u><u>n</u><u>g</u><u>:</u>
 
        <b>m</b><b>a</b><b>x</b><b>_</b><b>b</b><b>a</b><b>c</b><b>k</b><b>o</b><b>f</b><b>f</b>: optional integer, at least 1,000
-              Maximum  number  of  milliseconds to wait between connection at‐
+              Maximum number of milliseconds to wait  between  connection  at‐
               tempts. Default is implementation-specific.
 
        <b>i</b><b>n</b><b>a</b><b>c</b><b>t</b><b>i</b><b>v</b><b>i</b><b>t</b><b>y</b><b>_</b><b>p</b><b>r</b><b>o</b><b>b</b><b>e</b>: optional integer
               Maximum number of milliseconds of idle time on connection to the
-              client before sending  an  inactivity  probe  message.  If  Open
-              vSwitch  does  not communicate with the client for the specified
-              number of seconds, it will send a probe. If a  response  is  not
-              received  for  the  same additional amount of time, Open vSwitch
-              assumes the connection has been broken and  attempts  to  recon‐
-              nect.  Default is implementation-specific. A value of 0 disables
+              client  before  sending  an  inactivity  probe  message. If Open
+              vSwitch does not communicate with the client for  the  specified
+              number  of  seconds,  it will send a probe. If a response is not
+              received for the same additional amount of  time,  Open  vSwitch
+              assumes  the  connection  has been broken and attempts to recon‐
+              nect. Default is implementation-specific. A value of 0  disables
               inactivity probes.
 
      <u>S</u><u>t</u><u>a</u><u>t</u><u>u</u><u>s</u><u>:</u>
@@ -3852,12 +3871,12 @@
        in the status columns may be updated depends on the <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> type.
 
        When <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> specifies a connection method that listens for inbound con‐
-       nections (e.g. <b>p</b><b>t</b><b>c</b><b>p</b><b>:</b> or <b>p</b><b>u</b><b>n</b><b>i</b><b>x</b><b>:</b>), both  <b>n</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>  and  <b>i</b><b>s</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>e</b><b>d</b>
+       nections  (e.g.  <b>p</b><b>t</b><b>c</b><b>p</b><b>:</b>  or <b>p</b><b>u</b><b>n</b><b>i</b><b>x</b><b>:</b>), both <b>n</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> and <b>i</b><b>s</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>e</b><b>d</b>
        may also be updated while the remaining key-value pairs are omitted.
 
-       On  the  other  hand, when <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> specifies an outbound connection, all
-       key-value pairs may be updated, except  the  above-mentioned  two  key-
-       value  pairs associated with inbound connection targets. They are omit‐
+       On the other hand, when <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> specifies an  outbound  connection,  all
+       key-value  pairs  may  be  updated, except the above-mentioned two key-
+       value pairs associated with inbound connection targets. They are  omit‐
        ted.
 
        <b>i</b><b>s</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>e</b><b>d</b>: boolean
@@ -3865,7 +3884,7 @@
 
        <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>a</b><b>s</b><b>t</b><b>_</b><b>e</b><b>r</b><b>r</b><b>o</b><b>r</b>: optional string
               A human-readable description of the last error on the connection
-              to the manager; i.e. <b>s</b><b>t</b><b>r</b><b>e</b><b>r</b><b>r</b><b>o</b><b>r</b><b>(</b><b>e</b><b>r</b><b>r</b><b>n</b><b>o</b><b>)</b>. This key will  exist  only
+              to  the  manager; i.e. <b>s</b><b>t</b><b>r</b><b>e</b><b>r</b><b>r</b><b>o</b><b>r</b><b>(</b><b>e</b><b>r</b><b>r</b><b>n</b><b>o</b><b>)</b>. This key will exist only
               if an error has occurred.
 
        <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b>: optional string, one of <b>A</b><b>C</b><b>T</b><b>I</b><b>V</b><b>E</b>, <b>B</b><b>A</b><b>C</b><b>K</b><b>O</b><b>F</b><b>F</b>, <b>C</b><b>O</b><b>N</b><b>N</b><b>E</b><b>C</b><b>T</b><b>I</b><b>N</b><b>G</b>,
@@ -3884,7 +3903,7 @@
 
               <b>I</b><b>D</b><b>L</b><b>E</b>   Connection is idle. Waiting for response to keep-alive.
 
-              These  values  may  change in the future. They are provided only
+              These values may change in the future. They  are  provided  only
               for human consumption.
 
        <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>s</b><b>e</b><b>c</b><b>_</b><b>s</b><b>i</b><b>n</b><b>c</b><b>e</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b>: optional string, containing an integer, at
@@ -3895,48 +3914,48 @@
 
        <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>s</b><b>e</b><b>c</b><b>_</b><b>s</b><b>i</b><b>n</b><b>c</b><b>e</b><b>_</b><b>d</b><b>i</b><b>s</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b>: optional string, containing an integer,
        at least 0
-              The amount of time since this client last disconnected from  the
-              database  (in  seconds). Value is empty if client has never dis‐
+              The  amount of time since this client last disconnected from the
+              database (in seconds). Value is empty if client has  never  dis‐
               connected.
 
        <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>o</b><b>c</b><b>k</b><b>s</b><b>_</b><b>h</b><b>e</b><b>l</b><b>d</b>: optional string
-              Space-separated list of the names of OVSDB locks that  the  con‐
-              nection  holds.  Omitted  if  the  connection  does not hold any
+              Space-separated  list  of the names of OVSDB locks that the con‐
+              nection holds. Omitted if  the  connection  does  not  hold  any
               locks.
 
        <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>o</b><b>c</b><b>k</b><b>s</b><b>_</b><b>w</b><b>a</b><b>i</b><b>t</b><b>i</b><b>n</b><b>g</b>: optional string
-              Space-separated list of the names of OVSDB locks that  the  con‐
-              nection  is currently waiting to acquire. Omitted if the connec‐
+              Space-separated  list  of the names of OVSDB locks that the con‐
+              nection is currently waiting to acquire. Omitted if the  connec‐
               tion is not waiting for any locks.
 
        <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>o</b><b>c</b><b>k</b><b>s</b><b>_</b><b>l</b><b>o</b><b>s</b><b>t</b>: optional string
-              Space-separated list of the names of OVSDB locks that  the  con‐
-              nection  has  had  stolen by another OVSDB client. Omitted if no
+              Space-separated  list  of the names of OVSDB locks that the con‐
+              nection has had stolen by another OVSDB client.  Omitted  if  no
               locks have been stolen from this connection.
 
        <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>n</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>: optional string, containing an integer, at
        least 2
-              When <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> specifies a connection method that listens  for  in‐
-              bound  connections  (e.g. <b>p</b><b>t</b><b>c</b><b>p</b><b>:</b> or <b>p</b><b>s</b><b>s</b><b>l</b><b>:</b>) and more than one con‐
-              nection is actually active, the value is the  number  of  active
+              When  <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b>  specifies a connection method that listens for in‐
+              bound connections (e.g. <b>p</b><b>t</b><b>c</b><b>p</b><b>:</b> or <b>p</b><b>s</b><b>s</b><b>l</b><b>:</b>) and more than  one  con‐
+              nection  is  actually  active, the value is the number of active
               connections. Otherwise, this key-value pair is omitted.
 
        <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>b</b><b>o</b><b>u</b><b>n</b><b>d</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b>: optional string, containing an integer
               When <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> is <b>p</b><b>t</b><b>c</b><b>p</b><b>:</b> or <b>p</b><b>s</b><b>s</b><b>l</b><b>:</b>, this is the TCP port on which the
-              OVSDB  server  is  listening.  (This is particularly useful when
-              <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> specifies a port of 0, allowing the kernel to choose  any
+              OVSDB server is listening. (This  is  particularly  useful  when
+              <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b>  specifies a port of 0, allowing the kernel to choose any
               available port.)
 
      <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
 
-       The  overall purpose of these columns is described under <b>C</b><b>o</b><b>m</b><b>m</b><b>o</b><b>n</b> <b>C</b><b>o</b><b>l</b><b>u</b><b>m</b><b>n</b><b>s</b>
+       The overall purpose of these columns is described under <b>C</b><b>o</b><b>m</b><b>m</b><b>o</b><b>n</b>  <b>C</b><b>o</b><b>l</b><b>u</b><b>m</b><b>n</b><b>s</b>
        at the beginning of this document.
 
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
 
        <b>o</b><b>t</b><b>h</b><b>e</b><b>r</b><b>_</b><b>c</b><b>o</b><b>n</b><b>f</b><b>i</b><b>g</b>: map of string-string pairs
 <b>D</b><b>N</b><b>S</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
-       Each row in this table stores the DNS records. The  <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b>  ta‐
+       Each  row  in this table stores the DNS records. The <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> ta‐
        ble’s <b>d</b><b>n</b><b>s</b><b>_</b><b>r</b><b>e</b><b>c</b><b>o</b><b>r</b><b>d</b><b>s</b> references these records.
 
    <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
@@ -3948,8 +3967,8 @@
        <b>r</b><b>e</b><b>c</b><b>o</b><b>r</b><b>d</b><b>s</b>: map of string-string pairs
               Key-value pair of DNS records with <b>D</b><b>N</b><b>S</b> <b>q</b><b>u</b><b>e</b><b>r</b><b>y</b> <b>n</b><b>a</b><b>m</b><b>e</b> as the key and
               value as a string of IP address(es) separated by comma or space.
-              For  PTR  requests,  the  key-value pair can be <b>R</b><b>e</b><b>v</b><b>e</b><b>r</b><b>s</b><b>e</b> <b>I</b><b>P</b><b>v</b><b>4</b> <b>a</b><b>d</b>‐‐
-              <b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>.</b><b>i</b><b>n</b><b>-</b><b>a</b><b>d</b><b>d</b><b>r</b><b>.</b><b>a</b><b>r</b><b>p</b><b>a</b> and the value <b>D</b><b>N</b><b>S</b> <b>d</b><b>o</b><b>m</b><b>a</b><b>i</b><b>n</b> <b>n</b><b>a</b><b>m</b><b>e</b>. For  IPv6  ad‐
+              For PTR requests, the key-value pair can  be  <b>R</b><b>e</b><b>v</b><b>e</b><b>r</b><b>s</b><b>e</b>  <b>I</b><b>P</b><b>v</b><b>4</b>  <b>a</b><b>d</b>‐‐
+              <b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>.</b><b>i</b><b>n</b><b>-</b><b>a</b><b>d</b><b>d</b><b>r</b><b>.</b><b>a</b><b>r</b><b>p</b><b>a</b>  and  the value <b>D</b><b>N</b><b>S</b> <b>d</b><b>o</b><b>m</b><b>a</b><b>i</b><b>n</b> <b>n</b><b>a</b><b>m</b><b>e</b>. For IPv6 ad‐
               dresses, the key has to be <b>R</b><b>e</b><b>v</b><b>e</b><b>r</b><b>s</b><b>e</b> <b>I</b><b>P</b><b>v</b><b>6</b> <b>a</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>.</b><b>i</b><b>p</b><b>6</b><b>.</b><b>a</b><b>r</b><b>p</b><b>a</b>.
 
               <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b>  "vm1.ovn.org" = "10.0.0.4 aef0::4"
@@ -3957,13 +3976,13 @@
               <b>E</b><b>x</b><b>a</b><b>m</b><b>p</b><b>l</b><b>e</b><b>:</b>  "4.0.0.10.in-addr.arpa" = "vm1.ovn.org"
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>o</b><b>v</b><b>n</b><b>-</b><b>o</b><b>w</b><b>n</b><b>e</b><b>d</b>: optional string
-              If  set  to  true, then the OVN will be the main responsible for
+              If set to true, then the OVN will be the  main  responsible  for
               <b>D</b><b>N</b><b>S</b> <b>R</b><b>e</b><b>c</b><b>o</b><b>r</b><b>d</b><b>s</b> within this row.
 
-              A <b>D</b><b>N</b><b>S</b> row with this option set to <b>t</b><b>r</b><b>u</b><b>e</b> can be  created  for  do‐
-              mains  that  the  user needs to configure locally and don’t care
-              about IPv6 only interested in IPv4 or vice versa. This will  let
-              ovn  send  IPv4 DNS reply and reject/ignore IPv6 queries to save
+              A  <b>D</b><b>N</b><b>S</b>  row  with this option set to <b>t</b><b>r</b><b>u</b><b>e</b> can be created for do‐
+              mains that the user needs to configure locally  and  don’t  care
+              about  IPv6 only interested in IPv4 or vice versa. This will let
+              ovn send IPv4 DNS reply and reject/ignore IPv6 queries  to  save
               the waiting for a timeout on those uninteresting queries.
 
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
@@ -3984,28 +4003,28 @@
 
    <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
        <b>p</b><b>r</b><b>i</b><b>v</b><b>a</b><b>t</b><b>e</b><b>_</b><b>k</b><b>e</b><b>y</b>: string
-              Name of a PEM file  containing  the  private  key  used  as  the
+              Name  of  a  PEM  file  containing  the  private key used as the
               switch’s identity for SSL connections to the controller.
 
        <b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b><b>c</b><b>a</b><b>t</b><b>e</b>: string
-              Name  of a PEM file containing a certificate, signed by the cer‐
+              Name of a PEM file containing a certificate, signed by the  cer‐
               tificate authority (CA) used by the controller and manager, that
-              certifies the switch’s private key,  identifying  a  trustworthy
+              certifies  the  switch’s  private key, identifying a trustworthy
               switch.
 
        <b>c</b><b>a</b><b>_</b><b>c</b><b>e</b><b>r</b><b>t</b>: string
-              Name  of a PEM file containing the CA certificate used to verify
+              Name of a PEM file containing the CA certificate used to  verify
               that the switch is connected to a trustworthy controller.
 
        <b>b</b><b>o</b><b>o</b><b>t</b><b>s</b><b>t</b><b>r</b><b>a</b><b>p</b><b>_</b><b>c</b><b>a</b><b>_</b><b>c</b><b>e</b><b>r</b><b>t</b>: boolean
-              If set to <b>t</b><b>r</b><b>u</b><b>e</b>, then Open vSwitch will attempt to obtain the  CA
-              certificate  from the controller on its first SSL connection and
-              save it to the named PEM file. If it is successful, it will  im‐
-              mediately  drop  the  connection and reconnect, and from then on
-              all SSL connections  must  be  authenticated  by  a  certificate
-              signed  by the CA certificate thus obtained. <b>T</b><b>h</b><b>i</b><b>s</b> <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b> <b>e</b><b>x</b><b>p</b><b>o</b><b>s</b><b>e</b><b>s</b>
-              <b>t</b><b>h</b><b>e</b> <b>S</b><b>S</b><b>L</b> <b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b> <b>t</b><b>o</b> <b>a</b> <b>m</b><b>a</b><b>n</b><b>-</b><b>i</b><b>n</b><b>-</b><b>t</b><b>h</b><b>e</b><b>-</b><b>m</b><b>i</b><b>d</b><b>d</b><b>l</b><b>e</b> <b>a</b><b>t</b><b>t</b><b>a</b><b>c</b><b>k</b>  <b>o</b><b>b</b><b>t</b><b>a</b><b>i</b><b>n</b><b>i</b><b>n</b><b>g</b>  <b>t</b><b>h</b><b>e</b>
-              <b>i</b><b>n</b><b>i</b><b>t</b><b>i</b><b>a</b><b>l</b>  <b>C</b><b>A</b>  <b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b><b>c</b><b>a</b><b>t</b><b>e</b><b>.</b>  It may still be useful for bootstrap‐
+              If  set to <b>t</b><b>r</b><b>u</b><b>e</b>, then Open vSwitch will attempt to obtain the CA
+              certificate from the controller on its first SSL connection  and
+              save  it to the named PEM file. If it is successful, it will im‐
+              mediately drop the connection and reconnect, and  from  then  on
+              all  SSL  connections  must  be  authenticated  by a certificate
+              signed by the CA certificate thus obtained. <b>T</b><b>h</b><b>i</b><b>s</b> <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b>  <b>e</b><b>x</b><b>p</b><b>o</b><b>s</b><b>e</b><b>s</b>
+              <b>t</b><b>h</b><b>e</b>  <b>S</b><b>S</b><b>L</b>  <b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b> <b>t</b><b>o</b> <b>a</b> <b>m</b><b>a</b><b>n</b><b>-</b><b>i</b><b>n</b><b>-</b><b>t</b><b>h</b><b>e</b><b>-</b><b>m</b><b>i</b><b>d</b><b>d</b><b>l</b><b>e</b> <b>a</b><b>t</b><b>t</b><b>a</b><b>c</b><b>k</b> <b>o</b><b>b</b><b>t</b><b>a</b><b>i</b><b>n</b><b>i</b><b>n</b><b>g</b> <b>t</b><b>h</b><b>e</b>
+              <b>i</b><b>n</b><b>i</b><b>t</b><b>i</b><b>a</b><b>l</b> <b>C</b><b>A</b> <b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b><b>c</b><b>a</b><b>t</b><b>e</b><b>.</b> It may still be  useful  for  bootstrap‐
               ping.
 
        <b>s</b><b>s</b><b>l</b><b>_</b><b>p</b><b>r</b><b>o</b><b>t</b><b>o</b><b>c</b><b>o</b><b>l</b><b>s</b>: string
@@ -4013,18 +4032,18 @@
               fault when this option is omitted is <b>T</b><b>L</b><b>S</b><b>v</b><b>1</b><b>,</b><b>T</b><b>L</b><b>S</b><b>v</b><b>1</b><b>.</b><b>1</b><b>,</b><b>T</b><b>L</b><b>S</b><b>v</b><b>1</b><b>.</b><b>2</b>.
 
        <b>s</b><b>s</b><b>l</b><b>_</b><b>c</b><b>i</b><b>p</b><b>h</b><b>e</b><b>r</b><b>s</b>: string
-              List of ciphers (in OpenSSL cipher string  format)  to  be  sup‐
-              ported  for  SSL  connections.  The  default when this option is
+              List  of  ciphers  (in  OpenSSL cipher string format) to be sup‐
+              ported for SSL connections. The  default  when  this  option  is
               omitted is <b>H</b><b>I</b><b>G</b><b>H</b><b>:</b><b>!</b><b>a</b><b>N</b><b>U</b><b>L</b><b>L</b><b>:</b><b>!</b><b>M</b><b>D</b><b>5</b>.
 
      <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
 
-       The overall purpose of these columns is described under <b>C</b><b>o</b><b>m</b><b>m</b><b>o</b><b>n</b>  <b>C</b><b>o</b><b>l</b><b>u</b><b>m</b><b>n</b><b>s</b>
+       The  overall purpose of these columns is described under <b>C</b><b>o</b><b>m</b><b>m</b><b>o</b><b>n</b> <b>C</b><b>o</b><b>l</b><b>u</b><b>m</b><b>n</b><b>s</b>
        at the beginning of this document.
 
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
 <b>G</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b><b>_</b><b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
-       Association  of  a  chassis to a logical router port. The traffic going
+       Association of a chassis to a logical router port.  The  traffic  going
        out through an specific router port will be redirected to a chassis, or
        a set of them in high availability configurations.
 
@@ -4045,11 +4064,11 @@
 
        <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>n</b><b>a</b><b>m</b><b>e</b>: string
               Name of the chassis that we want to redirect traffic through for
-              the  associated  logical  router  port. The value must match the
+              the associated logical router port. The  value  must  match  the
               <b>n</b><b>a</b><b>m</b><b>e</b> column of the <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> table in the <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database.
 
        <b>p</b><b>r</b><b>i</b><b>o</b><b>r</b><b>i</b><b>t</b><b>y</b>: integer, in range 0 to 32,767
-              This is the priority of a chassis among all <b>G</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b><b>_</b><b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>  be‐
+              This  is the priority of a chassis among all <b>G</b><b>a</b><b>t</b><b>e</b><b>w</b><b>a</b><b>y</b><b>_</b><b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> be‐
               longing to the same logical router port.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>: map of string-string pairs
@@ -4062,11 +4081,11 @@
 
 <b>H</b><b>A</b><b>_</b><b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>G</b><b>r</b><b>o</b><b>u</b><b>p</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
        Table representing a group of chassis which can provide high availabil‐
-       ity  services.  Each  chassis  in the group is represented by the table
-       <b>H</b><b>A</b><b>_</b><b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>. The HA chassis with highest priority will be the master  of
-       this  group. If the master chassis failover is detected, the HA chassis
-       with the next higher priority takes over the responsibility of  provid‐
-       ing  the  HA.  If a distributed gateway router port references a row in
+       ity services. Each chassis in the group is  represented  by  the  table
+       <b>H</b><b>A</b><b>_</b><b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>.  The HA chassis with highest priority will be the master of
+       this group. If the master chassis failover is detected, the HA  chassis
+       with  the next higher priority takes over the responsibility of provid‐
+       ing the HA. If a distributed gateway router port references  a  row  in
        this table, then the master HA chassis in this group provides the gate‐
        way functionality.
 
@@ -4097,12 +4116,12 @@
 
    <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
        <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>n</b><b>a</b><b>m</b><b>e</b>: string
-              Name of the chassis which is part of the HA chassis  group.  The
-              value  must  match  the  <b>n</b><b>a</b><b>m</b><b>e</b> column of the <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b> table in the
+              Name  of  the chassis which is part of the HA chassis group. The
+              value must match the <b>n</b><b>a</b><b>m</b><b>e</b> column of the  <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>  table  in  the
               <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database.
 
        <b>p</b><b>r</b><b>i</b><b>o</b><b>r</b><b>i</b><b>t</b><b>y</b>: integer, in range 0 to 32,767
-              Priority of the chassis. Chassis with highest priority  will  be
+              Priority  of  the chassis. Chassis with highest priority will be
               the master.
 
      <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
@@ -4111,13 +4130,13 @@
               See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
 
 <b>B</b><b>F</b><b>D</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
-       Contains  BFD  parameter  for ovn-controller BFD configuration. OVN BFD
+       Contains BFD parameter for ovn-controller BFD  configuration.  OVN  BFD
        implementation is used to provide detection of failures in the path be‐
-       tween adjacent forwarding engines, including the  OVN  interfaces.  OVN
-       BFD  provides link status info to OVN northd in order to update logical
-       flows according to the status of BFD endpoints. In the  current  imple‐
-       mentation  OVN  BFD  is  used to check next-hop status for ECMP routes.
-       Please note BFD table refers to OVN BFD implementation and not  to  OVS
+       tween  adjacent  forwarding  engines, including the OVN interfaces. OVN
+       BFD provides link status info to OVN northd in order to update  logical
+       flows  according  to the status of BFD endpoints. In the current imple‐
+       mentation OVN BFD is used to check next-hop  status  for  ECMP  routes.
+       Please  note  BFD table refers to OVN BFD implementation and not to OVS
        legacy one.
 
    <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
@@ -4145,21 +4164,21 @@
               BFD peer IP address.
 
        <b>m</b><b>i</b><b>n</b><b>_</b><b>t</b><b>x</b>: optional integer, at least 1
-              This  is  the  minimum interval, in milliseconds, that the local
-              system would like to use when transmitting BFD Control  packets,
-              less  any  jitter  applied.  The value zero is reserved. Default
+              This is the minimum interval, in milliseconds,  that  the  local
+              system  would like to use when transmitting BFD Control packets,
+              less any jitter applied. The value  zero  is  reserved.  Default
               value is 1000 ms.
 
        <b>m</b><b>i</b><b>n</b><b>_</b><b>r</b><b>x</b>: optional integer
-              This is the minimum interval, in milliseconds, between  received
-              BFD  Control  packets that this system is capable of supporting,
-              less any jitter applied by the sender. If this  value  is  zero,
-              the  transmitting system does not want the remote system to send
+              This  is the minimum interval, in milliseconds, between received
+              BFD Control packets that this system is capable  of  supporting,
+              less  any  jitter  applied by the sender. If this value is zero,
+              the transmitting system does not want the remote system to  send
               any periodic BFD Control packets.
 
        <b>d</b><b>e</b><b>t</b><b>e</b><b>c</b><b>t</b><b>_</b><b>m</b><b>u</b><b>l</b><b>t</b>: optional integer, at least 1
-              Detection time multiplier.  The  negotiated  transmit  interval,
-              multiplied  by  this  value, provides the Detection Time for the
+              Detection  time  multiplier.  The  negotiated transmit interval,
+              multiplied by this value, provides the Detection  Time  for  the
               receiving system in Asynchronous mode. Default value is 5.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>: map of string-string pairs
@@ -4195,7 +4214,7 @@
    <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
      <u>C</u><u>o</u><u>n</u><u>f</u><u>i</u><u>g</u><u>u</u><u>r</u><u>a</u><u>t</u><u>i</u><u>o</u><u>n</u><u>:</u>
 
-       <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> reads configuration from these columns  and  propagates  the
+       <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>  reads  configuration  from these columns and propagates the
        value to SBDB.
 
        <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b>: string
@@ -4211,19 +4230,19 @@
               Override dynamically learnt MACs.
 
 <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>T</b><b>e</b><b>m</b><b>p</b><b>l</b><b>a</b><b>t</b><b>e</b><b>_</b><b>V</b><b>a</b><b>r</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
-       One  record per chassis, each containing a map, <b>v</b><b>a</b><b>r</b><b>i</b><b>a</b><b>b</b><b>l</b><b>e</b><b>s</b>, between tem‐
-       plate variable names and their value for that specific chassis. A  tem‐
+       One record per chassis, each containing a map, <b>v</b><b>a</b><b>r</b><b>i</b><b>a</b><b>b</b><b>l</b><b>e</b><b>s</b>, between  tem‐
+       plate  variable names and their value for that specific chassis. A tem‐
        plate variable has a name and potentially different values on different
-       hypervisors  in  the  OVN  cluster. For example, two rows, <b>R</b><b>1</b> <b>=</b> <b>(</b><b>.</b><b>c</b><b>h</b><b>a</b><b>s</b>‐‐
-       <b>s</b><b>i</b><b>s</b><b>=</b><b>C</b><b>1</b><b>,</b> <b>v</b><b>a</b><b>r</b><b>i</b><b>a</b><b>b</b><b>l</b><b>e</b><b>s</b><b>=</b><b>{</b><b>(</b><b>N</b><b>:</b> <b>V</b><b>1</b><b>)</b><b>}</b> and <b>R</b><b>2</b> <b>=</b> <b>(</b><b>.</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>=</b><b>C</b><b>2</b><b>,</b> <b>v</b><b>a</b><b>r</b><b>i</b><b>a</b><b>b</b><b>l</b><b>e</b><b>s</b><b>=</b><b>{</b><b>(</b><b>N</b><b>:</b>  <b>V</b><b>2</b><b>)</b><b>}</b>
+       hypervisors in the OVN cluster. For example, two  rows,  <b>R</b><b>1</b>  <b>=</b>  <b>(</b><b>.</b><b>c</b><b>h</b><b>a</b><b>s</b>‐‐
+       <b>s</b><b>i</b><b>s</b><b>=</b><b>C</b><b>1</b><b>,</b>  <b>v</b><b>a</b><b>r</b><b>i</b><b>a</b><b>b</b><b>l</b><b>e</b><b>s</b><b>=</b><b>{</b><b>(</b><b>N</b><b>:</b> <b>V</b><b>1</b><b>)</b><b>}</b> and <b>R</b><b>2</b> <b>=</b> <b>(</b><b>.</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>=</b><b>C</b><b>2</b><b>,</b> <b>v</b><b>a</b><b>r</b><b>i</b><b>a</b><b>b</b><b>l</b><b>e</b><b>s</b><b>=</b><b>{</b><b>(</b><b>N</b><b>:</b> <b>V</b><b>2</b><b>)</b><b>}</b>
        will make <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> running on chassis <b>C</b><b>1</b> and <b>C</b><b>2</b> interpret the to‐
-       ken  <b>N</b>  either  as <b>V</b><b>1</b> (on <b>C</b><b>1</b>) or as <b>V</b><b>2</b> (on <b>C</b><b>2</b>). Users can refer to tem‐
+       ken <b>N</b> either as <b>V</b><b>1</b> (on <b>C</b><b>1</b>) or as <b>V</b><b>2</b> (on <b>C</b><b>2</b>). Users can  refer  to  tem‐
        plate variables from within other logical components, e.g., within ACL,
-       QoS or Logical_Router_Policy matches  or  from  Load_Balancer  VIP  and
+       QoS  or  Logical_Router_Policy  matches  or  from Load_Balancer VIP and
        backend definitions.
 
-       If  a template variable is referenced on a chassis for which that vari‐
-       able is not defined then <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> running on  that  chassis  will
+       If a template variable is referenced on a chassis for which that  vari‐
+       able  is  not  defined then <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> running on that chassis will
        just interpret it as a raw string literal.
 
    <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>

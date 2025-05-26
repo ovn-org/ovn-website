@@ -2431,6 +2431,9 @@ optional string, containing an integer, in range 68 to 65,535
 .TQ 2.75in
 \fBoptions : gateway_mtu_bypass\fR
 optional string
+.TQ 2.75in
+\fBoptions : centralize_routing\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
 .RE
 .TQ .25in
 \fIAttachment:\fR
@@ -2597,6 +2600,18 @@ Designates lookup for \fBLogical_Router_Static_Routes\fR with the specified \fBr
 If set, logical flows will be added to router pipeline to check packet length\[char46] If packet length is greater than the value set, ICMPv4 type 3 (Destination Unreachable) code 4 (Fragmentation Needed and Don\(cqt Fragment was Set) or ICMPv6 type 2 (Packet Too Big) code 0 (no route to destination) packets will be generated\[char46] This allows for Path MTU Discovery\[char46]
 .IP "\fBoptions : gateway_mtu_bypass\fR: optional string"
 When configured, represents a match expression, in the same expression language used for the \fBmatch\fR column in the OVN Southbound database\(cqs \fBLogical_Flow\fR table\[char46] Packets matching this expression will bypass the length check configured through the \fBoptions:gateway_mtu\fR option\[char46]
+.IP "\fBoptions : centralize_routing\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+This option is applicable only if the router port is a distributed gateway port i\[char46]e if the \fBha_chassis_group\fR column or \fBgateway_chassis\fR is set\[char46]
+.IP
+If set to \fBtrue\fR, routing for the router port\(cqs networks (set in the column \fBnetworks\fR) is centralized on the gateway chassis which claims this distributed gateway port\[char46]
+.IP
+Additionally for this option to take effect, below conditions must be met:
+.RS
+.IP \(bu
+The Logical router has only one distributed gateway port\[char46]
+.IP \(bu
+The router port\(cqs peer logical switch has no localnet ports\[char46]
+.RE
 .ST "Attachment:"
 .PP
 .PP
