@@ -930,6 +930,9 @@ optional string, containing an integer, in range 0 to 4,294,967,295
 .TQ 2.75in
 \fBother_config : ct-zone-limit\fR
 optional string, containing an integer, in range 0 to 4,294,967,295
+.TQ 2.75in
+\fBother_config : enable-stateless-acl-with-lb\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
 .RE
 .TQ .25in
 \fIIP Multicast Snooping Options:\fR
@@ -1075,6 +1078,8 @@ Value used to request to assign L2 address only if neither subnet nor ipv6_prefi
 FDB aging \fBthreshold\fR value in seconds\[char46] FDB exceeding this timeout will be automatically removed\[char46] The value defaults to 0, which means disabled\[char46]
 .IP "\fBother_config : ct-zone-limit\fR: optional string, containing an integer, in range 0 to 4,294,967,295"
 CT zone \fBlimit\fR value for given \fBLogical_Switch\fR\[char46] This value will be propagated to all \fBLogical_Switch_Port\fR when configured, but can be overwritten individually per \fBLogical_Switch_Port\fR\[char46] The value 0 means unlimited\[char46] When the option is not present the limit is not set and the zone limit is derived from OvS default datapath limit\[char46]
+.IP "\fBother_config : enable-stateless-acl-with-lb\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+This option must be set to true for stateless ACL to work with load balancers\[char46] When enabled, packets with the ct\[char46]inv flag will not be dropped, even if use_ct_inv_match is set to true\[char46] Default: \fBfalse\fR\[char46]
 .ST "IP Multicast Snooping Options:"
 .PP
 .PP
@@ -2306,6 +2311,12 @@ optional string
 .TQ 2.75in
 \fBoptions : ct-commit-all\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 2.75in
+\fBoptions : ic-route-filter-adv\fR
+optional string
+.TQ 2.75in
+\fBoptions : ic-route-filter-learn\fR
+optional string
 .RE
 .TQ .25in
 \fICommon Columns:\fR
@@ -2449,6 +2460,10 @@ The vrf name must be a valid linux interface name\[char46] If it is too long the
 The vrf table id is not affected by this setting\[char46] For details see \fBoptions:dynamic-routing-maintain-vrf\fR on the Logical_Router\[char46]
 .IP "\fBoptions : ct-commit-all\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 When enabled the LR will commit traffic in a zone that is stateful\[char46] The traffic is not commited to both zones but it is selective based whether there is stateful DNAT/SNAT or both\[char46] The commit all will prevent issues with \fBct\[char46]inv\fR packets as it will prevent the commit of reply traffic, which could happen in some cases\[char46] This also helps with HWOL as there shouldn\(cqt be any match on ct\[char46]new for established sessions as we will commit everything in addition to already existing stateful NATs and LBs\[char46]
+.IP "\fBoptions : ic-route-filter-adv\fR: optional string"
+This option expects list of CIDRs delimited by \(dq,\(dq that\(cqs present in the Logical Router\[char46] A route will not be advertised if the route\(cqs prefix belongs to any of the CIDRs listed\[char46] This allows to filter CIDR prefixes in the process of advertising routes in \fBovn\-ic\fR daemon\[char46]
+.IP "\fBoptions : ic-route-filter-learn\fR: optional string"
+This option expects list of CIDRs delimited by \(dq,\(dq that\(cqs present in the Logical Router\[char46] A route will not be learned if the route\(cqs prefix belongs to any of the CIDRs listed\[char46] This allows to filter CIDR prefixes in the process of learning routes in \fBovn\-ic\fR daemon\[char46]
 .ST "Common Columns:"
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
@@ -2776,6 +2791,12 @@ optional string, either \fBtrue\fR or \fBfalse\fR
 .TQ 2.75in
 \fBoptions : dynamic-routing-port-name\fR
 optional string
+.TQ 2.75in
+\fBoptions : ic-route-filter-adv\fR
+optional string
+.TQ 2.75in
+\fBoptions : ic-route-filter-learn\fR
+optional string
 .RE
 .TQ .25in
 \fIAttachment:\fR
@@ -3007,6 +3028,10 @@ If the setting is not set or false the ovn-controller will expect this VRF to al
 The VRF table ID is the same as the tunnel key of the Logical_Router datapath\[char46] If this setting is false the tooling outside of OVN needs to ensure that this is the case\[char46]
 .IP "\fBoptions : dynamic-routing-port-name\fR: optional string"
 Only relevant if \fBoptions:dynamic-routing\fR on the respective Logical_Router is set to \fBtrue\fR\[char46] Only learn routes associated with the interface locally bound to the LSP or LRP specified here\[char46] This allows a single chassis to learn different routes on separate LRPs bound to this chassis\[char46] This is usefully e\[char46]g\[char46] in the case of a chassis with multiple links towards the network fabric where all of them run BGP individually\[char46] This option allows to have a 1:1 mapping between a single LRP and an individual link\[char46] If the port referenced by this name is bound locally on the ovn-controller we lookup the linux interface name of this port\[char46] This interface name is then used for the route filtering, so only routes that have this interface as nexthop will be learned\[char46] As there might not always be such a port bound on the ovn-controller this value can also be an arbitrary string\[char46] The ovn-controller will lookup the port name in the local \fBexternal_ids:dynamic-routing-port-mapping\fR\[char46] This is a list separated by \fB,\fR that contains \fBport=interfacename\fR pairs\[char46] If a match is found in there the configured interface name is used instead of the autodiscovery\[char46] Also it is then irrelevant if the port is bound locally\[char46]
+.IP "\fBoptions : ic-route-filter-adv\fR: optional string"
+This option expects list of CIDRs delimited by \(dq,\(dq that\(cqs present in the Logical Router Port\[char46] A route will be advertised if the route\(cqs prefix belongs to any of the CIDRs listed\[char46] This allows to filter CIDR prefixes in the process of advertising routes in \fBovn\-ic\fR daemon\[char46]
+.IP "\fBoptions : ic-route-filter-learn\fR: optional string"
+This option expects list of CIDRs delimited by \(dq,\(dq that\(cqs present in the Logical Router Port\[char46] A route will be learned if the route\(cqs prefix belongs to any of the CIDRs listed\[char46] This allows to filter CIDR prefixes in the process of learning routes in \fBovn\-ic\fR daemon\[char46]
 .ST "Attachment:"
 .PP
 .PP
