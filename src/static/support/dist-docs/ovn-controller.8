@@ -273,15 +273,6 @@ The boolean flag indicates if the chassis is used as an interconnection gateway\
 \fBexternal_ids:ovn\-match\-northd\-version\fR
 The boolean flag indicates if \fBovn\-controller\fR needs to check \fBovn\-northd\fR version\[char46] If this flag is set to true and the \fBovn\-northd\(cqs\fR version (reported in the Southbound database) doesn\(cqt match with the \fBovn\-controller\(cqs\fR internal version, then it will stop processing the southbound and local Open vSwitch database changes\[char46] The default value is considered false if this option is not defined\[char46]
 .TP
-\fBexternal_ids:ovn\-ofctrl\-wait\-before\-clear\fR
-The time, in milliseconds, to wait before clearing flows in OVS after OpenFlow connection/reconnection during \fBovn\-controller\fR initialization\[char46] The purpose of this wait is to give time for \fBovn\-controller\fR to compute the new flows before clearing existing ones, to avoid data plane down time during \fBovn\-controller\fR restart/upgrade at large scale environments where recomputing the flows takes more than a few seconds or even longer\[char46] It is difficult for \fBovn\-controller\fR to determine when the new flows computing is completed, because of the dynamics in the cloud environments, which is why this configuration is provided for users to adjust based on the scale of the environment\[char46] By default, it is 0, which means clearing existing flows without waiting\[char46] Not setting the value, or setting it too small, may result in data plane down time during upgrade/restart, while setting it too big may result in unnecessary extra control plane latency of applying new changes of CMS during upgrade/restart\[char46] In most cases, a slightly bigger value is not harmful, because the extra control plane latency happens only once during the OpenFlow connection\[char46] To get a reasonable range of the value setting, it is recommended to run the below commands on a node in the target environment and then set this configuration to twice the value of \fBMaximum\fR shown in the output of the second command\[char46]
-.RS
-.IP \(bu
-\fBovn\-appctl \-t ovn\-controller inc\-engine/recompute\fR
-.IP \(bu
-\fBovn\-appctl \-t ovn\-controller stopwatch/show flow\-generation\fR
-.RE
-.TP
 \fBexternal_ids:ovn\-enable\-lflow\-cache\fR
 The boolean flag indicates if \fBovn\-controller\fR should enable/disable the logical flow in-memory cache it uses when processing Southbound database logical flow changes\[char46] By default caching is enabled\[char46]
 .TP

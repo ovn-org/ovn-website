@@ -484,38 +484,6 @@ CONFIGURATION
                      and  local  Open  vSwitch  database  changes. The default
                      value is considered false if this option is not defined.
 
-              external_ids:ovn-ofctrl-wait-before-clear
-                     The time, in milliseconds, to wait before clearing  flows
-                     in  OVS  after  OpenFlow  connection/reconnection  during
-                     ovn-controller initialization. The purpose of  this  wait
-                     is  to  give  time  for ovn-controller to compute the new
-                     flows before clearing existing ones, to avoid data  plane
-                     down  time during ovn-controller restart/upgrade at large
-                     scale environments where recomputing the flows takes more
-                     than a few seconds or even longer. It  is  difficult  for
-                     ovn-controller  to determine when the new flows computing
-                     is completed, because of the dynamics in the cloud  envi‐
-                     ronments, which is why this configuration is provided for
-                     users to adjust based on the scale of the environment. By
-                     default,  it  is  0,  which means clearing existing flows
-                     without waiting. Not setting the value, or setting it too
-                     small, may result in data  plane  down  time  during  up‐
-                     grade/restart, while setting it too big may result in un‐
-                     necessary  extra  control  plane  latency of applying new
-                     changes of CMS during upgrade/restart. In most  cases,  a
-                     slightly  bigger  value is not harmful, because the extra
-                     control plane latency happens only once during the  Open‐
-                     Flow  connection.  To get a reasonable range of the value
-                     setting, it is recommended to run the below commands on a
-                     node in the target environment and then set this configu‐
-                     ration to twice the value of Maximum shown in the  output
-                     of the second command.
-
-                     •      ovn-appctl -t ovn-controller inc-engine/recompute
-
-                     •      ovn-appctl    -t   ovn-controller   stopwatch/show
-                            flow-generation
-
               external_ids:ovn-enable-lflow-cache
                      The boolean flag indicates if ovn-controller  should  en‐
                      able/disable  the  logical  flow  in-memory cache it uses
