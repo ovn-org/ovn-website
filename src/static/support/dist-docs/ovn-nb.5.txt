@@ -158,6 +158,10 @@ NB_Global TABLE
                                      optional string
             options : ic-route-learn-default
                                      optional string
+            options : ic-route-adv-lb
+                                     optional string
+            options : ic-route-learn-lb
+                                     optional string
             options : ic-route-denylist
                                      optional string
        Connection Options:
@@ -477,7 +481,7 @@ NB_Global TABLE
        exchanges routes between each other through  the  global  OVN_IC_South‚Ä‚Äê
        bound  database.  Only  routers with ports connected to interconnection
        transit switches participate in route advertisement. For each of  these
-       routers, there are two types of routes to be advertised:
+       routers, there are three types of routes to be advertised:
 
        Firstly, the static routes configured in the router are advertised.
 
@@ -485,30 +489,45 @@ NB_Global TABLE
        not on the transit switches are advertised. These are considered as di‚Äê
        rectly connected subnets on the router.
 
-       Link local prefixes (IPv4 169.254.0.0/16 and IPv6 FE80::/10) are  never
+       Thirdly, the vips of the load balancers  associated  with  the  logical
+       router are advertised.
+
+       Link  local prefixes (IPv4 169.254.0.0/16 and IPv6 FE80::/10) are never
        advertised.
 
-       The  learned  routes are added to the static_routes column of the Logi‚Ä‚Äê
+       The learned routes are added to the static_routes column of  the  Logi‚Ä‚Äê
        cal_Router table, with external_ids:ic-learned-route set to the uuid of
        the row in Route table of the OVN_IC_Southbound database.
 
        options : ic-route-adv: optional string
-              A boolean value that enables route advertisement to  the  global
+              A  boolean  value that enables route advertisement to the global
               OVN_IC_Southbound database. Default is false.
 
        options : ic-route-learn: optional string
-              A  boolean  value  that  enables  route learning from the global
+              A boolean value that enables  route  learning  from  the  global
               OVN_IC_Southbound database. Default is false.
 
        options : ic-route-adv-default: optional string
-              A boolean value that enables advertising default  route  to  the
+              A  boolean  value  that enables advertising default route to the
               global OVN_IC_Southbound database. Default is false. This option
               takes effect only when option ic-route-adv is true.
 
        options : ic-route-learn-default: optional string
-              A  boolean  value  that  enables learning default route from the
+              A boolean value that enables learning  default  route  from  the
               global OVN_IC_Southbound database. Default is false. This option
               takes effect only when option ic-route-learn is true.
+
+       options : ic-route-adv-lb: optional string
+              A  boolean  value  that enables advertising routes for load bal‚Äê
+              ancer vips to the global OVN_IC_Southbound database. Default  is
+              false. This option takes effect only when option ic-route-adv is
+              true.
+
+       options : ic-route-learn-lb: optional string
+              A  boolean  value that enables learning routes for load balancer
+              routes from the global OVN_IC_Southbound  database.  Default  is
+              false.  This option takes effect only when option ic-route-learn
+              is true.
 
        options : ic-route-denylist: optional string
               A string value contains a list of  CIDRs  delimited  by  ",".  A

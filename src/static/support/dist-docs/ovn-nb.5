@@ -517,6 +517,12 @@ optional string
 \fBoptions : ic-route-learn-default\fR
 optional string
 .TQ 2.50in
+\fBoptions : ic-route-adv-lb\fR
+optional string
+.TQ 2.50in
+\fBoptions : ic-route-learn-lb\fR
+optional string
+.TQ 2.50in
 \fBoptions : ic-route-denylist\fR
 optional string
 .RE
@@ -672,13 +678,16 @@ If set to \fBfalse\fR, ovn-controllers will no longer update the \fBnb_cfg\fR co
 .PP
 .PP
 .PP
-These options control how routes are advertised between OVN deployments for interconnection\[char46] If enabled, \fBovn\-ic\fR from different OVN deployments exchanges routes between each other through the global \fBOVN_IC_Southbound\fR database\[char46] Only routers with ports connected to interconnection transit switches participate in route advertisement\[char46] For each of these routers, there are two types of routes to be advertised:
+These options control how routes are advertised between OVN deployments for interconnection\[char46] If enabled, \fBovn\-ic\fR from different OVN deployments exchanges routes between each other through the global \fBOVN_IC_Southbound\fR database\[char46] Only routers with ports connected to interconnection transit switches participate in route advertisement\[char46] For each of these routers, there are three types of routes to be advertised:
 .PP
 .PP
 Firstly, the static routes configured in the router are advertised\[char46]
 .PP
 .PP
 Secondly, the \fBnetworks\fR configured in the logical router ports that are not on the transit switches are advertised\[char46] These are considered as directly connected subnets on the router\[char46]
+.PP
+.PP
+Thirdly, the vips of the load balancers associated with the logical router are advertised\[char46]
 .PP
 .PP
 Link local prefixes (IPv4 169\[char46]254\[char46]0\[char46]0/16 and IPv6 FE80::/10) are never advertised\[char46]
@@ -693,6 +702,10 @@ A boolean value that enables route learning from the global \fBOVN_IC_Southbound
 A boolean value that enables advertising default route to the global \fBOVN_IC_Southbound\fR database\[char46] Default is \fBfalse\fR\[char46] This option takes effect only when option \fBic\-route\-adv\fR is \fBtrue\fR\[char46]
 .IP "\fBoptions : ic-route-learn-default\fR: optional string"
 A boolean value that enables learning default route from the global \fBOVN_IC_Southbound\fR database\[char46] Default is \fBfalse\fR\[char46] This option takes effect only when option \fBic\-route\-learn\fR is \fBtrue\fR\[char46]
+.IP "\fBoptions : ic-route-adv-lb\fR: optional string"
+A boolean value that enables advertising routes for load balancer vips to the global \fBOVN_IC_Southbound\fR database\[char46] Default is \fBfalse\fR\[char46] This option takes effect only when option \fBic\-route\-adv\fR is \fBtrue\fR\[char46]
+.IP "\fBoptions : ic-route-learn-lb\fR: optional string"
+A boolean value that enables learning routes for load balancer routes from the global \fBOVN_IC_Southbound\fR database\[char46] Default is \fBfalse\fR\[char46] This option takes effect only when option \fBic\-route\-learn\fR is \fBtrue\fR\[char46]
 .IP "\fBoptions : ic-route-denylist\fR: optional string"
 A string value contains a list of CIDRs delimited by \(dq,\(dq\[char46] A route will not be advertised or learned if the route\(cqs prefix belongs to any of the CIDRs listed\[char46]
 .ST "Connection Options:"

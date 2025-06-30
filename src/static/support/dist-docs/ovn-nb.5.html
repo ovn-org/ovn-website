@@ -159,6 +159,10 @@
                                      optional string
             <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>l</b><b>e</b><b>a</b><b>r</b><b>n</b><b>-</b><b>d</b><b>e</b><b>f</b><b>a</b><b>u</b><b>l</b><b>t</b>
                                      optional string
+            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>a</b><b>d</b><b>v</b><b>-</b><b>l</b><b>b</b>
+                                     optional string
+            <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>l</b><b>e</b><b>a</b><b>r</b><b>n</b><b>-</b><b>l</b><b>b</b>
+                                     optional string
             <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>d</b><b>e</b><b>n</b><b>y</b><b>l</b><b>i</b><b>s</b><b>t</b>
                                      optional string
        <u>C</u><u>o</u><u>n</u><u>n</u><u>e</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> <u>O</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
@@ -478,7 +482,7 @@
        exchanges routes between each other through  the  global  <b>O</b><b>V</b><b>N</b><b>_</b><b>I</b><b>C</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b>‐‐
        <b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>  database.  Only  routers with ports connected to interconnection
        transit switches participate in route advertisement. For each of  these
-       routers, there are two types of routes to be advertised:
+       routers, there are three types of routes to be advertised:
 
        Firstly, the static routes configured in the router are advertised.
 
@@ -486,30 +490,45 @@
        not on the transit switches are advertised. These are considered as di‐
        rectly connected subnets on the router.
 
-       Link local prefixes (IPv4 169.254.0.0/16 and IPv6 FE80::/10) are  never
+       Thirdly, the vips of the load balancers  associated  with  the  logical
+       router are advertised.
+
+       Link  local prefixes (IPv4 169.254.0.0/16 and IPv6 FE80::/10) are never
        advertised.
 
-       The  learned  routes are added to the <b>s</b><b>t</b><b>a</b><b>t</b><b>i</b><b>c</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>s</b> column of the <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
+       The learned routes are added to the <b>s</b><b>t</b><b>a</b><b>t</b><b>i</b><b>c</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>s</b> column of  the  <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
        <b>c</b><b>a</b><b>l</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> table, with <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>i</b><b>c</b><b>-</b><b>l</b><b>e</b><b>a</b><b>r</b><b>n</b><b>e</b><b>d</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b> set to the uuid of
        the row in <b>R</b><b>o</b><b>u</b><b>t</b><b>e</b> table of the <b>O</b><b>V</b><b>N</b><b>_</b><b>I</b><b>C</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>a</b><b>d</b><b>v</b>: optional string
-              A boolean value that enables route advertisement to  the  global
+              A  boolean  value that enables route advertisement to the global
               <b>O</b><b>V</b><b>N</b><b>_</b><b>I</b><b>C</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database. Default is <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>l</b><b>e</b><b>a</b><b>r</b><b>n</b>: optional string
-              A  boolean  value  that  enables  route learning from the global
+              A boolean value that enables  route  learning  from  the  global
               <b>O</b><b>V</b><b>N</b><b>_</b><b>I</b><b>C</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database. Default is <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>a</b><b>d</b><b>v</b><b>-</b><b>d</b><b>e</b><b>f</b><b>a</b><b>u</b><b>l</b><b>t</b>: optional string
-              A boolean value that enables advertising default  route  to  the
+              A  boolean  value  that enables advertising default route to the
               global <b>O</b><b>V</b><b>N</b><b>_</b><b>I</b><b>C</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database. Default is <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>. This option
               takes effect only when option <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>a</b><b>d</b><b>v</b> is <b>t</b><b>r</b><b>u</b><b>e</b>.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>l</b><b>e</b><b>a</b><b>r</b><b>n</b><b>-</b><b>d</b><b>e</b><b>f</b><b>a</b><b>u</b><b>l</b><b>t</b>: optional string
-              A  boolean  value  that  enables learning default route from the
+              A boolean value that enables learning  default  route  from  the
               global <b>O</b><b>V</b><b>N</b><b>_</b><b>I</b><b>C</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database. Default is <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>. This option
               takes effect only when option <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>l</b><b>e</b><b>a</b><b>r</b><b>n</b> is <b>t</b><b>r</b><b>u</b><b>e</b>.
+
+       <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>a</b><b>d</b><b>v</b><b>-</b><b>l</b><b>b</b>: optional string
+              A  boolean  value  that enables advertising routes for load bal‐
+              ancer vips to the global <b>O</b><b>V</b><b>N</b><b>_</b><b>I</b><b>C</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database. Default  is
+              <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>. This option takes effect only when option <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>a</b><b>d</b><b>v</b> is
+              <b>t</b><b>r</b><b>u</b><b>e</b>.
+
+       <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>l</b><b>e</b><b>a</b><b>r</b><b>n</b><b>-</b><b>l</b><b>b</b>: optional string
+              A  boolean  value that enables learning routes for load balancer
+              routes from the global <b>O</b><b>V</b><b>N</b><b>_</b><b>I</b><b>C</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>  database.  Default  is
+              <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>.  This option takes effect only when option <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>l</b><b>e</b><b>a</b><b>r</b><b>n</b>
+              is <b>t</b><b>r</b><b>u</b><b>e</b>.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>-</b><b>d</b><b>e</b><b>n</b><b>y</b><b>l</b><b>i</b><b>s</b><b>t</b>: optional string
               A string value contains a list of  CIDRs  delimited  by  ",".  A

@@ -308,7 +308,8 @@ Route TABLE
          route_table                 string
          ip_prefix                   string
          nexthop                     string
-         origin                      string, either connected or static
+         origin                      string, one of  connected,  loadbalancer,
+                                     or static
        Common Columns:
          external_ids                map of string-string pairs
 
@@ -316,24 +317,24 @@ Route TABLE
      Core Features:
 
        transit_switch: string
-              The name of the transit switch, upon which the route  is  adver‐
+              The  name  of the transit switch, upon which the route is adver‐
               tised.
 
        availability_zone: Availability_Zone
               The availability zone that has advertised the route.
 
        route_table: string
-              Route  table  within  which  this route was created. Empty value
+              Route table within which this route  was  created.  Empty  value
               means <main> routing table.
 
               Routes for directly-connected networks will be learned to <main>
-              routing table and if Logical Routers have more than one  Transit
+              routing  table and if Logical Routers have more than one Transit
               Switch, which interconnects them, directly-connected routes will
-              be  added  via  each  transit switch port and configured as ECMP
+              be added via each transit switch port  and  configured  as  ECMP
               routes.
 
               Static routes within route tables will be advertised and learned
-              only if interconnecting transit switch’s  LRPs  will  have  same
+              only  if  interconnecting  transit  switch’s LRPs will have same
               value in options:route_table as NB route_table or ICSB route_ta�‐
               ble value respectively.
 
@@ -343,12 +344,14 @@ Route TABLE
        nexthop: string
               Nexthop IP address for this route.
 
-       origin: string, either connected or static
-              Can  be one of connected or static. Routes to directly-connected
-              subnets - LRP’s CIDRs are inserted to OVN IC  SB  DB  with  con�‐
-              nected  value in origin. Static routes are inserted to OVN IC SB
-              DB with static value. Next when route is learned to  another  AZ
-              NB DB by ovn-ic, route origin is synced to options:origin.
+       origin: string, one of connected, loadbalancer, or static
+              Can be one of connected, static or loadbalancer. Routes  to  di‐
+              rectly-connected subnets - LRP’s CIDRs are inserted to OVN IC SB
+              DB with connected value in origin. Static routes are inserted to
+              OVN  IC SB DB with static value. Routes for LB VIPs are inserted
+              in OVN IC SB DB with loadbalancer  value.  Next  when  route  is
+              learned to another AZ NB DB by ovn-ic, route origin is synced to
+              options:origin.
 
      Common Columns:
 
@@ -636,4 +639,4 @@ SSL TABLE
 
        external_ids: map of string-string pairs
 
-Open vSwitch 25.03.90           DB Schema 2.0.0                   ovn-ic-sb(5)
+Open vSwitch 25.03.90           DB Schema 2.1.0                   ovn-ic-sb(5)
