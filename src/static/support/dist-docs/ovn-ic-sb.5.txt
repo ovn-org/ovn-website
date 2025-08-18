@@ -65,6 +65,8 @@ TABLE SUMMARY
        Connection
                  OVSDB client connections.
        SSL       SSL configuration.
+       Service_Monitor
+                 Service_Monitor configuration.
 
 IC_SB_Global TABLE
        Interconnection  Southbound configuration. This table must have exactly
@@ -638,5 +640,65 @@ SSL TABLE
        at the beginning of this document.
 
        external_ids: map of string-string pairs
+Service_Monitor TABLE
+   Summary:
+       ip                            string
+       protocol                      optional string, either tcp or udp
+       port                          integer, in range 0 to 65,535
+       logical_port                  string
+       src_ip                        string
+       src_mac                       string
+       status                        optional  string,  one of error, offline,
+                                     or online
+       target_availability_zone      string
+       source_availability_zone      string
+       options                       map of string-string pairs
+       external_ids                  map of string-string pairs
 
-Open vSwitch 25.03.90           DB Schema 2.1.0                   ovn-ic-sb(5)
+   Details:
+       ip: string
+              IP of the service to be monitored. Copy from SBDB record.
+
+       protocol: optional string, either tcp or udp
+              The protocol of the service. Copy from source  Southbound  Data‐
+              base record.
+
+       port: integer, in range 0 to 65,535
+              The  TCP or UDP port of the service. Copy from source Southbound
+              Database record.
+
+       logical_port: string
+              The VIF of the logical port on which the service is running. The
+              ovn-controller that binds this logical_port monitors the service
+              by sending periodic monitor packets. Copy from source Southbound
+              Database record.
+
+       src_ip: string
+              Source IPv4 or IPv6  address  to  use  in  the  service  monitor
+              packet. Copy from source Southbound Database record.
+
+       src_mac: string
+              Source  Ethernet  address  to use in the service monitor packet.
+              Copy from Southbound Database record.
+
+       status: optional string, one of error, offline, or online
+              The health status of the service monitor, synchronized from tar‐
+              get Southbound Database.
+
+       target_availability_zone: string
+              The Availability Zone where the monitored  service  endpoint  is
+              located.
+
+       source_availability_zone: string
+              Availability  Zone that initiated this monitor entry in ICSB and
+              retains ownership for lifecycle management.
+
+       options: map of string-string pairs
+              Same as in Table Service_Monitor in SBDB. Copy from source  SBDB
+              record.
+
+       external_ids: map of string-string pairs
+              Same  as in Table Service_Monitor in SBDB. Copy from source SBDB
+              record.
+
+Open vSwitch 25.09.90           DB Schema 2.2.0                   ovn-ic-sb(5)

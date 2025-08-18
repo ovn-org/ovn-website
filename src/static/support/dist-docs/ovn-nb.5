@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nb" 5 " DB Schema 7.12.0" "Open vSwitch 25.03.90" "Open vSwitch Manual"
+.TH "ovn-nb" 5 " DB Schema 7.12.0" "Open vSwitch 25.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -946,6 +946,15 @@ optional string, containing an integer, in range 0 to 4,294,967,295
 .TQ 2.75in
 \fBother_config : enable-stateless-acl-with-lb\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 2.75in
+\fBother_config : dynamic-routing-vni\fR
+optional string, containing an integer, in range 0 to 16,777,215
+.TQ 2.75in
+\fBother_config : dynamic-routing-fdb-prefer-local\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 2.75in
+\fBother_config : dynamic-routing-redistribute\fR
+optional string
 .RE
 .TQ .25in
 \fIIP Multicast Snooping Options:\fR
@@ -1093,6 +1102,24 @@ FDB aging \fBthreshold\fR value in seconds\[char46] FDB exceeding this timeout w
 CT zone \fBlimit\fR value for given \fBLogical_Switch\fR\[char46] This value will be propagated to all \fBLogical_Switch_Port\fR when configured, but can be overwritten individually per \fBLogical_Switch_Port\fR\[char46] The value 0 means unlimited\[char46] When the option is not present the limit is not set and the zone limit is derived from OvS default datapath limit\[char46]
 .IP "\fBother_config : enable-stateless-acl-with-lb\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 This option must be set to true for stateless ACL to work with load balancers\[char46] When enabled, packets with the ct\[char46]inv flag will not be dropped, even if use_ct_inv_match is set to true\[char46] Default: \fBfalse\fR\[char46]
+.IP "\fBother_config : dynamic-routing-vni\fR: optional string, containing an integer, in range 0 to 16,777,215"
+This defines the vni number associated with EVPN domain that the Logical Switch is supposed to connect to\[char46]
+.IP
+The ovn-controller expects three interfaces to exist within the BGP vrf: \fBbr\-$vni\fR, \fBlo\-$vni\fR and \fBvxlan\-$vni\fR\[char46]
+.IP
+NOTE: this feature is experimental and may be subject to removal/change in the future\[char46]
+.IP "\fBother_config : dynamic-routing-fdb-prefer-local\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+This option defines the preference of FDB lookup, if set to true OVN will try to find the FDB entry in SB \fBFDB\fR table first\[char46] Then it tries to resolve the FDB via \fBovn\-controller\fR local EVPN FDB cache\[char46] The option defaults to false\[char46]
+.IP
+Only relevant if \fBother_config:dynamic-routing-vni\fR is set to valid VNI\[char46]
+.IP
+NOTE: this feature is experimental and may be subject to removal/change in the future\[char46]
+.IP "\fBother_config : dynamic-routing-redistribute\fR: optional string"
+Only relevant if \fBother_config:dynamic-routing-vni\fR is set to valid VNI\[char46]
+.IP
+If \fBfdb\fR is specified then ovn-controller will advertise all workloads that are local to the chassis\[char46] The applies to VIFs, container ports, virtual ports, connected DGPs and connected GW routers\[char46]
+.IP
+NOTE: this feature is experimental and may be subject to removal/change in the future\[char46]
 .ST "IP Multicast Snooping Options:"
 .PP
 .PP
@@ -1920,11 +1947,11 @@ Suppose that \fBvips\fR contains a key-value pair \fB10\[char46]0\[char46]0\[cha
 .IP "\fBhealth_check\fR: set of \fBLoad_Balancer_Health_Check\fRs"
 Load balancer health checks associated with this load balancer\[char46]
 .IP "\fBip_port_mappings\fR: map of string-string pairs"
-Maps from endpoint IP to a colon-separated pair of logical port name and source IP, e\[char46]g\[char46] \fB\fIport_name\fB:\fIsourc_ip\fB\fR for IPv4\[char46] Health checks are sent to this port with the specified source IP\[char46] For IPv6 square brackets must be used around IP address, e\[char46]g: \fB\fIport_name\fB:\fI[sourc_ip]\fB\fR
+Maps from endpoint IP to a colon-separated pair of logical port name and source IP, e\[char46]g\[char46] \fB\fIport_name\fB:\fIsourc_ip\fB\fR for IPv4\[char46] Health checks are sent to this port with the specified source IP\[char46] For IPv6 square brackets must be used around IP address, e\[char46]g: \fB\fIport_name\fB:\fI[sourc_ip]\fB\fR Remote endpoint: Specify :target_zone_name at the end of the above syntax to create remote health checks in a specific zone\[char46]
 .IP
-For example, in the example above, IP to port mappings might be defined as \fB10\[char46]0\[char46]0\[char46]4\fR=\fBsw0\-p1:10\[char46]0\[char46]0\[char46]2\fR and \fB20\[char46]0\[char46]0\[char46]4\fR=\fBsw1\-p1:20\[char46]0\[char46]0\[char46]2\fR, if the values given were suitable ports and IP addresses\[char46]
+For example, in the example above, IP to port mappings might be defined as \fB10\[char46]0\[char46]0\[char46]4\fR=\fBsw0\-p1:10\[char46]0\[char46]0\[char46]2\fR and \fB20\[char46]0\[char46]0\[char46]4\fR=\fBsw1\-p1:20\[char46]0\[char46]0\[char46]2\fR, if the values given were suitable ports and IP addresses\[char46] And remote endpoint: \fB10\[char46]0\[char46]0\[char46]4\fR=\fBsw0\-p1:10\[char46]0\[char46]0\[char46]2\fR:az1, where \fBsw0\-p1\fR - logical port in \fBaz1\fR\[char46]
 .IP
-For IPv6 IP to port mappings might be defined as \fB[2001::1]\fR=\fBsw0\-p1:[2002::1]\fR\[char46]
+For IPv6 IP to port mappings might be defined as \fB[2001::1]\fR=\fBsw0\-p1:[2002::1]\fR\[char46] Remote endpoint: same as for IP\[char46]
 .IP "\fBselection_fields\fR: set of strings, one of \fBeth_dst\fR, \fBeth_src\fR, \fBip_dst\fR, \fBip_src\fR, \fBipv6_dst\fR, \fBipv6_src\fR, \fBtp_dst\fR, or \fBtp_src\fR"
 OVN native load balancers are supported using the OpenFlow groups of type \fBselect\fR\[char46] OVS supports two selection methods: \fBdp_hash\fR and \fBhash (with optional fields
 specified)\fR in selecting the buckets of a group\[char46] Please see the OVS documentation (man ovs-ofctl) for more details on the selection methods\[char46] Each endpoint IP (and port if set) is mapped to a bucket in the group flow\[char46]

@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-sb" 5 " DB Schema 21.2.0" "Open vSwitch 25.03.90" "Open vSwitch Manual"
+.TH "ovn-sb" 5 " DB Schema 21.4.0" "Open vSwitch 25.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -2093,11 +2093,8 @@ set of uuids
 \fIOVN_Northbound Relationship:\fR
 .RS .25in
 .TQ 2.75in
-\fBexternal_ids : logical-switch\fR
-optional string, containing an uuid
-.TQ 2.75in
-\fBexternal_ids : logical-router\fR
-optional string, containing an uuid
+\fBtype\fR
+string, either \fBlogical\-router\fR or \fBlogical\-switch\fR
 .TQ 2.75in
 \fBexternal_ids : interconn-ts\fR
 optional string
@@ -2129,10 +2126,14 @@ Not used anymore; kept for backwards compatibility of the schema\[char46]
 .PP
 .PP
 Each row in \fBDatapath_Binding\fR is associated with some logical datapath\[char46] \fBovn\-northd\fR uses these keys to track the association of a logical datapath with concepts in the \fBOVN_Northbound\fR database\[char46]
-.IP "\fBexternal_ids : logical-switch\fR: optional string, containing an uuid"
-For a logical datapath that represents a logical switch, \fBovn\-northd\fR stores in this key the UUID of the corresponding \fBLogical_Switch\fR row in the \fBOVN_Northbound\fR database\[char46]
-.IP "\fBexternal_ids : logical-router\fR: optional string, containing an uuid"
-For a logical datapath that represents a logical router, \fBovn\-northd\fR stores in this key the UUID of the corresponding \fBLogical_Router\fR row in the \fBOVN_Northbound\fR database\[char46]
+.IP "\fBtype\fR: string, either \fBlogical\-router\fR or \fBlogical\-switch\fR"
+This represents the type of the northbound logical datapath that is represented by this southbound \fBDatapath_Binding\fR\[char46] The possible values for this are:
+.RS
+.IP \(bu
+\fBlogical\-switch\fR
+.IP \(bu
+\fBlogical\-router\fR
+.RE
 .IP "\fBexternal_ids : interconn-ts\fR: optional string"
 For a logical datapath that represents a logical switch that represents a transit switch for interconnection, \fBovn\-northd\fR stores in this key the value of the same \fBinterconn\-ts\fR key of the \fBexternal_ids\fR column of the corresponding \fBLogical_Switch\fR row in the \fBOVN_Northbound\fR database\[char46]
 .ST "Naming:"
@@ -3365,7 +3366,7 @@ The chassis that inserted this record\[char46] This column is used for RBAC purp
 .PP
 .PP
 .PP
-Each row in this table configures monitoring a service for its liveness\[char46] The service can be an IPv4 TCP or UDP service\[char46] \fBovn\-controller\fR periodically sends out service monitor packets and updates the status of the service\[char46]
+Each row in this table configures monitoring a service for its liveness\[char46] The service can be an IPv4 TCP or UDP service\[char46] \fBovn\-controller\fR periodically sends out service monitor packets and updates the status of the service\[char46] If the service monitor is not local, then ovn-ic creates a record about it in the SBDB database, after which another OVN deployment creates a record about the Service Monitor in its SBDB and the status is propagated back to the initial record in the original availability zone\[char46]
 .PP
 .PP
 \fBovn\-northd\fR uses this feature to implement the load balancer health check feature offered to the CMS through the northbound database\[char46]
@@ -3394,6 +3395,12 @@ string
 .TQ 2.75in
 \fBchassis_name\fR
 string
+.TQ 2.75in
+\fBlocal\fR
+boolean
+.TQ 2.75in
+\fBic_learned\fR
+boolean
 .TQ 2.75in
 \fBoptions : interval\fR
 optional string, containing an integer
@@ -3428,7 +3435,7 @@ map of string-string pairs
 .PP
 \fBovn\-northd\fR sets these columns and values to configure the service monitor\[char46]
 .IP "\fBip\fR: string"
-IP of the service to be monitored\[char46] Only IPv4 is supported\[char46]
+IP of the service to be monitored\[char46]
 .IP "\fBprotocol\fR: optional string, either \fBtcp\fR or \fBudp\fR"
 The protocol of the service\[char46]
 .IP "\fBport\fR: integer, in range 0 to 65,535"
@@ -3441,6 +3448,10 @@ Source Ethernet address to use in the service monitor packet\[char46]
 Source IPv4 or IPv6 address to use in the service monitor packet\[char46]
 .IP "\fBchassis_name\fR: string"
 The name of the chassis where the logical port is bound\[char46]
+.IP "\fBlocal\fR: boolean"
+Set to true if backend locates on local ovn deployment\[char46]
+.IP "\fBic_learned\fR: boolean"
+Set to true if the service monitor was propagated from another OVN deployment via ovn-ic management\[char46]
 .IP "\fBoptions : interval\fR: optional string, containing an integer"
 The interval, in seconds, between service monitor checks\[char46]
 .IP "\fBoptions : timeout\fR: optional string, containing an integer"
