@@ -43,7 +43,7 @@ OVN release series that are not LTS are standard term support releases.
 Standard term support series are given full bug fix support for one year from
 the initial date of release. After this, they no longer receive any support.
 
-The most recent standard term support series of OVN is 25.03.
+The most recent standard term support series of OVN is 25.03. 
 You can find more information, including download links, release notes and
 changelogs for this series [here](25.03).
 
