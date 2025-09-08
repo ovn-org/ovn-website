@@ -2390,8 +2390,9 @@ Datapath_Binding TABLE
                                      be unique within table)
        load_balancers                set of uuids
        OVN_Northbound Relationship:
-         type                        string, either  logical-router  or  logi�‐
-                                     cal-switch
+         type                        optional string, either logical-router or
+                                     logical-switch
+         nb_uuid                     optional uuid
          external_ids : interconn-ts
                                      optional string
          Naming:
@@ -2404,21 +2405,21 @@ Datapath_Binding TABLE
        tunnel_key: integer, in range 1 to 16,777,215 (must be unique within
        table)
               The tunnel key value to which the logical datapath is bound. The
-              Tunnel  Encapsulation  section  in ovn-architecture(7) describes
-              how tunnel keys are constructed for  each  supported  encapsula‐
+              Tunnel Encapsulation section  in  ovn-architecture(7)  describes
+              how  tunnel  keys  are constructed for each supported encapsula‐
               tion.
 
        load_balancers: set of uuids
-              Not  used  anymore;  kept  for  backwards  compatibility  of the
+              Not used  anymore;  kept  for  backwards  compatibility  of  the
               schema.
 
      OVN_Northbound Relationship:
 
-       Each row in Datapath_Binding is associated with some logical  datapath.
-       ovn-northd  uses these keys to track the association of a logical data‐
+       Each  row in Datapath_Binding is associated with some logical datapath.
+       ovn-northd uses these keys to track the association of a logical  data‐
        path with concepts in the OVN_Northbound database.
 
-       type: string, either logical-router or logical-switch
+       type: optional string, either logical-router or logical-switch
               This represents the type of the northbound logical datapath that
               is represented by this southbound Datapath_Binding. The possible
               values for this are:
@@ -2426,6 +2427,10 @@ Datapath_Binding TABLE
               •      logical-switch
 
               •      logical-router
+
+       nb_uuid: optional uuid
+              This  is  the UUID of the corresponding northbound logical data‐
+              path represented by this southbound Datapath_Binding.
 
        external_ids : interconn-ts: optional string
               For a logical datapath that represents  a  logical  switch  that
@@ -3870,7 +3875,7 @@ Service_Monitor TABLE
          src_mac                     string
          src_ip                      string
          chassis_name                string
-         local                       boolean
+         remote                      boolean
          ic_learned                  boolean
          options : interval          optional string, containing an integer
          options : timeout           optional string, containing an integer
@@ -3912,8 +3917,8 @@ Service_Monitor TABLE
        chassis_name: string
               The name of the chassis where the logical port is bound.
 
-       local: boolean
-              Set to true if backend locates on local ovn deployment.
+       remote: boolean
+              Set to true if backend locates on remote ovn deployment.
 
        ic_learned: boolean
               Set to true if the service monitor was propagated  from  another
@@ -4274,4 +4279,4 @@ ACL_ID TABLE
               An identifier corresponding to  a  northbound  allow-established
               ACL.
 
-Open vSwitch 25.09.90           DB Schema 21.4.0                     ovn-sb(5)
+Open vSwitch 25.09.90           DB Schema 21.5.0                     ovn-sb(5)

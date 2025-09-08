@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-sb" 5 " DB Schema 21.4.0" "Open vSwitch 25.09.90" "Open vSwitch Manual"
+.TH "ovn-sb" 5 " DB Schema 21.5.0" "Open vSwitch 25.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -2094,7 +2094,10 @@ set of uuids
 .RS .25in
 .TQ 2.75in
 \fBtype\fR
-string, either \fBlogical\-router\fR or \fBlogical\-switch\fR
+optional string, either \fBlogical\-router\fR or \fBlogical\-switch\fR
+.TQ 2.75in
+\fBnb_uuid\fR
+optional uuid
 .TQ 2.75in
 \fBexternal_ids : interconn-ts\fR
 optional string
@@ -2126,7 +2129,7 @@ Not used anymore; kept for backwards compatibility of the schema\[char46]
 .PP
 .PP
 Each row in \fBDatapath_Binding\fR is associated with some logical datapath\[char46] \fBovn\-northd\fR uses these keys to track the association of a logical datapath with concepts in the \fBOVN_Northbound\fR database\[char46]
-.IP "\fBtype\fR: string, either \fBlogical\-router\fR or \fBlogical\-switch\fR"
+.IP "\fBtype\fR: optional string, either \fBlogical\-router\fR or \fBlogical\-switch\fR"
 This represents the type of the northbound logical datapath that is represented by this southbound \fBDatapath_Binding\fR\[char46] The possible values for this are:
 .RS
 .IP \(bu
@@ -2134,6 +2137,8 @@ This represents the type of the northbound logical datapath that is represented 
 .IP \(bu
 \fBlogical\-router\fR
 .RE
+.IP "\fBnb_uuid\fR: optional uuid"
+This is the UUID of the corresponding northbound logical datapath represented by this southbound \fBDatapath_Binding\fR\[char46]
 .IP "\fBexternal_ids : interconn-ts\fR: optional string"
 For a logical datapath that represents a logical switch that represents a transit switch for interconnection, \fBovn\-northd\fR stores in this key the value of the same \fBinterconn\-ts\fR key of the \fBexternal_ids\fR column of the corresponding \fBLogical_Switch\fR row in the \fBOVN_Northbound\fR database\[char46]
 .ST "Naming:"
@@ -3396,7 +3401,7 @@ string
 \fBchassis_name\fR
 string
 .TQ 2.75in
-\fBlocal\fR
+\fBremote\fR
 boolean
 .TQ 2.75in
 \fBic_learned\fR
@@ -3448,8 +3453,8 @@ Source Ethernet address to use in the service monitor packet\[char46]
 Source IPv4 or IPv6 address to use in the service monitor packet\[char46]
 .IP "\fBchassis_name\fR: string"
 The name of the chassis where the logical port is bound\[char46]
-.IP "\fBlocal\fR: boolean"
-Set to true if backend locates on local ovn deployment\[char46]
+.IP "\fBremote\fR: boolean"
+Set to true if backend locates on remote ovn deployment\[char46]
 .IP "\fBic_learned\fR: boolean"
 Set to true if the service monitor was propagated from another OVN deployment via ovn-ic management\[char46]
 .IP "\fBoptions : interval\fR: optional string, containing an integer"
