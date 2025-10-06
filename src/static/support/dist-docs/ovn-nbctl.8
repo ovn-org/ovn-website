@@ -400,7 +400,7 @@ Lists all existing switches on standard output, one per line\[char46]
 These commands operates on ACL objects for a given \fIentity\fR\[char46] The \fIentity\fR can be either a logical switch or a port group\[char46] The \fIentity\fR can be specified as uuid or name\[char46] The \fB\-\-type\fR option can be used to specify the type of the \fIentity\fR, in case both a logical switch and a port groups exist with the same name specified for \fIentity\fR\[char46] \fBtype\fR must be either \fBswitch\fR or \fBport\-group\fR\[char46]
 .RS
 .TP
-[\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] [\fB\-\-log\fR] [\fB\-\-meter=\fR\fImeter\fR] [\fB\-\-severity=\fR\fIseverity\fR] [\fB\-\-name=\fR\fIname\fR] [\fB\-\-label=\fR\fIlabel\fR] [\fB\-\-sample\-new=\fR\fIsample\fR] [\fB\-\-sample\-est=\fR\fIsample\fR] [\fB\-\-may\-exist\fR] [\fB\-\-apply\-after\-lb\fR] [\fB\-\-tier\fR] \fBacl\-add\fR \fIentity\fR \fIdirection\fR \fIpriority\fR \fImatch\fR \fIverdict\fR
+[\fB\-\-type=\fR{\fBswitch\fR | \fBport\-group\fR}] [\fB\-\-log\fR] [\fB\-\-meter=\fR\fImeter\fR] [\fB\-\-severity=\fR\fIseverity\fR] [\fB\-\-name=\fR\fIname\fR] [\fB\-\-label=\fR\fIlabel\fR] [\fB\-\-sample\-new=\fR\fIsample\fR] [\fB\-\-sample\-est=\fR\fIsample\fR] [\fB\-\-may\-exist\fR] [\fB\-\-apply\-after\-lb\fR] [\fB\-\-tier\fR] \fBacl\-add\fR \fIentity\fR \fIdirection\fR \fIpriority\fR \fImatch\fR \fIverdict\fR [\fInetwork-function-group\fR]
 Adds the specified ACL to \fIentity\fR\[char46] \fIdirection\fR must be either \fBfrom\-lport\fR or \fBto\-lport\fR\[char46] \fIpriority\fR must be between \fB0\fR and \fB32767\fR, inclusive\[char46] A full description of the fields are in \fBovn\-nb\fR(5)\[char46] If \fB\-\-may\-exist\fR is specified, adding a duplicated ACL succeeds but the ACL is not really created\[char46] Without \fB\-\-may\-exist\fR, adding a duplicated ACL results in error\[char46]
 .IP
 The \fB\-\-log\fR option enables packet logging for the ACL\[char46] The options \fB\-\-severity\fR and \fB\-\-name\fR specify a severity and name, respectively, for log entries (and also enable logging)\[char46] The severity must be one of \fBalert\fR, \fBwarning\fR, \fBnotice\fR, \fBinfo\fR, or \fBdebug\fR\[char46] If a severity is not specified, the default is \fBinfo\fR\[char46] The \fB\-\-meter=\fImeter\fB\fR option is used to rate-limit packet logging\[char46] The \fImeter\fR argument names a meter configured by \fBmeter\-add\fR\[char46]
@@ -421,6 +421,37 @@ Lists the ACLs on \fIentity\fR\[char46]
 .IP
 The \fB\-\-all\fR option will also list the port group ACLs associated with each logical switch port, when a logical switch is provided as an argument\[char46]
 .RE
+.SS "Network Function Commands"
+.TP
+[\fB\-\-may\-exist\fR] \fBnf\-add\fR \fInf\fR \fIinport\fR \fIoutport\fR
+Creates a new network function named \fInf\fR with logical switch ports \fIinport\fR and \fIoutport\fR\[char46] Both the ports must be on the same logical switch and must be already created\[char46] When used in an ACL action, traffic matching the ACL are redirected to the \fIinport\fR if it is from-lport ACL and to the \fIoutport\fR if it is to-lport ACL\[char46] The response packets are sent through the same ports in reverse order\[char46]
+.IP
+Without any options, this command regards it as an error if \fInf\fR is a duplicate name\[char46] With \fB\-\-may\-exist\fR, adding network function with duplicate name overwrites the existing config\[char46]
+.TP
+[\fB\-\-if\-exists\fR] \fBnf\-del\fR \fInf\fR
+Deletes \fInf\fR specified as name or uuid\[char46] It is an error if \fInf\fR does not exist, unless \fB\-\-if\-exists\fR is specified\[char46]
+.TP
+\fBnf\-list\fR
+Lists all network functions\[char46]
+.TP
+[\fB\-\-may\-exist\fR] \fBnfg\-add\fR \fInfg\fR \fIid\fR \fImode\fR [\fInf\fR]\[char46]\[char46]\[char46]
+Creates a new network function group named \fInfg\fR with optionally one of more \fBnf\fR added to the group\[char46] The nfs must be already created\[char46] Traffic redirection would be done towards one of the active network functions, based on health monitoring\[char46] If all are down, any one would be chosen for redirection\[char46]
+.IP
+Each network function group must have a unique \fIid\fR between \fB1\fR and \fB255\fR\[char46] The \fImode\fR must be \fBinline\fR which is currently the only supported mode\[char46]
+.IP
+Without any options, this command regards it as an error if \fInfg\fR is a duplicate name\[char46] With \fB\-\-may\-exist\fR, adding network function group with duplicate name overwrites the existing config\[char46]
+.TP
+[\fB\-\-if\-exists\fR] \fBnfg\-del\fR \fInfg\fR
+Deletes \fInfg\fR specified as name or uuid\[char46] It is an error if \fInfg\fR does not exist, unless \fB\-\-if\-exists\fR is specified\[char46]
+.TP
+\fBnfg\-list\fR
+Lists all network function groups\[char46]
+.TP
+[\fB\-\-may\-exist\fR] \fBnfg\-add\-nf\fR \fInfg\fR \fInf\fR
+Add a network function named \fInf\fR to a network function group named \fInfg\fR\[char46] It is an error if \fInfg\fR or \fInf\fR does not exist\[char46] Unless \fB\-\-may\-exist\fR is specified, it is an error if the \fInf\fR being added is already a part of the \fInfg\fR\[char46]
+.TP
+\fBnfg\-del\-nf\fR \fInfg\fR \fInf\fR
+Delete a network function named \fInf\fR from a network function group named \fInfg\fR\[char46] It is an error if \fInfg\fR or \fInf\fR does not exist\[char46] It is an error if \fInf\fR is not a part of the \fInfg\fR, unless \fB\-\-if\-exists\fR is specified\[char46]
 .SS "Logical Switch QoS Rule Commands"
 .TP
 [\fB\-\-may\-exist\fR] \fBqos\-add\fR \fIswitch\fR \fIdirection\fR \fIpriority\fR \fImatch\fR [\fBmark=\fR\fImark\fR] [\fBdscp=\fR\fIdscp\fR] [\fBrate=\fR\fIrate\fR [\fBburst=\fR\fIburst\fR]]

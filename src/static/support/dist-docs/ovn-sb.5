@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-sb" 5 " DB Schema 21.5.0" "Open vSwitch 25.09.90" "Open vSwitch Manual"
+.TH "ovn-sb" 5 " DB Schema 21.6.0" "Open vSwitch 25.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -3380,14 +3380,23 @@ Each row in this table configures monitoring a service for its liveness\[char46]
 \fIConfiguration:\fR
 .RS .25in
 .TQ 2.75in
+\fBtype\fR
+optional string, either \fBload\-balancer\fR or \fBnetwork\-function\fR
+.TQ 2.75in
 \fBip\fR
 string
 .TQ 2.75in
+\fBmac\fR
+string
+.TQ 2.75in
 \fBprotocol\fR
-optional string, either \fBtcp\fR or \fBudp\fR
+optional string, one of \fBicmp\fR, \fBtcp\fR, or \fBudp\fR
 .TQ 2.75in
 \fBport\fR
 integer, in range 0 to 65,535
+.TQ 2.75in
+\fBlogical_input_port\fR
+string
 .TQ 2.75in
 \fBlogical_port\fR
 string
@@ -3439,14 +3448,20 @@ map of string-string pairs
 .PP
 .PP
 \fBovn\-northd\fR sets these columns and values to configure the service monitor\[char46]
+.IP "\fBtype\fR: optional string, either \fBload\-balancer\fR or \fBnetwork\-function\fR"
+The type of the service\[char46] Supported values are \(dqload-balancer\(dq and \(dqnetwork-function\(dq\[char46]
 .IP "\fBip\fR: string"
-IP of the service to be monitored\[char46]
-.IP "\fBprotocol\fR: optional string, either \fBtcp\fR or \fBudp\fR"
-The protocol of the service\[char46]
+Destination IP used in monitor packets\[char46] For load-balancer service this is the IP of the service to be monitored\[char46] For network-function service this IP is used to send probe packets through the associated Network Function port pair\[char46]
+.IP "\fBmac\fR: string"
+Destination MAC address used in monitor packets\[char46] This is applicable only for network-function services\[char46]
+.IP "\fBprotocol\fR: optional string, one of \fBicmp\fR, \fBtcp\fR, or \fBudp\fR"
+The protocol of the service\[char46] For \fBtype\fR load-balancer, supported protocols are tcp and udp\[char46] For \fBtype\fR \(dqnetwork-function\(dq, supported protocol is icmp, and the health probe is done by injecting an icmp echo request packet into the \fBinport\fR of the Network_Function and then montoring the same packet coming out of the \fBoutport\fR\[char46]
 .IP "\fBport\fR: integer, in range 0 to 65,535"
 The TCP or UDP port of the service\[char46]
+.IP "\fBlogical_input_port\fR: string"
+This is applicable only for network-function type\[char46] The VIF of the logical port on which monitor packets have to be sent\[char46] The \fBovn\-controller\fR that binds this \fBlogical_port\fR monitors the service by sending periodic monitor packets\[char46]
 .IP "\fBlogical_port\fR: string"
-The VIF of the logical port on which the service is running\[char46] The \fBovn\-controller\fR that binds this \fBlogical_port\fR monitors the service by sending periodic monitor packets\[char46]
+The VIF of the logical port on which the service is running\[char46] The \fBovn\-controller\fR that binds this \fBlogical_port\fR monitors the service by sending periodic monitor packets\[char46] For load-balancer this is the port to which monitor packets are sent and from which response packets are received\[char46] For network-function this is the port from which the forwarded monitor packets are received\[char46]
 .IP "\fBsrc_mac\fR: string"
 Source Ethernet address to use in the service monitor packet\[char46]
 .IP "\fBsrc_ip\fR: string"

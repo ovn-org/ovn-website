@@ -583,7 +583,8 @@ COMMANDS
               [--type={switch | port-group}] [--log] [--meter=meter] [--sever�‐
               ity=severity] [--name=name] [--label=label] [--sample-new=sam‐
               ple] [--sample-est=sample] [--may-exist] [--apply-after-lb]
-              [--tier] acl-add entity direction priority match verdict
+              [--tier] acl-add entity direction priority match verdict [net‐
+              work-function-group]
                      Adds the specified ACL to entity. direction must  be  ei‐
                      ther  from-lport  or to-lport. priority must be between 0
                      and 32767, inclusive. A full description  of  the  fields
@@ -633,6 +634,61 @@ COMMANDS
                      The --all option will also list the port group ACLs asso‐
                      ciated  with  each  logical  switch  port, when a logical
                      switch is provided as an argument.
+
+   Network Function Commands
+       [--may-exist] nf-add nf inport outport
+              Creates a new network function  named  nf  with  logical  switch
+              ports  inport  and  outport.  Both the ports must be on the same
+              logical switch and must be already created. When used in an  ACL
+              action, traffic matching the ACL are redirected to the inport if
+              it  is  from-lport ACL and to the outport if it is to-lport ACL.
+              The response packets are sent through the same ports in  reverse
+              order.
+
+              Without  any  options, this command regards it as an error if nf
+              is a duplicate name. With --may-exist, adding  network  function
+              with duplicate name overwrites the existing config.
+
+       [--if-exists] nf-del nf
+              Deletes  nf specified as name or uuid. It is an error if nf does
+              not exist, unless --if-exists is specified.
+
+       nf-list
+              Lists all network functions.
+
+       [--may-exist] nfg-add nfg id mode [nf]...
+              Creates a new network function group named nfg  with  optionally
+              one  of more nf added to the group. The nfs must be already cre‐
+              ated. Traffic redirection would be done towards one of  the  ac‐
+              tive  network  functions, based on health monitoring. If all are
+              down, any one would be chosen for redirection.
+
+              Each network function group must have a unique id between 1  and
+              255.  The  mode  must be inline which is currently the only sup‐
+              ported mode.
+
+              Without any options, this command regards it as an error if  nfg
+              is  a  duplicate name. With --may-exist, adding network function
+              group with duplicate name overwrites the existing config.
+
+       [--if-exists] nfg-del nfg
+              Deletes nfg specified as name or uuid. It is  an  error  if  nfg
+              does not exist, unless --if-exists is specified.
+
+       nfg-list
+              Lists all network function groups.
+
+       [--may-exist] nfg-add-nf nfg nf
+              Add  a  network  function  named  nf to a network function group
+              named nfg. It is an error if nfg or nf does  not  exist.  Unless
+              --may-exist  is  specified, it is an error if the nf being added
+              is already a part of the nfg.
+
+       nfg-del-nf nfg nf
+              Delete a network function named nf from a network function group
+              named nfg. It is an error if nfg or nf does not exist. It is  an
+              error  if  nf  is  not  a part of the nfg, unless --if-exists is
+              specified.
 
    Logical Switch QoS Rule Commands
        [--may-exist] qos-add switch direction priority match [mark=mark]
