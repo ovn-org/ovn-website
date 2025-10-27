@@ -1792,79 +1792,80 @@ DESCRIPTION
 
        A  global OVN Interconnection Northbound database is introduced for the
        operator (probably through CMS systems) to  configure  transit  logical
-       switches  that  connect  logical  routers from different AZs. A transit
-       switch is similar to a regular logical switch, but it is used  for  in‐
-       terconnection  purpose only. Typically, each transit switch can be used
-       to connect all logical routers that belong to same  tenant  across  all
-       AZs.
+       switches/routers  that  connect logical routers/switches from different
+       AZs. A transit switch is similar to a regular logical switch, but it is
+       used for interconnection purpose only. Typically, each  transit  switch
+       can  be  used to connect all logical routers that belong to same tenant
+       across all AZs. A Transit router is similar to distributed router, with
+       a bonus that it works across AZs.
 
-       A  dedicated  daemon process ovn-ic, OVN interconnection controller, in
-       each AZ will consume  this  data  and  populate  corresponding  logical
-       switches to their own northbound databases for each AZ, so that logical
-       routers  can  be connected to the transit switch by creating patch port
-       pairs in their northbound databases. Any router ports connected to  the
-       transit  switches  are  considered interconnection ports, which will be
-       exchanged between AZs.
+       A dedicated daemon process ovn-ic, OVN interconnection  controller,  in
+       each  AZ  will  consume  this  data  and populate corresponding logical
+       switches/routers to their own northbound databases for each AZ. So that
+       logical routers can be connected to  the  transit  switch  by  creating
+       patch  port  pairs in their northbound databases. Any router ports con‐
+       nected to the transit switches are  considered  interconnection  ports,
+       which will be exchanged between AZs.
 
        Physically, when workloads from different AZs communicate, packets need
-       to go through multiple hops: source chassis, source  gateway,  destina‐
-       tion  gateway  and  destination  chassis.  All these hops are connected
-       through tunnels so that the packets never  leave  overlay  networks.  A
+       to  go  through multiple hops: source chassis, source gateway, destina‐
+       tion gateway and destination chassis.  All  these  hops  are  connected
+       through  tunnels  so  that  the packets never leave overlay networks. A
        distributed gateway port is required to connect the logical router to a
-       transit  switch,  with a gateway chassis specified, so that the traffic
+       transit switch, with a gateway chassis specified, so that  the  traffic
        can be forwarded through the gateway chassis.
 
-       A global OVN Interconnection Southbound database is introduced for  ex‐
-       changing  control  plane  information between the AZs. The data in this
-       database is populated and consumed by the ovn-ic, of each AZ. The  main
+       A  global OVN Interconnection Southbound database is introduced for ex‐
+       changing control plane information between the AZs. The  data  in  this
+       database  is populated and consumed by the ovn-ic, of each AZ. The main
        information in this database includes:
 
               •      Datapath bindings for transit switches, which mainly con‐
-                     tains  the tunnel keys generated for each transit switch.
-                     Separate key ranges are reserved for transit switches  so
-                     that  they  will  never conflict with any tunnel keys lo‐
+                     tains the tunnel keys generated for each transit  switch.
+                     Separate  key ranges are reserved for transit switches so
+                     that they will never conflict with any  tunnel  keys  lo‐
                      cally assigned for datapaths within each AZ.
 
-              •      Availability zones, which are registered by  ovn-ic  from
+              •      Availability  zones,  which are registered by ovn-ic from
                      each AZ.
 
-              •      Gateways.  Each  AZ specifies chassises that are supposed
-                     to work as interconnection gateways, and the ovn-ic  will
-                     populate  this  information to the interconnection south‐
-                     bound DB. The ovn-ic from all the other  AZs  will  learn
+              •      Gateways. Each AZ specifies chassises that  are  supposed
+                     to  work as interconnection gateways, and the ovn-ic will
+                     populate this information to the  interconnection  south‐
+                     bound  DB.  The  ovn-ic from all the other AZs will learn
                      the gateways and populate to their own southbound DB as a
                      chassis.
 
-              •      Port  bindings  for  logical  switch ports created on the
+              •      Port bindings for logical switch  ports  created  on  the
                      transit switch. Each AZ maintains their logical router to
-                     transit switch connections independently, but ovn-ic  au‐
-                     tomatically  populates  local  port  bindings  on transit
+                     transit  switch connections independently, but ovn-ic au‐
+                     tomatically populates  local  port  bindings  on  transit
                      switches to the global interconnection southbound DB, and
-                     learns remote port bindings from other AZs  back  to  its
-                     own  northbound and southbound DBs, so that logical flows
+                     learns  remote  port  bindings from other AZs back to its
+                     own northbound and southbound DBs, so that logical  flows
                      can be produced and then translated to OVS flows locally,
                      which finally enables data plane communication.
 
-              •      Routes that are advertised between different AZs. If  en‐
+              •      Routes  that are advertised between different AZs. If en‐
                      abled, routes are automatically exchanged by ovn-ic. Both
-                     static  routes  and directly connected subnets are adver‐
-                     tised. Options in options column of the  NB_Global  table
-                     of  OVN_NB  database control the behavior of route adver‐
+                     static routes and directly connected subnets  are  adver‐
+                     tised.  Options  in options column of the NB_Global table
+                     of OVN_NB database control the behavior of  route  adver‐
                      tisement, such as enable/disable the advertising/learning
-                     routes, whether default  routes  are  advertised/learned,
+                     routes,  whether  default  routes are advertised/learned,
                      and blacklisted CIDRs. See ovn-nb(5) for more details.
 
-       The  tunnel keys for transit switch datapaths and related port bindings
-       must be agreed across all AZs. This is ensured by generating and  stor‐
-       ing  the  keys  in  the global interconnection southbound database. Any
+       The tunnel keys for transit switch datapaths and related port  bindings
+       must  be agreed across all AZs. This is ensured by generating and stor‐
+       ing the keys in the global  interconnection  southbound  database.  Any
        ovn-ic from any AZ can allocate the key, but race conditions are solved
        by enforcing unique index for the column in the database.
 
-       Once each AZ’s NB and SB databases are populated  with  interconnection
-       switches  and ports, and agreed upon the tunnel keys, data plane commu‐
+       Once  each  AZ’s NB and SB databases are populated with interconnection
+       switches and ports, and agreed upon the tunnel keys, data plane  commu‐
        nication between the AZs are established.
 
-       When VXLAN tunneling is enabled in an OVN cluster, due to  the  limited
+       When  VXLAN  tunneling is enabled in an OVN cluster, due to the limited
        range available for VNIs, Interconnection feature is not supported.
 
      A day in the life of a packet crossing AZs
@@ -1872,43 +1873,43 @@ DESCRIPTION
               1.  An IP packet is sent out from a VIF on a hypervisor (HV1) of
                   AZ1, with destination IP belonging to a VIF in AZ2.
 
-              2.  In  HV1’s  OVS  flow tables, the packet goes through logical
+              2.  In HV1’s OVS flow tables, the packet  goes  through  logical
                   switch and logical router pipelines, and in a logical router
-                  pipeline, the routing stage finds out the next hop  for  the
-                  destination  IP,  which  belongs  to a remote logical router
-                  port in AZ2, and the output port, which is  a  chassis-redi‐
-                  rect  port  located  on  an  interconnection gateway (GW1 in
+                  pipeline,  the  routing stage finds out the next hop for the
+                  destination IP, which belongs to  a  remote  logical  router
+                  port  in  AZ2, and the output port, which is a chassis-redi‐
+                  rect port located on  an  interconnection  gateway  (GW1  in
                   AZ1), so HV1 sends the packet to GW1 through tunnel.
 
-              3.  On GW1, it continues with the logical router pipe  line  and
-                  switches  to  the transit switch’s pipeline through the peer
-                  port of the chassis redirect port. In the  transit  switch’s
-                  pipeline  it outputs to the remote logical port which is lo‐
+              3.  On  GW1,  it continues with the logical router pipe line and
+                  switches to the transit switch’s pipeline through  the  peer
+                  port  of  the chassis redirect port. In the transit switch’s
+                  pipeline it outputs to the remote logical port which is  lo‐
                   cated on a gateway (GW2) in AZ2, so the GW1 sends the packet
                   to GW2 in tunnel.
 
-              4.  On GW2, it continues with the transit  switch  pipeline  and
-                  switches  to  the  logical  router pipeline through the peer
-                  port, which is a chassis redirect port that  is  located  on
+              4.  On  GW2,  it  continues with the transit switch pipeline and
+                  switches to the logical router  pipeline  through  the  peer
+                  port,  which  is  a chassis redirect port that is located on
                   GW2. The logical router pipeline then forwards the packet to
-                  relevant  logical  pipelines according to the destination IP
-                  address, and figures out the MAC and location of the  desti‐
+                  relevant logical pipelines according to the  destination  IP
+                  address,  and figures out the MAC and location of the desti‐
                   nation VIF port - a hypervisor (HV2). The GW2 then sends the
                   packet to HV2 in tunnel.
 
               5.  On HV2, the packet is delivered to the final destination VIF
-                  port  by  the  logical switch egress pipeline, just the same
+                  port by the logical switch egress pipeline,  just  the  same
                   way as for intra-AZ communications.
 
    Native OVN services for external logical ports
-       To support OVN native services (like DHCP/IPv6 RA/DNS  lookup)  to  the
-       cloud  resources  which  are  external,  OVN  supports external logical
+       To  support  OVN  native services (like DHCP/IPv6 RA/DNS lookup) to the
+       cloud resources which  are  external,  OVN  supports  external  logical
        ports.
 
        Below are some of the use cases where external ports can be used.
 
-              •      VMs connected to SR-IOV nics - Traffic from these VMs  by
-                     passes  the  kernel stack and local ovn-controller do not
+              •      VMs  connected to SR-IOV nics - Traffic from these VMs by
+                     passes the kernel stack and local ovn-controller  do  not
                      bind these ports and cannot serve the native services.
 
               •      When CMS supports provisioning baremetal servers.
@@ -1916,51 +1917,51 @@ DESCRIPTION
        OVN will provide the native services if CMS has done the below configu‐
        ration in the OVN Northbound Database.
 
-              •      A row is created in Logical_Switch_Port, configuring  the
+              •      A  row is created in Logical_Switch_Port, configuring the
                      addresses column and setting the type to external.
 
               •      ha_chassis_group column is configured.
 
-              •      The  HA chassis which belongs to the HA chassis group has
+              •      The HA chassis which belongs to the HA chassis group  has
                      the ovn-bridge-mappings configured and has proper L2 con‐
-                     nectivity so that it can receive the DHCP and  other  re‐
+                     nectivity  so  that it can receive the DHCP and other re‐
                      lated request packets from these external resources.
 
               •      The Logical_Switch of this port has a localnet port.
 
-              •      Native  OVN  services are enabled by configuring the DHCP
-                     and other options like the way it is done for the  normal
+              •      Native OVN services are enabled by configuring  the  DHCP
+                     and  other options like the way it is done for the normal
                      logical ports.
 
        It is recommended to use the same HA chassis group for all the external
        ports of a logical switch. Otherwise, the physical switch might see MAC
-       flap  issue when different chassis provide the native services. For ex‐
+       flap issue when different chassis provide the native services. For  ex‐
        ample when supporting native DHCPv4 service, DHCPv4 server mac (config‐
-       ured in options:server_mac column in  table  DHCP_Options)  originating
-       from  different  ports can cause MAC flap issue. The MAC of the logical
-       router IP(s) can also flap if the same HA chassis group is not set  for
+       ured  in  options:server_mac  column in table DHCP_Options) originating
+       from different ports can cause MAC flap issue. The MAC of  the  logical
+       router  IP(s) can also flap if the same HA chassis group is not set for
        all the external ports of a logical switch.
 
 SECURITY
    Role-Based Access Controls for the Southbound DB
-       In  order  to provide additional security against the possibility of an
-       OVN chassis becoming compromised in such a way as to allow rogue  soft‐
-       ware  to  make arbitrary modifications to the southbound database state
-       and thus disrupt the  OVN  network,  role-based  access  controls  (see
+       In order to provide additional security against the possibility  of  an
+       OVN  chassis becoming compromised in such a way as to allow rogue soft‐
+       ware to make arbitrary modifications to the southbound  database  state
+       and  thus  disrupt  the  OVN  network,  role-based access controls (see
        ovsdb-server(1) for additional details) are provided for the southbound
        database.
 
-       The  implementation  of  role-based access controls (RBAC) requires the
-       addition of two tables to an OVSDB schema: the RBAC_Role  table,  which
-       is  indexed  by  role name and maps the the names of the various tables
+       The implementation of role-based access controls  (RBAC)  requires  the
+       addition  of  two tables to an OVSDB schema: the RBAC_Role table, which
+       is indexed by role name and maps the the names of  the  various  tables
        that may be modifiable for a given role to individual rows in a permis‐
-       sions table containing detailed permission information for  that  role,
-       and  the  permission table itself which consists of rows containing the
+       sions  table  containing detailed permission information for that role,
+       and the permission table itself which consists of rows  containing  the
        following information:
 
               Table Name
                      The name of the associated table. This column exists pri‐
-                     marily as an aid for humans reading the contents of  this
+                     marily  as an aid for humans reading the contents of this
                      table.
 
               Auth Criteria
@@ -1969,37 +1970,37 @@ SECURITY
                      The contents of at least one of the columns or column:key
                      values in a row to be modified, inserted, or deleted must
                      be equal to the ID of the client attempting to act on the
-                     row  in order for the authorization check to pass. If the
-                     authorization criteria is empty,  authorization  checking
-                     is  disabled and all clients for the role will be treated
+                     row in order for the authorization check to pass. If  the
+                     authorization  criteria  is empty, authorization checking
+                     is disabled and all clients for the role will be  treated
                      as authorized.
 
               Insert/Delete
                      Row insertion/deletion permission; boolean value indicat‐
                      ing whether insertion and deletion of rows is allowed for
-                     the associated table. If true, insertion and deletion  of
+                     the  associated table. If true, insertion and deletion of
                      rows is allowed for authorized clients.
 
               Updatable Columns
-                     A  set of strings containing the names of columns or col‐
-                     umn:key pairs that may be updated or  mutated  by  autho‐
-                     rized  clients. Modifications to columns within a row are
-                     only permitted  when  the  authorization  check  for  the
+                     A set of strings containing the names of columns or  col‐
+                     umn:key  pairs  that  may be updated or mutated by autho‐
+                     rized clients. Modifications to columns within a row  are
+                     only  permitted  when  the  authorization  check  for the
                      client passes and all columns to be modified are included
                      in this set of modifiable columns.
 
-       RBAC  configuration  for  the  OVN southbound database is maintained by
+       RBAC configuration for the OVN southbound  database  is  maintained  by
        ovn-northd. With RBAC enabled, modifications are only permitted for the
-       Chassis, Encap, Port_Binding,  and  MAC_Binding  tables,  and  are  re‐
+       Chassis,  Encap,  Port_Binding,  and  MAC_Binding  tables,  and are re‐
        stricted as follows:
 
               Chassis
                      Authorization: client ID must match the chassis name.
 
-                     Insert/Delete:  authorized row insertion and deletion are
+                     Insert/Delete: authorized row insertion and deletion  are
                      permitted.
 
-                     Update: The columns  nb_cfg,  external_ids,  encaps,  and
+                     Update:  The  columns  nb_cfg,  external_ids, encaps, and
                      vtep_logical_switches may be modified when authorized.
 
               Encap  Authorization: client ID must match the chassis name.
@@ -2007,16 +2008,16 @@ SECURITY
                      Insert/Delete: row insertion and row deletion are permit‐
                      ted.
 
-                     Update:  The  columns  type, options, and ip can be modi‐
+                     Update: The columns type, options, and ip  can  be  modi‐
                      fied.
 
               Port_Binding
-                     Authorization: disabled (all clients are  considered  au‐
-                     thorized.  A  future enhancement may add columns (or keys
-                     to external_ids) in order to control  which  chassis  are
+                     Authorization:  disabled  (all clients are considered au‐
+                     thorized. A future enhancement may add columns  (or  keys
+                     to  external_ids)  in  order to control which chassis are
                      allowed to bind each port.
 
-                     Insert/Delete:  row  insertion/deletion are not permitted
+                     Insert/Delete: row insertion/deletion are  not  permitted
                      (ovn-northd maintains rows in this table.
 
                      Update: Only modifications to the chassis column are per‐
@@ -2028,7 +2029,7 @@ SECURITY
 
                      Insert/Delete: row insertion/deletion are permitted.
 
-                     Update: The columns logical_port, ip, mac,  and  datapath
+                     Update:  The  columns logical_port, ip, mac, and datapath
                      may be modified by ovn-controller.
 
               IGMP_Group
@@ -2044,42 +2045,42 @@ SECURITY
        requires the following steps:
 
               1.  Creating SSL/TLS certificates for each chassis with the cer‐
-                  tificate  CN field set to the chassis name (e.g. for a chas‐
-                  sis with external-ids:system-id=chassis-1, via  the  command
+                  tificate CN field set to the chassis name (e.g. for a  chas‐
+                  sis  with  external-ids:system-id=chassis-1, via the command
                   "ovs-pki -u req+sign chassis-1 switch").
 
               2.  Configuring each ovn-controller to use SSL/TLS when connect‐
                   ing to the southbound database (e.g. via "ovs-vsctl set open
                   .  external-ids:ovn-remote=ssl:x.x.x.x:6642").
 
-              3.  Configuring  a southbound database SSL/TLS remote with "ovn-
-                  controller"  role  (e.g.   via   "ovn-sbctl   set-connection
+              3.  Configuring a southbound database SSL/TLS remote with  "ovn-
+                  controller"   role   (e.g.   via  "ovn-sbctl  set-connection
                   role=ovn-controller pssl:6642").
 
    Encrypt Tunnel Traffic with IPsec
-       OVN  tunnel  traffic  goes through physical routers and switches. These
-       physical devices could be untrusted  (devices  in  public  network)  or
-       might  be  compromised.  Enabling  encryption to the tunnel traffic can
+       OVN tunnel traffic goes through physical routers  and  switches.  These
+       physical  devices  could  be  untrusted  (devices in public network) or
+       might be compromised. Enabling encryption to  the  tunnel  traffic  can
        prevent the traffic data from being monitored and manipulated.
 
        The tunnel traffic is encrypted with IPsec. The CMS sets the ipsec col‐
        umn in the northbound NB_Global table to enable or disable IPsec encry‐
-       tion. If ipsec is true, all OVN tunnels will be encrypted. If ipsec  is
+       tion.  If ipsec is true, all OVN tunnels will be encrypted. If ipsec is
        false, no OVN tunnels will be encrypted.
 
-       When  CMS  updates  the ipsec column in the northbound NB_Global table,
-       ovn-northd copies the value to  the  ipsec  column  in  the  southbound
+       When CMS updates the ipsec column in the  northbound  NB_Global  table,
+       ovn-northd  copies  the  value  to  the  ipsec column in the southbound
        SB_Global table. ovn-controller in each chassis monitors the southbound
-       database  and sets the options of the OVS tunnel interface accordingly.
-       OVS tunnel interface options are  monitored  by  the  ovs-monitor-ipsec
+       database and sets the options of the OVS tunnel interface  accordingly.
+       OVS  tunnel  interface  options  are monitored by the ovs-monitor-ipsec
        daemon which configures IKE daemon to set up IPsec connections.
 
-       Chassis  authenticates each other by using certificate. The authentica‐
-       tion succeeds if the other end in tunnel presents a certificate  signed
-       by  a  trusted CA and the common name (CN) matches the expected chassis
-       name. The SSL/TLS  certificates  used  in  role-based  access  controls
-       (RBAC)  can  be  used in IPsec. Or use ovs-pki to create different cer‐
-       tificates. The certificate is required to be x.509 version 3, and  with
+       Chassis authenticates each other by using certificate. The  authentica‐
+       tion  succeeds if the other end in tunnel presents a certificate signed
+       by a trusted CA and the common name (CN) matches the  expected  chassis
+       name.  The  SSL/TLS  certificates  used  in  role-based access controls
+       (RBAC) can be used in IPsec. Or use ovs-pki to  create  different  cer‐
+       tificates.  The certificate is required to be x.509 version 3, and with
        CN field and subjectAltName field being set to the chassis name.
 
        The CA certificate, chassis certificate and private key are required to
@@ -2088,28 +2089,28 @@ SECURITY
 
 DESIGN DECISIONS
    Tunnel Encapsulations
-       In general, OVN annotates logical network packets that  it  sends  from
-       one  hypervisor to another with the following three pieces of metadata,
+       In  general,  OVN  annotates logical network packets that it sends from
+       one hypervisor to another with the following three pieces of  metadata,
        which are encoded in an encapsulation-specific fashion:
 
-              •      24-bit logical datapath identifier, from  the  tunnel_key
+              •      24-bit  logical  datapath identifier, from the tunnel_key
                      column in the OVN Southbound Datapath_Binding table.
 
-              •      15-bit  logical ingress port identifier. ID 0 is reserved
-                     for internal use within OVN. IDs 1 through 32767,  inclu‐
-                     sive,  may  be  assigned  to  logical ports (see the tun�‐
+              •      15-bit logical ingress port identifier. ID 0 is  reserved
+                     for  internal use within OVN. IDs 1 through 32767, inclu‐
+                     sive, may be assigned to  logical  ports  (see  the  tun�‐
                      nel_key column in the OVN Southbound Port_Binding table).
 
-              •      16-bit logical egress  port  identifier.  IDs  0  through
+              •      16-bit  logical  egress  port  identifier.  IDs 0 through
                      32767 have the same meaning as for logical ingress ports.
-                     IDs  32768  through  65535, inclusive, may be assigned to
-                     logical multicast groups (see the  tunnel_key  column  in
+                     IDs 32768 through 65535, inclusive, may  be  assigned  to
+                     logical  multicast  groups  (see the tunnel_key column in
                      the OVN Southbound Multicast_Group table).
 
-       When  VXLAN  is  enabled  on  any hypervisor in a cluster, datapath and
-       egress port identifier ranges are reduced to 12-bits. This is done  be‐
-       cause  only  Geneve provides the large space for metadata (over 32 bits
-       per packet). The mode with reduced ranges is called VXLAN mode. To  ac‐
+       When VXLAN is enabled on any hypervisor  in  a  cluster,  datapath  and
+       egress  port identifier ranges are reduced to 12-bits. This is done be‐
+       cause only Geneve provides the large space for metadata (over  32  bits
+       per  packet). The mode with reduced ranges is called VXLAN mode. To ac‐
        commodate for VXLAN, 24 bits available are split as follows:
 
               •      12-bit logical datapath identifier, derived from the tun�‐
@@ -2118,45 +2119,45 @@ DESIGN DECISIONS
 
               •      12-bit logical egress port identifier. IDs 0 through 2047
                      are used for unicast output ports. IDs 2048 through 4095,
-                     inclusive,  may  be  assigned to logical multicast groups
-                     (see the tunnel_key column in the OVN  Southbound  Multi�‐
-                     cast_Group  table).  For  multicast  group tunnel keys, a
-                     special mapping scheme is used  to  internally  transform
-                     from  internal  OVN  16-bit  keys to 12-bit values before
-                     sending packets through a VXLAN  tunnel,  and  back  from
-                     12-bit  tunnel keys to 16-bit values when receiving pack‐
+                     inclusive, may be assigned to  logical  multicast  groups
+                     (see  the  tunnel_key column in the OVN Southbound Multi�‐
+                     cast_Group table). For multicast  group  tunnel  keys,  a
+                     special  mapping  scheme  is used to internally transform
+                     from internal OVN 16-bit keys  to  12-bit  values  before
+                     sending  packets  through  a  VXLAN tunnel, and back from
+                     12-bit tunnel keys to 16-bit values when receiving  pack‐
                      ets from a VXLAN tunnel.
 
               •      No logical ingress port identifier.
 
        The limited space available for metadata when VXLAN tunnels are enabled
-       in a cluster put the following  functional  limitations  onto  features
+       in  a  cluster  put  the following functional limitations onto features
        available to users:
 
               •      The maximum number of networks is reduced to 4096.
 
-              •      The  maximum  number  of  ports per network is reduced to
+              •      The maximum number of ports per  network  is  reduced  to
                      2048.
 
-              •      ACLs matching against logical  ingress  port  identifiers
+              •      ACLs  matching  against  logical ingress port identifiers
                      are not supported.
 
               •      OVN interconnection feature is not supported.
 
-       In  addition  to  functional limitations described above, the following
+       In addition to functional limitations described  above,  the  following
        should be considered before enabling it in your cluster:
 
-              •      Geneve uses randomized UDP or TCP source ports  that  al‐
+              •      Geneve  uses  randomized UDP or TCP source ports that al‐
                      lows efficient distribution among multiple paths in envi‐
                      ronments that use ECMP in their underlay.
 
-              •      NICs  are  available  to offload Geneve encapsulation and
+              •      NICs are available to offload  Geneve  encapsulation  and
                      decapsulation.
 
        Due to its flexibility, the preferred encapsulation between hypervisors
        is Geneve. For Geneve encapsulation, OVN transmits the logical datapath
-       identifier in the Geneve VNI. OVN transmits  the  logical  ingress  and
-       logical  egress  ports  in  a  TLV  with class 0x0102, type 0x80, and a
+       identifier  in  the  Geneve  VNI. OVN transmits the logical ingress and
+       logical egress ports in a TLV with  class  0x0102,  type  0x80,  and  a
        32-bit value encoded as follows, from MSB to LSB:
 
          1       15          16
@@ -2166,16 +2167,16 @@ DESIGN DECISIONS
          0
 
 
-       For connecting to gateways, in addition to Geneve, OVN supports  VXLAN,
-       because  VXLAN-only  support  is  common on top-of-rack (ToR) switches.
+       For  connecting to gateways, in addition to Geneve, OVN supports VXLAN,
+       because VXLAN-only support is common  on  top-of-rack  (ToR)  switches.
        Currently, gateways have a feature set that matches the capabilities as
        defined by the VTEP schema, so fewer bits of metadata are necessary. In
-       the future, gateways that do  not  support  encapsulations  with  large
+       the  future,  gateways  that  do  not support encapsulations with large
        amounts of metadata may continue to have a reduced feature set.
 
-       VXLAN  mode is recommended to be disabled if VXLAN encap at hypervisors
-       is needed only to support HW VTEP L2  Gateway  functionality.  See  man
-       ovn-nb(5)  for  table  NB_Global column options key vxlan_mode for more
+       VXLAN mode is recommended to be disabled if VXLAN encap at  hypervisors
+       is  needed  only  to  support HW VTEP L2 Gateway functionality. See man
+       ovn-nb(5) for table NB_Global column options key  vxlan_mode  for  more
        details.
 
 OVN 25.09.90                   OVN Architecture            ovn-architecture(7)

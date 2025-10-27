@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-ic-nb" 5 " DB Schema 1.2.0" "Open vSwitch 25.09.90" "Open vSwitch Manual"
+.TH "ovn-ic-nb" 5 " DB Schema 1.3.0" "Open vSwitch 25.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -46,6 +46,12 @@ IC Northbound configuration
 \fBTransit_Switch\fR
 Transit logical switch
 .TQ 1in
+\fBTransit_Router\fR
+Transit logical router
+.TQ 1in
+\fBTransit_Router_Port\fR
+Transit logical router
+.TQ 1in
 \fBSSL\fR
 SSL configuration\[char46]
 .TQ 1in
@@ -72,18 +78,26 @@ linethick = 0.500000;
 box at 0.684030,0.625000 wid 1.368100 height 0.500000 "IC_NB_Global"
 box at 0.684030,0.625000 wid 1.312544 height 0.444444
 linethick = 1.000000;
-box at 3.401000,1.000000 wid 1.086800 height 0.500000 "Connection"
+box at 3.739600,1.000000 wid 1.086800 height 0.500000 "Connection"
 linethick = 1.000000;
-box at 3.401000,0.250000 wid 0.750000 height 0.500000 "SSL"
+box at 3.739600,0.250000 wid 0.750000 height 0.500000 "SSL"
 linethick = 0.500000;
 box at 0.684030,1.375000 wid 1.357600 height 0.500000 "Transit_Switch"
 box at 0.684030,1.375000 wid 1.302044 height 0.444444
+linethick = 0.500000;
+box at 0.684030,2.125000 wid 1.347200 height 0.500000 "Transit_Router"
+box at 0.684030,2.125000 wid 1.291644 height 0.444444
 linethick = 1.000000;
-spline -> from 1.369600,0.718660 to 1.369600,0.718660 to 1.828500,0.782660 to 2.428400,0.866310 to 2.854400,0.925710
-"connections*" at 2.112800,0.988150
+box at 3.739600,2.125000 wid 1.763900 height 0.500000 "Transit_Router_Port"
 linethick = 1.000000;
-spline -> from 1.369600,0.531340 to 1.369600,0.531340 to 1.892300,0.458450 to 2.597900,0.360060 to 3.021100,0.301040
-"ssl?" at 2.112800,0.591960
+spline -> from 1.373600,0.708690 to 1.373600,0.708690 to 1.922600,0.776690 to 2.686400,0.871280 to 3.192900,0.934010
+"connections*" at 2.112800,0.956070
+linethick = 1.000000;
+spline -> from 1.371100,0.529250 to 1.371100,0.529250 to 1.454200,0.517940 to 1.538100,0.506790 to 1.618100,0.496530 to 2.228300,0.418250 to 2.939300,0.337190 to 3.359900,0.290290
+"ssl?" at 2.112800,0.595490
+linethick = 1.000000;
+spline -> from 1.362400,2.125000 to 1.362400,2.125000 to 1.801100,2.125000 to 2.380400,2.125000 to 2.855700,2.125000
+"ports*" at 2.112800,2.224000
 .ps +3
 .PE
 .RE\}
@@ -196,6 +210,96 @@ A name that uniquely identifies the transit logical switch\[char46]
 .IP "\fBother_config\fR: map of string-string pairs"
 .IP "\fBexternal_ids\fR: map of string-string pairs"
 See \fBExternal IDs\fR at the beginning of this document\[char46]
+.bp
+.SH "Transit_Router TABLE"
+.PP
+.PP
+.PP
+Each row represents one transit logical router for interconnection between different OVN deployments (availability zones)\[char46]
+.SS "Summary:
+.TQ .25in
+\fINaming:\fR
+.RS .25in
+.TQ 2.75in
+\fBname\fR
+string (must be unique within table)
+.RE
+.TQ 3.00in
+\fBports\fR
+set of \fBTransit_Router_Port\fRs
+.TQ .25in
+\fICommon Columns:\fR
+.RS .25in
+.TQ 2.75in
+\fBother_config\fR
+map of string-string pairs
+.TQ 2.75in
+\fBexternal_ids\fR
+map of string-string pairs
+.RE
+.SS "Details:
+.ST "Naming:"
+.PP
+.IP "\fBname\fR: string (must be unique within table)"
+A name that uniquely identifies the transit logical router\[char46]
+.IP "\fBports\fR: set of \fBTransit_Router_Port\fRs"
+The router\(cqs ports\[char46]
+.ST "Common Columns:"
+.PP
+.IP "\fBother_config\fR: map of string-string pairs"
+.IP "\fBexternal_ids\fR: map of string-string pairs"
+See \fBExternal IDs\fR at the beginning of this document\[char46]
+.bp
+.SH "Transit_Router_Port TABLE"
+.PP
+.PP
+.PP
+Each row represents one transit logical router for interconnection between different OVN deployments (availability zones)\[char46]
+.SS "Summary:
+.TQ .25in
+\fINaming:\fR
+.RS .25in
+.TQ 2.75in
+\fBname\fR
+string (must be unique within table)
+.RE
+.TQ 3.00in
+\fBmac\fR
+string
+.TQ 3.00in
+\fBchassis\fR
+string
+.TQ 3.00in
+\fBtr_uuid\fR
+uuid
+.TQ 3.00in
+\fBnetworks\fR
+set of strings
+.TQ .25in
+\fICommon Columns:\fR
+.RS .25in
+.TQ 2.75in
+\fBother_config\fR
+map of string-string pairs
+.RE
+.SS "Details:
+.ST "Naming:"
+.PP
+.IP "\fBname\fR: string (must be unique within table)"
+A name that uniquely identifies the transit logical router port\[char46]
+.IP "\fBmac\fR: string"
+The Ethernet address that belongs to this router port\[char46]
+.IP "\fBchassis\fR: string"
+The chassis this router port should be bound to\[char46]
+.IP "\fBtr_uuid\fR: uuid"
+This is the UUID of the northbound IC logical datapath this port is associated with\[char46]
+.IP "\fBnetworks\fR: set of strings"
+The IP addresses and netmasks of the router port\[char46] For example, \fB192\[char46]168\[char46]0\[char46]1/24\fR indicates that the router\(cqs IP address is 192\[char46]168\[char46]0\[char46]1 and that packets destined to 192\[char46]168\[char46]0\[char46]\fIx\fR should be routed to this port\[char46] These are optional\[char46]
+.IP
+A logical router port always adds a link-local IPv6 address (fe80::/64) automatically generated from the interface\(cqs MAC address using the modified EUI\-64 format\[char46]
+.ST "Common Columns:"
+.PP
+.IP "\fBother_config\fR: map of string-string pairs"
 .bp
 .SH "SSL TABLE"
 .PP
