@@ -2284,6 +2284,9 @@ optional string, either \fBtrue\fR or \fBfalse\fR
 \fBoptions : dynamic-routing-vrf-name\fR
 optional string
 .TQ 2.75in
+\fBoptions : dynamic-routing-vrf-id\fR
+optional string, containing an integer, in range 1 to 4,294,967,295
+.TQ 2.75in
 \fBoptions : ct-commit-all\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
 .RE
@@ -2426,11 +2429,17 @@ This controls whether \fBovn\-controller\fR will advertise \fBAdvertised_Route\f
 .IP "\fBoptions : dynamic-routing-vrf-name\fR: optional string"
 Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
 .IP
-This defines the name of the vrf the ovn-controller will use to advertise and learn routes\[char46] If not set the vrf will be named \(dqovnvrf\(dq with the datapath id of the Logical Router appended to it\[char46]
+This defines the name of the vrf the ovn-controller will use to advertise and learn routes\[char46] If not set the vrf will be named \(dqovnvrf\(dq with the \fBoptions:dynamic-routing-vrf-id\fR or datapath id of the Logical Router appended to it\[char46]
 .IP
 The vrf name must be a valid linux interface name\[char46] If it is too long the generated name will be used instead\[char46]
 .IP
 The vrf table id is not affected by this setting\[char46] For details see \fBoptions:dynamic-routing-maintain-vrf\fR on the Logical_Router\[char46]
+.IP "\fBoptions : dynamic-routing-vrf-id\fR: optional string, containing an integer, in range 1 to 4,294,967,295"
+Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
+.IP
+This defines the vrf table id used by the specified vrf\[char46] When not set or set to invalid value datapath id of the Logical Router will be used instead\[char46]
+.IP
+This can also affect the vrf name\[char46] For details see \fBoptions:dynamic-routing-vrf-name\fR on the Logical_Router\[char46]
 .IP "\fBoptions : ct-commit-all\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 When enabled the LR will commit traffic in a zone that is stateful\[char46] The traffic is not commited to both zones but it is selective based whether there is stateful DNAT/SNAT or both\[char46] The commit all will prevent issues with \fBct\[char46]inv\fR packets as it will prevent the commit of reply traffic, which could happen in some cases\[char46] This also helps with HWOL as there shouldn\(cqt be any match on ct\[char46]new for established sessions as we will commit everything in addition to already existing stateful NATs and LBs\[char46]
 .ST "Common Columns:"
@@ -2444,7 +2453,7 @@ See \fBExternal IDs\fR at the beginning of this document\[char46]
 In order to achieve status of \fBTransit Router\fR for \fBLogical_Router\fR there needs to be at least one \fBLogical_Router_Port\fR that is considered remote\[char46] The LRP can be \fBremote\fR only if it has \fBoptions:requested\-chassis\fR set to chassis that is considered remote\[char46] See \fBLogical_Router_Port\fR for more details\[char46]
 .PP
 .PP
-In order for the \fBTransit Router\fR to work properly all the tunnel keys for the \fBTransit Router\fR itself and the remote ports keys needs to match in all AZs e\[char46]g\[char46] TR in AZ1 and AZ2 needs to have the same tunnel key\[char46] Remote port for AZ2 in AZ1 needs to have the same tunnel key as local port in AZ2 and vice vers\[char46]
+In order for the \fBTransit Router\fR to work properly all the tunnel keys for the \fBTransit Router\fR itself and its router ports need to match in all AZs e\[char46]g\[char46] TR in AZ1 and AZ2 need to have the same tunnel key\[char46] Remote ports for AZ2 in AZ1 need to have the same tunnel key as local ports in AZ2 and vice versa\[char46] It\(cqs also possible that the router has non-transit ports, without \fBoptions:requested\-chassis\fR set; their keys also need to match in all AZs\[char46]
 .PP
 .PP
 The \fBTransit Router\fR behaves as distributed router which means that it has the same limitations for stateful flows like \fBNAT and LBs\fR and it will lose the CT state between AZs\[char46]
@@ -2959,7 +2968,7 @@ If not set the value from \fBoptions:dynamic-routing-redistribute-local-only\fR 
 .IP "\fBoptions : dynamic-routing-maintain-vrf\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 Only relevant if \fBoptions:dynamic-routing\fR on the respective Logical_Router is set to \fBtrue\fR\[char46]
 .IP
-If this LRP is bound to a specific chassis then the ovn-controller of this chassis will maintain a vrf\[char46] This vrf will contain all the routes that should be announced from this LRP\[char46] Unless \fBoptions:dynamic-routing-vrf-name\fR is set the vrf will be named \(dqovnvrf\(dq with the datapath id of the Logical Router appended to it\[char46]
+If this LRP is bound to a specific chassis then the ovn-controller of this chassis will maintain a vrf\[char46] This vrf will contain all the routes that should be announced from this LRP\[char46] Unless \fBoptions:dynamic-routing-vrf-name\fR is set the vrf will be named \(dqovnvrf\(dq with the \fBoptions:dynamic-routing-vrf-id\fR or datapath id of the Logical Router appended to it\[char46]
 .IP
 If the setting is not set or false the ovn-controller will expect this VRF to already exist\[char46] Some tooling outside of OVN needs to ensure this\[char46]
 .IP
