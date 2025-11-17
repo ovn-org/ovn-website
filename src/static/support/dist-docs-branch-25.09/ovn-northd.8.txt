@@ -1882,9 +1882,7 @@ LOGICAL FLOW TABLE STRUCTURE
 
      Egress Table 2: to-lport Pre-ACLs
 
-       This is similar to ingress table Pre-ACLs except for to-lport  traffic.
-       Except  when  the  option enable-stateless-acl-with-lb is enabled: REG‐
-       BIT_ACL_STATELESS ignored.
+       This is similar to ingress table Pre-ACLs except for to-lport traffic.
 
        This table also has a priority-110 flow with the match eth.src == E for
        all logical switch datapaths to move traffic to the next table. Where E
@@ -1920,6 +1918,10 @@ LOGICAL FLOW TABLE STRUCTURE
        logical router port. This flow is added to skip the connection tracking
        of  packets which will be entering logical router datapath from logical
        switch datapath for routing.
+
+       When enable-stateless-acl-with-lb is enabled,  additional  priority-115
+       flow  is  added to match traffic with REGBIT_ACL_STATELESS set and pass
+       connection tracking.
 
      Egress Table 4: Pre-stateful
 
@@ -2019,7 +2021,9 @@ LOGICAL FLOW TABLE STRUCTURE
      Egress Table 11: Stateful
 
        This  is  similar  to  ingress  table Stateful except that there are no
-       rules added for load balancing new connections.
+       rules added for load  balancing  new  connections.  When  enable-state�‐
+       less-acl-with-lb  is  enabled, new stateless connections bypass connec‐
+       tion tracking.
 
      Egress Table 12: Egress Port Security - check
 
