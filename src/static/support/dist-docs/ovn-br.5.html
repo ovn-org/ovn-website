@@ -1,0 +1,436 @@
+<html><head><meta charset="UTF-8"></head><body><pre>
+<u>o</u><u>v</u><u>n</u><u>-</u><u>b</u><u>r</u><u>i</u><u>d</u><u>g</u><u>e</u><u>-</u><u>c</u><u>o</u><u>n</u><u>t</u><u>r</u><u>o</u><u>l</u><u>l</u><u>e</u><u>r</u>(5)      Open vSwitch Manual     <u>o</u><u>v</u><u>n</u><u>-</u><u>b</u><u>r</u><u>i</u><u>d</u><u>g</u><u>e</u><u>-</u><u>c</u><u>o</u><u>n</u><u>t</u><u>r</u><u>o</u><u>l</u><u>l</u><u>e</u><u>r</u>(5)
+
+<b>N</b><b>A</b><b>M</b><b>E</b>
+       ovn-bridge-controller - OVN_Bridge_Controller database schema
+
+       This  database  is  the interface between OVN Bridge Controller and the
+       cloud management system (CMS) to program and control  the  OVS  bridges
+       using OVN logical flows. The CMS produces almost all of the contents of
+       the  database.  The <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> program monitors the database
+       contents and programs the OVS bridges with the OpenFlow rules.
+
+   <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b>
+       Each of the tables in this database contains a  special  column,  named
+       <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>.  This  column has the same form and purpose each place it
+       appears.
+
+              <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
+                     Key-value pairs for use by the CMS.  The  CMS  might  use
+                     certain  pairs,  for example, to identify entities in its
+                     own configuration that correspond to those in this  data‐
+                     base.
+
+<b>T</b><b>A</b><b>B</b><b>L</b><b>E</b> <b>S</b><b>U</b><b>M</b><b>M</b><b>A</b><b>R</b><b>Y</b>
+       The  following list summarizes the purpose of each of the tables in the
+       <b>O</b><b>V</b><b>N</b><b>_</b><b>B</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b><b>_</b><b>C</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> database.  Each table is described in more detail
+       on a later page.
+
+       Table     Purpose
+       <b>B</b><b>R</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> Bridge Controller configuration
+       <b>C</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>
+                 OVSDB client connections.
+       <b>S</b><b>S</b><b>L</b>       SSL configuration.
+       <b>B</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b>    OVS Bridge to control
+       <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>F</b><b>l</b><b>o</b><b>w</b>
+                 Logical flow
+
+<b>B</b><b>R</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
+   <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
+       <b>b</b><b>r</b><b>_</b><b>c</b><b>f</b><b>g</b>                        integer
+       <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
+         <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>                map of string-string pairs
+       <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
+         <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>                     map of string-string pairs
+       <u>C</u><u>o</u><u>n</u><u>n</u><u>e</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> <u>O</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
+         <b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>                 set of <b>C</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>s
+         <b>s</b><b>s</b><b>l</b>                         optional <b>S</b><b>S</b><b>L</b>
+
+   <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
+       <b>b</b><b>r</b><b>_</b><b>c</b><b>f</b><b>g</b>: integer
+              Sequence number for client to increment. When a client  modifies
+              any  part  of  the  bridge Controller database configuration and
+              wishes to wait for  <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  to  finish  applying  the
+              changes, it may increment this sequence number.
+
+     <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
+
+       <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
+              See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
+
+     <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
+
+       <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>: map of string-string pairs
+              This  column  provides general key/value settings. The supported
+              options are described individually below.
+
+     <u>C</u><u>o</u><u>n</u><u>n</u><u>e</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> <u>O</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
+
+       <b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>: set of <b>C</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>s
+              Database clients to  which  the  Open  vSwitch  database  server
+              should  connect or on which it should listen, along with options
+              for how these connections should be configured. See the  <b>C</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b>‐‐
+              <b>t</b><b>i</b><b>o</b><b>n</b> table for more information.
+
+       <b>s</b><b>s</b><b>l</b>: optional <b>S</b><b>S</b><b>L</b>
+              Global SSL/TLS configuration.
+
+<b>C</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
+       Configuration  for  a  database  connection to an Open vSwitch database
+       (OVSDB) client.
+
+       This table  primarily  configures  the  Open  vSwitch  database  server
+       (<b>o</b><b>v</b><b>s</b><b>d</b><b>b</b><b>-</b><b>s</b><b>e</b><b>r</b><b>v</b><b>e</b><b>r</b>).
+
+       The  Open vSwitch database server can initiate and maintain active con‐
+       nections to remote clients. It can also  listen  for  database  connec‐
+       tions.
+
+   <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
+       <u>C</u><u>o</u><u>r</u><u>e</u> <u>F</u><u>e</u><u>a</u><u>t</u><u>u</u><u>r</u><u>e</u><u>s</u><u>:</u>
+         <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b>                      string (must be unique within table)
+       <u>C</u><u>l</u><u>i</u><u>e</u><u>n</u><u>t</u> <u>F</u><u>a</u><u>i</u><u>l</u><u>u</u><u>r</u><u>e</u> <u>D</u><u>e</u><u>t</u><u>e</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> <u>a</u><u>n</u><u>d</u> <u>H</u><u>a</u><u>n</u><u>d</u><u>l</u><u>i</u><u>n</u><u>g</u><u>:</u>
+         <b>m</b><b>a</b><b>x</b><b>_</b><b>b</b><b>a</b><b>c</b><b>k</b><b>o</b><b>f</b><b>f</b>                 optional integer, at least 1,000
+         <b>i</b><b>n</b><b>a</b><b>c</b><b>t</b><b>i</b><b>v</b><b>i</b><b>t</b><b>y</b><b>_</b><b>p</b><b>r</b><b>o</b><b>b</b><b>e</b>            optional integer
+       <u>S</u><u>t</u><u>a</u><u>t</u><u>u</u><u>s</u><u>:</u>
+         <b>i</b><b>s</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>e</b><b>d</b>                boolean
+         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>a</b><b>s</b><b>t</b><b>_</b><b>e</b><b>r</b><b>r</b><b>o</b><b>r</b>         optional string
+         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b>              optional  string, one of <b>A</b><b>C</b><b>T</b><b>I</b><b>V</b><b>E</b>, <b>B</b><b>A</b><b>C</b><b>K</b><b>O</b><b>F</b><b>F</b>,
+                                     <b>C</b><b>O</b><b>N</b><b>N</b><b>E</b><b>C</b><b>T</b><b>I</b><b>N</b><b>G</b>, <b>I</b><b>D</b><b>L</b><b>E</b>, or <b>V</b><b>O</b><b>I</b><b>D</b>
+         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>s</b><b>e</b><b>c</b><b>_</b><b>s</b><b>i</b><b>n</b><b>c</b><b>e</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b>  optional string, containing  an  integer,
+                                     at least 0
+         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>s</b><b>e</b><b>c</b><b>_</b><b>s</b><b>i</b><b>n</b><b>c</b><b>e</b><b>_</b><b>d</b><b>i</b><b>s</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b>
+                                     optional  string,  containing an integer,
+                                     at least 0
+         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>o</b><b>c</b><b>k</b><b>s</b><b>_</b><b>h</b><b>e</b><b>l</b><b>d</b>         optional string
+         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>o</b><b>c</b><b>k</b><b>s</b><b>_</b><b>w</b><b>a</b><b>i</b><b>t</b><b>i</b><b>n</b><b>g</b>      optional string
+         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>o</b><b>c</b><b>k</b><b>s</b><b>_</b><b>l</b><b>o</b><b>s</b><b>t</b>         optional string
+         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>n</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>      optional string, containing  an  integer,
+                                     at least 2
+         <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>b</b><b>o</b><b>u</b><b>n</b><b>d</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b>         optional string, containing an integer
+       <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
+         <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>                map of string-string pairs
+         <b>o</b><b>t</b><b>h</b><b>e</b><b>r</b><b>_</b><b>c</b><b>o</b><b>n</b><b>f</b><b>i</b><b>g</b>                map of string-string pairs
+
+   <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
+     <u>C</u><u>o</u><u>r</u><u>e</u> <u>F</u><u>e</u><u>a</u><u>t</u><u>u</u><u>r</u><u>e</u><u>s</u><u>:</u>
+
+       <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b>: string (must be unique within table)
+              Connection methods for clients.
+
+              The following connection methods are currently supported:
+
+              <b>s</b><b>s</b><b>l</b><b>:</b><u>h</u><u>o</u><u>s</u><u>t</u>[<b>:</b><u>p</u><u>o</u><u>r</u><u>t</u>]
+                     The specified SSL/TLS <u>p</u><u>o</u><u>r</u><u>t</u> on the host at the given <u>h</u><u>o</u><u>s</u><u>t</u>,
+                     which can either be a DNS name (if built with unbound li‐
+                     brary)  or  an  IP address. A valid SSL/TLS configuration
+                     must be provided when this form is used, this  configura‐
+                     tion can be specified via command-line options or the <b>S</b><b>S</b><b>L</b>
+                     table.
+
+                     If <u>p</u><u>o</u><u>r</u><u>t</u> is not specified, it defaults to 6640.
+
+                     SSL/TLS support is an optional feature that is not always
+                     built as part of OVN or Open vSwitch.
+
+              <b>t</b><b>c</b><b>p</b><b>:</b><u>h</u><u>o</u><u>s</u><u>t</u>[<b>:</b><u>p</u><u>o</u><u>r</u><u>t</u>]
+                     The  specified  TCP  <u>p</u><u>o</u><u>r</u><u>t</u>  on the host at the given <u>h</u><u>o</u><u>s</u><u>t</u>,
+                     which can either be a DNS name (if built with unbound li‐
+                     brary) or an IP address. If <u>h</u><u>o</u><u>s</u><u>t</u> is an IPv6 address, wrap
+                     it in square brackets, e.g. <b>t</b><b>c</b><b>p</b><b>:</b><b>[</b><b>:</b><b>:</b><b>1</b><b>]</b><b>:</b><b>6</b><b>6</b><b>4</b><b>0</b>.
+
+                     If <u>p</u><u>o</u><u>r</u><u>t</u> is not specified, it defaults to 6640.
+
+              <b>p</b><b>s</b><b>s</b><b>l</b><b>:</b>[<u>p</u><u>o</u><u>r</u><u>t</u>][<b>:</b><u>h</u><u>o</u><u>s</u><u>t</u>]
+                     Listens for SSL/TLS  connections  on  the  specified  TCP
+                     <u>p</u><u>o</u><u>r</u><u>t</u>. Specify 0 for <u>p</u><u>o</u><u>r</u><u>t</u> to have the kernel automatically
+                     choose  an available port. If <u>h</u><u>o</u><u>s</u><u>t</u>, which can either be a
+                     DNS name (if built with unbound library)  or  an  IP  ad‐
+                     dress,  is  specified, then connections are restricted to
+                     the resolved or specified local IPaddress (either IPv4 or
+                     IPv6 address). If <u>h</u><u>o</u><u>s</u><u>t</u> is an IPv6 address, wrap in square
+                     brackets, e.g. <b>p</b><b>s</b><b>s</b><b>l</b><b>:</b><b>6</b><b>6</b><b>4</b><b>0</b><b>:</b><b>[</b><b>:</b><b>:</b><b>1</b><b>]</b>. If <u>h</u><u>o</u><u>s</u><u>t</u> is not  specified
+                     then  it listens only on IPv4 (but not IPv6) addresses. A
+                     valid SSL/TLS configuration must be  provided  when  this
+                     form  is  used, this can be specified either via command-
+                     line options or the <b>S</b><b>S</b><b>L</b> table.
+
+                     If <u>p</u><u>o</u><u>r</u><u>t</u> is not specified, it defaults to 6640.
+
+                     SSL/TLS support is an optional feature that is not always
+                     built as part of OVN or Open vSwitch.
+
+              <b>p</b><b>t</b><b>c</b><b>p</b><b>:</b>[<u>p</u><u>o</u><u>r</u><u>t</u>][<b>:</b><u>h</u><u>o</u><u>s</u><u>t</u>]
+                     Listens for connections on the specified TCP <u>p</u><u>o</u><u>r</u><u>t</u>.  Spec‐
+                     ify 0 for <u>p</u><u>o</u><u>r</u><u>t</u> to have the kernel automatically choose an
+                     available  port.  If <u>h</u><u>o</u><u>s</u><u>t</u>, which can either be a DNS name
+                     (if built with unbound library)  or  an  IP  address,  is
+                     specified,  then  connections  are  restricted to the re‐
+                     solved or specified local IP address (either IPv4 or IPv6
+                     address). If <u>h</u><u>o</u><u>s</u><u>t</u> is an IPv6 address, wrap it  in  square
+                     brackets,  e.g. <b>p</b><b>t</b><b>c</b><b>p</b><b>:</b><b>6</b><b>6</b><b>4</b><b>0</b><b>:</b><b>[</b><b>:</b><b>:</b><b>1</b><b>]</b>. If <u>h</u><u>o</u><u>s</u><u>t</u> is not specified
+                     then it listens only on IPv4 addresses.
+
+                     If <u>p</u><u>o</u><u>r</u><u>t</u> is not specified, it defaults to 6640.
+
+              When multiple clients are configured, the <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> values must  be
+              unique. Duplicate <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> values yield unspecified results.
+
+     <u>C</u><u>l</u><u>i</u><u>e</u><u>n</u><u>t</u> <u>F</u><u>a</u><u>i</u><u>l</u><u>u</u><u>r</u><u>e</u> <u>D</u><u>e</u><u>t</u><u>e</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> <u>a</u><u>n</u><u>d</u> <u>H</u><u>a</u><u>n</u><u>d</u><u>l</u><u>i</u><u>n</u><u>g</u><u>:</u>
+
+       <b>m</b><b>a</b><b>x</b><b>_</b><b>b</b><b>a</b><b>c</b><b>k</b><b>o</b><b>f</b><b>f</b>: optional integer, at least 1,000
+              Maximum  number  of  milliseconds to wait between connection at‐
+              tempts. Default is implementation-specific.
+
+       <b>i</b><b>n</b><b>a</b><b>c</b><b>t</b><b>i</b><b>v</b><b>i</b><b>t</b><b>y</b><b>_</b><b>p</b><b>r</b><b>o</b><b>b</b><b>e</b>: optional integer
+              Maximum number of milliseconds of idle time on connection to the
+              client before sending  an  inactivity  probe  message.  If  Open
+              vSwitch  does  not communicate with the client for the specified
+              number of seconds, it will send a probe. If a  response  is  not
+              received  for  the  same additional amount of time, Open vSwitch
+              assumes the connection has been broken and  attempts  to  recon‐
+              nect.  Default is implementation-specific. A value of 0 disables
+              inactivity probes.
+
+     <u>S</u><u>t</u><u>a</u><u>t</u><u>u</u><u>s</u><u>:</u>
+
+       Key-value pair of <b>i</b><b>s</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>e</b><b>d</b> is always updated. Other key-value pairs
+       in the status columns may be updated depends on the <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> type.
+
+       When <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> specifies a connection method that listens for inbound con‐
+       nections (e.g. <b>p</b><b>t</b><b>c</b><b>p</b><b>:</b> or <b>p</b><b>u</b><b>n</b><b>i</b><b>x</b><b>:</b>), both  <b>n</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>  and  <b>i</b><b>s</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>e</b><b>d</b>
+       may also be updated while the remaining key-value pairs are omitted.
+
+       On  the  other  hand, when <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> specifies an outbound connection, all
+       key-value pairs may be updated, except  the  above-mentioned  two  key-
+       value  pairs associated with inbound connection targets. They are omit‐
+       ted.
+
+       <b>i</b><b>s</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>e</b><b>d</b>: boolean
+              <b>t</b><b>r</b><b>u</b><b>e</b> if currently connected to this client, <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b> otherwise.
+
+       <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>a</b><b>s</b><b>t</b><b>_</b><b>e</b><b>r</b><b>r</b><b>o</b><b>r</b>: optional string
+              A human-readable description of the last error on the connection
+              to the manager; i.e. <b>s</b><b>t</b><b>r</b><b>e</b><b>r</b><b>r</b><b>o</b><b>r</b><b>(</b><b>e</b><b>r</b><b>r</b><b>n</b><b>o</b><b>)</b>. This key will  exist  only
+              if an error has occurred.
+
+       <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b>: optional string, one of <b>A</b><b>C</b><b>T</b><b>I</b><b>V</b><b>E</b>, <b>B</b><b>A</b><b>C</b><b>K</b><b>O</b><b>F</b><b>F</b>, <b>C</b><b>O</b><b>N</b><b>N</b><b>E</b><b>C</b><b>T</b><b>I</b><b>N</b><b>G</b>,
+       <b>I</b><b>D</b><b>L</b><b>E</b>, or <b>V</b><b>O</b><b>I</b><b>D</b>
+              The state of the connection to the manager:
+
+              <b>V</b><b>O</b><b>I</b><b>D</b>   Connection is disabled.
+
+              <b>B</b><b>A</b><b>C</b><b>K</b><b>O</b><b>F</b><b>F</b>
+                     Attempting to reconnect at an increasing period.
+
+              <b>C</b><b>O</b><b>N</b><b>N</b><b>E</b><b>C</b><b>T</b><b>I</b><b>N</b><b>G</b>
+                     Attempting to connect.
+
+              <b>A</b><b>C</b><b>T</b><b>I</b><b>V</b><b>E</b> Connected, remote host responsive.
+
+              <b>I</b><b>D</b><b>L</b><b>E</b>   Connection is idle. Waiting for response to keep-alive.
+
+              These  values  may  change in the future. They are provided only
+              for human consumption.
+
+       <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>s</b><b>e</b><b>c</b><b>_</b><b>s</b><b>i</b><b>n</b><b>c</b><b>e</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b>: optional string, containing an integer, at
+       least 0
+              The amount of time since this client last successfully connected
+              to the database (in seconds). Value is empty if client has never
+              successfully been connected.
+
+       <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>s</b><b>e</b><b>c</b><b>_</b><b>s</b><b>i</b><b>n</b><b>c</b><b>e</b><b>_</b><b>d</b><b>i</b><b>s</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b>: optional string, containing an integer,
+       at least 0
+              The amount of time since this client last disconnected from  the
+              database  (in  seconds). Value is empty if client has never dis‐
+              connected.
+
+       <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>o</b><b>c</b><b>k</b><b>s</b><b>_</b><b>h</b><b>e</b><b>l</b><b>d</b>: optional string
+              Space-separated list of the names of OVSDB locks that  the  con‐
+              nection  holds.  Omitted  if  the  connection  does not hold any
+              locks.
+
+       <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>o</b><b>c</b><b>k</b><b>s</b><b>_</b><b>w</b><b>a</b><b>i</b><b>t</b><b>i</b><b>n</b><b>g</b>: optional string
+              Space-separated list of the names of OVSDB locks that  the  con‐
+              nection  is currently waiting to acquire. Omitted if the connec‐
+              tion is not waiting for any locks.
+
+       <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>l</b><b>o</b><b>c</b><b>k</b><b>s</b><b>_</b><b>l</b><b>o</b><b>s</b><b>t</b>: optional string
+              Space-separated list of the names of OVSDB locks that  the  con‐
+              nection  has  had  stolen by another OVSDB client. Omitted if no
+              locks have been stolen from this connection.
+
+       <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>n</b><b>_</b><b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>: optional string, containing an integer, at
+       least 2
+              When <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> specifies a connection method that listens  for  in‐
+              bound  connections  (e.g. <b>p</b><b>t</b><b>c</b><b>p</b><b>:</b> or <b>p</b><b>s</b><b>s</b><b>l</b><b>:</b>) and more than one con‐
+              nection is actually active, the value is the  number  of  active
+              connections. Otherwise, this key-value pair is omitted.
+
+       <b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>:</b> <b>b</b><b>o</b><b>u</b><b>n</b><b>d</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b>: optional string, containing an integer
+              When <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> is <b>p</b><b>t</b><b>c</b><b>p</b><b>:</b> or <b>p</b><b>s</b><b>s</b><b>l</b><b>:</b>, this is the TCP port on which the
+              OVSDB  server  is  listening.  (This is particularly useful when
+              <b>t</b><b>a</b><b>r</b><b>g</b><b>e</b><b>t</b> specifies a port of 0, allowing the kernel to choose  any
+              available port.)
+
+     <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
+
+       The  overall purpose of these columns is described under <b>C</b><b>o</b><b>m</b><b>m</b><b>o</b><b>n</b> <b>C</b><b>o</b><b>l</b><b>u</b><b>m</b><b>n</b><b>s</b>
+       at the beginning of this document.
+
+       <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
+
+       <b>o</b><b>t</b><b>h</b><b>e</b><b>r</b><b>_</b><b>c</b><b>o</b><b>n</b><b>f</b><b>i</b><b>g</b>: map of string-string pairs
+<b>S</b><b>S</b><b>L</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
+       SSL/TLS configuration for ovn-nb database access.
+
+   <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
+       <b>p</b><b>r</b><b>i</b><b>v</b><b>a</b><b>t</b><b>e</b><b>_</b><b>k</b><b>e</b><b>y</b>                   string
+       <b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b><b>c</b><b>a</b><b>t</b><b>e</b>                   string
+       <b>c</b><b>a</b><b>_</b><b>c</b><b>e</b><b>r</b><b>t</b>                       string
+       <b>b</b><b>o</b><b>o</b><b>t</b><b>s</b><b>t</b><b>r</b><b>a</b><b>p</b><b>_</b><b>c</b><b>a</b><b>_</b><b>c</b><b>e</b><b>r</b><b>t</b>             boolean
+       <b>s</b><b>s</b><b>l</b><b>_</b><b>p</b><b>r</b><b>o</b><b>t</b><b>o</b><b>c</b><b>o</b><b>l</b><b>s</b>                 string
+       <b>s</b><b>s</b><b>l</b><b>_</b><b>c</b><b>i</b><b>p</b><b>h</b><b>e</b><b>r</b><b>s</b>                   string
+       <b>s</b><b>s</b><b>l</b><b>_</b><b>c</b><b>i</b><b>p</b><b>h</b><b>e</b><b>r</b><b>s</b><b>u</b><b>i</b><b>t</b><b>e</b><b>s</b>              string
+       <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
+         <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>                map of string-string pairs
+
+   <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
+       <b>p</b><b>r</b><b>i</b><b>v</b><b>a</b><b>t</b><b>e</b><b>_</b><b>k</b><b>e</b><b>y</b>: string
+              Name of a PEM file  containing  the  private  key  used  as  the
+              switch’s identity for SSL/TLS connections to the controller.
+
+       <b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b><b>c</b><b>a</b><b>t</b><b>e</b>: string
+              Name  of a PEM file containing a certificate, signed by the cer‐
+              tificate authority (CA) used by the controller and manager, that
+              certifies the switch’s private key,  identifying  a  trustworthy
+              switch.
+
+       <b>c</b><b>a</b><b>_</b><b>c</b><b>e</b><b>r</b><b>t</b>: string
+              Name  of a PEM file containing the CA certificate used to verify
+              that the switch is connected to a trustworthy controller.
+
+       <b>b</b><b>o</b><b>o</b><b>t</b><b>s</b><b>t</b><b>r</b><b>a</b><b>p</b><b>_</b><b>c</b><b>a</b><b>_</b><b>c</b><b>e</b><b>r</b><b>t</b>: boolean
+              If set to <b>t</b><b>r</b><b>u</b><b>e</b>, then Open vSwitch will attempt to obtain the  CA
+              certificate  from the controller on its first SSL/TLS connection
+              and save it to the named PEM file. If it is successful, it  will
+              immediately  drop the connection and reconnect, and from then on
+              all SSL/TLS connections must be authenticated by  a  certificate
+              signed  by the CA certificate thus obtained. <b>T</b><b>h</b><b>i</b><b>s</b> <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b> <b>e</b><b>x</b><b>p</b><b>o</b><b>s</b><b>e</b><b>s</b>
+              <b>t</b><b>h</b><b>e</b> <b>S</b><b>S</b><b>L</b><b>/</b><b>T</b><b>L</b><b>S</b> <b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b> <b>t</b><b>o</b> <b>a</b> <b>m</b><b>a</b><b>n</b><b>-</b><b>i</b><b>n</b><b>-</b><b>t</b><b>h</b><b>e</b><b>-</b><b>m</b><b>i</b><b>d</b><b>d</b><b>l</b><b>e</b>  <b>a</b><b>t</b><b>t</b><b>a</b><b>c</b><b>k</b>  <b>o</b><b>b</b><b>t</b><b>a</b><b>i</b><b>n</b><b>i</b><b>n</b><b>g</b>
+              <b>t</b><b>h</b><b>e</b>  <b>i</b><b>n</b><b>i</b><b>t</b><b>i</b><b>a</b><b>l</b>  <b>C</b><b>A</b>  <b>c</b><b>e</b><b>r</b><b>t</b><b>i</b><b>f</b><b>i</b><b>c</b><b>a</b><b>t</b><b>e</b><b>.</b>  It may still be useful for boot‐
+              strapping.
+
+       <b>s</b><b>s</b><b>l</b><b>_</b><b>p</b><b>r</b><b>o</b><b>t</b><b>o</b><b>c</b><b>o</b><b>l</b><b>s</b>: string
+              Range or a comma- or space-delimited list of the SSL/TLS  proto‐
+              cols to enable for SSL/TLS connections.
+
+              Supported  protocols  include <b>T</b><b>L</b><b>S</b><b>v</b><b>1</b><b>.</b><b>2</b> and <b>T</b><b>L</b><b>S</b><b>v</b><b>1</b><b>.</b><b>3</b>. Ranges can be
+              provided in a form of two protocol names separated with  a  dash
+              (<b>T</b><b>L</b><b>S</b><b>v</b><b>1</b><b>.</b><b>2</b><b>-</b><b>T</b><b>L</b><b>S</b><b>v</b><b>1</b><b>.</b><b>3</b>), or as a single protocol name with a plus sign
+              (<b>T</b><b>L</b><b>S</b><b>v</b><b>1</b><b>.</b><b>2</b><b>+</b>).  The value can be a list of protocols or exactly one
+              range. The range is a preferred way of specifying protocols  and
+              the  configuration  always  behaves  as if the range between the
+              minimum and the maximum specified version is provided, i.e.,  if
+              the  value  is  set to <b>T</b><b>L</b><b>S</b><b>v</b><b>1</b><b>.</b><b>X</b><b>,</b><b>T</b><b>L</b><b>S</b><b>v</b><b>1</b><b>.</b><b>(</b><b>X</b><b>+</b><b>2</b><b>)</b>, the <b>T</b><b>L</b><b>S</b><b>v</b><b>1</b><b>.</b><b>(</b><b>X</b><b>+</b><b>1</b><b>)</b> will
+              also be enabled as if it was a range. Regardless of  order,  the
+              highest  protocol  supported  by  both sides will be chosen when
+              making the connection.
+
+              The default when this option is omitted is <b>T</b><b>L</b><b>S</b><b>v</b><b>1</b><b>.</b><b>2</b><b>+</b>.
+
+       <b>s</b><b>s</b><b>l</b><b>_</b><b>c</b><b>i</b><b>p</b><b>h</b><b>e</b><b>r</b><b>s</b>: string
+              List of ciphers (in OpenSSL cipher string  format)  to  be  sup‐
+              ported  for  SSL/TLS  connections with TLSv1.2. The default when
+              this option is omitted is <b>D</b><b>E</b><b>F</b><b>A</b><b>U</b><b>L</b><b>T</b><b>:</b><b>@</b><b>S</b><b>E</b><b>C</b><b>L</b><b>E</b><b>V</b><b>E</b><b>L</b><b>=</b><b>2</b>.
+
+       <b>s</b><b>s</b><b>l</b><b>_</b><b>c</b><b>i</b><b>p</b><b>h</b><b>e</b><b>r</b><b>s</b><b>u</b><b>i</b><b>t</b><b>e</b><b>s</b>: string
+              List of ciphersuites (in OpenSSL ciphersuites string format)  to
+              be supported for SSL/TLS connections with TLSv1.3 and later. De‐
+              fault  value from OpenSSL will be used when this option is omit‐
+              ted.
+
+     <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
+
+       The overall purpose of these columns is described under <b>C</b><b>o</b><b>m</b><b>m</b><b>o</b><b>n</b>  <b>C</b><b>o</b><b>l</b><b>u</b><b>m</b><b>n</b><b>s</b>
+       at the beginning of this document.
+
+       <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
+<b>B</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
+   <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
+       <b>n</b><b>a</b><b>m</b><b>e</b>                          string (must be unique within table)
+       <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>                       map of string-string pairs
+       <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>                  map of string-string pairs
+
+   <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
+       <b>n</b><b>a</b><b>m</b><b>e</b>: string (must be unique within table)
+              Name  of  the  OVS bridge. This bridge should exist in the local
+              OVS database.
+
+       <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>: map of string-string pairs
+              Reserved for future use.
+
+       <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
+              See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
+
+<b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>F</b><b>l</b><b>o</b><b>w</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
+   <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
+       <b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b>                        optional <b>B</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b>
+       <b>t</b><b>a</b><b>b</b><b>l</b><b>e</b><b>_</b><b>i</b><b>d</b>                      integer, in range 0 to 100
+       <b>p</b><b>r</b><b>i</b><b>o</b><b>r</b><b>i</b><b>t</b><b>y</b>                      integer, in range 0 to 65,535
+       <b>m</b><b>a</b><b>t</b><b>c</b><b>h</b>                         string
+       <b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>                       string
+       <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>                  map of string-string pairs
+
+   <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
+       <b>b</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b>: optional <b>B</b><b>r</b><b>i</b><b>d</b><b>g</b><b>e</b>
+              The bridge to which the logical flow belongs to.
+
+       <b>t</b><b>a</b><b>b</b><b>l</b><b>e</b><b>_</b><b>i</b><b>d</b>: integer, in range 0 to 100
+              The stage in the logical pipeline, analogous to an OpenFlow  ta‐
+              ble number.
+
+       <b>p</b><b>r</b><b>i</b><b>o</b><b>r</b><b>i</b><b>t</b><b>y</b>: integer, in range 0 to 65,535
+              The flow’s priority. Flows with numerically higher priority take
+              precedence  over those with lower. If two logical flows with the
+              same priority both match, then the one actually applied  to  the
+              packet is undefined.
+
+       <b>m</b><b>a</b><b>t</b><b>c</b><b>h</b>: string
+              A  matching  expression.  OVN  provides  a  superset of OpenFlow
+              matching capabilities, using a syntax similar to Boolean expres‐
+              sions in a programming language.
+
+              Please see the documentation of the <b>m</b><b>a</b><b>t</b><b>c</b><b>h</b> column  of  the  <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
+              <b>c</b><b>a</b><b>l</b><b>_</b><b>F</b><b>l</b><b>o</b><b>w</b> table in the <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database.
+
+       <b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>: string
+              Logical  datapath  actions, to be executed when the logical flow
+              represented by this row is the highest-priority match.
+
+              Actions share lexical syntax with the <b>m</b><b>a</b><b>t</b><b>c</b><b>h</b> column. An empty set
+              of actions (or one that contains just white space or  comments),
+              or  a  set  of  actions  that consists of just <b>d</b><b>r</b><b>o</b><b>p</b><b>;</b>, causes the
+              matched packets to be dropped. Otherwise, the column should con‐
+              tain a sequence of actions, each terminated by a semicolon.
+
+              Please see the documentation of the <b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> column of the  <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
+              <b>c</b><b>a</b><b>l</b><b>_</b><b>F</b><b>l</b><b>o</b><b>w</b> table in the <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database.
+
+              While  <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  technically  supports  all OVN logical
+              flow actions defined in the <b>a</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> column of  the  <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>F</b><b>l</b><b>o</b><b>w</b>
+              table  in  the <b>O</b><b>V</b><b>N</b><b>_</b><b>S</b><b>o</b><b>u</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>, some actions are not intended for
+              use by the CMS. These include controller OpenFlow actions (e.g.,
+              put_dhcp_opts,  dns_lookup)  and  OVN-specific  actions   (e.g.,
+              look_arp, look_fdb).
+
+              It is the CMS’s responsibility to avoid using such actions. When
+              the  CMS  defines the packet pipeline in the OVS bridge and adds
+              logical flows using <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>,  it  is  expected  to  be
+              mindful of using only relevant OVN actions.
+
+       <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
+              See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
+
+Open vSwitch 25.09.90           DB Schema 0.0.1       <u>o</u><u>v</u><u>n</u><u>-</u><u>b</u><u>r</u><u>i</u><u>d</u><u>g</u><u>e</u><u>-</u><u>c</u><u>o</u><u>n</u><u>t</u><u>r</u><u>o</u><u>l</u><u>l</u><u>e</u><u>r</u>(5)
+</pre></body></html>

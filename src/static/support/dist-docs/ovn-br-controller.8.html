@@ -1,0 +1,49 @@
+<html><head><meta charset="UTF-8"></head><body><pre>
+<u>o</u><u>v</u><u>n</u><u>-</u><u>b</u><u>r</u><u>-</u><u>c</u><u>o</u><u>n</u><u>t</u><u>r</u><u>o</u><u>l</u><u>l</u><u>e</u><u>r</u>(8)              OVN Manual              <u>o</u><u>v</u><u>n</u><u>-</u><u>b</u><u>r</u><u>-</u><u>c</u><u>o</u><u>n</u><u>t</u><u>r</u><u>o</u><u>l</u><u>l</u><u>e</u><u>r</u>(8)
+
+<b>N</b><b>A</b><b>M</b><b>E</b>
+       ovn-br-controller - Open Virtual Network local OVS bridge controller
+
+<b>S</b><b>Y</b><b>N</b><b>O</b><b>P</b><b>S</b><b>I</b><b>S</b>
+       <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> [<u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u>] [<u>o</u><u>v</u><u>s</u><u>-</u><u>d</u><u>a</u><u>t</u><u>a</u><u>b</u><u>a</u><u>s</u><u>e</u>]
+
+<b>D</b><b>E</b><b>S</b><b>C</b><b>R</b><b>I</b><b>P</b><b>T</b><b>I</b><b>O</b><b>N</b>
+       <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  is OVN logical flow based local controller daemon to
+       control and program the Open vSwitch bridges. It connects up to the OVN
+       bridge database (see <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b>(5)) over the OVSDB protocol,  and  down  to
+       the  Open vSwitch database (see <b>o</b><b>v</b><b>s</b><b>-</b><b>v</b><b>s</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>d</b><b>.</b><b>c</b><b>o</b><b>n</b><b>f</b><b>.</b><b>d</b><b>b</b>(5)) over the OVSDB
+       protocol  and  to  <b>o</b><b>v</b><b>s</b><b>-</b><b>v</b><b>s</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>d</b>(8)  via   OpenFlow.   <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>
+       processes  and  converts  the  OVN  Logical flows configured in the OVN
+       bridge database for the Open vSwitch bridges to OpenFlow rules and pro‐
+       grams these flow rules to the Open vSwitch bridges.
+
+<b>C</b><b>O</b><b>N</b><b>F</b><b>I</b><b>G</b><b>U</b><b>R</b><b>A</b><b>T</b><b>I</b><b>O</b><b>N</b>
+       <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> retrieves most of its configuration information  from
+       the local Open vSwitch’s ovsdb-server instance. The default location is
+       <b>d</b><b>b</b><b>.</b><b>s</b><b>o</b><b>c</b><b>k</b> in the local Open vSwitch’s "run" directory. It may be overrid‐
+       den  by specifying the <u>o</u><u>v</u><u>s</u><u>-</u><u>d</u><u>a</u><u>t</u><u>a</u><u>b</u><u>a</u><u>s</u><u>e</u> argument as an OVSDB active or pas‐
+       sive connection method, as described in <b>o</b><b>v</b><b>s</b><b>d</b><b>b</b>(7).
+
+       <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> assumes it gets configuration  information  from  the
+       following keys in the <b>O</b><b>p</b><b>e</b><b>n</b><b>_</b><b>v</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> table of the local OVS instance:
+
+              <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>-</b><b>r</b><b>e</b><b>m</b><b>o</b><b>t</b><b>e</b>
+                     The  OVN  bridge database that this system should connect
+                     to for its configuration, in one of the same forms  docu‐
+                     mented above for the <u>o</u><u>v</u><u>s</u><u>-</u><u>d</u><u>a</u><u>t</u><u>a</u><u>b</u><u>a</u><u>s</u><u>e</u>.
+
+       <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  reads  the  following  values  from the <b>O</b><b>p</b><b>e</b><b>n</b><b>_</b><b>v</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b>
+       database of the local OVS instance:
+
+              <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>o</b><b>v</b><b>n</b><b>b</b><b>r</b><b>-</b><b>m</b><b>a</b><b>n</b><b>a</b><b>g</b><b>e</b><b>d</b> from <b>I</b><b>n</b><b>t</b><b>e</b><b>r</b><b>f</b><b>a</b><b>c</b><b>e</b> table
+                     If the value is <b>t</b><b>r</b><b>u</b><b>e</b>, then this interface is  managed  by
+                     <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  if  this interface is connected to the
+                     OVS bridge managed by <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>.
+
+                     Default value is true if this option is not defined.
+
+                     CMS should set the value of this option to  <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>  if  it
+                     doesn’t want <b>o</b><b>v</b><b>n</b><b>-</b><b>b</b><b>r</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> to manage it.
+
+OVN 25.09.90                   ovn-br-controller          <u>o</u><u>v</u><u>n</u><u>-</u><u>b</u><u>r</u><u>-</u><u>c</u><u>o</u><u>n</u><u>t</u><u>r</u><u>o</u><u>l</u><u>l</u><u>e</u><u>r</u>(8)
+</pre></body></html>

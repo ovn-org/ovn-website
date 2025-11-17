@@ -1,0 +1,47 @@
+ovn-br-controller(8)              OVN Manual              ovn-br-controller(8)
+
+NAME
+       ovn-br-controller - Open Virtual Network local OVS bridge controller
+
+SYNOPSIS
+       ovn-br-controller [options] [ovs-database]
+
+DESCRIPTION
+       ovn-br-controller  is OVN logical flow based local controller daemon to
+       control and program the Open vSwitch bridges. It connects up to the OVN
+       bridge database (see ovn-br(5)) over the OVSDB protocol,  and  down  to
+       the  Open vSwitch database (see ovs-vswitchd.conf.db(5)) over the OVSDB
+       protocol  and  to  ovs-vswitchd(8)  via   OpenFlow.   ovn-br-controller
+       processes  and  converts  the  OVN  Logical flows configured in the OVN
+       bridge database for the Open vSwitch bridges to OpenFlow rules and pro‐
+       grams these flow rules to the Open vSwitch bridges.
+
+CONFIGURATION
+       ovn-br-controller retrieves most of its configuration information  from
+       the local Open vSwitch’s ovsdb-server instance. The default location is
+       db.sock in the local Open vSwitch’s "run" directory. It may be overrid‐
+       den  by specifying the ovs-database argument as an OVSDB active or pas‐
+       sive connection method, as described in ovsdb(7).
+
+       ovn-br-controller assumes it gets configuration  information  from  the
+       following keys in the Open_vSwitch table of the local OVS instance:
+
+              external_ids:ovn-br-remote
+                     The  OVN  bridge database that this system should connect
+                     to for its configuration, in one of the same forms  docu‐
+                     mented above for the ovs-database.
+
+       ovn-br-controller  reads  the  following  values  from the Open_vSwitch
+       database of the local OVS instance:
+
+              external_ids:ovnbr-managed from Interface table
+                     If the value is true, then this interface is  managed  by
+                     ovn-br-controller  if  this interface is connected to the
+                     OVS bridge managed by ovn-br-controller.
+
+                     Default value is true if this option is not defined.
+
+                     CMS should set the value of this option to  false  if  it
+                     doesn’t want ovn-br-controller to manage it.
+
+OVN 25.09.90                   ovn-br-controller          ovn-br-controller(8)

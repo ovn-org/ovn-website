@@ -54,6 +54,15 @@ COMMANDS
        restart_ic_ovsdb
        run_ic_nb_ovsdb
        run_ic_sb_ovsdb
+       start_ovnbr_ovsdb
+       start_br_controller
+       stop_ovnbr_ovsdb
+       stop_br_controller
+       restart_ovnbr_ovsdb
+       restart_br_controller
+       status_ovnbr_ovsdb
+       status_br_controller
+       run_ovnbr_ovsdb
 
 OPTIONS
        --ovn-northd-priority=NICE
@@ -71,6 +80,10 @@ OPTIONS
        --ovsdb-nb-wrapper=WRAPPER
 
        --ovsdb-sb-wrapper=WRAPPER
+
+       --ovn-br-controller-priority=NICE
+
+       --ovn-br-controller-wrapper=WRAPPER
 
        --ovn-user=USER:GROUP
 
@@ -121,6 +134,24 @@ FILE LOCATION OPTIONS
 
        --ovn-controller-ssl-bootstrap-ca-cert=CERT
 
+       --db-ovnbr-sock=SOCKET
+
+       --db-ovnbr-file=FILE
+
+       --db-ovnbr-schema=FILE
+
+       --db-ovnbr-create-insecure-remote=yes|no
+
+       --db-ovnbr-config-file=FILE
+
+       --ovn-br-controller-ssl-key=KEY
+
+       --ovn-br-controller-ssl-cert=CERT
+
+       --ovn-br-controller-ssl-ca-cert=CERT
+
+       --ovn-br-controller-ssl-bootstrap-ca-cert=CERT
+
 PROTOCOL, CIPHER AND CIPHERSUITE OPTIONS
        --ovn-controller-ssl-protocols=PROTOCOLS
 
@@ -163,6 +194,16 @@ PROTOCOL, CIPHER AND CIPHERSUITE OPTIONS
        --ovn-ic-nb-db-ssl-ciphersuites=CIPHERSUITES
 
        --ovn-ic-sb-db-ssl-ciphersuites=CIPHERSUITES
+
+       --ovn-br-controller-ssl-protocols=PROTOCOLS
+
+       --ovn-br-db-ssl-protocols=PROTOCOLS
+
+       --ovn-br-controller-ssl-ciphers=CIPHERS
+
+       --ovn-br-db-ssl-ciphers=CIPHERS
+
+       --ovn-br-db-ssl-ciphersuites=CIPHERSUITES
 
 ADDRESS AND PORT OPTIONS
        --db-nb-sync-from-addr=IP ADDRESS
@@ -329,6 +370,13 @@ RUNNING OVN DB SERVERS WITHOUT DETACHING
        option, making it to block until ovsdb-server exits. This command  will
        be useful for starting the OVN IC-SB ovsdb-server in a container.
 
+       # ovn-ctl run_ovnbr_ovsdb
+
+       This  command  runs  the OVN bridge db ovsdb-server without passing the
+       detach option, making it to block until ovsdb-server exits.  This  com‚Äê
+       mand  will  be useful for starting the OVN br db ovsdb-server in a con‚Äê
+       tainer.
+
 EXAMPLE USAGE
    Run ovn-controller on a host already running OVS
        # ovn-ctl start_controller
@@ -357,7 +405,7 @@ EXAMPLE USAGE
    Creating a clustered db on 3 nodes with IPs x.x.x.x, y.y.y.y and z.z.z.z
      Starting OVN ovsdb servers and ovn-northd on the node with IP x.x.x.x
 
-          #  ovn-ctl  --db-nb-addr=x.x.x.x  --db-nb-create-insecure-remote=yes
+         #  ovn-ctl  --db-nb-addr=x.x.x.x   --db-nb-create-insecure-remote=yes
        --db-sb-addr=x.x.x.x  --db-sb-create-insecure-remote=yes  --db-nb-clus‚Ä‚Äê
        ter-local-addr=x.x.x.x               --db-sb-cluster-local-addr=x.x.x.x
        --ovn-northd-nb-db=tcp:x.x.x.x:6641,tcp:y.y.y.y:6641,tcp:z.z.z.z:6641
@@ -367,7 +415,7 @@ EXAMPLE USAGE
      Starting OVN ovsdb-servers and ovn-northd on the node with IP y.y.y.y and
      joining the cluster started at x.x.x.x
 
-         #  ovn-ctl  --db-nb-addr=y.y.y.y   --db-nb-create-insecure-remote=yes
+          #  ovn-ctl  --db-nb-addr=y.y.y.y  --db-nb-create-insecure-remote=yes
        --db-sb-addr=y.y.y.y  --db-sb-create-insecure-remote=yes  --db-nb-clus‚Ä‚Äê
        ter-local-addr=y.y.y.y --db-sb-cluster-local-addr=y.y.y.y --db-nb-clus‚Ä‚Äê
        ter-remote-addr=x.x.x.x             --db-sb-cluster-remote-addr=x.x.x.x
@@ -378,19 +426,19 @@ EXAMPLE USAGE
      Starting OVN ovsdb-servers and ovn-northd on the node with IP z.z.z.z and
      joining the cluster started at x.x.x.x
 
-          #  ovn-ctl  --db-nb-addr=z.z.z.z  --db-nb-create-insecure-remote=yes
-       --db-nb-cluster-local-addr=z.z.z.z  --db-sb-addr=z.z.z.z   --db-sb-cre‚Ä‚Äê
+         #  ovn-ctl  --db-nb-addr=z.z.z.z   --db-nb-create-insecure-remote=yes
+       --db-nb-cluster-local-addr=z.z.z.z   --db-sb-addr=z.z.z.z  --db-sb-cre‚Ä‚Äê
        ate-insecure-remote=yes              --db-sb-cluster-local-addr=z.z.z.z
        --db-nb-cluster-remote-addr=x.x.x.x --db-sb-cluster-remote-addr=x.x.x.x
        --ovn-northd-nb-db=tcp:x.x.x.x:6641,tcp:y.y.y.y:6641,tcp:z.z.z.z:6641
        --ovn-northd-sb-db=tcp:x.x.x.x:6642,tcp:y.y.y.y:6642,tcp:z.z.z.z:6642
        start_northd
 
-   Passing ssl keys when starting OVN dbs will supersede the default ssl  val‚Ä‚Äê
+   Passing  ssl keys when starting OVN dbs will supersede the default ssl val‚Ä‚Äê
        ues in db
      Starting standalone ovn db server passing SSL/TLS certificates
 
-             #      ovn-ctl     --ovn-nb-db-ssl-key=/etc/ovn/ovnnb-privkey.pem
+            #      ovn-ctl      --ovn-nb-db-ssl-key=/etc/ovn/ovnnb-privkey.pem
        --ovn-nb-db-ssl-cert=/etc/ovn/ovnnb-cert.pem
        --ovn-nb-db-ssl-ca-cert=/etc/ovn/cacert.pem
        --ovn-sb-db-ssl-key=/etc/ovn/ovnsb-privkey.pem
@@ -398,21 +446,26 @@ EXAMPLE USAGE
        --ovn-sb-db-ssl-ca-cert=/etc/ovn/cacert.pem start_northd
 
    Avoiding automatic clustered OVN database schema upgrade
-       If you desire more control over clustered DB schema  upgrade,  you  can
-       opt-out  of  automatic  on-start  upgrade  attempts  with --no-db-clus‚Ä‚Äê
+       If  you  desire  more control over clustered DB schema upgrade, you can
+       opt-out of  automatic  on-start  upgrade  attempts  with  --no-db-clus‚Ä‚Äê
        ter-schema-upgrade.
 
-     Start OVN NB and SB clustered databases on host with IP  x.x.x.x  without
+     Start  OVN  NB and SB clustered databases on host with IP x.x.x.x without
      schema upgrade
 
-           #    ovn-ctl    start_nb_ovsdb   --db-nb-cluster-local-addr=x.x.x.x
-       --no-db-cluster-schema-upgrade # ovn-ctl  start_sb_ovsdb  --db-sb-clus‚Ä‚Äê
+          #    ovn-ctl    start_nb_ovsdb    --db-nb-cluster-local-addr=x.x.x.x
+       --no-db-cluster-schema-upgrade  #  ovn-ctl start_sb_ovsdb --db-sb-clus‚Ä‚Äê
        ter-local-addr=x.x.x.x --no-db-cluster-schema-upgrade
 
      Trigger clustered DB schema upgrade manually
 
-          #   ovsdb-client  convert  unix:/var/run/ovn/ovnnb_db.sock  /usr/lo‚Ä‚Äê
+         #  ovsdb-client  convert   unix:/var/run/ovn/ovnnb_db.sock   /usr/lo‚Ä‚Äê
        cal/share/ovn/ovn-nb.ovsschema       #       ovsdb-client       convert
        unix:/var/run/ovn/ovnsb_db.sock /usr/local/share/ovn/ovn-sb.ovsschema
+
+   Run OVN bridge controller services on a host already running OVS
+       # ovn-ctl start_ovnbr_ovsdb
+
+       # ovn-ctl start_br_controller
 
 OVN 25.09.90                        ovn-ctl                         ovn-ctl(8)

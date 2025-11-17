@@ -1,0 +1,56 @@
+'\" p
+.\" -*- nroff -*-
+.TH "ovn-br-controller" 8 "ovn-br-controller" "OVN 25\[char46]09\[char46]90" "OVN Manual"
+.fp 5 L CR              \\" Make fixed-width font available as \\fL.
+.de TQ
+.  br
+.  ns
+.  TP "\\$1"
+..
+.de ST
+.  PP
+.  RS -0.15in
+.  I "\\$1"
+.  RE
+..
+.de SU
+.  PP
+.  I "\\$1"
+..
+.PP
+.SH "NAME"
+.PP
+.PP
+ovn-br-controller \- Open Virtual Network local OVS bridge controller
+.SH "SYNOPSIS"
+.PP
+.PP
+\fBovn\-br\-controller\fR [\fIoptions\fR] [\fIovs-database\fR]
+.SH "DESCRIPTION"
+.PP
+.PP
+\fBovn\-br\-controller\fR is OVN logical flow based local controller daemon to control and program the Open vSwitch bridges\[char46] It connects up to the OVN bridge database (see \fBovn\-br\fR(5)) over the OVSDB protocol, and down to the Open vSwitch database (see \fBovs\-vswitchd\[char46]conf\[char46]db\fR(5)) over the OVSDB protocol and to \fBovs\-vswitchd\fR(8) via OpenFlow\[char46] \fBovn\-br\-controller\fR processes and converts the OVN Logical flows configured in the OVN bridge database for the Open vSwitch bridges to OpenFlow rules and programs these flow rules to the Open vSwitch bridges\[char46]
+.SH "CONFIGURATION"
+.PP
+.PP
+\fBovn\-br\-controller\fR retrieves most of its configuration information from the local Open vSwitch\(cqs ovsdb-server instance\[char46] The default location is \fBdb\[char46]sock\fR in the local Open vSwitch\(cqs \(dqrun\(dq directory\[char46] It may be overridden by specifying the \fIovs-database\fR argument as an OVSDB active or passive connection method, as described in \fBovsdb\fR(7)\[char46]
+.PP
+.PP
+\fBovn\-br\-controller\fR assumes it gets configuration information from the following keys in the \fBOpen_vSwitch\fR table of the local OVS instance:
+.RS
+.TP
+\fBexternal_ids:ovn\-br\-remote\fR
+The OVN bridge database that this system should connect to for its configuration, in one of the same forms documented above for the \fIovs-database\fR\[char46]
+.RE
+.PP
+.PP
+\fBovn\-br\-controller\fR reads the following values from the \fBOpen_vSwitch\fR database of the local OVS instance:
+.RS
+.TP
+\fBexternal_ids:ovnbr\-managed\fR from \fBInterface\fR table
+If the value is \fBtrue\fR, then this interface is managed by \fBovn\-br\-controller\fR if this interface is connected to the OVS bridge managed by \fBovn\-br\-controller\fR\[char46]
+.IP
+Default value is true if this option is not defined\[char46]
+.IP
+CMS should set the value of this option to \fBfalse\fR if it doesn\(cqt want \fBovn\-br\-controller\fR to manage it\[char46]
+.RE

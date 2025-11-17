@@ -1267,7 +1267,7 @@ This is similar to ingress table \fBLearn MAC of \(cqunknown\(cq ports
 .ST "Egress Table 2: \fBto\-lport\fI Pre-ACLs"
 .PP
 .PP
-This is similar to ingress table \fBPre\-ACLs\fR except for \fBto\-lport\fR traffic\[char46] Except when the option enable-stateless-acl-with-lb is enabled: REGBIT_ACL_STATELESS ignored\[char46]
+This is similar to ingress table \fBPre\-ACLs\fR except for \fBto\-lport\fR traffic\[char46]
 .PP
 .PP
 This table also has a priority\-110 flow with the match \fBeth\[char46]src == \fIE\fB\fR for all logical switch datapaths to move traffic to the next table\[char46] Where \fIE\fR is the service monitor mac defined in the \fBoptions:svc_monitor_mac\fR column of \fBNB_Global\fR table\[char46]
@@ -1288,6 +1288,9 @@ This table also has a priority\-110 flow with the match \fBeth\[char46]src == \f
 .PP
 .PP
 This table also has a priority\-110 flow with the match \fBoutport == \fII\fB\fR for all logical switch datapaths to move traffic to the next table, and, if there are no stateful_acl, clear the ct_state\[char46] Where \fII\fR is the peer of a logical router port\[char46] This flow is added to skip the connection tracking of packets which will be entering logical router datapath from logical switch datapath for routing\[char46]
+.PP
+.PP
+When \fBenable\-stateless\-acl\-with\-lb\fR is enabled, additional priority\-115 flow is added to match traffic with \fBREGBIT_ACL_STATELESS\fR set and pass connection tracking\[char46]
 .ST "Egress Table 4: Pre-stateful"
 .PP
 .PP
@@ -1356,7 +1359,7 @@ This is similar to ingress table \fBQoS\fR except they apply to \fBto\-lport\fR 
 .ST "Egress Table 11: Stateful"
 .PP
 .PP
-This is similar to ingress table \fBStateful\fR except that there are no rules added for load balancing new connections\[char46]
+This is similar to ingress table \fBStateful\fR except that there are no rules added for load balancing new connections\[char46] When \fBenable\-stateless\-acl\-with\-lb\fR is enabled, new stateless connections bypass connection tracking\[char46]
 .RS
 .IP \(bu
 A priority 120 flow is added for each network function port \fIP\fR that is identical to the priority 100 flow except for additional match \fBoutport == \fIP\fB\fR and additional action \fBct_label\[char46]tun_if_id = reg5[16\[char46]\[char46]31]\fR\[char46] In case packets redirected by network function logic gets tunneled from host1 to host2 where the network function port resides, host2\(cqs physical table 0 populates reg5[16\[char46]\[char46]31] with the openflow tunnel interface id on which the packet was received\[char46] This priority 120 flow commits the tunnel id to the ct_label\[char46] That way, when the same packet comes out of the other port of the network function it can retrieve this information from the peer port\(cqs CT entry and tunnel the packet back to host1\[char46] This is required to make cross host traffic redirection work for VLAN subnet\[char46]
