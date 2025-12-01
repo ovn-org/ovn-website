@@ -430,62 +430,75 @@
                      and advertisements. This is achieved by a rule with  pri‐
                      ority 80 that sets <b>R</b><b>E</b><b>G</b><b>B</b><b>I</b><b>T</b><b>_</b><b>P</b><b>O</b><b>R</b><b>T</b><b>_</b><b>S</b><b>E</b><b>C</b><b>_</b><b>D</b><b>R</b><b>O</b><b>P</b><b>"</b> <b>=</b> <b>1</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b><b>"</b>.
 
-              •      For  each (enabled) vtep logical port, a priority 70 flow
+              •      For each logical switch that has connected physical ports
+                     (localnet  or  l2gateway) and is also connected to a dis‐
+                     tributed router, filtering rules are added  for  ARP  re‐
+                     quests  coming  from localnet or l2gateway ports, allowed
+                     for processing on  gateway  chassis.  The  <b>R</b><b>E</b><b>G</b><b>B</b><b>I</b><b>T</b><b>_</b><b>E</b><b>X</b><b>T</b><b>_</b><b>A</b><b>R</b><b>P</b>
+                     register  is  set  for  all ARP requests originating from
+                     physical ports with priority 75 flow.
+
+              •      For each (enabled) vtep logical port, a priority 70  flow
                      is added which matches on all packets and applies the ac‐
-                     tion <b>n</b><b>e</b><b>x</b><b>t</b><b>(</b><b>p</b><b>i</b><b>p</b><b>e</b><b>l</b><b>i</b><b>n</b><b>e</b><b>=</b><b>i</b><b>n</b><b>g</b><b>r</b><b>e</b><b>s</b><b>s</b><b>,</b> <b>t</b><b>a</b><b>b</b><b>l</b><b>e</b><b>=</b><b>S</b><b>_</b><b>S</b><b>W</b><b>I</b><b>T</b><b>C</b><b>H</b><b>_</b><b>I</b><b>N</b><b>_</b><b>L</b><b>3</b><b>_</b><b>L</b><b>K</b><b>U</b><b>P</b><b>)</b>  <b>=</b>
-                     <b>1</b><b>;</b>  to  skip  most  stages of ingress pipeline and go di‐
+                     tion  <b>n</b><b>e</b><b>x</b><b>t</b><b>(</b><b>p</b><b>i</b><b>p</b><b>e</b><b>l</b><b>i</b><b>n</b><b>e</b><b>=</b><b>i</b><b>n</b><b>g</b><b>r</b><b>e</b><b>s</b><b>s</b><b>,</b> <b>t</b><b>a</b><b>b</b><b>l</b><b>e</b><b>=</b><b>S</b><b>_</b><b>S</b><b>W</b><b>I</b><b>T</b><b>C</b><b>H</b><b>_</b><b>I</b><b>N</b><b>_</b><b>L</b><b>3</b><b>_</b><b>L</b><b>K</b><b>U</b><b>P</b><b>)</b> <b>=</b>
+                     <b>1</b><b>;</b> to skip most stages of ingress  pipeline  and  go  di‐
                      rectly to ingress L2 lookup table to determine the output
-                     port. Packets from VTEP (RAMP) switch should not be  sub‐
+                     port.  Packets from VTEP (RAMP) switch should not be sub‐
                      jected to any ACL checks. Egress pipeline will do the ACL
                      checks.
 
               •      For each enabled logical port configured with qdisc queue
-                     id   in   the   <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>q</b><b>d</b><b>i</b><b>s</b><b>c</b><b>_</b><b>q</b><b>u</b><b>e</b><b>u</b><b>e</b><b>_</b><b>i</b><b>d</b>  column  of  <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
+                     id  in  the  <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>q</b><b>d</b><b>i</b><b>s</b><b>c</b><b>_</b><b>q</b><b>u</b><b>e</b><b>u</b><b>e</b><b>_</b><b>i</b><b>d</b>   column   of   <b>L</b><b>o</b><b>g</b><b>i</b>‐‐
                      <b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b>,  a  priority  70  flow  is  added  which
-                     matches   on   all   packets   and   applies  the  action
-                     <b>s</b><b>e</b><b>t</b><b>_</b><b>q</b><b>u</b><b>e</b><b>u</b><b>e</b><b>(</b><b>i</b><b>d</b><b>)</b><b>;</b>          <b>R</b><b>E</b><b>G</b><b>B</b><b>I</b><b>T</b><b>_</b><b>P</b><b>O</b><b>R</b><b>T</b><b>_</b><b>S</b><b>E</b><b>C</b><b>_</b><b>D</b><b>R</b><b>O</b><b>P</b><b>"</b>           <b>=</b>
+                     matches  on  all   packets   and   applies   the   action
+                     <b>s</b><b>e</b><b>t</b><b>_</b><b>q</b><b>u</b><b>e</b><b>u</b><b>e</b><b>(</b><b>i</b><b>d</b><b>)</b><b>;</b>           <b>R</b><b>E</b><b>G</b><b>B</b><b>I</b><b>T</b><b>_</b><b>P</b><b>O</b><b>R</b><b>T</b><b>_</b><b>S</b><b>E</b><b>C</b><b>_</b><b>D</b><b>R</b><b>O</b><b>P</b><b>"</b>          <b>=</b>
                      <b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>_</b><b>i</b><b>n</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b><b>_</b><b>s</b><b>e</b><b>c</b><b>(</b><b>)</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b><b>"</b>.
 
-              •      A  priority  1 flow is added which matches on all packets
-                     for all the logical ports and  applies  the  action  <b>R</b><b>E</b><b>G</b>‐‐
+              •      A priority 1 flow is added which matches on  all  packets
+                     for  all  the  logical  ports and applies the action <b>R</b><b>E</b><b>G</b>‐‐
                      <b>B</b><b>I</b><b>T</b><b>_</b><b>P</b><b>O</b><b>R</b><b>T</b><b>_</b><b>S</b><b>E</b><b>C</b><b>_</b><b>D</b><b>R</b><b>O</b><b>P</b><b>"</b> <b>=</b> <b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>_</b><b>i</b><b>n</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b><b>_</b><b>s</b><b>e</b><b>c</b><b>(</b><b>)</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> to evalu‐
-                     ate  the  port security. The action <b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>_</b><b>i</b><b>n</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b><b>_</b><b>s</b><b>e</b><b>c</b> ap‐
-                     plies the port security rules defined in  the  <b>p</b><b>o</b><b>r</b><b>t</b><b>_</b><b>s</b><b>e</b><b>c</b><b>u</b>‐‐
+                     ate the port security. The action  <b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>_</b><b>i</b><b>n</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b><b>_</b><b>s</b><b>e</b><b>c</b>  ap‐
+                     plies  the  port security rules defined in the <b>p</b><b>o</b><b>r</b><b>t</b><b>_</b><b>s</b><b>e</b><b>c</b><b>u</b>‐‐
                      <b>r</b><b>i</b><b>t</b><b>y</b> column of <b>L</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> table.
 
      <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>:</u> <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>P</u><u>o</u><u>r</u><u>t</u> <u>S</u><u>e</u><u>c</u><u>u</u><u>r</u><u>i</u><u>t</u><u>y</u> <u>-</u> <u>A</u><u>p</u><u>p</u><u>l</u><u>y</u>
 
-       For  each logical switch port <u>P</u> of type router connected to a gw router
+       For each logical switch port <u>P</u> of type router connected to a gw  router
        a priority-120 flow that matches ’recirculated’ icmp{4,6} error ’packet
        too big’ and <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>D</u> &amp;&amp;&amp;&amp; <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>P</u> &amp;&amp;&amp;&amp; <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>t</b><b>u</b><b>n</b><b>n</b><b>e</b><b>l</b><b>_</b><b>r</b><b>x</b> <b>=</b><b>=</b> <b>1</b> where
        <u>D</u> is the peer logical router port <u>R</u><u>P</u> mac address, swaps inport and out‐
        port and applies the action <b>n</b><b>e</b><b>x</b><b>t</b>.
 
-       For each logical switch port <u>P</u> of type router connected to  a  distrib‐
-       uted  router  a priority-120 flow that matches ’recirculated’ icmp{4,6}
+       For  each  logical switch port <u>P</u> of type router connected to a distrib‐
+       uted router a priority-120 flow that matches  ’recirculated’  icmp{4,6}
        error ’packet too big’ and <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b> <u>D</u> &amp;&amp;&amp;&amp; <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>t</b><b>u</b><b>n</b><b>n</b><b>e</b><b>l</b><b>_</b><b>r</b><b>x</b> <b>=</b><b>=</b> <b>1</b> where <u>D</u>
-       is the peer logical router port <u>R</u><u>P</u> mac address, swaps inport  and  out‐
+       is  the  peer logical router port <u>R</u><u>P</u> mac address, swaps inport and out‐
        port and applies the action  <b>n</b><b>e</b><b>x</b><b>t</b><b>(</b><b>p</b><b>i</b><b>p</b><b>e</b><b>l</b><b>i</b><b>n</b><b>e</b><b>=</b><b>S</b><b>_</b><b>S</b><b>W</b><b>I</b><b>T</b><b>C</b><b>H</b><b>_</b><b>I</b><b>N</b><b>_</b><b>L</b><b>2</b><b>_</b><b>L</b><b>K</b><b>U</b><b>P</b><b>)</b>.
 
        For each logical switch port <u>P</u> a priority-110 flow that matches ’recir‐
-       culated’  icmp{4,6}  error ’packet too big’ and <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>D</u> &amp;&amp;&amp;&amp; <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b>
+       culated’ icmp{4,6} error ’packet too big’ and <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>D</u>  &amp;&amp;&amp;&amp;  <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b>
        <b>=</b><b>=</b> <u>P</u> &amp;&amp;&amp;&amp; <b>!</b><b>i</b><b>s</b><b>_</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>r</b><b>e</b><b>s</b><b>i</b><b>d</b><b>e</b><b>n</b><b>t</b><b>(</b><b>"</b><u>P</u><b>"</b><b>)</b> &amp;&amp;&amp;&amp; <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>t</b><b>u</b><b>n</b><b>n</b><b>e</b><b>l</b><b>_</b><b>r</b><b>x</b> <b>=</b><b>=</b> <b>1</b>
-        where <u>D</u> is the logical switch port mac address, swaps inport and  out‐
+        where  <u>D</u> is the logical switch port mac address, swaps inport and out‐
        port and applies the action <b>n</b><b>e</b><b>x</b><b>t</b>.
 
        This  table  adds  a  priority-105  flow  that  matches  ’recirculated’
        icmp{4,6} error ’packet too big’ to drop the packet.
 
-       This table drops the packets if the port security check failed  in  the
+       This  table  drops the packets if the port security check failed in the
        previous stage i.e the register bit <b>R</b><b>E</b><b>G</b><b>B</b><b>I</b><b>T</b><b>_</b><b>P</b><b>O</b><b>R</b><b>T</b><b>_</b><b>S</b><b>E</b><b>C</b><b>_</b><b>D</b><b>R</b><b>O</b><b>P</b> is set to 1.
 
        Ingress table 1 contains these logical flows:
 
-              •      A  priority-50 fallback flow that drops the packet if the
+              •      A priority-50 fallback flow that drops the packet if  the
                      register bit <b>R</b><b>E</b><b>G</b><b>B</b><b>I</b><b>T</b><b>_</b><b>P</b><b>O</b><b>R</b><b>T</b><b>_</b><b>S</b><b>E</b><b>C</b><b>_</b><b>D</b><b>R</b><b>O</b><b>P</b> is set to 1.
 
               •      One priority-0 fallback flow that matches all packets and
                      advances to the next table.
+
+              •      Priority  75: Allows <b>R</b><b>E</b><b>G</b><b>B</b><b>I</b><b>T</b><b>_</b><b>E</b><b>X</b><b>T</b><b>_</b><b>A</b><b>R</b><b>P</b> packets only on gate‐
+                     way chassis and chassis  with  distributed  NAT  entries.
+                     Priority  70: Drops <b>R</b><b>E</b><b>G</b><b>B</b><b>I</b><b>T</b><b>_</b><b>E</b><b>X</b><b>T</b><b>_</b><b>A</b><b>R</b><b>P</b> packets on non-gateway
+                     chassis (complements the priority 75 flow).
 
      <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>2</u><u>:</u> <u>M</u><u>i</u><u>r</u><u>r</u><u>o</u><u>r</u>
 

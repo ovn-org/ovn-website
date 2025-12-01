@@ -291,6 +291,8 @@ IPv6 Neighbor Discovery - Neighbor Advertisements
 .IP
 Since this port shares IP and MAC addresses with the Logical Router Port, we wan\(cqt to prevent duplicate replies and advertisements\[char46] This is achieved by a rule with priority 80 that sets \fBREGBIT_PORT_SEC_DROP\(dq = 1; next;\(dq\fR\[char46]
 .IP \(bu
+For each logical switch that has connected physical ports (localnet or l2gateway) and is also connected to a distributed router, filtering rules are added for ARP requests coming from localnet or l2gateway ports, allowed for processing on gateway chassis\[char46] The \fBREGBIT_EXT_ARP\fR register is set for all ARP requests originating from physical ports with priority 75 flow\[char46]
+.IP \(bu
 For each (enabled) vtep logical port, a priority 70 flow is added which matches on all packets and applies the action \fBnext(pipeline=ingress, table=S_SWITCH_IN_L3_LKUP) = 1;\fR to skip most stages of ingress pipeline and go directly to ingress L2 lookup table to determine the output port\[char46] Packets from VTEP (RAMP) switch should not be subjected to any ACL checks\[char46] Egress pipeline will do the ACL checks\[char46]
 .IP \(bu
 For each enabled logical port configured with qdisc queue id in the \fBoptions:qdisc_queue_id\fR column of \fBLogical_Switch_Port\fR, a priority 70 flow is added which matches on all packets and applies the action \fBset_queue(id);
@@ -327,6 +329,8 @@ Ingress table 1 contains these logical flows:
 A priority\-50 fallback flow that drops the packet if the register bit \fBREGBIT_PORT_SEC_DROP\fR is set to 1\[char46]
 .IP \(bu
 One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
+.IP \(bu
+Priority 75: Allows \fBREGBIT_EXT_ARP\fR packets only on gateway chassis and chassis with distributed NAT entries\[char46] Priority 70: Drops \fBREGBIT_EXT_ARP\fR packets on non-gateway chassis (complements the priority 75 flow)\[char46]
 .RE
 .ST "Ingress Table 2: Mirror"
 .PP

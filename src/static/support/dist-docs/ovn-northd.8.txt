@@ -429,62 +429,75 @@ LOGICAL FLOW TABLE STRUCTURE
                      and advertisements. This is achieved by a rule with  pri‐
                      ority 80 that sets REGBIT_PORT_SEC_DROP" = 1; next;".
 
-              •      For  each (enabled) vtep logical port, a priority 70 flow
+              •      For each logical switch that has connected physical ports
+                     (localnet  or  l2gateway) and is also connected to a dis‐
+                     tributed router, filtering rules are added  for  ARP  re‐
+                     quests  coming  from localnet or l2gateway ports, allowed
+                     for processing on  gateway  chassis.  The  REGBIT_EXT_ARP
+                     register  is  set  for  all ARP requests originating from
+                     physical ports with priority 75 flow.
+
+              •      For each (enabled) vtep logical port, a priority 70  flow
                      is added which matches on all packets and applies the ac‐
-                     tion next(pipeline=ingress, table=S_SWITCH_IN_L3_LKUP)  =
-                     1;  to  skip  most  stages of ingress pipeline and go di‐
+                     tion  next(pipeline=ingress, table=S_SWITCH_IN_L3_LKUP) =
+                     1; to skip most stages of ingress  pipeline  and  go  di‐
                      rectly to ingress L2 lookup table to determine the output
-                     port. Packets from VTEP (RAMP) switch should not be  sub‐
+                     port.  Packets from VTEP (RAMP) switch should not be sub‐
                      jected to any ACL checks. Egress pipeline will do the ACL
                      checks.
 
               •      For each enabled logical port configured with qdisc queue
-                     id   in   the   options:qdisc_queue_id  column  of  Logi�‐
+                     id  in  the  options:qdisc_queue_id   column   of   Logi�‐
                      cal_Switch_Port,  a  priority  70  flow  is  added  which
-                     matches   on   all   packets   and   applies  the  action
-                     set_queue(id);          REGBIT_PORT_SEC_DROP"           =
+                     matches  on  all   packets   and   applies   the   action
+                     set_queue(id);           REGBIT_PORT_SEC_DROP"          =
                      check_in_port_sec(); next;".
 
-              •      A  priority  1 flow is added which matches on all packets
-                     for all the logical ports and  applies  the  action  REG�‐
+              •      A priority 1 flow is added which matches on  all  packets
+                     for  all  the  logical  ports and applies the action REG�‐
                      BIT_PORT_SEC_DROP" = check_in_port_sec(); next; to evalu‐
-                     ate  the  port security. The action check_in_port_sec ap‐
-                     plies the port security rules defined in  the  port_secu�‐
+                     ate the port security. The action  check_in_port_sec  ap‐
+                     plies  the  port security rules defined in the port_secu�‐
                      rity column of Logical_Switch_Port table.
 
      Ingress Table 1: Ingress Port Security - Apply
 
-       For  each logical switch port P of type router connected to a gw router
+       For each logical switch port P of type router connected to a gw  router
        a priority-120 flow that matches ’recirculated’ icmp{4,6} error ’packet
        too big’ and eth.src == D && outport == P && flags.tunnel_rx == 1 where
        D is the peer logical router port RP mac address, swaps inport and out‐
        port and applies the action next.
 
-       For each logical switch port P of type router connected to  a  distrib‐
-       uted  router  a priority-120 flow that matches ’recirculated’ icmp{4,6}
+       For  each  logical switch port P of type router connected to a distrib‐
+       uted router a priority-120 flow that matches  ’recirculated’  icmp{4,6}
        error ’packet too big’ and eth.dst == D && flags.tunnel_rx == 1 where D
-       is the peer logical router port RP mac address, swaps inport  and  out‐
+       is  the  peer logical router port RP mac address, swaps inport and out‐
        port and applies the action  next(pipeline=S_SWITCH_IN_L2_LKUP).
 
        For each logical switch port P a priority-110 flow that matches ’recir‐
-       culated’  icmp{4,6}  error ’packet too big’ and eth.src == D && outport
+       culated’ icmp{4,6} error ’packet too big’ and eth.src == D  &&  outport
        == P && !is_chassis_resident("P") && flags.tunnel_rx == 1
-        where D is the logical switch port mac address, swaps inport and  out‐
+        where  D is the logical switch port mac address, swaps inport and out‐
        port and applies the action next.
 
        This  table  adds  a  priority-105  flow  that  matches  ’recirculated’
        icmp{4,6} error ’packet too big’ to drop the packet.
 
-       This table drops the packets if the port security check failed  in  the
+       This  table  drops the packets if the port security check failed in the
        previous stage i.e the register bit REGBIT_PORT_SEC_DROP is set to 1.
 
        Ingress table 1 contains these logical flows:
 
-              •      A  priority-50 fallback flow that drops the packet if the
+              •      A priority-50 fallback flow that drops the packet if  the
                      register bit REGBIT_PORT_SEC_DROP is set to 1.
 
               •      One priority-0 fallback flow that matches all packets and
                      advances to the next table.
+
+              •      Priority  75: Allows REGBIT_EXT_ARP packets only on gate‐
+                     way chassis and chassis  with  distributed  NAT  entries.
+                     Priority  70: Drops REGBIT_EXT_ARP packets on non-gateway
+                     chassis (complements the priority 75 flow).
 
      Ingress Table 2: Mirror
 
