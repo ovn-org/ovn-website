@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nb" 5 " DB Schema 7.14.0" "Open vSwitch 25.09.90" "Open vSwitch Manual"
+.TH "ovn-nb" 5 " DB Schema 7.15.0" "Open vSwitch 25.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -2458,6 +2458,12 @@ optional string
 \fBoptions : dynamic-routing-vrf-id\fR
 optional string, containing an integer, in range 1 to 4,294,967,295
 .TQ 2.75in
+\fBoptions : dynamic-routing-v4-prefix-nexthop\fR
+optional string
+.TQ 2.75in
+\fBoptions : dynamic-routing-v6-prefix-nexthop\fR
+optional string
+.TQ 2.75in
 \fBoptions : ct-commit-all\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
 .TQ 2.75in
@@ -2626,6 +2632,14 @@ Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
 This defines the vrf table id used by the specified vrf\[char46] When not set or set to invalid value datapath id of the Logical Router will be used instead\[char46]
 .IP
 This can also affect the vrf name\[char46] For details see \fBoptions:dynamic-routing-vrf-name\fR on the Logical_Router\[char46]
+.IP "\fBoptions : dynamic-routing-v4-prefix-nexthop\fR: optional string"
+Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
+.IP
+This defines nexthop used by IPv4 advertised routes instead of the routes being advertised as blackhole\[char46] This can be either valid IPv4 or IPv6 address\[char46]
+.IP "\fBoptions : dynamic-routing-v6-prefix-nexthop\fR: optional string"
+Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
+.IP
+This defines nexthop used by IPv6 advertised routes instead of the routes being advertised as blackhole\[char46] This can be only valid IPv6 address\[char46]
 .IP "\fBoptions : ct-commit-all\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 When enabled the LR will commit traffic in a zone that is stateful\[char46] The traffic is not commited to both zones but it is selective based whether there is stateful DNAT/SNAT or both\[char46] The commit all will prevent issues with \fBct\[char46]inv\fR packets as it will prevent the commit of reply traffic, which could happen in some cases\[char46] This also helps with HWOL as there shouldn\(cqt be any match on ct\[char46]new for established sessions as we will commit everything in addition to already existing stateful NATs and LBs\[char46]
 .IP "\fBoptions : ic-route-filter-adv\fR: optional string"
@@ -4512,6 +4526,9 @@ string (must be unique within table)
 \fBid\fR
 integer, in range 1 to 255 (must be unique within table)
 .TQ 3.00in
+\fBfallback\fR
+optional string, either \fBfail\-close\fR or \fBfail\-open\fR
+.TQ 3.00in
 \fBnetwork_function\fR
 set of \fBNetwork_Function\fRs
 .TQ 3.00in
@@ -4532,6 +4549,18 @@ map of string-string pairs
 Name of the \fBNetwork_Function_Group\fR\[char46] Name should be unique\[char46]
 .IP "\fBid\fR: integer, in range 1 to 255 (must be unique within table)"
 A unique integer between 1 and 255 must be assigned to each \fBNetwork_Function_Group\fR\[char46]
+.IP "\fBfallback\fR: optional string, either \fBfail\-close\fR or \fBfail\-open\fR"
+Fallback setting when no active network functions are available\[char46]
+.IP
+Supports following fallback mechanisms\[char46] If not specified, fail-close will be applied when no active Network Functions are available\[char46]
+.RS
+.TP
+\fBfail\-open\fR
+Traffic bypasses Network Function and gets allowed when there is no active Network Function available\[char46]
+.TP
+\fBfail\-close\fR
+Traffic gets dropped when there is no active Network Function available\[char46]
+.RE
 .IP "\fBnetwork_function\fR: set of \fBNetwork_Function\fRs"
 A list of network functions which belong to this group\[char46]
 .IP "\fBnetwork_function_active\fR: optional \fBNetwork_Function\fR"
