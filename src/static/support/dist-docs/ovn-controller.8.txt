@@ -601,181 +601,184 @@ CONFIGURATION
                      removal/change in the future.
 
               external_ids:ovn-evpn-local-ip
-                     IP  address used as a source address for the EVPN traffic
-                     leaving this OVN setup. There is currently  support  only
-                     for single IP address being specified. NOTE: this feature
-                     is  experimental  and may be subject to removal/change in
-                     the future.
+                     IP  address  list used as a source addresses for the EVPN
+                     traffic leaving this OVN setup. The ovn-evpn-local-ip can
+                     be specified by the CMS according to the  following  syn‐
+                     tax:  external_ids:ovn-evpn-local-ip=vni0-IPv4,vni1-IPv4,
+                     vni1-IPv6,IPv4,IPv6, where if no VNI value is  specified,
+                     OVN  will  use  the provided IP as default IP. NOTE: this
+                     feature  is  experimental  and  may  be  subject  to  re‐
+                     moval/change in the future.
 
-       Most of configuration options listed above can also be set for  a  par‐
-       ticular  chassis  name  (see  external_ids:system-id  for more informa‐
-       tion). This can be achieved  by  setting  external_ids:option-[chassis]
-       instead  of  external_ids:option. For example, set external_ids:ovn-en�‐
-       cap-ip-otherhv to use a particular IP address for  the  controller  in‐
-       stance  named otherhv. Name specific configuration options always over‐
+       Most  of  configuration options listed above can also be set for a par‐
+       ticular chassis name (see  external_ids:system-id   for  more  informa‐
+       tion).  This  can  be achieved by setting external_ids:option-[chassis]
+       instead of external_ids:option. For example,  set  external_ids:ovn-en�‐
+       cap-ip-otherhv  to  use  a particular IP address for the controller in‐
+       stance named otherhv. Name specific configuration options always  over‐
        ride any global options set in the database.
 
        Chassis-specific configuration options in the database plus the ability
        to configure the chassis name to use via the system-id-override file or
-       command line allows  to  run  multiple  ovn-controller  instances  with
+       command  line  allows  to  run  multiple  ovn-controller instances with
        unique chassis names on the same host using the same vswitchd instance.
-       This  may  be useful when running a hybrid setup with more than one CMS
-       managing ports on the host, or to use different datapath types  on  the
-       same  host.  Also note that this ability is highly experimental and has
-       known limitations (for example, stateful ACLs are not  supported).  Use
+       This may be useful when running a hybrid setup with more than  one  CMS
+       managing  ports  on the host, or to use different datapath types on the
+       same host. Also note that this ability is highly experimental  and  has
+       known  limitations  (for example, stateful ACLs are not supported). Use
        at your own risk.
 
-       ovn-controller  reads  the following values from the Open_vSwitch data‐
+       ovn-controller reads the following values from the  Open_vSwitch  data‐
        base of the local OVS instance:
 
               datapath-type from Bridge table
-                     This value is read from local OVS integration bridge  row
-                     of  Bridge  table and populated in other_config:datapath-
+                     This  value is read from local OVS integration bridge row
+                     of Bridge table and populated  in  other_config:datapath-
                      type of the Chassis table in the OVN_Southbound database.
 
               iface-types from Open_vSwitch table
-                     This value is populated  in  external_ids:iface-types  of
+                     This  value  is  populated in external_ids:iface-types of
                      the Chassis table in the OVN_Southbound database.
 
               private_key, certificate, ca_cert, and bootstrap_ca_cert from
               SSL table
-                     These  values  provide the SSL/TLS configuration used for
-                     connecting to the OVN southbound database server when  an
-                     SSL/TLS   connection   type   is  configured  via  exter�‐
-                     nal_ids:ovn-remote. Note that this SSL/TLS  configuration
-                     can  also  be provided via command-line options, the con‐
-                     figuration in the database takes precedence if  both  are
+                     These values provide the SSL/TLS configuration  used  for
+                     connecting  to the OVN southbound database server when an
+                     SSL/TLS  connection  type  is   configured   via   exter�‐
+                     nal_ids:ovn-remote.  Note that this SSL/TLS configuration
+                     can also be provided via command-line options,  the  con‐
+                     figuration  in  the database takes precedence if both are
                      present.
 
 OPEN VSWITCH DATABASE USAGE
-       ovn-controller  uses  a number of external_ids keys in the Open vSwitch
-       database to keep track of ports and interfaces. For  proper  operation,
+       ovn-controller uses a number of external_ids keys in the  Open  vSwitch
+       database  to  keep track of ports and interfaces. For proper operation,
        users should not change or clear these keys:
 
               external_ids:ovn-chassis-id in the Port table
-                     The  presence of this key identifies a tunnel port within
-                     the integration bridge as one created  by  ovn-controller
+                     The presence of this key identifies a tunnel port  within
+                     the  integration  bridge as one created by ovn-controller
                      to reach a remote chassis. Its value is the chassis ID of
                      the remote chassis.
 
               external_ids:ct-zone-range in the Open_vSwitch table
                      The presence of this key identifies a minimum and maximum
-                     values  for  ct-zone ids dynamically selected by ovn-con‐
-                     troller (boundaries are included in the  range).  Minimum
+                     values for ct-zone ids dynamically selected  by  ovn-con‐
+                     troller  (boundaries  are included in the range). Minimum
                      value is 1 while maximum value is 65535.
 
               external_ids:ct-zone-* in the Bridge table
-                     Logical  ports and gateway routers are assigned a connec‐
-                     tion tracking zone by ovn-controller  for  stateful  ser‐
-                     vices.  To  keep state across restarts of ovn-controller,
-                     these keys are stored in the integration bridge’s  Bridge
+                     Logical ports and gateway routers are assigned a  connec‐
+                     tion  tracking  zone  by ovn-controller for stateful ser‐
+                     vices. To keep state across restarts  of  ovn-controller,
+                     these  keys are stored in the integration bridge’s Bridge
                      table. The name contains a prefix of ct-zone- followed by
-                     the  name  of  the  logical port or gateway router’s zone
-                     key. The value for this key identifies the zone used  for
+                     the name of the logical port  or  gateway  router’s  zone
+                     key.  The value for this key identifies the zone used for
                      this port.
 
               external_ids:ovn-localnet-port in the Port table
-                     The  presence  of this key identifies a patch port as one
-                     created by  ovn-controller  to  connect  the  integration
+                     The presence of this key identifies a patch port  as  one
+                     created  by  ovn-controller  to  connect  the integration
                      bridge and another bridge to implement a localnet logical
                      port. Its value is the name of the logical port with type
-                     set  to  localnet  that  the  port implements. See exter�‐
+                     set to localnet that  the  port  implements.  See  exter�‐
                      nal_ids:ovn-bridge-mappings, above, for more information.
 
-                     Each localnet logical port is implemented as  a  pair  of
+                     Each  localnet  logical  port is implemented as a pair of
                      patch ports, one in the integration bridge, one in a dif‐
                      ferent  bridge,  with  the  same  external_ids:ovn-local�‐
                      net-port value.
 
               external_ids:ovn-l2gateway-port in the Port table
-                     The presence of this key identifies a patch port  as  one
-                     created  by  ovn-controller  to  connect  the integration
-                     bridge and another bridge to implement a l2gateway  logi‐
-                     cal  port. Its value is the name of the logical port with
-                     type set to l2gateway that the port implements.  See  ex�‐
-                     ternal_ids:ovn-bridge-mappings,  above, for more informa‐
+                     The  presence  of this key identifies a patch port as one
+                     created by  ovn-controller  to  connect  the  integration
+                     bridge  and another bridge to implement a l2gateway logi‐
+                     cal port. Its value is the name of the logical port  with
+                     type  set  to l2gateway that the port implements. See ex�‐
+                     ternal_ids:ovn-bridge-mappings, above, for more  informa‐
                      tion.
 
-                     Each l2gateway logical port is implemented as a  pair  of
+                     Each  l2gateway  logical port is implemented as a pair of
                      patch ports, one in the integration bridge, one in a dif‐
-                     ferent  bridge,  with  the  same external_ids:ovn-l2gate�‐
+                     ferent bridge,  with  the  same  external_ids:ovn-l2gate�‐
                      way-port value.
 
               external-ids:ovn-l3gateway-port in the Port table
-                     This key identifies  a  patch  port  as  one  created  by
+                     This  key  identifies  a  patch  port  as  one created by
                      ovn-controller to implement a l3gateway logical port. Its
-                     value  is  the  name of the logical port with type set to
-                     l3gateway. This patch port is similar to the OVN  logical
-                     patch  port, except that l3gateway port can only be bound
+                     value is the name of the logical port with  type  set  to
+                     l3gateway.  This patch port is similar to the OVN logical
+                     patch port, except that l3gateway port can only be  bound
                      to a particular chassis.
 
               external-ids:ovn-logical-patch-port in the Port table
-                     This key identifies  a  patch  port  as  one  created  by
-                     ovn-controller  to  implement  an  OVN logical patch port
-                     within the integration bridge. Its value is the  name  of
+                     This  key  identifies  a  patch  port  as  one created by
+                     ovn-controller to implement an  OVN  logical  patch  port
+                     within  the  integration bridge. Its value is the name of
                      the OVN logical patch port that it implements.
 
               external-ids:ovn-startup-ts in the Bridge table
-                     This  key  represents  the timestamp (in milliseconds) at
+                     This key represents the timestamp  (in  milliseconds)  at
                      which ovn-controller process was started.
 
               external-ids:ovn-nb-cfg in the Bridge table
                      This   key   represents   the   last   known   OVN_South�‐
-                     bound.SB_Global.nb_cfg  value  for  which  all flows have
+                     bound.SB_Global.nb_cfg value for  which  all  flows  have
                      been successfully installed in OVS.
 
               external-ids:ovn-nb-cfg-ts in the Bridge table
-                     This key represents the timestamp  (in  milliseconds)  of
-                     the  last known OVN_Southbound.SB_Global.nb_cfg value for
+                     This  key  represents  the timestamp (in milliseconds) of
+                     the last known OVN_Southbound.SB_Global.nb_cfg value  for
                      which all flows have been successfully installed in OVS.
 
               external_ids:ovn-installed and external_ids:ovn-installed-ts in
               the Interface table
                      This key is set after all openflow operations correspond‐
-                     ing to the OVS interface  have  been  processed  by  ovs-
-                     vswitchd.  At  the same time a timestamp, in milliseconds
-                     since  the  epoch,  is  stored  in   external_ids:ovn-in�‐
+                     ing  to  the  OVS  interface  have been processed by ovs-
+                     vswitchd. At the same time a timestamp,  in  milliseconds
+                     since   the  epoch,  is  stored  in  external_ids:ovn-in�‐
                      stalled-ts.
 
               external_ids:ovn-evpn-tunnel in the Port and Interface table
-                     Presence  of  this  key indicates that the Port/Interface
-                     was created by ovn-controller to be used as  tunnel  port
+                     Presence of this key indicates  that  the  Port/Interface
+                     was  created  by ovn-controller to be used as tunnel port
                      for EVPN traffic.
 
 OVN SOUTHBOUND DATABASE USAGE
-       ovn-controller  reads from much of the OVN_Southbound database to guide
+       ovn-controller reads from much of the OVN_Southbound database to  guide
        its operation. ovn-controller also writes to the following tables:
 
               Chassis
-                     Upon startup, ovn-controller creates a row in this  table
-                     to  represent its own chassis. Upon graceful termination,
-                     e.g. with ovn-appctl  -t  ovn-controller  exit  (but  not
+                     Upon  startup, ovn-controller creates a row in this table
+                     to represent its own chassis. Upon graceful  termination,
+                     e.g.  with  ovn-appctl  -t  ovn-controller  exit (but not
                      SIGTERM), ovn-controller removes its row.
 
-              Encap  Upon  startup,  ovn-controller  creates  a row or rows in
-                     this table that represent the  tunnel  encapsulations  by
-                     which  its chassis can be reached, and points its Chassis
-                     row to them. Upon  graceful  termination,  ovn-controller
+              Encap  Upon startup, ovn-controller creates a  row  or  rows  in
+                     this  table  that  represent the tunnel encapsulations by
+                     which its chassis can be reached, and points its  Chassis
+                     row  to  them.  Upon graceful termination, ovn-controller
                      removes these rows.
 
               Port_Binding
-                     At  runtime,  ovn-controller  sets the chassis columns of
-                     ports that are resident on its chassis to  point  to  its
-                     Chassis  row,  and, conversely, clears the chassis column
-                     of ports that point to its Chassis row but are no  longer
-                     resident  on  its  chassis. The chassis column has a weak
-                     reference type, so when ovn-controller  gracefully  exits
+                     At runtime, ovn-controller sets the  chassis  columns  of
+                     ports  that  are  resident on its chassis to point to its
+                     Chassis row, and, conversely, clears the  chassis  column
+                     of  ports that point to its Chassis row but are no longer
+                     resident on its chassis. The chassis column  has  a  weak
+                     reference  type,  so when ovn-controller gracefully exits
                      and removes its Chassis row, the database server automat‐
                      ically clears any remaining references to that row.
 
               MAC_Binding
-                     At  runtime, ovn-controller updates the MAC_Binding table
-                     as instructed by  put_arp  and  put_nd  logical  actions.
-                     These  changes  persist  beyond  the lifetime of ovn-con�‐
+                     At runtime, ovn-controller updates the MAC_Binding  table
+                     as  instructed  by  put_arp  and  put_nd logical actions.
+                     These changes persist beyond  the  lifetime  of  ovn-con�‐
                      troller.
 
 RUNTIME MANAGEMENT COMMANDS
-       ovn-appctl can send commands to a running ovn-controller  process.  The
+       ovn-appctl  can  send commands to a running ovn-controller process. The
        currently supported commands are described below.
 
               exit   Causes ovn-controller to gracefully terminate.
@@ -791,15 +794,15 @@ RUNTIME MANAGEMENT COMMANDS
                      Lists each group table entry and its local group id.
 
               inject-pkt microflow
-                     Injects  microflow  into  the  connected Open vSwitch in‐
-                     stance. microflow must contain an  ingress  logical  port
+                     Injects microflow into the  connected  Open  vSwitch  in‐
+                     stance.  microflow  must  contain an ingress logical port
                      (inport argument) that is present on the Open vSwitch in‐
                      stance.
 
-                     The  microflow  argument  describes the packet whose for‐
+                     The microflow argument describes the  packet  whose  for‐
                      warding is to be simulated, in the syntax of an OVN logi‐
-                     cal expression, as described  in  ovn-sb(5),  to  express
-                     constraints.  The  parser  understands prerequisites; for
+                     cal  expression,  as  described  in ovn-sb(5), to express
+                     constraints. The parser  understands  prerequisites;  for
                      example, if the expression refers to ip4.src, there is no
                      need to explicitly state ip4 or eth.type == 0x800.
 
@@ -807,33 +810,33 @@ RUNTIME MANAGEMENT COMMANDS
                      Show OVN SBDB connection status for the chassis.
 
               recompute
-                     Trigger a full compute iteration in ovn-controller  based
-                     on  the contents of the Southbound database and local OVS
+                     Trigger  a full compute iteration in ovn-controller based
+                     on the contents of the Southbound database and local  OVS
                      database.
 
-                     This command is intended to use only in the  event  of  a
-                     bug  in  the  incremental  processing  engine in ovn-con�‐
+                     This  command  is  intended to use only in the event of a
+                     bug in the  incremental  processing  engine  in  ovn-con�‐
                      troller to avoid inconsistent states. It should therefore
                      be used with care as full recomputes are cpu intensive.
 
               sb-cluster-state-reset
-                     Reset southbound database cluster status  when  databases
+                     Reset  southbound  database cluster status when databases
                      are destroyed and rebuilt.
 
-                     If  all  databases in a clustered southbound database are
+                     If all databases in a clustered southbound  database  are
                      removed from disk, then the stored index of all databases
-                     will be reset to zero. This will cause ovn-controller  to
-                     be  unable  to  read or write to the southbound database,
-                     because it will always detect the data as stale. In  such
-                     a  case, run this command so that ovn-controller will re‐
-                     set its local index so that  it  can  interact  with  the
+                     will  be reset to zero. This will cause ovn-controller to
+                     be unable to read or write to  the  southbound  database,
+                     because  it will always detect the data as stale. In such
+                     a case, run this command so that ovn-controller will  re‐
+                     set  its  local  index  so  that it can interact with the
                      southbound database again.
 
               debug/delay-nb-cfg-report seconds
                      This command is used to delay ovn-controller updating the
-                     nb_cfg  back  to  OVN_Southbound database. This is useful
-                     when ovn-nbctl --wait=hv is used  to  measure  end-to-end
-                     latency  in  a  large scale environment. See ovn-nbctl(8)
+                     nb_cfg back to OVN_Southbound database.  This  is  useful
+                     when  ovn-nbctl  --wait=hv  is used to measure end-to-end
+                     latency in a large scale  environment.  See  ovn-nbctl(8)
                      for more details.
 
               lflow-cache/flush
@@ -844,7 +847,7 @@ RUNTIME MANAGEMENT COMMANDS
                      per cache type entry counts.
 
               inc-engine/show-stats
-                     Display ovn-controller engine counters. For  each  engine
+                     Display  ovn-controller  engine counters. For each engine
                      node the following counters have been added:
 
                      •      recompute
@@ -854,8 +857,8 @@ RUNTIME MANAGEMENT COMMANDS
                      •      cancel
 
               inc-engine/show-stats engine_node_name counter_name
-                     Display  the  ovn-controller  engine  counter(s)  for the
-                     specified engine_node_name. counter_name is optional  and
+                     Display the  ovn-controller  engine  counter(s)  for  the
+                     specified  engine_node_name. counter_name is optional and
                      can be one of recompute, compute or cancel.
 
               inc-engine/clear-stats
