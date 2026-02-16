@@ -2774,7 +2774,7 @@ Catch-all: A priority\-0 flow with match \fB1\fR has actions \fBnext;\fR\[char46
 .ST "Ingress Table 26: ARP Request"
 .PP
 .PP
-In the common case where the Ethernet destination has been resolved, this table outputs the packet\[char46] Otherwise, it composes and sends an ARP or IPv6 Neighbor Solicitation request\[char46] It holds the following flows:
+In the common case where the Ethernet destination has been resolved, this table advances the packet to the next table\[char46] Otherwise, it composes and sends an ARP or IPv6 Neighbor Solicitation request\[char46] It holds the following flows:
 .RS
 .IP \(bu
 Unknown MAC address\[char46] A priority\-100 flow for IPv4 packets with match \fBeth\[char46]dst == 00:00:00:00:00:00\fR has the following actions:
@@ -2842,8 +2842,12 @@ Unknown MAC address\[char46] A priority\-100 flow for IPv6 packets with match \f
 .IP
 The IP packet that triggers the ARP/IPv6 NS request is dropped\[char46]
 .IP \(bu
-Known MAC address\[char46] A priority\-0 flow with match \fB1\fR has actions \fBoutput;\fR\[char46]
+Known MAC address\[char46] A priority\-0 flow with match \fB1\fR has actions \fBnext;\fR\[char46]
 .RE
+.ST "Ingress Table 27: ECMP symmetric reply processing for egress"
+.PP
+.PP
+This table contains logical flows that commit IP traffic forwarded by ECMP symmetric reply static routes in the \(dqroute direction\(dq, that is, for sessions initiated from behind such routes\[char46] These flows can be hit only on gateway routers, the only type of routers that supports ECMP symmetric reply routes\[char46] As the egress port of the traffic needs to be stored in conntrack for these sessions, one logical flow is added for each logical router port\[char46]
 .ST "Egress Table 0: Check DNAT local"
 .PP
 .PP

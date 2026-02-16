@@ -3718,8 +3718,9 @@
      <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>2</u><u>6</u><u>:</u> <u>A</u><u>R</u><u>P</u> <u>R</u><u>e</u><u>q</u><u>u</u><u>e</u><u>s</u><u>t</u>
 
        In  the  common  case where the Ethernet destination has been resolved,
-       this table outputs the packet. Otherwise, it composes and sends an  ARP
-       or IPv6 Neighbor Solicitation request. It holds the following flows:
+       this table advances the packet to the next table.  Otherwise,  it  com‐
+       poses  and sends an ARP or IPv6 Neighbor Solicitation request. It holds
+       the following flows:
 
               •      Unknown MAC address. A priority-100 flow for IPv4 packets
                      with match <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b> <b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b> has the following
@@ -3734,10 +3735,10 @@
                      <b>}</b><b>;</b>
 
 
-                     Unknown  MAC  address. For each IPv6 static route associ‐
-                     ated with the router with the nexthop  IP:  <u>G</u>,  a  prior‐
-                     ity-200  flow  for  IPv6  packets  with  match <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b>
-                     <b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b> &amp;&amp;&amp;&amp; <b>x</b><b>x</b><b>r</b><b>e</b><b>g</b><b>0</b> <b>=</b><b>=</b> <u>G</u> with the  following  ac‐
+                     Unknown MAC address. For each IPv6 static  route  associ‐
+                     ated  with  the  router  with the nexthop IP: <u>G</u>, a prior‐
+                     ity-200 flow for  IPv6  packets  with  match  <b>e</b><b>t</b><b>h</b><b>.</b><b>d</b><b>s</b><b>t</b>  <b>=</b><b>=</b>
+                     <b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b>  &amp;&amp;&amp;&amp;  <b>x</b><b>x</b><b>r</b><b>e</b><b>g</b><b>0</b> <b>=</b><b>=</b> <u>G</u> with the following ac‐
                      tions is added:
 
                      <b>n</b><b>d</b><b>_</b><b>n</b><b>s</b> <b>{</b>
@@ -3749,7 +3750,7 @@
 
 
                      Where <u>E</u> is the multicast mac derived from the Gateway IP,
-                     <u>I</u>  is  the solicited-node multicast address corresponding
+                     <u>I</u> is the solicited-node multicast  address  corresponding
                      to the target address <u>G</u>.
 
                      Unknown MAC address. A priority-100 flow for IPv6 packets
@@ -3762,32 +3763,42 @@
                      <b>}</b><b>;</b>
 
 
-                     (Ingress table <b>I</b><b>P</b> <b>R</b><b>o</b><b>u</b><b>t</b><b>i</b><b>n</b><b>g</b> initialized <b>r</b><b>e</b><b>g</b><b>1</b>  with  the  IP
-                     address  owned  by <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> and <b>(</b><b>x</b><b>x</b><b>)</b><b>r</b><b>e</b><b>g</b><b>0</b> with the next-hop
+                     (Ingress  table  <b>I</b><b>P</b>  <b>R</b><b>o</b><b>u</b><b>t</b><b>i</b><b>n</b><b>g</b> initialized <b>r</b><b>e</b><b>g</b><b>1</b> with the IP
+                     address owned by <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> and <b>(</b><b>x</b><b>x</b><b>)</b><b>r</b><b>e</b><b>g</b><b>0</b> with  the  next-hop
                      IP address)
 
-                     The IP packet that triggers the ARP/IPv6  NS  request  is
+                     The  IP  packet  that triggers the ARP/IPv6 NS request is
                      dropped.
 
               •      Known MAC address. A priority-0 flow with match <b>1</b> has ac‐
-                     tions <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b><b>;</b>.
+                     tions <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>.
+
+     <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>2</u><u>7</u><u>:</u> <u>E</u><u>C</u><u>M</u><u>P</u> <u>s</u><u>y</u><u>m</u><u>m</u><u>e</u><u>t</u><u>r</u><u>i</u><u>c</u> <u>r</u><u>e</u><u>p</u><u>l</u><u>y</u> <u>p</u><u>r</u><u>o</u><u>c</u><u>e</u><u>s</u><u>s</u><u>i</u><u>n</u><u>g</u> <u>f</u><u>o</u><u>r</u> <u>e</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u>
+
+       This table contains logical flows that commit IP traffic  forwarded  by
+       ECMP  symmetric  reply static routes in the "route direction", that is,
+       for sessions initiated from behind such routes. These flows can be  hit
+       only  on  gateway  routers, the only type of routers that supports ECMP
+       symmetric reply routes. As the egress port of the traffic needs  to  be
+       stored  in  conntrack for these sessions, one logical flow is added for
+       each logical router port.
 
      <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>0</u><u>:</u> <u>C</u><u>h</u><u>e</u><u>c</u><u>k</u> <u>D</u><u>N</u><u>A</u><u>T</u> <u>l</u><u>o</u><u>c</u><u>a</u><u>l</u>
 
-       This  table  checks  if  the  packet  needs  to be DNATed in the router
-       ingress table <b>l</b><b>r</b><b>_</b><b>i</b><b>n</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b> after it is SNATed  and  looped  back  to  the
-       ingress  pipeline.  This check is done only for routers configured with
-       distributed gateway ports and NAT entries. This check is done  so  that
+       This table checks if the packet  needs  to  be  DNATed  in  the  router
+       ingress  table  <b>l</b><b>r</b><b>_</b><b>i</b><b>n</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b>  after  it  is SNATed and looped back to the
+       ingress pipeline. This check is done only for routers  configured  with
+       distributed  gateway  ports and NAT entries. This check is done so that
        SNAT and DNAT is done in different zones instead of a common zone.
 
-              •      A  priority-0  logical flow with match <b>1</b> has actions <b>R</b><b>E</b><b>G</b>‐‐
+              •      A priority-0 logical flow with match <b>1</b> has  actions  <b>R</b><b>E</b><b>G</b>‐‐
                      <b>B</b><b>I</b><b>T</b><b>_</b><b>D</b><b>S</b><b>T</b><b>_</b><b>N</b><b>A</b><b>T</b><b>_</b><b>I</b><b>P</b><b>_</b><b>L</b><b>O</b><b>C</b><b>A</b><b>L</b> <b>=</b> <b>0</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>.
 
      <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>:</u> <u>U</u><u>N</u><u>D</u><u>N</u><u>A</u><u>T</u>
 
-       This is for already established  connections’  reverse  traffic.  i.e.,
-       DNAT  has  already been done in ingress pipeline and now the packet has
-       entered the egress pipeline as part of a reply. This  traffic  is  unD‐
+       This  is  for  already  established connections’ reverse traffic. i.e.,
+       DNAT has already been done in ingress pipeline and now the  packet  has
+       entered  the  egress  pipeline as part of a reply. This traffic is unD‐
        NATed here.
 
               •      A priority-0 logical flow with match <b>1</b> has actions <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>.
@@ -3797,161 +3808,161 @@
               •      For IPv6 Neighbor Discovery or Router Solicitation/Adver‐
                      tisement traffic, a priority-100 flow with action <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>.
 
-              •      For  all  IP  packets,  a priority-50 flow with an action
+              •      For all IP packets, a priority-50  flow  with  an  action
                      <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>l</b><b>o</b><b>o</b><b>p</b><b>b</b><b>a</b><b>c</b><b>k</b> <b>=</b> <b>1</b><b>;</b> <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b><b>;</b>.
 
      <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>1</u><u>:</u> <u>U</u><u>N</u><u>D</u><u>N</u><u>A</u><u>T</u> <u>o</u><u>n</u> <u>D</u><u>i</u><u>s</u><u>t</u><u>r</u><u>i</u><u>b</u><u>u</u><u>t</u><u>e</u><u>d</u> <u>R</u><u>o</u><u>u</u><u>t</u><u>e</u><u>r</u><u>s</u>
 
-              •      For all the configured load balancing rules for a  router
-                     with  gateway  port  in  <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b> database that in‐
-                     cludes an IPv4 address <b>V</b><b>I</b><b>P</b>, for every  backend  IPv4  ad‐
-                     dress  <u>B</u>  defined for the <b>V</b><b>I</b><b>P</b> a priority-120 flow is pro‐
-                     grammed on gateway chassis that matches <b>i</b><b>p</b> &amp;&amp;&amp;&amp; <b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b>  <b>=</b><b>=</b>
-                     <u>B</u>  &amp;&amp;&amp;&amp; <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>G</u><u>W</u>, where <u>G</u><u>W</u> is the logical router gate‐
+              •      For  all the configured load balancing rules for a router
+                     with gateway port in  <b>O</b><b>V</b><b>N</b><b>_</b><b>N</b><b>o</b><b>r</b><b>t</b><b>h</b><b>b</b><b>o</b><b>u</b><b>n</b><b>d</b>  database  that  in‐
+                     cludes  an  IPv4  address <b>V</b><b>I</b><b>P</b>, for every backend IPv4 ad‐
+                     dress <u>B</u> defined for the <b>V</b><b>I</b><b>P</b> a priority-120 flow  is  pro‐
+                     grammed  on gateway chassis that matches <b>i</b><b>p</b> &amp;&amp;&amp;&amp; <b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b>
+                     <u>B</u> &amp;&amp;&amp;&amp; <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>G</u><u>W</u>, where <u>G</u><u>W</u> is the logical router  gate‐
                      way port with an action <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b><b>;</b>. If the backend IPv4 ad‐
-                     dress <u>B</u> is also configured with L4 port <u>P</u><u>O</u><u>R</u><u>T</u> of  protocol
-                     <u>P</u>,  then  the  match  also  includes <b>P</b><b>.</b><b>s</b><b>r</b><b>c</b> == <u>P</u><u>O</u><u>R</u><u>T</u>. These
+                     dress  <u>B</u> is also configured with L4 port <u>P</u><u>O</u><u>R</u><u>T</u> of protocol
+                     <u>P</u>, then the match also  includes  <b>P</b><b>.</b><b>s</b><b>r</b><b>c</b>  ==  <u>P</u><u>O</u><u>R</u><u>T</u>.  These
                      flows are not added for load balancers with IPv6 <u>V</u><u>I</u><u>P</u><u>s</u>.
 
-                     If the router is configured to force SNAT  any  load-bal‐
-                     anced   packets,   above   action  will  be  replaced  by
+                     If  the  router is configured to force SNAT any load-bal‐
+                     anced  packets,  above  action  will   be   replaced   by
                      <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>f</b><b>o</b><b>r</b><b>c</b><b>e</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>f</b><b>o</b><b>r</b><b>_</b><b>l</b><b>b</b> <b>=</b> <b>1</b><b>;</b> <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b><b>;</b>.
 
-              •      For each configuration in  the  OVN  Northbound  database
-                     that  asks  to  change  the  destination  IP address of a
-                     packet from an IP address of <u>A</u> to <u>B</u>, a priority-100  flow
-                     matches  <b>i</b><b>p</b> &amp;&amp;&amp;&amp; <b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>B</u> &amp;&amp;&amp;&amp; <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>G</u><u>W</u>, where <u>G</u><u>W</u> is
+              •      For  each  configuration  in  the OVN Northbound database
+                     that asks to change  the  destination  IP  address  of  a
+                     packet  from an IP address of <u>A</u> to <u>B</u>, a priority-100 flow
+                     matches <b>i</b><b>p</b> &amp;&amp;&amp;&amp; <b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>B</u> &amp;&amp;&amp;&amp; <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>G</u><u>W</u>, where <u>G</u><u>W</u>  is
                      the logical router gateway port, with an action <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b><b>;</b>.
-                     If the NAT rule is of type dnat_and_snat and  has  <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b>‐‐
+                     If  the  NAT rule is of type dnat_and_snat and has <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b>‐‐
                      <b>l</b><b>e</b><b>s</b><b>s</b><b>=</b><b>t</b><b>r</b><b>u</b><b>e</b> in the options, then the action would be <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>.
 
-                     If  the  NAT rule cannot be handled in a distributed man‐
-                     ner, then the priority-100 flow above is only  programmed
+                     If the NAT rule cannot be handled in a  distributed  man‐
+                     ner,  then the priority-100 flow above is only programmed
                      on the gateway chassis with the action <b>c</b><b>t</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b>.
 
-                     If  the  NAT rule can be handled in a distributed manner,
-                     then there is an additional action <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b>  <u>E</u><u>A</u><b>;</b>,  where
+                     If the NAT rule can be handled in a  distributed  manner,
+                     then  there  is an additional action <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b> <u>E</u><u>A</u><b>;</b>, where
                      <u>E</u><u>A</u> is the ethernet address associated with the IP address
-                     <u>A</u>  in  the NAT rule. This allows upstream MAC learning to
+                     <u>A</u> in the NAT rule. This allows upstream MAC  learning  to
                      point to the correct chassis.
 
      <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>2</u><u>:</u> <u>P</u><u>o</u><u>s</u><u>t</u> <u>U</u><u>N</u><u>D</u><u>N</u><u>A</u><u>T</u>
 
-              •      A priority-70 logical flow is  added  that  initiates  CT
+              •      A  priority-70  logical  flow  is added that initiates CT
                      state for traffic that is configured to be SNATed on Dis‐
                      tributed   routers.   This   allows   the   next   table,
                      <b>l</b><b>r</b><b>_</b><b>o</b><b>u</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b>, to effectively match on various CT states.
 
-              •      A priority-50 logical flow is added that commits any  un‐
-                     tracked  flows  from the previous table <b>l</b><b>r</b><b>_</b><b>o</b><b>u</b><b>t</b><b>_</b><b>u</b><b>n</b><b>d</b><b>n</b><b>a</b><b>t</b> for
-                     Gateway routers. This flow matches on <b>c</b><b>t</b><b>.</b><b>n</b><b>e</b><b>w</b> &amp;&amp;&amp;&amp;  <b>i</b><b>p</b>  with
+              •      A  priority-50 logical flow is added that commits any un‐
+                     tracked flows from the previous table  <b>l</b><b>r</b><b>_</b><b>o</b><b>u</b><b>t</b><b>_</b><b>u</b><b>n</b><b>d</b><b>n</b><b>a</b><b>t</b>  for
+                     Gateway  routers.  This flow matches on <b>c</b><b>t</b><b>.</b><b>n</b><b>e</b><b>w</b> &amp;&amp;&amp;&amp; <b>i</b><b>p</b> with
                      action <b>c</b><b>t</b><b>_</b><b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b> <b>{</b> <b>}</b> <b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> .
 
               •      If the <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>c</b><b>t</b><b>-</b><b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b><b>-</b><b>a</b><b>l</b><b>l</b> is set to <b>t</b><b>r</b><b>u</b><b>e</b> the following
-                     flows  are  configured  matching  on  <b>i</b><b>p</b>  &amp;&amp;&amp;&amp;  <b>(</b><b>!</b><b>c</b><b>t</b><b>.</b><b>t</b><b>r</b><b>k</b> <b>|</b><b>|</b>
-                     <b>!</b><b>c</b><b>t</b><b>.</b><b>r</b><b>p</b><b>l</b><b>)</b> &amp;&amp;&amp;&amp; <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>u</b><b>n</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>n</b><b>o</b><b>t</b><b>_</b><b>t</b><b>r</b><b>a</b><b>c</b><b>k</b><b>e</b><b>d</b> <b>=</b><b>=</b> <b>1</b> with an  action
-                     <b>c</b><b>t</b><b>_</b><b>n</b><b>e</b><b>x</b><b>t</b><b>(</b><b>s</b><b>n</b><b>a</b><b>t</b><b>)</b><b>;</b>  and  <b>i</b><b>p</b>  &amp;&amp;&amp;&amp; <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>u</b><b>n</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>n</b><b>e</b><b>w</b> <b>=</b><b>=</b> <b>1</b> with an
-                     action <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>. There is extra match when there is  config‐
+                     flows are  configured  matching  on  <b>i</b><b>p</b>  &amp;&amp;&amp;&amp;  <b>(</b><b>!</b><b>c</b><b>t</b><b>.</b><b>t</b><b>r</b><b>k</b>  <b>|</b><b>|</b>
+                     <b>!</b><b>c</b><b>t</b><b>.</b><b>r</b><b>p</b><b>l</b><b>)</b>  &amp;&amp;&amp;&amp; <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>u</b><b>n</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>n</b><b>o</b><b>t</b><b>_</b><b>t</b><b>r</b><b>a</b><b>c</b><b>k</b><b>e</b><b>d</b> <b>=</b><b>=</b> <b>1</b> with an action
+                     <b>c</b><b>t</b><b>_</b><b>n</b><b>e</b><b>x</b><b>t</b><b>(</b><b>s</b><b>n</b><b>a</b><b>t</b><b>)</b><b>;</b> and <b>i</b><b>p</b> &amp;&amp;&amp;&amp; <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>u</b><b>n</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>n</b><b>e</b><b>w</b> <b>=</b><b>=</b>  <b>1</b>  with  an
+                     action  <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>. There is extra match when there is config‐
                      ured DGP <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <b>D</b><b>G</b><b>P</b> &amp;&amp;&amp;&amp; <b>i</b><b>s</b><b>_</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>r</b><b>e</b><b>s</b><b>i</b><b>d</b><b>e</b><b>n</b><b>t</b><b>(</b><b>C</b><b>H</b><b>A</b><b>S</b><b>S</b><b>I</b><b>S</b><b>)</b>.
 
               •      A priority-0 logical flow with match <b>1</b> has actions <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>.
 
      <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>3</u><u>:</u> <u>S</u><u>N</u><u>A</u><u>T</u>
 
-       Packets  that  are  configured to be SNATed get their source IP address
+       Packets that are configured to be SNATed get their  source  IP  address
        changed based on the configuration in the OVN Northbound database.
 
-              •      A priority-120 flow to advance the IPv6 Neighbor  solici‐
-                     tation  packet  to  next  table to skip SNAT. In the case
-                     where ovn-controller injects an IPv6  Neighbor  Solicita‐
-                     tion  packet  (for <b>n</b><b>d</b><b>_</b><b>n</b><b>s</b> action) we don’t want the packet
+              •      A  priority-120 flow to advance the IPv6 Neighbor solici‐
+                     tation packet to next table to skip  SNAT.  In  the  case
+                     where  ovn-controller  injects an IPv6 Neighbor Solicita‐
+                     tion packet (for <b>n</b><b>d</b><b>_</b><b>n</b><b>s</b> action) we don’t want  the  packet
                      to go through conntrack.
 
        Egress Table 3: SNAT on Gateway Routers
 
-              •      If the Gateway router in the OVN Northbound database  has
-                     been  configured  to  force  SNAT a packet (that has been
-                     previously DNATted) to <u>B</u>,  a  priority-100  flow  matches
-                     <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>f</b><b>o</b><b>r</b><b>c</b><b>e</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>f</b><b>o</b><b>r</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b>  <b>=</b><b>=</b>  <b>1</b>  &amp;&amp;&amp;&amp;  <b>i</b><b>p</b>  with  an action
+              •      If  the Gateway router in the OVN Northbound database has
+                     been configured to force SNAT a  packet  (that  has  been
+                     previously  DNATted)  to  <u>B</u>,  a priority-100 flow matches
+                     <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>f</b><b>o</b><b>r</b><b>c</b><b>e</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>f</b><b>o</b><b>r</b><b>_</b><b>d</b><b>n</b><b>a</b><b>t</b> <b>=</b><b>=</b>  <b>1</b>  &amp;&amp;&amp;&amp;  <b>i</b><b>p</b>  with  an  action
                      <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>(</b><u>B</u><b>)</b><b>;</b>.
 
-              •      If a load balancer configured to skip snat has  been  ap‐
+              •      If  a  load balancer configured to skip snat has been ap‐
                      plied to the Gateway router pipeline, a priority-120 flow
-                     matches  <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>s</b><b>k</b><b>i</b><b>p</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>f</b><b>o</b><b>r</b><b>_</b><b>l</b><b>b</b> <b>=</b><b>=</b> <b>1</b> &amp;&amp;&amp;&amp; <b>i</b><b>p</b> with an action
+                     matches <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>s</b><b>k</b><b>i</b><b>p</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>f</b><b>o</b><b>r</b><b>_</b><b>l</b><b>b</b> <b>=</b><b>=</b> <b>1</b> &amp;&amp;&amp;&amp; <b>i</b><b>p</b> with an  action
                      <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>.
-
-              •      If the Gateway router in the OVN Northbound database  has
-                     been  configured  to  force  SNAT a packet (that has been
-                     previously  load-balanced)  using  router  IP  (i.e   <b>o</b><b>p</b>‐‐
-                     <b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>:lb_force_snat_ip=router_ip),  then for each logical
-                     router port <u>P</u> attached to the  Gateway  router,  and  for
-                     each  network  configured  for  this port, a priority-110
-                     flow matches  <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>f</b><b>o</b><b>r</b><b>c</b><b>e</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>f</b><b>o</b><b>r</b><b>_</b><b>l</b><b>b</b>  <b>=</b><b>=</b>  <b>1</b>  &amp;&amp;  <b>i</b><b>p</b><b>4</b>  &amp;&amp;
-                     <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>n</b><b>e</b><b>t</b><b>w</b><b>o</b><b>r</b><b>k</b><b>_</b><b>i</b><b>d</b>  <b>=</b><b>=</b>  <u>N</u>  &amp;&amp;  <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>P</u>, where <u>N</u> is the
-                     network index, with an action <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>(</b><u>R</u><b>)</b><b>;</b> where <u>R</u> is  the
-                     IP  configured on the router port. A similar flow is cre‐
-                     ated for IPv6, with <b>i</b><b>p</b><b>6</b> instead of <b>i</b><b>p</b><b>4</b>.  <u>N</u>,  the  network
-                     index, will be 0 for networks 17 and up.
-
-                     If  the logical router port <u>P</u> is configured with multiple
-                     IPv4 and multiple IPv6 addresses, the IPv4 and  IPv6  ad‐
-                     dress  within  the  same  network as the next-hop will be
-                     chosen as <u>R</u> for SNAT. However, if there are more than  16
-                     networks  configured, the lexicographically first IP will
-                     be considered for SNAT for networks 17 and up.
-
-              •      A priority-105 flow  matches  the  old  behavior  for  if
-                     northd is upgraded before controller and <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>n</b><b>e</b><b>t</b><b>w</b><b>o</b><b>r</b><b>k</b><b>_</b><b>i</b><b>d</b>
-                     is  not  recognized. It is only added if there’s at least
-                     one network  configured  (excluding  LLA  for  IPv6).  It
-                     matches  on:  <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>f</b><b>o</b><b>r</b><b>c</b><b>e</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>f</b><b>o</b><b>r</b><b>_</b><b>l</b><b>b</b> <b>=</b><b>=</b> <b>1</b> &amp;&amp; <b>i</b><b>p</b><b>4</b> &amp;&amp; <b>o</b><b>u</b><b>t</b>‐‐
-                     <b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>P</u>, with action: <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>(</b><u>R</u><b>)</b>. <u>R</u> is the lexicograph‐
-                     ically first IP address configured. There  is  a  similar
-                     flow for IPv6 with <b>i</b><b>p</b><b>6</b> instead of <b>i</b><b>p</b><b>4</b>.
 
               •      If  the Gateway router in the OVN Northbound database has
                      been configured to force SNAT a  packet  (that  has  been
+                     previously   load-balanced)  using  router  IP  (i.e  <b>o</b><b>p</b>‐‐
+                     <b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>:lb_force_snat_ip=router_ip), then for each  logical
+                     router  port  <u>P</u>  attached  to the Gateway router, and for
+                     each network configured for  this  port,  a  priority-110
+                     flow  matches  <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>f</b><b>o</b><b>r</b><b>c</b><b>e</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>f</b><b>o</b><b>r</b><b>_</b><b>l</b><b>b</b>  <b>=</b><b>=</b>  <b>1</b>  &amp;&amp;  <b>i</b><b>p</b><b>4</b> &amp;&amp;
+                     <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>n</b><b>e</b><b>t</b><b>w</b><b>o</b><b>r</b><b>k</b><b>_</b><b>i</b><b>d</b> <b>=</b><b>=</b> <u>N</u> &amp;&amp; <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>P</u>,  where  <u>N</u>  is  the
+                     network  index, with an action <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>(</b><u>R</u><b>)</b><b>;</b> where <u>R</u> is the
+                     IP configured on the router port. A similar flow is  cre‐
+                     ated  for  IPv6,  with <b>i</b><b>p</b><b>6</b> instead of <b>i</b><b>p</b><b>4</b>. <u>N</u>, the network
+                     index, will be 0 for networks 17 and up.
+
+                     If the logical router port <u>P</u> is configured with  multiple
+                     IPv4  and  multiple IPv6 addresses, the IPv4 and IPv6 ad‐
+                     dress within the same network as  the  next-hop  will  be
+                     chosen  as <u>R</u> for SNAT. However, if there are more than 16
+                     networks configured, the lexicographically first IP  will
+                     be considered for SNAT for networks 17 and up.
+
+              •      A  priority-105  flow  matches  the  old  behavior for if
+                     northd is upgraded before controller and <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>n</b><b>e</b><b>t</b><b>w</b><b>o</b><b>r</b><b>k</b><b>_</b><b>i</b><b>d</b>
+                     is not recognized. It is only added if there’s  at  least
+                     one  network  configured  (excluding  LLA  for  IPv6). It
+                     matches on: <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>f</b><b>o</b><b>r</b><b>c</b><b>e</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>f</b><b>o</b><b>r</b><b>_</b><b>l</b><b>b</b> <b>=</b><b>=</b> <b>1</b> &amp;&amp; <b>i</b><b>p</b><b>4</b>  &amp;&amp;  <b>o</b><b>u</b><b>t</b>‐‐
+                     <b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>P</u>, with action: <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>(</b><u>R</u><b>)</b>. <u>R</u> is the lexicograph‐
+                     ically  first  IP  address configured. There is a similar
+                     flow for IPv6 with <b>i</b><b>p</b><b>6</b> instead of <b>i</b><b>p</b><b>4</b>.
+
+              •      If the Gateway router in the OVN Northbound database  has
+                     been  configured  to  force  SNAT a packet (that has been
                      previously  load-balanced)  to  <u>B</u>,  a  priority-100  flow
                      matches <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>f</b><b>o</b><b>r</b><b>c</b><b>e</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>f</b><b>o</b><b>r</b><b>_</b><b>l</b><b>b</b> <b>=</b><b>=</b> <b>1</b> &amp;&amp;&amp;&amp; <b>i</b><b>p</b> with an action
                      <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>(</b><u>B</u><b>)</b><b>;</b>.
 
-              •      For each configuration in the  OVN  Northbound  database,
-                     that  asks  to  change  the source IP address of a packet
-                     from an IP address of <u>A</u> or to change the  source  IP  ad‐
-                     dress  of a packet that belongs to network <u>A</u> to <u>B</u>, a flow
-                     matches <b>i</b><b>p</b> &amp;&amp;&amp;&amp; <b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>A</u> &amp;&amp;&amp;&amp; <b>(</b><b>!</b><b>c</b><b>t</b><b>.</b><b>t</b><b>r</b><b>k</b> <b>|</b><b>|</b>  <b>!</b><b>c</b><b>t</b><b>.</b><b>r</b><b>p</b><b>l</b><b>)</b>  with
+              •      For  each  configuration  in the OVN Northbound database,
+                     that asks to change the source IP  address  of  a  packet
+                     from  an  IP  address of <u>A</u> or to change the source IP ad‐
+                     dress of a packet that belongs to network <u>A</u> to <u>B</u>, a  flow
+                     matches  <b>i</b><b>p</b>  &amp;&amp;&amp;&amp; <b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>A</u> &amp;&amp;&amp;&amp; <b>(</b><b>!</b><b>c</b><b>t</b><b>.</b><b>t</b><b>r</b><b>k</b> <b>|</b><b>|</b> <b>!</b><b>c</b><b>t</b><b>.</b><b>r</b><b>p</b><b>l</b><b>)</b> with
                      an action <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>(</b><u>B</u><b>)</b><b>;</b>. The priority of the flow is calcu‐
-                     lated  based on the mask of <u>A</u>, with matches having larger
-                     masks getting higher priorities. If the NAT  rule  is  of
+                     lated based on the mask of <u>A</u>, with matches having  larger
+                     masks  getting  higher  priorities. If the NAT rule is of
                      type dnat_and_snat and has <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>l</b><b>e</b><b>s</b><b>s</b><b>=</b><b>t</b><b>r</b><b>u</b><b>e</b> in the options,
                      then the action would be <b>i</b><b>p</b><b>4</b><b>/</b><b>6</b><b>.</b><b>s</b><b>r</b><b>c</b><b>=</b> <b>(</b><u>B</u><b>)</b>.
 
-                     For  each  configuration  in the OVN Northbound database,
-                     that asks to change the source IP  address  of  a  packet
-                     from  an  IP  address of <u>A</u> or to change the source IP ad‐
+                     For each configuration in the  OVN  Northbound  database,
+                     that  asks  to  change  the source IP address of a packet
+                     from an IP address of <u>A</u> or to change the  source  IP  ad‐
                      dress of a packet that belongs to network <u>A</u> to <u>B</u>, match <u>M</u>
-                     and priority <u>P</u>, a flow matches <b>i</b><b>p</b>  &amp;&amp;&amp;&amp;  <b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b>  <b>=</b><b>=</b>  <u>A</u>  &amp;&amp;&amp;&amp;
-                     <b>(</b><b>!</b><b>c</b><b>t</b><b>.</b><b>t</b><b>r</b><b>k</b>  <b>|</b><b>|</b> <b>!</b><b>c</b><b>t</b><b>.</b><b>r</b><b>p</b><b>l</b><b>)</b> &amp;&amp;&amp;&amp; <b>(</b><u>M</u><b>)</b> with an action <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>(</b><u>B</u><b>)</b><b>;</b> .
-                     The priority of the flow is calculated based as <b>3</b><b>0</b><b>0</b> <b>+</b>  <u>P</u>.
-                     If  the  NAT rule is of type dnat_and_snat and has <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b>‐‐
-                     <b>l</b><b>e</b><b>s</b><b>s</b><b>=</b><b>t</b><b>r</b><b>u</b><b>e</b> in  the  options,  then  the  action  would  be
+                     and  priority  <u>P</u>,  a  flow  matches <b>i</b><b>p</b> &amp;&amp;&amp;&amp; <b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>A</u> &amp;&amp;&amp;&amp;
+                     <b>(</b><b>!</b><b>c</b><b>t</b><b>.</b><b>t</b><b>r</b><b>k</b> <b>|</b><b>|</b> <b>!</b><b>c</b><b>t</b><b>.</b><b>r</b><b>p</b><b>l</b><b>)</b> &amp;&amp;&amp;&amp; <b>(</b><u>M</u><b>)</b> with an action <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>(</b><u>B</u><b>)</b><b>;</b>  .
+                     The  priority of the flow is calculated based as <b>3</b><b>0</b><b>0</b> <b>+</b> <u>P</u>.
+                     If the NAT rule is of type dnat_and_snat and  has  <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b>‐‐
+                     <b>l</b><b>e</b><b>s</b><b>s</b><b>=</b><b>t</b><b>r</b><b>u</b><b>e</b>  in  the  options,  then  the  action  would be
                      <b>i</b><b>p</b><b>4</b><b>/</b><b>6</b><b>.</b><b>s</b><b>r</b><b>c</b><b>=</b><b>(</b><u>B</u><b>)</b>.
 
-              •      If  the  NAT  rule  has  <b>a</b><b>l</b><b>l</b><b>o</b><b>w</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b><b>s</b> configured, then
+              •      If the NAT  rule  has  <b>a</b><b>l</b><b>l</b><b>o</b><b>w</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b><b>s</b>  configured,  then
                      there is an additional match <b>i</b><b>p</b><b>4</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b> <u>a</u><u>l</u><u>l</u><u>o</u><u>w</u><u>e</u><u>d</u><b>_</b><u>e</u><u>x</u><u>t</u><b>_</b><u>i</u><u>p</u><u>s</u> .
-                     Similarly, for  IPV6,  match  would  be  <b>i</b><b>p</b><b>6</b><b>.</b><b>d</b><b>s</b><b>t</b>  <b>=</b><b>=</b>  <u>a</u><u>l</u><u>�</u>��
+                     Similarly,  for  IPV6,  match  would  be  <b>i</b><b>p</b><b>6</b><b>.</b><b>d</b><b>s</b><b>t</b>  <b>=</b><b>=</b> <u>a</u><u>l</u><u>�</u>��
                      <u>l</u><u>o</u><u>w</u><u>e</u><u>d</u><b>_</b><u>e</u><u>x</u><u>t</u><b>_</b><u>i</u><u>p</u><u>s</u>.
 
-              •      If  the  NAT rule has <b>e</b><b>x</b><b>e</b><b>m</b><b>p</b><b>t</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b><b>s</b> set, then there is
+              •      If the NAT rule has <b>e</b><b>x</b><b>e</b><b>m</b><b>p</b><b>t</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b><b>s</b> set, then  there  is
                      an additional flow configured at the priority + 1 of cor‐
-                     responding NAT rule. The flow matches if  destination  ip
+                     responding  NAT  rule. The flow matches if destination ip
                      is an <b>e</b><b>x</b><b>e</b><b>m</b><b>p</b><b>t</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b> and the action is <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> . This flow
-                     is  used  to bypass the ct_snat action for a packet which
+                     is used to bypass the ct_snat action for a  packet  which
                      is destinted to <b>e</b><b>x</b><b>e</b><b>m</b><b>p</b><b>t</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b><b>s</b>.
 
               •      If the <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>c</b><b>t</b><b>-</b><b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b><b>-</b><b>a</b><b>l</b><b>l</b> is set to <b>t</b><b>r</b><b>u</b><b>e</b> the following
-                     two flows are configured matching on  <b>i</b><b>p</b> &amp;&amp;&amp;&amp;  <b>(</b><b>!</b><b>c</b><b>t</b><b>.</b><b>t</b><b>r</b><b>k</b>  <b>|</b><b>|</b>
-                     <b>!</b><b>c</b><b>t</b><b>.</b><b>r</b><b>p</b><b>l</b><b>)</b>  &amp;&amp;&amp;&amp;  <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>u</b><b>n</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>n</b><b>e</b><b>w</b>  <b>=</b><b>=</b>  <b>1</b> and <b>i</b><b>p</b> &amp;&amp;&amp;&amp; <b>c</b><b>t</b><b>.</b><b>n</b><b>e</b><b>w</b> &amp;&amp;&amp;&amp;
+                     two  flows  are configured matching on  <b>i</b><b>p</b> &amp;&amp;&amp;&amp; <b>(</b><b>!</b><b>c</b><b>t</b><b>.</b><b>t</b><b>r</b><b>k</b> <b>|</b><b>|</b>
+                     <b>!</b><b>c</b><b>t</b><b>.</b><b>r</b><b>p</b><b>l</b><b>)</b> &amp;&amp;&amp;&amp; <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>u</b><b>n</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>n</b><b>e</b><b>w</b> <b>=</b><b>=</b> <b>1</b> and  <b>i</b><b>p</b>  &amp;&amp;&amp;&amp;  <b>c</b><b>t</b><b>.</b><b>n</b><b>e</b><b>w</b>  &amp;&amp;&amp;&amp;
                      <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>u</b><b>n</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>n</b><b>o</b><b>t</b><b>_</b><b>t</b><b>r</b><b>a</b><b>c</b><b>k</b><b>e</b><b>d</b> <b>=</b><b>=</b> <b>1</b>
                       both with an action <b>c</b><b>t</b><b>_</b><b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b><b>_</b><b>t</b><b>o</b><b>_</b><b>z</b><b>o</b><b>n</b><b>e</b><b>(</b><b>s</b><b>n</b><b>a</b><b>t</b><b>)</b><b>;</b>.
 
@@ -3959,60 +3970,60 @@
 
        Egress Table 3: SNAT on Distributed Routers
 
-              •      For each configuration in the  OVN  Northbound  database,
-                     that  asks  to  change  the source IP address of a packet
-                     from an IP address of <u>A</u> or to change the  source  IP  ad‐
-                     dress  of  a  packet  that belongs to network <u>A</u> to <u>B</u>, two
+              •      For  each  configuration  in the OVN Northbound database,
+                     that asks to change the source IP  address  of  a  packet
+                     from  an  IP  address of <u>A</u> or to change the source IP ad‐
+                     dress of a packet that belongs to network  <u>A</u>  to  <u>B</u>,  two
                      flows are added. The priority <u>P</u> of these flows are calcu‐
-                     lated based on the mask of <u>A</u>, with matches having  larger
+                     lated  based on the mask of <u>A</u>, with matches having larger
                      masks getting higher priorities.
 
-                     If  the  NAT rule cannot be handled in a distributed man‐
-                     ner, then the below flows  are  only  programmed  on  the
-                     gateway  chassis increasing flow priority by 128 in order
+                     If the NAT rule cannot be handled in a  distributed  man‐
+                     ner,  then  the  below  flows  are only programmed on the
+                     gateway chassis increasing flow priority by 128 in  order
                      to be run first.
 
                      •      The first flow is added with the calculated prior‐
-                            ity <u>P</u> and match <b>i</b><b>p</b> &amp;&amp;&amp;&amp; <b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>A</u> &amp;&amp;&amp;&amp;  <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b>  <b>=</b><b>=</b>
-                            <u>G</u><u>W</u>,  where  <u>G</u><u>W</u> is the logical router gateway port,
+                            ity  <u>P</u>  and match <b>i</b><b>p</b> &amp;&amp;&amp;&amp; <b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>A</u> &amp;&amp;&amp;&amp; <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b>
+                            <u>G</u><u>W</u>, where <u>G</u><u>W</u> is the logical router  gateway  port,
                             with an action <b>c</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b><b>(</b><u>B</u><b>)</b><b>;</b> to SNATed in the common
                             zone. If the NAT rule is of type dnat_and_snat and
                             has <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>l</b><b>e</b><b>s</b><b>s</b><b>=</b><b>t</b><b>r</b><b>u</b><b>e</b> in the options, then the action
                             would be <b>i</b><b>p</b><b>4</b><b>/</b><b>6</b><b>.</b><b>s</b><b>r</b><b>c</b><b>=</b><b>(</b><u>B</u><b>)</b>.
 
-                     If the NAT rule can be handled in a  distributed  manner,
-                     then  there  is an additional action (for both the flows)
-                     <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b> <u>E</u><u>A</u><b>;</b>, where <u>E</u><u>A</u> is the ethernet  address  associ‐
-                     ated  with  the IP address <u>A</u> in the NAT rule. This allows
+                     If  the  NAT rule can be handled in a distributed manner,
+                     then there is an additional action (for both  the  flows)
+                     <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b>  <b>=</b>  <u>E</u><u>A</u><b>;</b>, where <u>E</u><u>A</u> is the ethernet address associ‐
+                     ated with the IP address <u>A</u> in the NAT rule.  This  allows
                      upstream MAC learning to point to the correct chassis.
 
-                     If the NAT  rule  has  <b>a</b><b>l</b><b>l</b><b>o</b><b>w</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b><b>s</b>  configured,  then
+                     If  the  NAT  rule  has  <b>a</b><b>l</b><b>l</b><b>o</b><b>w</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b><b>s</b> configured, then
                      there is an additional match <b>i</b><b>p</b><b>4</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b> <u>a</u><u>l</u><u>l</u><u>o</u><u>w</u><u>e</u><u>d</u><b>_</b><u>e</u><u>x</u><u>t</u><b>_</b><u>i</u><u>p</u><u>s</u> .
-                     Similarly,  for  IPV6,  match  would  be  <b>i</b><b>p</b><b>6</b><b>.</b><b>d</b><b>s</b><b>t</b>  <b>=</b><b>=</b> <u>a</u><u>l</u><u>�</u>��
+                     Similarly, for  IPV6,  match  would  be  <b>i</b><b>p</b><b>6</b><b>.</b><b>d</b><b>s</b><b>t</b>  <b>=</b><b>=</b>  <u>a</u><u>l</u><u>�</u>��
                      <u>l</u><u>o</u><u>w</u><u>e</u><u>d</u><b>_</b><u>e</u><u>x</u><u>t</u><b>_</b><u>i</u><u>p</u><u>s</u>.
 
-                     If the NAT rule has <b>e</b><b>x</b><b>e</b><b>m</b><b>p</b><b>t</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b><b>s</b> set, then  there  is
-                     an  additional  flow configured at the priority <u>P</u> <b>+</b> <b>2</b>  of
-                     corresponding NAT rule. The flow matches  if  destination
-                     ip  is  an <b>e</b><b>x</b><b>e</b><b>m</b><b>p</b><b>t</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b> and the action is <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> . This
-                     flow is used to bypass the  ct_snat  action  for  a  flow
+                     If  the  NAT rule has <b>e</b><b>x</b><b>e</b><b>m</b><b>p</b><b>t</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b><b>s</b> set, then there is
+                     an additional flow configured at the priority <u>P</u> <b>+</b>  <b>2</b>   of
+                     corresponding  NAT  rule. The flow matches if destination
+                     ip is an <b>e</b><b>x</b><b>e</b><b>m</b><b>p</b><b>t</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b> and the action is <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>  .  This
+                     flow  is  used  to  bypass  the ct_snat action for a flow
                      which is destinted to <b>e</b><b>x</b><b>e</b><b>m</b><b>p</b><b>t</b><b>e</b><b>d</b><b>_</b><b>e</b><b>x</b><b>t</b><b>_</b><b>i</b><b>p</b><b>s</b>.
 
-              •      An  additional flow is added for traffic that goes in op‐
-                     posite direction (i.e. it enters a network  with  config‐
-                     ured  SNAT). Where the flow above matched on <b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b> <u>A</u>
-                     &amp;&amp;&amp;&amp; <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>G</u><u>W</u>, this flow matches on  <b>i</b><b>p</b><b>4</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b>  <u>A</u>  &amp;&amp;&amp;&amp;
+              •      An additional flow is added for traffic that goes in  op‐
+                     posite  direction  (i.e. it enters a network with config‐
+                     ured SNAT). Where the flow above matched on <b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b> <b>=</b><b>=</b>  <u>A</u>
+                     &amp;&amp;&amp;&amp;  <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b>  <b>=</b><b>=</b> <u>G</u><u>W</u>, this flow matches on  <b>i</b><b>p</b><b>4</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b> <u>A</u> &amp;&amp;&amp;&amp;
                      <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>G</u><u>W</u>. A CT state is initiated for this traffic so
-                     that  the following table, <b>l</b><b>r</b><b>_</b><b>o</b><b>u</b><b>t</b><b>_</b><b>p</b><b>o</b><b>s</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b>, can identify
-                     whether the traffic flow was initiated from the  internal
+                     that the following table, <b>l</b><b>r</b><b>_</b><b>o</b><b>u</b><b>t</b><b>_</b><b>p</b><b>o</b><b>s</b><b>t</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b>, can  identify
+                     whether  the traffic flow was initiated from the internal
                      or external network.
 
               •      If the <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>c</b><b>t</b><b>-</b><b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b><b>-</b><b>a</b><b>l</b><b>l</b> is set to <b>t</b><b>r</b><b>u</b><b>e</b> the following
-                     two  flows  are  configured matching on <b>i</b><b>p</b> &amp;&amp;&amp;&amp; <b>(</b><b>!</b><b>c</b><b>t</b><b>.</b><b>t</b><b>r</b><b>k</b> <b>|</b><b>|</b>
-                     <b>!</b><b>c</b><b>t</b><b>.</b><b>r</b><b>p</b><b>l</b><b>)</b> &amp;&amp;&amp;&amp; <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>u</b><b>n</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>n</b><b>e</b><b>w</b> <b>=</b><b>=</b> <b>1</b> &amp;&amp;&amp;&amp; <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b>  <b>=</b><b>=</b>  <b>D</b><b>G</b><b>P</b>  &amp;&amp;&amp;&amp;
+                     two flows are configured matching on <b>i</b><b>p</b>  &amp;&amp;&amp;&amp;  <b>(</b><b>!</b><b>c</b><b>t</b><b>.</b><b>t</b><b>r</b><b>k</b>  <b>|</b><b>|</b>
+                     <b>!</b><b>c</b><b>t</b><b>.</b><b>r</b><b>p</b><b>l</b><b>)</b>  &amp;&amp;&amp;&amp;  <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>u</b><b>n</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>n</b><b>e</b><b>w</b>  <b>=</b><b>=</b> <b>1</b> &amp;&amp;&amp;&amp; <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <b>D</b><b>G</b><b>P</b> &amp;&amp;&amp;&amp;
                      <b>i</b><b>s</b><b>_</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>r</b><b>e</b><b>s</b><b>i</b><b>d</b><b>e</b><b>n</b><b>t</b><b>(</b><b>C</b><b>H</b><b>A</b><b>S</b><b>S</b><b>I</b><b>S</b><b>)</b>
-                      and  <b>i</b><b>p</b>  &amp;&amp;&amp;&amp;  <b>c</b><b>t</b><b>.</b><b>n</b><b>e</b><b>w</b>  &amp;&amp;&amp;&amp; <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>u</b><b>n</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>n</b><b>o</b><b>t</b><b>_</b><b>t</b><b>r</b><b>a</b><b>c</b><b>k</b><b>e</b><b>d</b> <b>=</b><b>=</b> <b>1</b> &amp;&amp;&amp;&amp;
-                     <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <b>D</b><b>G</b><b>P</b> &amp;&amp;&amp;&amp;  <b>i</b><b>s</b><b>_</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>r</b><b>e</b><b>s</b><b>i</b><b>d</b><b>e</b><b>n</b><b>t</b><b>(</b><b>C</b><b>H</b><b>A</b><b>S</b><b>S</b><b>I</b><b>S</b><b>)</b>both  with
+                      and <b>i</b><b>p</b> &amp;&amp;&amp;&amp; <b>c</b><b>t</b><b>.</b><b>n</b><b>e</b><b>w</b> &amp;&amp;&amp;&amp;  <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>u</b><b>n</b><b>s</b><b>n</b><b>a</b><b>t</b><b>_</b><b>n</b><b>o</b><b>t</b><b>_</b><b>t</b><b>r</b><b>a</b><b>c</b><b>k</b><b>e</b><b>d</b>  <b>=</b><b>=</b>  <b>1</b>  &amp;&amp;&amp;&amp;
+                     <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b>  <b>=</b><b>=</b>  <b>D</b><b>G</b><b>P</b> &amp;&amp;&amp;&amp; <b>i</b><b>s</b><b>_</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>r</b><b>e</b><b>s</b><b>i</b><b>d</b><b>e</b><b>n</b><b>t</b><b>(</b><b>C</b><b>H</b><b>A</b><b>S</b><b>S</b><b>I</b><b>S</b><b>)</b>both with
                      an action <b>c</b><b>t</b><b>_</b><b>c</b><b>o</b><b>m</b><b>m</b><b>i</b><b>t</b><b>_</b><b>t</b><b>o</b><b>_</b><b>z</b><b>o</b><b>n</b><b>e</b><b>(</b><b>s</b><b>n</b><b>a</b><b>t</b><b>)</b><b>;</b>.
 
               •      A priority-0 logical flow with match <b>1</b> has actions <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>.
@@ -4022,40 +4033,40 @@
        Packets reaching this table are processed according to the flows below:
 
               •      Traffic that goes directly into a network configured with
-                     SNAT  on  Distributed  routers, and was initiated from an
-                     external network (i.e. it matches <b>c</b><b>t</b><b>.</b><b>n</b><b>e</b><b>w</b>),  is  committed
-                     to  the SNAT CT zone. This ensures that replies returning
-                     from the SNATed network do not have their source  address
-                     translated.  For  details  about match rules and priority
-                     see  section  "Egress  Table  3:  SNAT   on   Distributed
+                     SNAT on Distributed routers, and was  initiated  from  an
+                     external  network  (i.e. it matches <b>c</b><b>t</b><b>.</b><b>n</b><b>e</b><b>w</b>), is committed
+                     to the SNAT CT zone. This ensures that replies  returning
+                     from  the SNATed network do not have their source address
+                     translated. For details about match  rules  and  priority
+                     see   section   "Egress  Table  3:  SNAT  on  Distributed
                      Routers".
 
-              •      A  priority-0  logical  flow that matches all packets not
+              •      A priority-0 logical flow that matches  all  packets  not
                      already handled (match <b>1</b>) and action <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>.
 
      <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>5</u><u>:</u> <u>E</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>L</u><u>o</u><u>o</u><u>p</u><u>b</u><u>a</u><u>c</u><u>k</u>
 
-       For distributed logical routers where one of the logical  router  ports
+       For  distributed  logical routers where one of the logical router ports
        specifies a gateway chassis.
 
-       While  UNDNAT  and SNAT processing have already occurred by this point,
-       this traffic needs to be forced through egress loopback  on  this  dis‐
+       While UNDNAT and SNAT processing have already occurred by  this  point,
+       this  traffic  needs  to be forced through egress loopback on this dis‐
        tributed gateway port instance, in order for UNSNAT and DNAT processing
-       to  be applied, and also for IP routing and ARP resolution after all of
+       to be applied, and also for IP routing and ARP resolution after all  of
        the NAT processing, so that the packet can be forwarded to the destina‐
        tion.
 
        This table has the following flows:
 
-              •      For each NAT rule in the OVN  Northbound  database  on  a
-                     distributed  router,  a  priority-100  logical  flow with
-                     match <b>i</b><b>p</b><b>4</b><b>.</b><b>d</b><b>s</b><b>t</b> <b>=</b><b>=</b> <u>E</u> &amp;&amp;&amp;&amp; <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>G</u><u>W</u>  &amp;&amp;&amp;&amp;  <b>i</b><b>s</b><b>_</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>r</b><b>e</b><b>s</b><b>i</b>‐‐
-                     <b>d</b><b>e</b><b>n</b><b>t</b><b>(</b><u>P</u><b>)</b>,  where <u>E</u> is the external IP address specified in
-                     the NAT rule, <u>G</u><u>W</u> is the distributed gateway  port  corre‐
-                     sponding  to  the  NAT  rule (specified or inferred). For
-                     dnat_and_snat NAT rule, <u>P</u> is the logical  port  specified
-                     in  the  NAT rule. If <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b> column of <b>N</b><b>A</b><b>T</b> table is
-                     NOT set, then <u>P</u> is the <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b> <b>p</b><b>o</b><b>r</b><b>t</b>  of  <u>G</u><u>W</u>  with
+              •      For  each  NAT  rule  in the OVN Northbound database on a
+                     distributed router,  a  priority-100  logical  flow  with
+                     match  <b>i</b><b>p</b><b>4</b><b>.</b><b>d</b><b>s</b><b>t</b>  <b>=</b><b>=</b> <u>E</u> &amp;&amp;&amp;&amp; <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>G</u><u>W</u> &amp;&amp;&amp;&amp; <b>i</b><b>s</b><b>_</b><b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>r</b><b>e</b><b>s</b><b>i</b>‐‐
+                     <b>d</b><b>e</b><b>n</b><b>t</b><b>(</b><u>P</u><b>)</b>, where <u>E</u> is the external IP address specified  in
+                     the  NAT  rule, <u>G</u><u>W</u> is the distributed gateway port corre‐
+                     sponding to the NAT rule  (specified  or  inferred).  For
+                     dnat_and_snat  NAT  rule, <u>P</u> is the logical port specified
+                     in the NAT rule. If <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>p</b><b>o</b><b>r</b><b>t</b> column of <b>N</b><b>A</b><b>T</b>  table  is
+                     NOT  set,  then  <u>P</u> is the <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>r</b><b>e</b><b>d</b><b>i</b><b>r</b><b>e</b><b>c</b><b>t</b> <b>p</b><b>o</b><b>r</b><b>t</b> of <u>G</u><u>W</u> with
                      the following actions:
 
                      <b>c</b><b>l</b><b>o</b><b>n</b><b>e</b> <b>{</b>
@@ -4073,9 +4084,9 @@
                      <b>}</b><b>;</b>
 
 
-                     <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>l</b><b>o</b><b>o</b><b>p</b><b>b</b><b>a</b><b>c</b><b>k</b>  is set since in_port is unchanged and the
+                     <b>f</b><b>l</b><b>a</b><b>g</b><b>s</b><b>.</b><b>l</b><b>o</b><b>o</b><b>p</b><b>b</b><b>a</b><b>c</b><b>k</b> is set since in_port is unchanged and  the
                      packet may return back to that port after NAT processing.
-                     <b>R</b><b>E</b><b>G</b><b>B</b><b>I</b><b>T</b><b>_</b><b>E</b><b>G</b><b>R</b><b>E</b><b>S</b><b>S</b><b>_</b><b>L</b><b>O</b><b>O</b><b>P</b><b>B</b><b>A</b><b>C</b><b>K</b> is set  to  indicate  that  egress
+                     <b>R</b><b>E</b><b>G</b><b>B</b><b>I</b><b>T</b><b>_</b><b>E</b><b>G</b><b>R</b><b>E</b><b>S</b><b>S</b><b>_</b><b>L</b><b>O</b><b>O</b><b>P</b><b>B</b><b>A</b><b>C</b><b>K</b>  is  set  to  indicate that egress
                      loopback has occurred, in order to skip the source IP ad‐
                      dress check against the router address.
 
@@ -4085,33 +4096,33 @@
 
        Packets that reach this table are ready for delivery. It contains:
 
-              •      Priority-110  logical flows that match IP multicast pack‐
-                     ets on each enabled logical router port  and  modify  the
-                     Ethernet  source  address  of the packets to the Ethernet
+              •      Priority-110 logical flows that match IP multicast  pack‐
+                     ets  on  each  enabled logical router port and modify the
+                     Ethernet source address of the packets  to  the  Ethernet
                      address of the port and then execute action <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b><b>;</b>.
 
               •      Priority-100 logical flows that match packets on each en‐
                      abled logical router port, with action <b>o</b><b>u</b><b>t</b><b>p</b><b>u</b><b>t</b><b>;</b>.
 
-              •      A priority-0 logical flow that matches  all  packets  not
+              •      A  priority-0  logical  flow that matches all packets not
                      already handled (match <b>1</b>) and drops them (action <b>d</b><b>r</b><b>o</b><b>p</b><b>;</b>).
 
 <b>D</b><b>R</b><b>O</b><b>P</b> <b>S</b><b>A</b><b>M</b><b>P</b><b>L</b><b>I</b><b>N</b><b>G</b>
-       As  described  in  the previous section, there are several places where
+       As described in the previous section, there are  several  places  where
        ovn-northd might decided to drop a packet by explicitly creating a <b>L</b><b>o</b><b>g</b>‐‐
        <b>i</b><b>c</b><b>a</b><b>l</b><b>_</b><b>F</b><b>l</b><b>o</b><b>w</b> with the <b>d</b><b>r</b><b>o</b><b>p</b><b>;</b> action.
 
        When debug drop-sampling has been cofigured in the OVN Northbound data‐
-       base, the ovn-northd will replace all the <b>d</b><b>r</b><b>o</b><b>p</b><b>;</b>  actions  with  a  <b>s</b><b>a</b><b>m</b>‐‐
-       <b>p</b><b>l</b><b>e</b><b>(</b><b>p</b><b>r</b><b>i</b><b>o</b><b>r</b><b>i</b><b>t</b><b>y</b><b>=</b><b>6</b><b>5</b><b>5</b><b>3</b><b>5</b><b>,</b>         <b>c</b><b>o</b><b>l</b><b>l</b><b>e</b><b>c</b><b>t</b><b>o</b><b>r</b><b>_</b><b>s</b><b>e</b><b>t</b><b>=</b><u>i</u><u>d</u><b>,</b>        <b>o</b><b>b</b><b>s</b><b>_</b><b>d</b><b>o</b><b>m</b><b>a</b><b>i</b><b>n</b><b>=</b><u>o</u><u>b</u><u>s</u><b>_</b><u>i</u><u>d</u><b>,</b>
+       base,  the  ovn-northd  will  replace all the <b>d</b><b>r</b><b>o</b><b>p</b><b>;</b> actions with a <b>s</b><b>a</b><b>m</b>‐‐
+       <b>p</b><b>l</b><b>e</b><b>(</b><b>p</b><b>r</b><b>i</b><b>o</b><b>r</b><b>i</b><b>t</b><b>y</b><b>=</b><b>6</b><b>5</b><b>5</b><b>3</b><b>5</b><b>,</b>        <b>c</b><b>o</b><b>l</b><b>l</b><b>e</b><b>c</b><b>t</b><b>o</b><b>r</b><b>_</b><b>s</b><b>e</b><b>t</b><b>=</b><u>i</u><u>d</u><b>,</b>         <b>o</b><b>b</b><b>s</b><b>_</b><b>d</b><b>o</b><b>m</b><b>a</b><b>i</b><b>n</b><b>=</b><u>o</u><u>b</u><u>s</u><b>_</b><u>i</u><u>d</u><b>,</b>
        <b>o</b><b>b</b><b>s</b><b>_</b><b>p</b><b>o</b><b>i</b><b>n</b><b>t</b><b>=</b><b>@</b><b>c</b><b>o</b><b>o</b><b>k</b><b>i</b><b>e</b><b>)</b> action, where:
 
-              •      <u>i</u><u>d</u> is the value the <b>d</b><b>e</b><b>b</b><b>u</b><b>g</b><b>_</b><b>d</b><b>r</b><b>o</b><b>p</b><b>_</b><b>c</b><b>o</b><b>l</b><b>l</b><b>e</b><b>c</b><b>t</b><b>o</b><b>r</b><b>_</b><b>s</b><b>e</b><b>t</b> option  con‐
+              •      <u>i</u><u>d</u>  is the value the <b>d</b><b>e</b><b>b</b><b>u</b><b>g</b><b>_</b><b>d</b><b>r</b><b>o</b><b>p</b><b>_</b><b>c</b><b>o</b><b>l</b><b>l</b><b>e</b><b>c</b><b>t</b><b>o</b><b>r</b><b>_</b><b>s</b><b>e</b><b>t</b> option con‐
                      figured in the OVN Northbound.
 
-              •      <u>o</u><u>b</u><u>s</u><b>_</b><u>i</u><u>d</u>  has  it’s  8  most  significant bits equal to the
-                     value of  the  <b>d</b><b>e</b><b>b</b><b>u</b><b>g</b><b>_</b><b>d</b><b>r</b><b>o</b><b>p</b><b>_</b><b>d</b><b>o</b><b>m</b><b>a</b><b>i</b><b>n</b><b>_</b><b>i</b><b>d</b>  option  in  the  OVN
-                     Northbound  and  it’s  24 least significant bits equal to
+              •      <u>o</u><u>b</u><u>s</u><b>_</b><u>i</u><u>d</u> has it’s 8 most  significant  bits  equal  to  the
+                     value  of  the  <b>d</b><b>e</b><b>b</b><b>u</b><b>g</b><b>_</b><b>d</b><b>r</b><b>o</b><b>p</b><b>_</b><b>d</b><b>o</b><b>m</b><b>a</b><b>i</b><b>n</b><b>_</b><b>i</b><b>d</b>  option  in  the OVN
+                     Northbound and it’s 24 least significant  bits  equal  to
                      the datapath’s tunnel key.
 
 OVN 25.03.3                       ovn-northd                     <u>o</u><u>v</u><u>n</u><u>-</u><u>n</u><u>o</u><u>r</u><u>t</u><u>h</u><u>d</u>(8)
