@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-sb" 5 " DB Schema 21.7.0" "Open vSwitch 25.09.90" "Open vSwitch Manual"
+.TH "ovn-sb" 5 " DB Schema 21.7.1" "Open vSwitch 25.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -903,7 +903,7 @@ optional \fBLogical_DP_Group\fR
 string, either \fBegress\fR or \fBingress\fR
 .TQ 3.00in
 \fBtable_id\fR
-integer, in range 0 to 32
+integer, in range 0 to 33
 .TQ 3.00in
 \fBpriority\fR
 integer, in range 0 to 65,535
@@ -945,7 +945,7 @@ The logical datapath to which the logical flow belongs\[char46]
 The group of logical datapaths to which the logical flow belongs\[char46] This means that the same logical flow belongs to all datapaths in a group\[char46]
 .IP "\fBpipeline\fR: string, either \fBegress\fR or \fBingress\fR"
 The primary flows used for deciding on a packet\(cqs destination are the \fBingress\fR flows\[char46] The \fBegress\fR flows implement ACLs\[char46] See \fBLogical Life Cycle of a Packet\fR, above, for details\[char46]
-.IP "\fBtable_id\fR: integer, in range 0 to 32"
+.IP "\fBtable_id\fR: integer, in range 0 to 33"
 The stage in the logical pipeline, analogous to an OpenFlow table number\[char46]
 .IP "\fBpriority\fR: integer, in range 0 to 65,535"
 The flow\(cqs priority\[char46] Flows with numerically higher priority take precedence over those with lower\[char46] If two logical datapath flows with the same priority both match, then the one actually applied to the packet is undefined\[char46]
@@ -1585,6 +1585,11 @@ Processing automatically moves on to the next table, as if \fBnext;\fR were spec
 .TQ .5in
 \fBct_lb_mark(backends=\fIip\fB[:\fIport\fB][,\[char46]\[char46]\[char46]][; hash_fields=\fIfield1\fB,\fIfield2\fB,\[char46]\[char46]\[char46]][; ct_flag]);\fR
 Same as \fBct_lb\fR, except that it internally uses ct_mark to store the NAT flag, while \fBct_lb\fR uses ct_label for the same purpose\[char46]
+.TP
+\fBct_lb_mark_local;\fR
+.TQ .5in
+\fBct_lb_mark_local(backends=\fIlport_name\fB[\fIip\fB[:\fIport\fB][,\[char46]\[char46]\[char46]][; hash_fields=\fIfield1\fB,\fIfield2\fB,\[char46]\[char46]\[char46]][; ct_flag]);\fR
+Same as \fBct_lb_mark\fR, with the key difference that it implements local-only load balancing\[char46] This mode selects backends only from those running on the current chassis, preventing traffic from being forwarded to backends on remote nodes\[char46]
 .TP
 \fB\fIR\fB = dns_lookup();\fR
 \fBParameters\fR: No parameters\[char46]

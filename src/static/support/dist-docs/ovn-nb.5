@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nb" 5 " DB Schema 7.15.0" "Open vSwitch 25.09.90" "Open vSwitch Manual"
+.TH "ovn-nb" 5 " DB Schema 7.16.0" "Open vSwitch 25.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -1802,6 +1802,8 @@ If an element includes an IPv4 address, but no IPv6 addresses, then IPv6 traffic
 .IP
 This column uses the same lexical syntax as the \fBmatch\fR column in the OVN Southbound database\(cqs \fBPipeline\fR table\[char46] Multiple addresses within an element may be space or comma separated\[char46]
 .IP
+Each element in the set also supports the special prefix \(dqVRRPv3\(dq that allows specification of single physical MAC and multiple VRRPv3 MAC addresses\[char46] As for non VRRPv3 entries, multiple IP addresses can be associated with the specified MACs\[char46] \(dqVRRPv3\(dq with a single physical MAC translates to allowing traffic for the whole \(dqVRRPv3\(dq range of MACs\[char46] See more in the examples\[char46] When the port security configuration entry contains the VRRPv3 label, the behavior for physical MAC (the first specified) is different\[char46] The installed flows will allow traffic from/to VRRP MACs + IPs\[char46] The physical MAC is there to properly allow ARP/ND with given VRRP MACs\[char46] To allow traffic that is not related to virtual router, e\[char46]g\[char46], IP traffic with a physical MAC as a source, a regular port security entry should be added separately\[char46]
+.IP
 This column is provided as a convenience to cloud management systems, but all of the features that it implements can be implemented as ACLs using the \fBACL\fR table\[char46]
 .IP
 Examples:
@@ -1815,6 +1817,15 @@ This adds further restrictions to the first example\[char46] The host may send I
 .TP
 \fB\(dq80:fa:5b:12:42:ba\(dq, \(dq80:fa:5b:06:72:b7 192\[char46]168\[char46]1\[char46]10/24\(dq\fR
 The host may send traffic from and receive traffic to the specified MAC addresses, and to receive traffic to Ethernet multicast and broadcast addresses, but not otherwise\[char46] With MAC 80:fa:5b:12:42:ba, the host may send traffic from and receive traffic to any L3 address\[char46] With MAC 80:fa:5b:06:72:b7, the host may send IPv4 packets from or receive IPv4 packets to only 192\[char46]168\[char46]1\[char46]10, except that it may also receive IPv4 packets to 192\[char46]168\[char46]1\[char46]255 (based on the subnet mask), 255\[char46]255\[char46]255\[char46]255, and any address in 224\[char46]0\[char46]0\[char46]0/4\[char46] The host may not send or receive any IPv6 (including IPv6 Neighbor Discovery) traffic\[char46]
+.TP
+\fB\(dqVRRPv3 <PHYSICAL_MAC>\(dq\fR
+The host may send ARP/ND packets with physical MAC as a source and any of the VRRPv3 MACs as inner SHA/TLL/SLL - 00:00:5e:00:01:00/40 for IPv4 and 00:00:5e:00:02:00/40 for IPv6\[char46] It may also send or receive any traffic with any of VRRPv3 MAC addresses as a source or destination\[char46] But not with the physical MAC address\[char46]
+.TP
+\fB\(dqVRRPv3 <PHYSICAL_MAC>\fR \fB<VRRPV3_MACv4_1>/[<MASK1>]\fR \fB<VRRPV3_MACv4_N>\fR \fB<VRRPV3_MACv6_1>/[<MASK2>]\fR \fB<VRRPV3_MACv6_N>\(dq\fR
+Same as the previous example, but allowed VRRPv3 MAC addresses are limited to the specified ones\[char46] The specified VRRPv3 MAC addresses must have a correct prefix - 00:00:5e:00:01 for IPv4 and 00:00:5e:00:02 for IPv6\[char46] VRRPv3 MACs can be provided with a mask with a prefix between /40 and /48\[char46]
+.TP
+\fB\(dqVRRPv3 <PHYSICAL_MAC>\fR \fB<VRRPV3_MACv4_1>/[<MASK1>]\fR \fB<VRRPV3_MACv4_N>\fR \fB<VRRPV3_MACv6_1>/[<MASK2>]\fR \fB<VRRPV3_MACv6_N>\fR \fB<VRRPV3_IPv4_1>/[<MASK1>]\fR \fB<VRRPV3_IPv4_N>\fR \fB<VRRPV3_IPv6_1>/[<MASK2>]\fR \fB<VRRPV3_IPv6_N>\(dq\fR
+The same as the previous example, but the provided IP addresses further restrict the inner IP for ARP/ND\[char46] As well as IP/IPv6 traffic to/from given VRRPv3 MACs\[char46] The IP address format is the same as for the regular port security entry\[char46]
 .RE
 .IP "\fBpeer\fR: optional string"
 For a switch port used to connect two logical switches, this identifies the other switch port in the pair by \fBname\fR\[char46]
@@ -2039,6 +2050,9 @@ optional string, either \fBtrue\fR or \fBfalse\fR
 .TQ 2.75in
 \fBoptions : use_stateless_nat\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 2.75in
+\fBoptions : distributed\fR
+optional string
 .RE
 .SS "Details:
 .IP "\fBname\fR: string"
@@ -2060,7 +2074,7 @@ Suppose that \fBvips\fR contains a key-value pair \fB10\[char46]0\[char46]0\[cha
 .IP "\fBhealth_check\fR: set of \fBLoad_Balancer_Health_Check\fRs"
 Load balancer health checks associated with this load balancer\[char46]
 .IP "\fBip_port_mappings\fR: map of string-string pairs"
-Maps from endpoint IP to a colon-separated pair of logical port name and source IP, e\[char46]g\[char46] \fB\fIport_name\fB:\fIsourc_ip\fB\fR for IPv4\[char46] Health checks are sent to this port with the specified source IP\[char46] For IPv6 square brackets must be used around IP address, e\[char46]g: \fB\fIport_name\fB:\fI[sourc_ip]\fB\fR\[char46] The source IP must be from the subnet of the monitored endpoint\[char46] It can be either an unused IP from the subnet, or an IP of one of the Logical Router Ports connected to the same switch\[char46] Remote endpoint: Specify :target_zone_name at the end of the above syntax to create remote health checks in a specific zone\[char46]
+Maps from endpoint IP to a colon-separated pair of logical port name and source IP, e\[char46]g\[char46] \fB\fIport_name\fB:\fIsource_ip\fB\fR for IPv4\[char46] Health checks are sent to this port with the specified source IP\[char46] For IPv6 square brackets must be used around IP address, e\[char46]g: \fB\fIport_name\fB:\fI[source_ip]\fB\fR\[char46] The source IP must be from the subnet of the monitored endpoint\[char46] It can be either an unused IP from the subnet, or an IP of one of the Logical Router Ports connected to the same switch\[char46] Remote endpoint: Specify :target_zone_name at the end of the above syntax to create remote health checks in a specific zone\[char46] For distributed load balancers - ip_port_mappings is required\[char46] In the absence of health checks - source_ip is optional\[char46]
 .IP
 For example, in the example above, IP to port mappings might be defined as \fB10\[char46]0\[char46]0\[char46]4\fR=\fBsw0\-p1:10\[char46]0\[char46]0\[char46]2\fR and \fB20\[char46]0\[char46]0\[char46]4\fR=\fBsw1\-p1:20\[char46]0\[char46]0\[char46]2\fR, if the values given were suitable ports and IP addresses\[char46] And remote endpoint: \fB10\[char46]0\[char46]0\[char46]4\fR=\fBsw0\-p1:10\[char46]0\[char46]0\[char46]2\fR:az1, where \fBsw0\-p1\fR - logical port in \fBaz1\fR\[char46]
 .IP
@@ -2139,6 +2153,8 @@ If the CMS provides a positive value (in seconds) for \fBaffinity_timeout\fR, OV
 The value indicates whether ovn-controller should flush CT entries that are related to this LB\[char46] The flush happens if the LB is removed, any of the backends is updated/removed or the LB is not considered local anymore by the ovn-controller\[char46] This option is set to \fBfalse\fR by default\[char46]
 .IP "\fBoptions : use_stateless_nat\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 If the load balancer is configured with \fBuse_stateless_nat\fR option to \fBtrue\fR, the logical router that references this load balancer will use Stateless NAT rules when the logical router has multiple distributed gateway ports(DGP)\[char46] Otherwise, the outbound traffic may be dropped in scenarios where we have different chassis for each DGP\[char46] This option is set to \fBfalse\fR by default\[char46]
+.IP "\fBoptions : distributed\fR: optional string"
+Option enables distributed load balancing across compute nodes, ensuring traffic is always routed to local backends — eliminating east-west traffic between nodes\[char46] Required configuration: \fBip_port_mappings\fR\[char46] NOTE: The addressing of the underlay network must not overlap with the addressing of Load Balancer VIP\[char46] If the Load Balancer is attached to a router that is directly connected to the underlay network and the VIP belongs to the same subnet as used on the underlay network, the traffic won\(cqt be spread across all chassis\[char46] Instead, it will be concentrated only on the chassis that hosts the Distributed Gateway Port of the router\[char46]
 .bp
 .SH "Load_Balancer_Group TABLE"
 .PP
@@ -4611,6 +4627,9 @@ Each row represents one network function entity\[char46] This contains a pair of
 \fBname\fR
 string (must be unique within table)
 .TQ 3.00in
+\fBid\fR
+integer, in range 1 to 255 (must be unique within table)
+.TQ 3.00in
 \fBinport\fR
 \fBLogical_Switch_Port\fR
 .TQ 3.00in
@@ -4629,6 +4648,8 @@ map of string-string pairs
 .SS "Details:
 .IP "\fBname\fR: string (must be unique within table)"
 Name of the \fBNetwork_Function\fR\[char46] Name should be unique\[char46]
+.IP "\fBid\fR: integer, in range 1 to 255 (must be unique within table)"
+A unique integer between 1 and 255 must be assigned to each \fBNetwork_Function\fR\[char46]
 .IP "\fBinport\fR: \fBLogical_Switch_Port\fR"
 \fBLogical_Switch_Port\fR where request traffic for from-lport ACL and response traffic for to-lport ACL is redirected\[char46]
 .IP "\fBoutport\fR: \fBLogical_Switch_Port\fR"

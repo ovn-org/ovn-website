@@ -1891,8 +1891,22 @@ Logical_Switch_Port TABLE
               the OVN Southbound database’s Pipeline table. Multiple addresses
               within an element may be space or comma separated.
 
-              This  column  is  provided  as a convenience to cloud management
-              systems, but all of the features that it implements can  be  im‐
+              Each  element  in  the set also supports the special prefix "VR‐
+              RPv3" that allows specification of single physical MAC and  mul‐
+              tiple  VRRPv3 MAC addresses. As for non VRRPv3 entries, multiple
+              IP addresses can be associated with the specified MACs. "VRRPv3"
+              with a single physical MAC translates to  allowing  traffic  for
+              the whole "VRRPv3" range of MACs. See more in the examples. When
+              the port security configuration entry contains the VRRPv3 label,
+              the  behavior  for physical MAC (the first specified) is differ‐
+              ent. The installed flows will allow traffic from/to VRRP MACs  +
+              IPs.  The  physical  MAC  is there to properly allow ARP/ND with
+              given VRRP MACs. To allow traffic that is not related to virtual
+              router, e.g., IP traffic with a physical MAC as a source, a reg‐
+              ular port security entry should be added separately.
+
+              This column is provided as a  convenience  to  cloud  management
+              systems,  but  all of the features that it implements can be im‐
               plemented as ACLs using the ACL table.
 
               Examples:
@@ -1901,33 +1915,60 @@ Logical_Switch_Port TABLE
                      The host may send traffic from and receive traffic to the
                      specified MAC address, and to receive traffic to Ethernet
                      multicast and broadcast addresses, but not otherwise. The
-                     host  may not send ARP or IPv6 Neighbor Discovery packets
-                     with inner source Ethernet addresses other than  the  one
+                     host may not send ARP or IPv6 Neighbor Discovery  packets
+                     with  inner  source Ethernet addresses other than the one
                      specified.
 
               80:fa:5b:06:72:b7 192.168.1.10/24
-                     This  adds further restrictions to the first example. The
-                     host may send IPv4 packets from or receive  IPv4  packets
-                     to  only  192.168.1.10,  except  that it may also receive
+                     This adds further restrictions to the first example.  The
+                     host  may  send IPv4 packets from or receive IPv4 packets
+                     to only 192.168.1.10, except that  it  may  also  receive
                      IPv4 packets to 192.168.1.255 (based on the subnet mask),
                      255.255.255.255, and any address in 224.0.0.0/4. The host
-                     may not send ARPs with a source  Ethernet  address  other
-                     than  80:fa:5b:06:72:b7 or source IPv4 address other than
-                     192.168.1.10. The host may not send or receive  any  IPv6
+                     may  not  send  ARPs with a source Ethernet address other
+                     than 80:fa:5b:06:72:b7 or source IPv4 address other  than
+                     192.168.1.10.  The  host may not send or receive any IPv6
                      (including IPv6 Neighbor Discovery) traffic.
 
               "80:fa:5b:12:42:ba", "80:fa:5b:06:72:b7 192.168.1.10/24"
                      The host may send traffic from and receive traffic to the
                      specified MAC addresses, and to receive traffic to Ether‐
                      net multicast and broadcast addresses, but not otherwise.
-                     With  MAC  80:fa:5b:12:42:ba,  the  host may send traffic
-                     from and receive traffic to  any  L3  address.  With  MAC
+                     With MAC 80:fa:5b:12:42:ba, the  host  may  send  traffic
+                     from  and  receive  traffic  to  any L3 address. With MAC
                      80:fa:5b:06:72:b7, the host may send IPv4 packets from or
                      receive IPv4 packets to only 192.168.1.10, except that it
-                     may  also receive IPv4 packets to 192.168.1.255 (based on
-                     the subnet mask), 255.255.255.255,  and  any  address  in
-                     224.0.0.0/4.  The  host  may not send or receive any IPv6
+                     may also receive IPv4 packets to 192.168.1.255 (based  on
+                     the  subnet  mask),  255.255.255.255,  and any address in
+                     224.0.0.0/4. The host may not send or  receive  any  IPv6
                      (including IPv6 Neighbor Discovery) traffic.
+
+              "VRRPv3 <PHYSICAL_MAC>"
+                     The  host  may send ARP/ND packets with physical MAC as a
+                     source and any of the VRRPv3 MACs as inner SHA/TLL/SLL  -
+                     00:00:5e:00:01:00/40  for  IPv4  and 00:00:5e:00:02:00/40
+                     for IPv6. It may also send or receive  any  traffic  with
+                     any  of  VRRPv3 MAC addresses as a source or destination.
+                     But not with the physical MAC address.
+
+              "VRRPv3 <PHYSICAL_MAC> <VRRPV3_MACv4_1>/[<MASK1>] <VR�‐
+              RPV3_MACv4_N> <VRRPV3_MACv6_1>/[<MASK2>] <VRRPV3_MACv6_N>"
+                     Same as the previous example, but allowed VRRPv3 MAC  ad‐
+                     dresses  are limited to the specified ones. The specified
+                     VRRPv3  MAC  addresses  must  have  a  correct  prefix  -
+                     00:00:5e:00:01  for IPv4 and 00:00:5e:00:02 for IPv6. VR‐
+                     RPv3 MACs can be provided with a mask with a  prefix  be‐
+                     tween /40 and /48.
+
+              "VRRPv3 <PHYSICAL_MAC> <VRRPV3_MACv4_1>/[<MASK1>] <VR�‐
+              RPV3_MACv4_N> <VRRPV3_MACv6_1>/[<MASK2>] <VRRPV3_MACv6_N> <VR�‐
+              RPV3_IPv4_1>/[<MASK1>] <VRRPV3_IPv4_N> <VRRPV3_IPv6_1>/[<MASK2>]
+              <VRRPV3_IPv6_N>"
+                     The same as the previous example, but the provided IP ad‐
+                     dresses further restrict the inner IP for ARP/ND. As well
+                     as  IP/IPv6 traffic to/from given VRRPv3 MACs. The IP ad‐
+                     dress format is the same as for the regular port security
+                     entry.
 
        peer: optional string
               For a switch port used to connect  two  logical  switches,  this
@@ -2138,6 +2179,7 @@ Load_Balancer TABLE
          options : ct_flush          optional string, either true or false
          options : use_stateless_nat
                                      optional string, either true or false
+         options : distributed       optional string
 
    Details:
        name: string
@@ -2193,49 +2235,51 @@ Load_Balancer TABLE
 
        ip_port_mappings: map of string-string pairs
               Maps  from endpoint IP to a colon-separated pair of logical port
-              name and source IP, e.g.  port_name:sourc_ip  for  IPv4.  Health
+              name and source IP, e.g. port_name:source_ip  for  IPv4.  Health
               checks  are  sent to this port with the specified source IP. For
               IPv6 square brackets  must  be  used  around  IP  address,  e.g:
-              port_name:[sourc_ip].  The  source IP must be from the subnet of
+              port_name:[source_ip].  The source IP must be from the subnet of
               the monitored endpoint. It can be either an unused IP  from  the
               subnet, or an IP of one of the Logical Router Ports connected to
               the  same  switch. Remote endpoint: Specify :target_zone_name at
               the end of the above syntax to create remote health checks in  a
-              specific zone.
+              specific zone. For distributed load balancers - ip_port_mappings
+              is  required. In the absence of health checks - source_ip is op‐
+              tional.
 
-              For  example, in the example above, IP to port mappings might be
-              defined         as         10.0.0.4=sw0-p1:10.0.0.2          and
-              20.0.0.4=sw1-p1:20.0.0.2,  if  the  values  given  were suitable
-              ports    and    IP    addresses.    And     remote     endpoint:
-              10.0.0.4=sw0-p1:10.0.0.2:az1,  where  sw0-p1  -  logical port in
+              For example, in the example above, IP to port mappings might  be
+              defined          as         10.0.0.4=sw0-p1:10.0.0.2         and
+              20.0.0.4=sw1-p1:20.0.0.2, if  the  values  given  were  suitable
+              ports     and     IP    addresses.    And    remote    endpoint:
+              10.0.0.4=sw0-p1:10.0.0.2:az1, where sw0-p1  -  logical  port  in
               az1.
 
-              For  IPv6  IP   to   port   mappings   might   be   defined   as
+              For   IPv6   IP   to   port   mappings   might   be  defined  as
               [2001::1]=sw0-p1:[2002::1]. Remote endpoint: same as for IP.
 
        selection_fields: set of strings, one of eth_dst, eth_src, ip_dst,
        ip_src, ipv6_dst, ipv6_src, tp_dst, or tp_src
-              OVN  native  load  balancers  are  supported  using the OpenFlow
-              groups of type  select.  OVS  supports  two  selection  methods:
-              dp_hash  and  hash (with optional fields specified) in selecting
-              the buckets of a group. Please see the  OVS  documentation  (man
-              ovs-ofctl)  for more details on the selection methods. Each end‐
-              point IP (and port if set) is mapped to a bucket  in  the  group
+              OVN native load  balancers  are  supported  using  the  OpenFlow
+              groups  of  type  select.  OVS  supports  two selection methods:
+              dp_hash and hash (with optional fields specified)  in  selecting
+              the  buckets  of  a group. Please see the OVS documentation (man
+              ovs-ofctl) for more details on the selection methods. Each  end‐
+              point  IP  (and  port if set) is mapped to a bucket in the group
               flow.
 
-              CMS  can  choose the hash selection method by setting the selec‐
-              tion fields in this  column.  ovs-vswitchd  uses  the  specified
+              CMS can choose the hash selection method by setting  the  selec‐
+              tion  fields  in  this  column.  ovs-vswitchd uses the specified
               fields in generating the hash.
 
-              Example:  {ip_proto,ip_src,ip_dst} for a 3-tuple match. Example:
-              {ip_proto,ipv6_src,ipv6_dst}  for  an   IPv6   match.   Example:
+              Example: {ip_proto,ip_src,ip_dst} for a 3-tuple match.  Example:
+              {ip_proto,ipv6_src,ipv6_dst}   for   an   IPv6  match.  Example:
               {ip_proto,ip_src,ip_dst,tp_src,tp_dst}.                 Example:
               {ip_src,ip_dst,ipv6_src,ipv6_dst,tp_src,tp_dst}.
 
               dp_hash selection method uses the assistance of datapath to cal‐
               culate the hash and it is expected to be faster than hash selec‐
-              tion method. So CMS should take this into  consideration  before
-              using  the hash method. Please consult the OVS documentation and
+              tion  method.  So CMS should take this into consideration before
+              using the hash method. Please consult the OVS documentation  and
               OVS sources for the implementation details.
 
      Common Columns:
@@ -2246,53 +2290,53 @@ Load_Balancer TABLE
      Load_Balancer options:
 
        options : reject: optional string, either true or false
-              If the load balancer is created with --reject option and it  has
-              no  active  backends,  a  TCP reset segment (for tcp) or an ICMP
-              port unreachable packet (for all other kind of traffic) will  be
-              sent  whenever an incoming packet is received for this load-bal‐
-              ancer. Please note using --reject option will  disable  empty_lb
+              If  the load balancer is created with --reject option and it has
+              no active backends, a TCP reset segment (for  tcp)  or  an  ICMP
+              port  unreachable packet (for all other kind of traffic) will be
+              sent whenever an incoming packet is received for this  load-bal‐
+              ancer.  Please  note using --reject option will disable empty_lb
               SB controller event for this load balancer.
 
        options : hairpin_snat_ip: optional string
-              IP  to  be  used  as  source IP for packets that have been hair-
-              pinned after load balancing. The default behavior when  the  op‐
-              tion  is  not  set is to use the load balancer VIP as source IP.
+              IP to be used as source IP for  packets  that  have  been  hair-
+              pinned  after  load balancing. The default behavior when the op‐
+              tion is not set is to use the load balancer VIP  as  source  IP.
               This option may have exactly one IPv4 and/or one IPv6 address on
               it, separated by a space character.
 
        options : skip_snat: optional string
-              If the load balancing rule is configured with skip_snat  option,
-              the  option  lb_force_snat_ip  configured for the logical router
-              that references this load balancer will not be applied for  this
+              If  the load balancing rule is configured with skip_snat option,
+              the option lb_force_snat_ip configured for  the  logical  router
+              that  references this load balancer will not be applied for this
               load balancer.
 
        options : add_route: optional string
-              If  set  to  true, then neighbor routers will have logical flows
-              added that will allow for routing to the VIP IP.  It  also  will
+              If set to true, then neighbor routers will  have  logical  flows
+              added  that  will  allow for routing to the VIP IP. It also will
               have ARP resolution logical flows added. By setting this option,
-              it  means  there  is  no  reason to create a Logical_Router_Sta�‐
-              tic_Route from neighbor routers to this  NAT  address.  It  also
-              means  that  no  ARP request is required for neighbor routers to
-              learn the IP-MAC mapping for this VIP IP. For  more  information
-              about  what  flows  are  added  for  IP  routes,  please see the
+              it means there is no  reason  to  create  a  Logical_Router_Sta�‐
+              tic_Route  from  neighbor  routers  to this NAT address. It also
+              means that no ARP request is required for  neighbor  routers  to
+              learn  the  IP-MAC mapping for this VIP IP. For more information
+              about what flows  are  added  for  IP  routes,  please  see  the
               ovn-northd manpage section on IP Routing.
 
        options : neighbor_responder: optional string
-              If set to all, then routers on which the load  balancer  is  ap‐
-              plied  reply  to ARP/neighbor discovery requests for all VIPs of
-              the load balancer. If set to reachable, then  routers  on  which
+              If  set  to  all, then routers on which the load balancer is ap‐
+              plied reply to ARP/neighbor discovery requests for all  VIPs  of
+              the  load  balancer.  If set to reachable, then routers on which
               the load balancer is applied reply to ARP/neighbor discovery re‐
-              quests  only for VIPs that are part of a router’s subnet. If set
-              to none, then routers on which  the  load  balancer  is  applied
-              never  reply  to  ARP/neighbor discovery requests for any of the
+              quests only for VIPs that are part of a router’s subnet. If  set
+              to  none,  then  routers  on  which the load balancer is applied
+              never reply to ARP/neighbor discovery requests for  any  of  the
               load balancer VIPs. Load balancers with options:template=true do
               not support reachable as a valid mode. The default value of this
-              option, if not specified, is reachable  for  regular  load  bal‐
+              option,  if  not  specified,  is reachable for regular load bal‐
               ancers and none for template load balancers.
 
        options : template: optional string
-              Option  to  be  set to true, if the load balancer is a template.
-              The load balancer VIPs and backends must be  using  Chassis_Tem�‐
+              Option to be set to true, if the load balancer  is  a  template.
+              The  load  balancer VIPs and backends must be using Chassis_Tem�‐
               plate_Var in their definitions.
 
               Load balancer template VIP supported formats are:
@@ -2300,7 +2344,7 @@ Load_Balancer TABLE
               ^VIP_VAR[:^PORT_VAR|:port]
 
 
-              where  VIP_VAR and PORT_VAR are keys of the Chassis_Template_Var
+              where VIP_VAR and PORT_VAR are keys of the  Chassis_Template_Var
               variables records.
 
               Note: The VIP and PORT cannot be combined into a single template
@@ -2314,43 +2358,56 @@ Load_Balancer TABLE
               ^BACKENDS_VAR1,^BACKENDS_VAR2
 
 
-              where BACKEND_VAR1, PORT_VAR1,  BACKEND_VAR2,  PORT_VAR2,  BACK�‐
+              where  BACKEND_VAR1,  PORT_VAR1,  BACKEND_VAR2, PORT_VAR2, BACK�‐
               ENDS_VAR1 and BACKENDS_VAR2 are keys of the Chassis_Template_Var
               variables records.
 
               In the above examples, square brackets are only used to indicate
-              choosing  between the enclosed options. But when adding to Chas�‐
-              sis_Template_Var variables backend IPv6 addresses  must  be  en‐
-              closed  in []. VIPs must not be enclosed in []. For example: lb�‐
+              choosing between the enclosed options. But when adding to  Chas�‐
+              sis_Template_Var  variables  backend  IPv6 addresses must be en‐
+              closed in []. VIPs must not be enclosed in []. For example:  lb�‐
               vip="3001::10",lbport=12010,lbback="[2001::1]",
               ip6_back="[2001::1]:12010"
 
        options : address-family: optional string
-              Address family used by the load balancer. Supported  values  are
-              ipv4  and  ipv6.  The  address-family is only used for load bal‐
-              ancers with options:template=true. For explicit load  balancers,
+              Address  family  used by the load balancer. Supported values are
+              ipv4 and ipv6. The address-family is only  used  for  load  bal‐
+              ancers  with options:template=true. For explicit load balancers,
               setting the address-family has no effect.
 
        options : affinity_timeout: optional string
-              If  the  CMS  provides  a positive value (in seconds) for affin�‐
-              ity_timeout, OVN will dnat connections received  from  the  same
-              client  to this lb to the same backend if received in the affin‐
+              If the CMS provides a positive value  (in  seconds)  for  affin�‐
+              ity_timeout,  OVN  will  dnat connections received from the same
+              client to this lb to the same backend if received in the  affin‐
               ity timeslot. Max supported affinity_timeout is 65535 seconds.
 
        options : ct_flush: optional string, either true or false
-              The value indicates whether ovn-controller should flush  CT  en‐
-              tries  that  are related to this LB. The flush happens if the LB
-              is removed, any of the backends is updated/removed or the LB  is
-              not  considered local anymore by the ovn-controller. This option
+              The  value  indicates whether ovn-controller should flush CT en‐
+              tries that are related to this LB. The flush happens if  the  LB
+              is  removed, any of the backends is updated/removed or the LB is
+              not considered local anymore by the ovn-controller. This  option
               is set to false by default.
 
        options : use_stateless_nat: optional string, either true or false
               If the load balancer is configured with use_stateless_nat option
-              to true, the logical router that references this  load  balancer
-              will  use Stateless NAT rules when the logical router has multi‐
-              ple distributed  gateway  ports(DGP).  Otherwise,  the  outbound
-              traffic  may  be  dropped  in  scenarios where we have different
+              to  true,  the logical router that references this load balancer
+              will use Stateless NAT rules when the logical router has  multi‐
+              ple  distributed  gateway  ports(DGP).  Otherwise,  the outbound
+              traffic may be dropped in  scenarios  where  we  have  different
               chassis for each DGP. This option is set to false by default.
+
+       options : distributed: optional string
+              Option  enables distributed load balancing across compute nodes,
+              ensuring traffic is always routed to local backends —  eliminat‐
+              ing  east-west  traffic  between  nodes. Required configuration:
+              ip_port_mappings. NOTE: The addressing of the  underlay  network
+              must  not  overlap  with the addressing of Load Balancer VIP. If
+              the Load Balancer is attached to a router that is directly  con‐
+              nected  to  the underlay network and the VIP belongs to the same
+              subnet as used on the underlay network,  the  traffic  won’t  be
+              spread across all chassis. Instead, it will be concentrated only
+              on  the  chassis  that hosts the Distributed Gateway Port of the
+              router.
 
 Load_Balancer_Group TABLE
        Each row represents a logical grouping of load balancers. It is  up  to
@@ -3270,7 +3327,6 @@ Mirror_Rule TABLE
               The Mirror Rule priority. Rule with higher priority takes prece‐
               dence  over  those  with lower. A rule is uniquely identified by
               the priority and match string.
-
 Meter TABLE
        Each row in this table represents a meter that can be used for  QoS  or
        rate-limiting.
@@ -5414,6 +5470,8 @@ Network_Function TABLE
 
    Summary:
        name                          string (must be unique within table)
+       id                            integer,  in  range  1  to  255  (must be
+                                     unique within table)
        inport                        Logical_Switch_Port
        outport                       Logical_Switch_Port
        health_check                  optional Network_Function_Health_Check
@@ -5424,12 +5482,16 @@ Network_Function TABLE
        name: string (must be unique within table)
               Name of the Network_Function. Name should be unique.
 
+       id: integer, in range 1 to 255 (must be unique within table)
+              A unique integer between 1 and 255 must be assigned to each Net�‐
+              work_Function.
+
        inport: Logical_Switch_Port
               Logical_Switch_Port where request traffic for from-lport ACL and
               response traffic for to-lport ACL is redirected.
 
        outport: Logical_Switch_Port
-              Logical_Switch_Port  where  request traffic for to-lport ACL and
+              Logical_Switch_Port where request traffic for to-lport  ACL  and
               response traffic for from-lport ACL is redirected.
 
        health_check: optional Network_Function_Health_Check
@@ -5456,7 +5518,7 @@ Network_Function_Health_Check TABLE
 
    Details:
        name: string (must be unique within table)
-              Name  of  the  Network_Function_Health_Check.  Name  should   be
+              Name   of  the  Network_Function_Health_Check.  Name  should  be
               unique.
 
      Health check options:
@@ -5465,7 +5527,7 @@ Network_Function_Health_Check TABLE
               The interval, in seconds, between health checks. Default: 5s.
 
        options : timeout: optional string, containing an integer
-              The  time, in seconds, after which a health check times out. De‐
+              The time, in seconds, after which a health check times out.  De‐
               fault: 3s.
 
        options : success_count: optional string, containing an integer
@@ -5481,4 +5543,4 @@ Network_Function_Health_Check TABLE
        external_ids: map of string-string pairs
               See External IDs at the beginning of this document.
 
-Open vSwitch 25.09.90           DB Schema 7.15.0                     ovn-nb(5)
+Open vSwitch 25.09.90           DB Schema 7.16.0                     ovn-nb(5)

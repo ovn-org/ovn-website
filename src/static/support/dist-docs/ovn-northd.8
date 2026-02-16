@@ -499,7 +499,7 @@ next;\fR)\[char46] This is needed for the default allow policy because, while th
 .IP \(bu
 A priority\-65532 flow that sets the allow bit for any traffic in the reply direction for a connection that has been committed to the connection tracker (i\[char46]e\[char46], established flows), as long as the committed flow does not have \fBct_mark\[char46]blocked\fR set\[char46] We only handle traffic in the reply direction here because we want all packets going in the request direction to still go through the flows that implement the currently defined policy based on ACLs\[char46] If a connection is no longer allowed by policy, \fBct_mark\[char46]blocked\fR will get set and packets in the reply direction will no longer be allowed, either\[char46] This flow also clears the register bits \fBreg0[9]\fR and \fBreg0[10]\fR and sets register bit \fBreg0[17]\fR\[char46] If ACL logging and logging of related packets is enabled, then a companion priority\-65533 flow will be installed that accomplishes the same thing but also logs the traffic\[char46]
 .IP \(bu
-The priority\-65532 flows that allow response and related traffic, also set \fBreg8[21] = ct_label\[char46]nf_group\fR, which gets checked in the \fBNetwork Function\fR table\[char46]
+The priority\-65532 flows that allow response and related traffic, also set \fBreg8[21] = ct_label\[char46]nf\fR, which gets checked in the \fBNetwork Function\fR table\[char46]
 .IP \(bu
 A priority\-65532 flow that sets the allow bit for any traffic that is considered related to a committed flow in the connection tracker (e\[char46]g\[char46], an ICMP Port Unreachable from a non-listening UDP port), as long as the committed flow does not have \fBct_mark\[char46]blocked\fR set\[char46] This flow also applies NAT to the related traffic so that ICMP headers and the inner packet have correct addresses\[char46] If ACL logging and logging of related packets is enabled, then a companion priority\-65533 flow will be installed that accomplishes the same thing but also logs the traffic\[char46]
 .IP \(bu
@@ -723,45 +723,72 @@ next(pipeline=egress,table=5);}\fR action for SCTP associations\[char46]
 .IP \(bu
 If any ACLs have tiers configured on them, then three priority 500 flows are installed\[char46] If the current tier counter is 0, 1, or 2, then the current tier counter is incremented by one and the packet is sent back to the previous table for re-evaluation\[char46]
 .RE
-.ST "Ingress Table 23: Stateful"
+.ST "Ingress Table 23: Pre Network Function"
+.PP
+.PP
+This stage selects the active network function from a \fBNetwork_Function_Group\fR based on the network function group ID set by the ACL eval stage earlier\[char46] This stage is applicable for request packets of \fBfrom\-lport\fR ACLs (\fBreg8[22] == 1\fR)\[char46] Response packets for \fBto\-lport\fR ACLs bypass this stage and use \fBct_label\[char46]nf_id\fR directly in the Network Function table\[char46]
+.PP
+.PP
+A network function group can contain one or more network functions\[char46] Health monitoring is performed by sending datapath probes as per parameters defined in \fBNetwork_Function_Health_Check\fR\[char46] This stage selects one of the healthy network functions\[char46] If none are healthy, the behavior follows the \fBfallback\fR column configured in the \fBNetwork_Function_Group\fR table\[char46] If health monitoring is not configured, any one from the group is selected\[char46]
+.PP
+.PP
+When a request packet matches a \fBfrom\-lport\fR ACL with \fBnetwork_function_group\fR set, the ACL eval stage sets \fBreg8[21] = 1\fR (NF enabled), \fBreg8[22] = 1\fR (request direction), and \fBreg0[22\[char46]\[char46]29]\fR to the network function group ID\[char46] This table then selects the active network function from the group and overwrites \fBreg0[22\[char46]\[char46]29]\fR with the specific \fBid\fR of a \fBNetwork_Function\fR table entry\[char46] The subsequent Network Function table uses this NF ID to redirect packets to the appropriate network function port\[char46] In the future, this stage will be extended to support network function load balancing\[char46]
+.RS
+.IP \(bu
+For each network_function_group \fIid\fR with an active network function, a priority\-99 flow matches \fBreg8[21] == 1 &&
+reg8[22] == 1 && reg0[22\[char46]\[char46]29] == \fIid\fB\fR and sets \fBreg0[22\[char46]\[char46]29] = \fInf_id\fB; next;\fR where \fInf_id\fR is the ID of the active network function\[char46] This prepares request packets that matched a \fBfrom\-lport\fR ACL with network_function_group for redirection in the subsequent Network Function table\[char46]
+.IP \(bu
+For each network function group with \fIid\fR that has \fBfallback\fR set to \fBfail\-open\fR, a priority\-10 flow matches \fBreg8[21] == 1 && reg8[22] == 1 &&
+reg0[22\[char46]\[char46]29] == \fIid\fB\fR and sets \fBreg8[21] = 0;
+reg0[22\[char46]\[char46]29] = 0; next;\fR\[char46] This clears both the NF enabled bit and the NF group ID, allowing packets to continue processing through the pipeline without network function redirection when no active network function is available (fail-open behavior)\[char46]
+.IP \(bu
+A priority\-1 flow matches \fBreg8[21] == 1 && reg8[22] == 1
+\fR and sets \fBreg0[22\[char46]\[char46]29] = 0; next;\fR\[char46] This is a catch-all flow for network function groups with \fBfallback\fR set to \fBfail\-close\fR (or default) when no active network function is available\[char46] It clears only the NF group ID, leaving the NF enabled bit set\[char46] These packets will be dropped by the priority\-1 drop rule in the subsequent Network Function table (fail-close behavior)\[char46]
+.IP \(bu
+A priority\-0 flow that simply moves traffic to the next table\[char46]
+.RE
+.ST "Ingress Table 24: Stateful"
 .RS
 .IP \(bu
 A priority 100 flow is added which commits the packet to the conntrack and sets the most significant 32-bits of \fBct_label\fR with the \fBreg3\fR value based on the hint provided by previous tables (with a match for \fBreg0[1] == 1 && reg0[13] == 1\fR)\[char46] This is used by the \fBACLs\fR with label to commit the label value to conntrack\[char46]
 .IP \(bu
 For \fBACLs\fR without label, a second priority\-100 flow commits packets to connection tracker using \fBct_commit; next;\fR action based on a hint provided by the previous tables (with a match for \fBreg0[1] == 1 && reg0[13] == 0\fR)\[char46]
 .IP \(bu
-Corresponding to each of the two priority 100 flows above, a priority 110 flow is added, which has the following extra match and action, but otherwise identical to the priority 100 flow\[char46] Match: \fBreg8[21] == 1\fR (packet matched an ACL with \fBnetwork_function_group\fR set) Action: \fBct_label\[char46]nf_group = 1;
-ct_label\[char46]nf_group_id = reg0[22\[char46]\[char46]29];\fR This is to commit the network_function information in conntrack so that the response and related packets can be redirected to it as well\[char46]
+Corresponding to each of the two priority 100 flows above, a priority 110 flow is added, which has the following extra match and action, but otherwise identical to the priority 100 flow\[char46] Match: \fBreg8[21] == 1\fR (packet matched an ACL with \fBnetwork_function_group\fR set) Action: \fBct_label\[char46]nf = 1;
+ct_label\[char46]nf_id = reg0[22\[char46]\[char46]29];\fR This is to commit the network_function information in conntrack so that the response and related packets can be redirected to it as well\[char46]
 .IP \(bu
 A priority\-0 flow that simply moves traffic to the next table\[char46]
 .RE
 .ST "Ingress Table 25: Network Function"
 .PP
 .PP
-This table implements the packet redirection rules for network function\[char46] If \fBnetwork_function_group\fR column in \fBfrom\-lport\fR ACL is set to \fIid\fR of a \fBNetwork_Function_Group\fR entity, the ingress ACL eval stage sets a set of registers as described before\[char46] Those registers get used here\[char46] In case of \fBto\-lport\fR ACLs, the request packet is redirected in egress pipeline as described later\[char46] The response is handled here using the network_function_group id committed in ct_label during request processing\[char46]
+This table implements packet redirection to network functions\[char46] When a packet matches an ACL with \fBnetwork_function_group\fR column set to the \fBid\fR of a \fBNetwork_Function_Group\fR table entry, the ACL eval stage sets \fBreg8[21] = 1\fR (NF enabled), \fBreg8[22] = 1\fR (request direction), and \fBreg0[22\[char46]\[char46]29]\fR to the network function group ID\[char46] The Pre Network Function stage then selects the active network function from the group and overwrites \fBreg0[22\[char46]\[char46]29]\fR with the specific \fBid\fR of a \fBNetwork_Function\fR table entry\[char46] This table uses that NF ID to redirect packets to the appropriate network function port\[char46]
 .PP
 .PP
-There can be one or more network_functions in a group\[char46] Health monitoring is done by sending datapath probes as par parameters defined in \fBNetwork_Function_Health_Check\fR\[char46] One of the healthy network_functions is selected for each network_function_group\[char46] If none are healthy, or if health monitoring is not configured, any one from the group is selected\[char46] The rules in this table redirects request packets for \fBfrom\-lport\fR ACLs and response packets for \fBto\-lport\fR ACLs to the selected network_function\(cqs \fBinport\fR\[char46] If the network_function ports are not present on this logical switch, their child ports if any, are used\[char46] In the below statements when network function ports are referred it implies the parent or child ports as applicable to this logical switch\[char46]
+This table handles request packets for \fBfrom\-lport\fR ACLs and response packets for \fBto\-lport\fR ACLs\[char46] For \fBfrom\-lport\fR ACLs, request packets are redirected to the network function\(cqs \fBinport\fR, and corresponding response/related packets are handled in the egress pipeline\[char46] For \fBto\-lport\fR ACLs, request packets are handled in the egress pipeline, but corresponding response/related packets for those flows are redirected here using the network function ID stored in \fBct_label\[char46]nf_id\fR during request processing\[char46]
+.PP
+.PP
+If the network function ports are not present on this logical switch, their child ports (if any) are used\[char46] In the statements below, network function ports refer to either the parent or child ports as applicable to this logical switch\[char46]
 .RS
 .IP \(bu
 For each network_function port \fIP\fR, a priority\-100 flow is added that matches \fBinport == \fIP\fB\fR and advances packets to the next table\[char46] Thus packets coming from network function are not subject to redirection\[char46] This flow also sets \fBreg5[16\[char46]\[char46]31] = ct_label\[char46]tun_if_id\fR\[char46] This is used for tunneling packet to originating host in case of cross host traffic redirection for VLAN subnet\[char46] This ct_label field stores the openflow tunnel interface id of the originating host for this connection and gets populated in egress \fBStateful\fR table\[char46]
 .IP \(bu
-For each network_function_group \fIid\fR, a priority\-99 flow matches \fBreg8[21] == 1 && reg8[22] == 1 &&
-reg0[22\[char46]\[char46]29] == \fIid\fB\fR and sets \fBoutport=\fIP\fB; output;\fR where \fIP\fR is the \fBinport\fR of the selected network function\[char46] This ensures redirection of request packets for flows matching \fBfrom\-lport\fR ACLs with network_function\[char46]
+For each active network function with \fIid\fR that is referenced in a network function group, a priority\-99 flow matches \fBreg8[21] == 1 && reg8[22] == 1 &&
+reg0[22\[char46]\[char46]29] == \fIid\fB\fR and sets \fBoutport=\fIP\fB; output;\fR where \fIP\fR is the \fBinport\fR of that network function\[char46] This redirects request packets for flows matching \fBfrom\-lport\fR ACLs with network_function_group to the specific network function selected by the Pre Network Function stage\[char46]
 .IP \(bu
-For each network_function_group \fIid\fR, a priority\-99 rule matches \fBreg8[21] == 1 && reg8[22] == 0 &&
-ct_label\[char46]nf_group_id == \fIid\fB\fR and takes identical action as above\[char46] This ensures redirection of response and related packets matching \fBto\-lport\fR ACLs with network_function\[char46]
+For each active network function with \fIid\fR that is referenced in a network function group, a priority\-99 rule matches \fBreg8[21] == 1 && reg8[22] == 0 &&
+ct_label\[char46]nf_id == \fIid\fB\fR and takes identical action as above\[char46] This redirects response and related packets for \fBto\-lport\fR ACLs to the same network function that handled the request, using the NF ID stored in the connection tracking label\[char46]
 .IP \(bu
 In each of the above cases, when the same packet comes out unchanged through the other port of the network_function, it would match the priority 100 flow and be forwarded to the next table\[char46]
 .IP \(bu
-One priority\-100 rule to skip redirection of multicast packets that hit a network_function ACL\[char46] Match on \fB8[21] == 1 &&
+One priority\-100 rule to skip redirection of multicast packets that hit a network_function ACL\[char46] Match on \fBreg8[21] == 1 &&
 eth\[char46]mcast\fR and action is to advance to the next table\[char46]
 .IP \(bu
-One priority\-1 rule that checks \fBreg8[[21]] == 1\fR, and drops such packets\[char46] This is to address the case where a packet hit an ACL with network function but the network function does not have ports or child ports on this logical switch\[char46]
+One priority\-1 rule that checks \fBreg8[21] == 1\fR, and drops such packets\[char46] This is to address the case where a packet hit an ACL with network function but the network function does not have ports or child ports on this logical switch\[char46]
 .IP \(bu
 One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
 .RE
-.ST "Ingress Table 25: ARP/ND responder"
+.ST "Ingress Table 26: ARP/ND responder"
 .PP
 .PP
 This table implements ARP/ND responder in a logical switch for known IPs\[char46] The advantage of the ARP responder flow is to limit ARP broadcasts by locally responding to ARP requests without the need to send to other hypervisors\[char46] One common case is when the inport is a logical port associated with a VIF and the broadcast is responded to on the local hypervisor rather than broadcast across the whole network and responded to by the destination VM\[char46] This behavior is proxy ARP\[char46]
@@ -1000,7 +1027,7 @@ These flows are required to respond to an ARP request if an ARP request is sent 
 .IP \(bu
 One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
 .RE
-.ST "Ingress Table 26: DHCP option processing"
+.ST "Ingress Table 27: DHCP option processing"
 .PP
 .PP
 This table adds the DHCPv4 options to a DHCPv4 packet from the logical ports configured with IPv4 address(es) and DHCPv4 options, and similarly for DHCPv6 options\[char46] This table also adds flows for the logical ports of type \fBexternal\fR\[char46]
@@ -1036,7 +1063,7 @@ For DHCPv6 Solicit/Request/Confirm packets, this transforms the packet into a DH
 .IP \(bu
 A priority\-0 flow that matches all packets to advances to table 16\[char46]
 .RE
-.ST "Ingress Table 27: DHCP responses"
+.ST "Ingress Table 28: DHCP responses"
 .PP
 .PP
 This table implements DHCP responder for the DHCP replies generated by the previous table\[char46]
@@ -1104,7 +1131,7 @@ where \fIE\fR is the server MAC address and \fIS\fR is the server IPv6 LLA addre
 .IP \(bu
 A priority\-0 flow that matches all packets to advances to table 17\[char46]
 .RE
-.ST "Ingress Table 28 DNS Lookup"
+.ST "Ingress Table 29 DNS Lookup"
 .PP
 .PP
 This table looks up and resolves the DNS names to the corresponding configured IP address(es)\[char46]
@@ -1122,7 +1149,7 @@ A priority\-100 logical flow for each logical switch datapath if it is configure
 .IP
 For valid DNS packets, this transforms the packet into a DNS reply if the DNS name can be resolved, and stores 1 into reg0[4]\[char46] For failed DNS resolution or other kinds of packets, it just stores 0 into reg0[4]\[char46] Either way, it continues to the next table\[char46]
 .RE
-.ST "Ingress Table 29 DNS Responses"
+.ST "Ingress Table 30 DNS Responses"
 .PP
 .PP
 This table implements DNS responder for the DNS replies generated by the previous table\[char46]
@@ -1152,7 +1179,7 @@ A priority\-100 logical flow for each logical switch datapath if it is configure
 .IP
 (This terminates ingress packet processing; the packet does not go to the next ingress table\[char46])
 .RE
-.ST "Ingress table 30 External ports"
+.ST "Ingress table 31 External ports"
 .PP
 .PP
 Traffic from the \fBexternal\fR logical ports enter the ingress datapath pipeline via the \fBlocalnet\fR port\[char46] This table adds the below logical flows to handle the traffic from these ports\[char46]
@@ -1168,7 +1195,7 @@ eth\[char46]src == \fIE\fB && eth\[char46]dst == \fIR\fB
 .IP \(bu
 A priority\-0 flow that matches all packets to advances to table 20\[char46]
 .RE
-.ST "Ingress Table 31 Destination Lookup"
+.ST "Ingress Table 32 Destination Lookup"
 .PP
 .PP
 This table implements switching behavior\[char46] It contains these logical flows:
@@ -1236,7 +1263,7 @@ For each forwarding group configured on the logical switch datapath, a priority\
 .IP \(bu
 One priority\-0 fallback flow that matches all packets with the action \fBoutport = get_fdb(eth\[char46]dst); next;\fR\[char46] The action \fBget_fdb\fR gets the port for the \fBeth\[char46]dst\fR in the MAC learning table of the logical switch datapath\[char46] If there is no entry for \fBeth\[char46]dst\fR in the MAC learning table, then it stores \fBnone\fR in the \fBoutport\fR\[char46]
 .RE
-.ST "Ingress Table 32 Destination unknown"
+.ST "Ingress Table 33 Destination unknown"
 .PP
 .PP
 This table handles the packets whose destination was not found or and looked up in the MAC learning table of the logical switch datapath\[char46] It contains the following flows\[char46]
@@ -1360,7 +1387,31 @@ A logical flow added for each Mirror Rule in Mirror table attached to logical sw
 .PP
 .PP
 This is similar to ingress table \fBQoS\fR except they apply to \fBto\-lport\fR QoS rules\[char46]
-.ST "Egress Table 11: Stateful"
+.ST "Egress Table 11: Pre Network Function"
+.PP
+.PP
+This stage selects the active network function from a \fBNetwork_Function_Group\fR based on the network function group ID set by the ACL eval stage earlier\[char46] This stage is applicable for request packets of \fBto\-lport\fR ACLs (\fBreg8[22] == 1\fR)\[char46] Response packets for \fBfrom\-lport\fR ACLs bypass this stage and use \fBct_label\[char46]nf_id\fR directly in the Network Function table\[char46]
+.PP
+.PP
+A network function group can contain one or more network functions\[char46] Health monitoring is performed by sending datapath probes as per parameters defined in \fBNetwork_Function_Health_Check\fR\[char46] This stage selects one of the healthy network functions\[char46] If none are healthy, the behavior follows the \fBfallback\fR column configured in the \fBNetwork_Function_Group\fR table\[char46] If health monitoring is not configured, any one from the group is selected\[char46]
+.PP
+.PP
+When a request packet matches a \fBto\-lport\fR ACL with \fBnetwork_function_group\fR set, the ACL eval stage sets \fBreg8[21] = 1\fR (NF enabled), \fBreg8[22] = 1\fR (request direction), and \fBreg0[22\[char46]\[char46]29]\fR to the network function group ID\[char46] This table then selects the active network function from the group and overwrites \fBreg0[22\[char46]\[char46]29]\fR with the specific \fBid\fR of a \fBNetwork_Function\fR table entry\[char46] The subsequent Network Function table uses this NF ID to redirect packets to the appropriate network function port\[char46] In the future, this stage will be extended to support network function load balancing\[char46]
+.RS
+.IP \(bu
+For each network function group with \fIid\fR that has an active network function, a priority\-99 flow matches \fBreg8[21] == 1
+&& reg8[22] == 1 && reg0[22\[char46]\[char46]29] == \fIid\fB\fR and sets \fBreg0[22\[char46]\[char46]29] = \fInf_id\fB; next;\fR where \fInf_id\fR is the \fBid\fR of the active \fBNetwork_Function\fR selected from the group\[char46] This prepares request packets that matched a \fBto\-lport\fR ACL with network_function_group for redirection in the subsequent Network Function table\[char46]
+.IP \(bu
+For each network function group with \fIid\fR that has \fBfallback\fR set to \fBfail\-open\fR, a priority\-10 flow matches \fBreg8[21] == 1 && reg8[22] == 1 &&
+reg0[22\[char46]\[char46]29] == \fIid\fB\fR and sets \fBreg8[21] = 0;
+reg0[22\[char46]\[char46]29] = 0; next;\fR\[char46] This clears both the NF enabled bit and the NF group ID, allowing packets to continue processing through the pipeline without network function redirection when no active network function is available (fail-open behavior)\[char46]
+.IP \(bu
+A priority\-1 flow matches \fBreg8[21] == 1 && reg8[22] == 1
+\fR and sets \fBreg0[22\[char46]\[char46]29] = 0; next;\fR\[char46] This is a catch-all flow for network function groups with \fBfallback\fR set to \fBfail\-close\fR (or default) when no active network function is available\[char46] It clears only the NF group ID, leaving the NF enabled bit set\[char46] These packets will be dropped by the priority\-1 drop rule in the subsequent Network Function table (fail-close behavior)\[char46]
+.IP \(bu
+A priority\-0 flow that simply moves traffic to the next table\[char46]
+.RE
+.ST "Egress Table 12: Stateful"
 .PP
 .PP
 This is similar to ingress table \fBStateful\fR except that there are no rules added for load balancing new connections\[char46] When \fBenable\-stateless\-acl\-with\-lb\fR is enabled, new stateless connections bypass connection tracking\[char46]
@@ -1368,20 +1419,20 @@ This is similar to ingress table \fBStateful\fR except that there are no rules a
 .IP \(bu
 A priority 120 flow is added for each network function port \fIP\fR that is identical to the priority 100 flow except for additional match \fBoutport == \fIP\fB\fR and additional action \fBct_label\[char46]tun_if_id = reg5[16\[char46]\[char46]31]\fR\[char46] In case packets redirected by network function logic gets tunneled from host1 to host2 where the network function port resides, host2\(cqs physical table 0 populates reg5[16\[char46]\[char46]31] with the openflow tunnel interface id on which the packet was received\[char46] This priority 120 flow commits the tunnel id to the ct_label\[char46] That way, when the same packet comes out of the other port of the network function it can retrieve this information from the peer port\(cqs CT entry and tunnel the packet back to host1\[char46] This is required to make cross host traffic redirection work for VLAN subnet\[char46]
 .RE
-.ST "Egress Table 12: Network Function"
+.ST "Egress Table 13: Network Function"
 .PP
 .PP
-This table is similar to ingress table \fBNetwork Function\fR except for the role of \fBfrom\-lport\fR and \fBto\-lport\fR ACLs reversed, and the packet redirection happening to the selected network function\(cqs \fBoutport\fR rather than to its \fBinport\fR\[char46] Another difference is that the action injects the packets back into the ingress pipeline\[char46]
+This table handles request packets for \fBto\-lport\fR ACLs and response packets for \fBfrom\-lport\fR ACLs\[char46] For \fBto\-lport\fR ACLs, request packets are redirected to the network function\(cqs \fBoutport\fR, and corresponding response/related packets are handled in the ingress pipeline\[char46] For \fBfrom\-lport\fR ACLs, request packets are handled in the ingress pipeline, but corresponding response/related packets for those flows are redirected here using the network function ID stored in \fBct_label\[char46]nf_id\fR during request processing\[char46]
 .RS
 .IP \(bu
 Similar to ingress \fBNetwork Function\fR a priority\-100 flow is added for each network_function port, that matches the inport with the network function port and advances the packet to the next table\[char46]
 .IP \(bu
-For each network_function_group \fIid\fR, a priority\-99 flow matches \fBreg8[21] == 1 && reg8[22] == 1 &&
-reg0[22\[char46]\[char46]29] == \fIid\fB\fR and sets \fBoutport=\fIP\fB;
-reg8[23] = 1; next(pipeline=ingress, table=\fIT\fB)\fR where \fIP\fR is the \fBoutport\fR of the selected network_function and \fIT\fR is the ingress table \fBDestination Lookup\fR\[char46] This ensures redirection of request packets matching \fBto\-lport\fR ACL with network_function\[char46] The packets are injected back to the ingress pipeline from where they get sent out skipping any further lookup because of \fBreg8[23]\fR\[char46]
+For each active network function with \fIid\fR that is referenced in a network function group, a priority\-99 flow matches \fBreg8[21] == 1 && reg8[22] == 1 &&
+reg0[22\[char46]\[char46]29] == \fIid\fB\fR and sets \fBoutport=\fIP\fB; reg8[23] = 1; next(pipeline=ingress,
+table=\fIT\fB)\fR where \fIP\fR is the \fBoutport\fR of that network function and \fIT\fR is the ingress table \fBDestination Lookup\fR\[char46] This redirects request packets matching \fBto\-lport\fR ACLs with network_function_group to the specific network function selected by the Pre Network Function stage\[char46] The packets are injected back to the ingress pipeline from where they get sent out, skipping any further lookup because of \fBreg8[23]\fR\[char46]
 .IP \(bu
-For each network_function_group \fIid\fR, a priority\-99 rule matches \fBreg8[21] == 1 && reg8[22] == 0 &&
-ct_label\[char46]nf_group_id == \fIid\fB\fR and takes identical action as above\[char46] This ensures redirection if response and related packets for flows matching \fBfrom\-lport\fR ACLs with network_function\[char46]
+For each active network function with \fIid\fR that is referenced in a network function group, a priority\-99 rule matches \fBreg8[21] == 1 && reg8[22] == 0 &&
+ct_label\[char46]nf_id == \fIid\fB\fR and takes identical action as above\[char46] This redirects response and related packets for \fBfrom\-lport\fR ACLs to the same network function that handled the request, using the NF ID stored in the connection tracking label\[char46]
 .IP \(bu
 In each of the above cases, when the same packet comes out unchanged through the other port of the network_function, it would match the priority 100 flow and be forwarded to the next table\[char46]
 .IP \(bu
@@ -1391,7 +1442,7 @@ One priority\-1 flow same as ingress \fBNetwork Function\fR\[char46]
 .IP \(bu
 One priority\-0 flow same as ingress \fBNetwork Function\fR\[char46]
 .RE
-.ST "Egress Table 13: Egress Port Security - check"
+.ST "Egress Table 14: Egress Port Security - check"
 .PP
 .PP
 This is similar to the port security logic in table \fBIngress Port Security check\fR except that action \fBcheck_out_port_sec\fR is used to check the port security rules\[char46] This table adds the below logical flows\[char46]
@@ -1401,7 +1452,7 @@ A priority 100 flow which matches on the multicast traffic and applies the actio
 .IP \(bu
 A priority 0 logical flow is added which matches on all the packets and applies the action \fBREGBIT_PORT_SEC_DROP\(dq = check_out_port_sec(); next;\(dq\fR\[char46] The action \fBcheck_out_port_sec\fR applies the port security rules based on the addresses defined in the \fBport_security\fR column of \fBLogical_Switch_Port\fR table before delivering the packet to the \fBoutport\fR\[char46]
 .RE
-.ST "Egress Table 14: Egress Port Security - Apply"
+.ST "Egress Table 15: Egress Port Security - Apply"
 .PP
 .PP
 This is similar to the ingress port security logic in ingress table \fBA Ingress Port Security \- Apply\fR\[char46] This table drops the packets if the port security check failed in the previous stage i\[char46]e the register bit \fBREGBIT_PORT_SEC_DROP\fR is set to 1\[char46]
@@ -2916,7 +2967,7 @@ Catch-all: A priority\-0 flow with match \fB1\fR has actions \fBnext;\fR\[char46
 .ST "Ingress Table 27: ARP Request"
 .PP
 .PP
-In the common case where the Ethernet destination has been resolved, this table outputs the packet\[char46] Otherwise, it composes and sends an ARP or IPv6 Neighbor Solicitation request\[char46] It holds the following flows:
+In the common case where the Ethernet destination has been resolved, this table advances the packet to the next table\[char46] Otherwise, it composes and sends an ARP or IPv6 Neighbor Solicitation request\[char46] It holds the following flows:
 .RS
 .IP \(bu
 Unknown MAC address\[char46] A priority\-100 flow for IPv4 packets with match \fBeth\[char46]dst == 00:00:00:00:00:00\fR has the following actions:
@@ -2984,8 +3035,12 @@ Unknown MAC address\[char46] A priority\-100 flow for IPv6 packets with match \f
 .IP
 The IP packet that triggers the ARP/IPv6 NS request is dropped\[char46]
 .IP \(bu
-Known MAC address\[char46] A priority\-0 flow with match \fB1\fR has actions \fBoutput;\fR\[char46]
+Known MAC address\[char46] A priority\-0 flow with match \fB1\fR has actions \fBnext;\fR\[char46]
 .RE
+.ST "Ingress Table 28: ECMP symmetric reply processing for egress"
+.PP
+.PP
+This table contains logical flows that commit IP traffic forwarded by ECMP symmetric reply static routes in the \(dqroute direction\(dq, that is, for sessions initiated from behind such routes\[char46] These flows can be hit only on gateway routers, the only type of routers that supports ECMP symmetric reply routes\[char46] As the egress port of the traffic needs to be stored in conntrack for these sessions, one logical flow is added for each logical router port\[char46]
 .ST "Egress Table 0: Check DNAT local"
 .PP
 .PP
