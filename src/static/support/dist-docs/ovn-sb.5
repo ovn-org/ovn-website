@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-sb" 5 " DB Schema 21.7.1" "Open vSwitch 25.09.90" "Open vSwitch Manual"
+.TH "ovn-sb" 5 " DB Schema 21.8.0" "Open vSwitch 26.03.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -3405,7 +3405,7 @@ Each row in this table configures monitoring a service for its liveness\[char46]
 .RS .25in
 .TQ 2.75in
 \fBtype\fR
-optional string, either \fBload\-balancer\fR or \fBnetwork\-function\fR
+optional string, one of \fBload\-balancer\fR, \fBlogical\-switch\-port\fR, or \fBnetwork\-function\fR
 .TQ 2.75in
 \fBip\fR
 string
@@ -3472,14 +3472,14 @@ map of string-string pairs
 .PP
 .PP
 \fBovn\-northd\fR sets these columns and values to configure the service monitor\[char46]
-.IP "\fBtype\fR: optional string, either \fBload\-balancer\fR or \fBnetwork\-function\fR"
+.IP "\fBtype\fR: optional string, one of \fBload\-balancer\fR, \fBlogical\-switch\-port\fR, or \fBnetwork\-function\fR"
 The type of the service\[char46] Supported values are \(dqload-balancer\(dq and \(dqnetwork-function\(dq\[char46]
 .IP "\fBip\fR: string"
 Destination IP used in monitor packets\[char46] For load-balancer service this is the IP of the service to be monitored\[char46] For network-function service this IP is used to send probe packets through the associated Network Function port pair\[char46]
 .IP "\fBmac\fR: string"
 Destination MAC address used in monitor packets\[char46] This is applicable only for network-function services\[char46]
 .IP "\fBprotocol\fR: optional string, one of \fBicmp\fR, \fBtcp\fR, or \fBudp\fR"
-The protocol of the service\[char46] For \fBtype\fR load-balancer, supported protocols are tcp and udp\[char46] For \fBtype\fR \(dqnetwork-function\(dq, supported protocol is icmp, and the health probe is done by injecting an icmp echo request packet into the \fBinport\fR of the Network_Function and then montoring the same packet coming out of the \fBoutport\fR\[char46]
+The protocol of the service\[char46] For \fBtype\fR load-balancer, supported protocols are tcp and udp\[char46] For \fBtype\fR \(dqnetwork-function\(dq, supported protocol is icmp, and the health probe is done by injecting an icmp echo request packet into the \fBinport\fR of the Network_Function and then montoring the same packet coming out of the \fBoutport\fR\[char46] For \fBtype\fR \(dqlogical-switch-port\(dq, supported protocols are \fBtcp\fR, \fBudp\fR and \fBicmp\fR\[char46]
 .IP "\fBport\fR: integer, in range 0 to 65,535"
 The TCP or UDP port of the service\[char46]
 .IP "\fBlogical_input_port\fR: string"
@@ -3513,6 +3513,8 @@ The \fBovn\-controller\fR on the chassis that hosts the \fBlogical_port\fR updat
 For TCP service, \fBovn\-controller\fR sends a SYN to the service and expects an ACK response to consider the service to be \fBonline\fR\[char46]
 .IP
 For UDP service, \fBovn\-controller\fR sends a UDP packet to the service and doesn\(cqt expect any reply\[char46] If it receives an ICMP reply, then it considers the service to be \fBoffline\fR\[char46]
+.IP
+For ICMP service, \fBovn\-controller\fR sends an ICMP Echo Request and expects an ICMP Echo Reply to consider service to be \fBonline\fR\[char46] If no reply is received or if an ICMP error message is received, the service is considered \fBoffline\fR\[char46]
 .ST "Common Columns:"
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
