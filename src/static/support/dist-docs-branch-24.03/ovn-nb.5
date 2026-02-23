@@ -1475,6 +1475,8 @@ If an element includes an IPv4 address, but no IPv6 addresses, then IPv6 traffic
 .IP
 This column uses the same lexical syntax as the \fBmatch\fR column in the OVN Southbound database\(cqs \fBPipeline\fR table\[char46] Multiple addresses within an element may be space or comma separated\[char46]
 .IP
+Each element in the set also supports the special prefix \(dqVRRPv3\(dq that allows specification of single physical MAC and multiple VRRPv3 MAC addresses\[char46] As for non VRRPv3 entries, multiple IP addresses can be associated with the specified MACs\[char46] \(dqVRRPv3\(dq with a single physical MAC translates to allowing traffic for the whole \(dqVRRPv3\(dq range of MACs\[char46] See more in the examples\[char46] When the port security configuration entry contains the VRRPv3 label, the behavior for physical MAC (the first specified) is different\[char46] The installed flows will allow traffic from/to VRRP MACs + IPs\[char46] The physical MAC is there to properly allow ARP/ND with given VRRP MACs\[char46] To allow traffic that is not related to virtual router, e\[char46]g\[char46], IP traffic with a physical MAC as a source, a regular port security entry should be added separately\[char46]
+.IP
 This column is provided as a convenience to cloud management systems, but all of the features that it implements can be implemented as ACLs using the \fBACL\fR table\[char46]
 .IP
 Examples:
@@ -1488,6 +1490,15 @@ This adds further restrictions to the first example\[char46] The host may send I
 .TP
 \fB\(dq80:fa:5b:12:42:ba\(dq, \(dq80:fa:5b:06:72:b7 192\[char46]168\[char46]1\[char46]10/24\(dq\fR
 The host may send traffic from and receive traffic to the specified MAC addresses, and to receive traffic to Ethernet multicast and broadcast addresses, but not otherwise\[char46] With MAC 80:fa:5b:12:42:ba, the host may send traffic from and receive traffic to any L3 address\[char46] With MAC 80:fa:5b:06:72:b7, the host may send IPv4 packets from or receive IPv4 packets to only 192\[char46]168\[char46]1\[char46]10, except that it may also receive IPv4 packets to 192\[char46]168\[char46]1\[char46]255 (based on the subnet mask), 255\[char46]255\[char46]255\[char46]255, and any address in 224\[char46]0\[char46]0\[char46]0/4\[char46] The host may not send or receive any IPv6 (including IPv6 Neighbor Discovery) traffic\[char46]
+.TP
+\fB\(dqVRRPv3 <PHYSICAL_MAC>\(dq\fR
+The host may send ARP/ND packets with physical MAC as a source and any of the VRRPv3 MACs as inner SHA/TLL/SLL - 00:00:5e:00:01:00/40 for IPv4 and 00:00:5e:00:02:00/40 for IPv6\[char46] It may also send or receive any traffic with any of VRRPv3 MAC addresses as a source or destination\[char46] But not with the physical MAC address\[char46]
+.TP
+\fB\(dqVRRPv3 <PHYSICAL_MAC>\fR \fB<VRRPV3_MACv4_1>/[<MASK1>]\fR \fB<VRRPV3_MACv4_N>\fR \fB<VRRPV3_MACv6_1>/[<MASK2>]\fR \fB<VRRPV3_MACv6_N>\(dq\fR
+Same as the previous example, but allowed VRRPv3 MAC addresses are limited to the specified ones\[char46] The specified VRRPv3 MAC addresses must have a correct prefix - 00:00:5e:00:01 for IPv4 and 00:00:5e:00:02 for IPv6\[char46] VRRPv3 MACs can be provided with a mask with a prefix between /40 and /48\[char46]
+.TP
+\fB\(dqVRRPv3 <PHYSICAL_MAC>\fR \fB<VRRPV3_MACv4_1>/[<MASK1>]\fR \fB<VRRPV3_MACv4_N>\fR \fB<VRRPV3_MACv6_1>/[<MASK2>]\fR \fB<VRRPV3_MACv6_N>\fR \fB<VRRPV3_IPv4_1>/[<MASK1>]\fR \fB<VRRPV3_IPv4_N>\fR \fB<VRRPV3_IPv6_1>/[<MASK2>]\fR \fB<VRRPV3_IPv6_N>\(dq\fR
+The same as the previous example, but the provided IP addresses further restrict the inner IP for ARP/ND\[char46] As well as IP/IPv6 traffic to/from given VRRPv3 MACs\[char46] The IP address format is the same as for the regular port security entry\[char46]
 .RE
 .ST "DHCP:"
 .PP
