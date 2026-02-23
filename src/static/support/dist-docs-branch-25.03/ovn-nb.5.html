@@ -1687,8 +1687,22 @@
               the OVN Southbound database’s <b>P</b><b>i</b><b>p</b><b>e</b><b>l</b><b>i</b><b>n</b><b>e</b> table. Multiple addresses
               within an element may be space or comma separated.
 
-              This  column  is  provided  as a convenience to cloud management
-              systems, but all of the features that it implements can  be  im‐
+              Each  element  in  the set also supports the special prefix "VR‐
+              RPv3" that allows specification of single physical MAC and  mul‐
+              tiple  VRRPv3 MAC addresses. As for non VRRPv3 entries, multiple
+              IP addresses can be associated with the specified MACs. "VRRPv3"
+              with a single physical MAC translates to  allowing  traffic  for
+              the whole "VRRPv3" range of MACs. See more in the examples. When
+              the port security configuration entry contains the VRRPv3 label,
+              the  behavior  for physical MAC (the first specified) is differ‐
+              ent. The installed flows will allow traffic from/to VRRP MACs  +
+              IPs.  The  physical  MAC  is there to properly allow ARP/ND with
+              given VRRP MACs. To allow traffic that is not related to virtual
+              router, e.g., IP traffic with a physical MAC as a source, a reg‐
+              ular port security entry should be added separately.
+
+              This column is provided as a  convenience  to  cloud  management
+              systems,  but  all of the features that it implements can be im‐
               plemented as ACLs using the <b>A</b><b>C</b><b>L</b> table.
 
               Examples:
@@ -1697,33 +1711,60 @@
                      The host may send traffic from and receive traffic to the
                      specified MAC address, and to receive traffic to Ethernet
                      multicast and broadcast addresses, but not otherwise. The
-                     host  may not send ARP or IPv6 Neighbor Discovery packets
-                     with inner source Ethernet addresses other than  the  one
+                     host may not send ARP or IPv6 Neighbor Discovery  packets
+                     with  inner  source Ethernet addresses other than the one
                      specified.
 
               <b>8</b><b>0</b><b>:</b><b>f</b><b>a</b><b>:</b><b>5</b><b>b</b><b>:</b><b>0</b><b>6</b><b>:</b><b>7</b><b>2</b><b>:</b><b>b</b><b>7</b> <b>1</b><b>9</b><b>2</b><b>.</b><b>1</b><b>6</b><b>8</b><b>.</b><b>1</b><b>.</b><b>1</b><b>0</b><b>/</b><b>2</b><b>4</b>
-                     This  adds further restrictions to the first example. The
-                     host may send IPv4 packets from or receive  IPv4  packets
-                     to  only  192.168.1.10,  except  that it may also receive
+                     This adds further restrictions to the first example.  The
+                     host  may  send IPv4 packets from or receive IPv4 packets
+                     to only 192.168.1.10, except that  it  may  also  receive
                      IPv4 packets to 192.168.1.255 (based on the subnet mask),
                      255.255.255.255, and any address in 224.0.0.0/4. The host
-                     may not send ARPs with a source  Ethernet  address  other
-                     than  80:fa:5b:06:72:b7 or source IPv4 address other than
-                     192.168.1.10. The host may not send or receive  any  IPv6
+                     may  not  send  ARPs with a source Ethernet address other
+                     than 80:fa:5b:06:72:b7 or source IPv4 address other  than
+                     192.168.1.10.  The  host may not send or receive any IPv6
                      (including IPv6 Neighbor Discovery) traffic.
 
               <b>"</b><b>8</b><b>0</b><b>:</b><b>f</b><b>a</b><b>:</b><b>5</b><b>b</b><b>:</b><b>1</b><b>2</b><b>:</b><b>4</b><b>2</b><b>:</b><b>b</b><b>a</b><b>"</b><b>,</b> <b>"</b><b>8</b><b>0</b><b>:</b><b>f</b><b>a</b><b>:</b><b>5</b><b>b</b><b>:</b><b>0</b><b>6</b><b>:</b><b>7</b><b>2</b><b>:</b><b>b</b><b>7</b> <b>1</b><b>9</b><b>2</b><b>.</b><b>1</b><b>6</b><b>8</b><b>.</b><b>1</b><b>.</b><b>1</b><b>0</b><b>/</b><b>2</b><b>4</b><b>"</b>
                      The host may send traffic from and receive traffic to the
                      specified MAC addresses, and to receive traffic to Ether‐
                      net multicast and broadcast addresses, but not otherwise.
-                     With  MAC  80:fa:5b:12:42:ba,  the  host may send traffic
-                     from and receive traffic to  any  L3  address.  With  MAC
+                     With MAC 80:fa:5b:12:42:ba, the  host  may  send  traffic
+                     from  and  receive  traffic  to  any L3 address. With MAC
                      80:fa:5b:06:72:b7, the host may send IPv4 packets from or
                      receive IPv4 packets to only 192.168.1.10, except that it
-                     may  also receive IPv4 packets to 192.168.1.255 (based on
-                     the subnet mask), 255.255.255.255,  and  any  address  in
-                     224.0.0.0/4.  The  host  may not send or receive any IPv6
+                     may also receive IPv4 packets to 192.168.1.255 (based  on
+                     the  subnet  mask),  255.255.255.255,  and any address in
+                     224.0.0.0/4. The host may not send or  receive  any  IPv6
                      (including IPv6 Neighbor Discovery) traffic.
+
+              <b>"</b><b>V</b><b>R</b><b>R</b><b>P</b><b>v</b><b>3</b> <lt;<lt;<b>P</b><b>H</b><b>Y</b><b>S</b><b>I</b><b>C</b><b>A</b><b>L</b><b>_</b><b>M</b><b>A</b><b>C</b>>gt;>gt;<b>"</b>
+                     The  host  may send ARP/ND packets with physical MAC as a
+                     source and any of the VRRPv3 MACs as inner SHA/TLL/SLL  -
+                     00:00:5e:00:01:00/40  for  IPv4  and 00:00:5e:00:02:00/40
+                     for IPv6. It may also send or receive  any  traffic  with
+                     any  of  VRRPv3 MAC addresses as a source or destination.
+                     But not with the physical MAC address.
+
+              <b>"</b><b>V</b><b>R</b><b>R</b><b>P</b><b>v</b><b>3</b> <lt;<lt;<b>P</b><b>H</b><b>Y</b><b>S</b><b>I</b><b>C</b><b>A</b><b>L</b><b>_</b><b>M</b><b>A</b><b>C</b>>gt;>gt; <lt;<lt;<b>V</b><b>R</b><b>R</b><b>P</b><b>V</b><b>3</b><b>_</b><b>M</b><b>A</b><b>C</b><b>v</b><b>4</b><b>_</b><b>1</b>>gt;>gt;<b>/</b><b>[</b><lt;<lt;<b>M</b><b>A</b><b>S</b><b>K</b><b>1</b>>gt;>gt;<b>]</b> <lt;<lt;<b>V</b><b>R</b>‐‐
+              <b>R</b><b>P</b><b>V</b><b>3</b><b>_</b><b>M</b><b>A</b><b>C</b><b>v</b><b>4</b><b>_</b><b>N</b>>gt;>gt; <lt;<lt;<b>V</b><b>R</b><b>R</b><b>P</b><b>V</b><b>3</b><b>_</b><b>M</b><b>A</b><b>C</b><b>v</b><b>6</b><b>_</b><b>1</b>>gt;>gt;<b>/</b><b>[</b><lt;<lt;<b>M</b><b>A</b><b>S</b><b>K</b><b>2</b>>gt;>gt;<b>]</b> <lt;<lt;<b>V</b><b>R</b><b>R</b><b>P</b><b>V</b><b>3</b><b>_</b><b>M</b><b>A</b><b>C</b><b>v</b><b>6</b><b>_</b><b>N</b>>gt;>gt;<b>"</b>
+                     Same as the previous example, but allowed VRRPv3 MAC  ad‐
+                     dresses  are limited to the specified ones. The specified
+                     VRRPv3  MAC  addresses  must  have  a  correct  prefix  -
+                     00:00:5e:00:01  for IPv4 and 00:00:5e:00:02 for IPv6. VR‐
+                     RPv3 MACs can be provided with a mask with a  prefix  be‐
+                     tween /40 and /48.
+
+              <b>"</b><b>V</b><b>R</b><b>R</b><b>P</b><b>v</b><b>3</b> <lt;<lt;<b>P</b><b>H</b><b>Y</b><b>S</b><b>I</b><b>C</b><b>A</b><b>L</b><b>_</b><b>M</b><b>A</b><b>C</b>>gt;>gt; <lt;<lt;<b>V</b><b>R</b><b>R</b><b>P</b><b>V</b><b>3</b><b>_</b><b>M</b><b>A</b><b>C</b><b>v</b><b>4</b><b>_</b><b>1</b>>gt;>gt;<b>/</b><b>[</b><lt;<lt;<b>M</b><b>A</b><b>S</b><b>K</b><b>1</b>>gt;>gt;<b>]</b> <lt;<lt;<b>V</b><b>R</b>‐‐
+              <b>R</b><b>P</b><b>V</b><b>3</b><b>_</b><b>M</b><b>A</b><b>C</b><b>v</b><b>4</b><b>_</b><b>N</b>>gt;>gt; <lt;<lt;<b>V</b><b>R</b><b>R</b><b>P</b><b>V</b><b>3</b><b>_</b><b>M</b><b>A</b><b>C</b><b>v</b><b>6</b><b>_</b><b>1</b>>gt;>gt;<b>/</b><b>[</b><lt;<lt;<b>M</b><b>A</b><b>S</b><b>K</b><b>2</b>>gt;>gt;<b>]</b> <lt;<lt;<b>V</b><b>R</b><b>R</b><b>P</b><b>V</b><b>3</b><b>_</b><b>M</b><b>A</b><b>C</b><b>v</b><b>6</b><b>_</b><b>N</b>>gt;>gt; <lt;<lt;<b>V</b><b>R</b>‐‐
+              <b>R</b><b>P</b><b>V</b><b>3</b><b>_</b><b>I</b><b>P</b><b>v</b><b>4</b><b>_</b><b>1</b>>gt;>gt;<b>/</b><b>[</b><lt;<lt;<b>M</b><b>A</b><b>S</b><b>K</b><b>1</b>>gt;>gt;<b>]</b> <lt;<lt;<b>V</b><b>R</b><b>R</b><b>P</b><b>V</b><b>3</b><b>_</b><b>I</b><b>P</b><b>v</b><b>4</b><b>_</b><b>N</b>>gt;>gt; <lt;<lt;<b>V</b><b>R</b><b>R</b><b>P</b><b>V</b><b>3</b><b>_</b><b>I</b><b>P</b><b>v</b><b>6</b><b>_</b><b>1</b>>gt;>gt;<b>/</b><b>[</b><lt;<lt;<b>M</b><b>A</b><b>S</b><b>K</b><b>2</b>>gt;>gt;<b>]</b>
+              <lt;<lt;<b>V</b><b>R</b><b>R</b><b>P</b><b>V</b><b>3</b><b>_</b><b>I</b><b>P</b><b>v</b><b>6</b><b>_</b><b>N</b>>gt;>gt;<b>"</b>
+                     The same as the previous example, but the provided IP ad‐
+                     dresses further restrict the inner IP for ARP/ND. As well
+                     as  IP/IPv6 traffic to/from given VRRPv3 MACs. The IP ad‐
+                     dress format is the same as for the regular port security
+                     entry.
 
        <b>p</b><b>e</b><b>e</b><b>r</b>: optional string
               For a switch port used to connect  two  logical  switches,  this
