@@ -432,6 +432,9 @@ optional string
 \fBoptions : use_ct_inv_match\fR
 optional string
 .TQ 2.75in
+\fBoptions : acl_ct_translation\fR
+optional string
+.TQ 2.75in
 \fBoptions : default_acl_drop\fR
 optional string
 .TQ 2.75in
@@ -591,6 +594,12 @@ The default value is \fBfalse\fR\[char46]
 If set to false, ARP/ND reply flows for logical switch ports will be installed only if the port is up, i\[char46]e\[char46] claimed by a Chassis\[char46] If set to true, these flows are installed regardless of the status of the port, which can result in a situation that ARP request to an IP is resolved even before the relevant VM/container is running\[char46] For environments where this is not an issue, setting it to \fBtrue\fR can reduce the load and latency of the control plane\[char46] The default value is \fBtrue\fR\[char46]
 .IP "\fBoptions : use_ct_inv_match\fR: optional string"
 If set to false, \fBovn\-northd\fR will not use the \fBct\[char46]inv\fR field in any of the logical flow matches\[char46] The default value is true\[char46] If the NIC supports offloading OVS datapath flows but doesn\(cqt support offloading ct_state \fBinv\fR flag, then the datapath flows matching on this flag (either \fB+inv\fR or \fB\-inv\fR) will not be offloaded\[char46] CMS should consider setting \fBuse_ct_inv_match\fR to \fBfalse\fR in such cases\[char46] This results in a side effect of the invalid packets getting delivered to the destination VIF, which otherwise would have been dropped by \fBOVN\fR\[char46]
+.IP "\fBoptions : acl_ct_translation\fR: optional string"
+If set to \fBtrue\fR, \fBovn\-northd\fR will enable connection tracking based L4 field translation for stateful ACLs\[char46] When enabled, ACL matches on L4 port fields (tcp/udp/sctp) use connection tracking state instead of packet headers\[char46] This allows proper handling of IP fragmentation in userspace datapaths (e\[char46]g\[char46], DPDK) where fragments are not automatically reassembled during connection tracking lookup\[char46]
+.IP
+\fBImportant:\fR Enabling this option may break hardware offloading of flows\[char46] It also disables the multicast conntrack bypass, which means multicast traffic (including DHCP) will go through connection tracking\[char46] This may have a performance impact on multicast-heavy workloads\[char46] Only enable this option if you need to handle fragmented traffic with stateful ACLs in userspace datapaths\[char46]
+.IP
+The default value is \fBfalse\fR\[char46]
 .IP "\fBoptions : default_acl_drop\fR: optional string"
 If set to \fBtrue\fR\[char46], \fBovn\-northd\fR will generate a logical flow to drop all traffic in the ACL stages\[char46] By default this option is set to \fBfalse\fR\[char46]
 .IP "\fBoptions : debug_drop_domain_id\fR: optional string"
