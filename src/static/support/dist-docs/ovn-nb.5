@@ -1366,6 +1366,9 @@ optional string
 \fBoptions : requested-chassis\fR
 optional string
 .TQ 2.50in
+\fBoptions : requested-encap-ip\fR
+optional string
+.TQ 2.50in
 \fBoptions : activation-strategy\fR
 optional string
 .TQ 2.50in
@@ -1662,6 +1665,8 @@ If set to a comma separated list, the first entry identifies the main chassis an
 When multiple chassis are set for the port, and the logical switch is connected to an external network through a \fBlocalnet\fR port, tunneling is enforced for the port to guarantee delivery of packets directed to the port to all its locations\[char46] This has MTU implications because the network used for tunneling must have MTU larger than \fBlocalnet\fR for stable connectivity\[char46]
 .IP
 If the same host co-hosts more than one controller instance (either belonging to the same or separate clusters), special attention should be given to consistently using unique chassis names used in this option\[char46] It is advised that chassis names - and not host names - are used for this option\[char46]
+.IP "\fBoptions : requested-encap-ip\fR: optional string"
+Requests the encapsulation IP address for the port binding\[char46] If set, \fBovn\-northd\fR uses this IP to select the \fBEncap\fR entry written to \fBencap\fR\[char46] This is intended for ports without a local OVS interface, e\[char46]g\[char46] remote transit switch ports in ovn-kubernetes interconnect mode\[char46]
 .IP "\fBoptions : activation-strategy\fR: optional string"
 If used with multiple chassis set in \fBrequested-chassis\fR, specifies an activation strategy for all additional chassis\[char46] By default, no activation strategy is used, meaning additional port locations are immediately available for use\[char46] The option supports a comma separated list where you can combine 3 protocols, \(dqrarp\(dq, \(dqgarp\(dq and \(dqna\(dq\[char46] When any of the protocols is set, the port is blocked for ingress and egress communication until a specified protocol packet is sent from a new location\[char46] The activation strategy is useful in live migration scenarios for virtual machines\[char46]
 .IP "\fBoptions : iface-id-ver\fR: optional string"
@@ -3085,6 +3090,9 @@ optional string
 \fBoptions : requested-chassis\fR
 optional string
 .TQ 2.75in
+\fBoptions : requested-encap-ip\fR
+optional string
+.TQ 2.75in
 \fBoptions : dynamic-routing-redistribute\fR
 optional string
 .TQ 2.75in
@@ -3310,6 +3318,8 @@ This option expects a name of a filtered route-tag that\(cqs present in the Logi
 If set, identifies a specific chassis (by name or hostname) that is allowed to bind this port\[char46] This option is valid only for chassis that have \fBoptions:is\-remote=true\fR, in other words for chassis that are in different Availability zone\[char46] The option accepts only single value\[char46]
 .IP
 By assigning remote chassis the \fBLogical_Router\fR gains status of \fBTransit Router\fR see \fBLogical_Router\fR table for more details\[char46]
+.IP "\fBoptions : requested-encap-ip\fR: optional string"
+Requests the encapsulation IP address for the port binding\[char46] If set, \fBovn\-northd\fR uses this IP to select the \fBEncap\fR entry written to \fBencap\fR\[char46] This is intended for ports without a local OVS interface, e\[char46]g\[char46] remote transit router ports in ovn-kubernetes interconnect mode\[char46]
 .IP "\fBoptions : dynamic-routing-redistribute\fR: optional string"
 Only relevant if \fBoptions:dynamic-routing\fR on the respective Logical_Router is set to \fBtrue\fR\[char46]
 .IP
