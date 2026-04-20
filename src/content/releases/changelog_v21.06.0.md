@@ -1,6 +1,6 @@
 +++
 title = "Changelog v21.06.0"
-[_build]
+[build]
   list = 'never'
 +++
 
