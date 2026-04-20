@@ -1235,9 +1235,13 @@ Priority\-80 flows for each IP address/VIP/NAT address owned by a router port co
 .IP \(bu
 Priority\-75 flows for each port connected to a logical router matching self originated ARP request/RARP request/ND packets\[char46] These packets are flooded to the \fBMC_FLOOD_L2\fR which contains all non-router logical ports\[char46]
 .IP \(bu
-A priority\-72 flow that outputs all ARP requests and ND packets with an Ethernet broadcast or multicast \fBeth\[char46]dst\fR to the \fBMC_FLOOD_L2\fR multicast group if \fBother_config:broadcast\-arps\-to\-all\-routers=true\fR\[char46]
+A priority\-72 flow that outputs all ND NA (Neighbor Advertisement), ND RS (Router Solicitation) and ND RA (Router Advertisement) packets with an Ethernet broadcast or multicast \fBeth\[char46]dst\fR to the \fBMC_FLOOD\fR multicast group, which includes all ports\[char46] ND NA must reach routers for neighbor learning; ND RS must reach routers so they can respond with Router Advertisements; ND RA must reach routers for proper IPv6 network operation\[char46]
 .IP \(bu
-A priority\-71 flow that outputs all ARP or IP packets with an Ethernet broadcast or multicast \fBeth\[char46]dst\fR to the \fBMC_FLOOD\fR multicast group\[char46]
+A priority\-72 flow that outputs all ARP requests and ND NS (Neighbor Solicitation) packets with an Ethernet broadcast or multicast \fBeth\[char46]dst\fR to the \fBMC_FLOOD_L2\fR multicast group if \fBother_config:broadcast\-arps\-to\-all\-routers=false\fR\[char46]
+.IP \(bu
+A priority\-71 flow that outputs all ARP packets with an Ethernet broadcast or multicast \fBeth\[char46]dst\fR to the \fBMC_FLOOD\fR multicast group\[char46]
+.IP \(bu
+A priority\-71 flow that outputs all IP packets with an Ethernet broadcast or multicast \fBeth\[char46]dst\fR to the \fBMC_FLOOD_L2\fR multicast group, which contains only non-router logical ports\[char46] If any connected router has \fBoptions:mcast_relay=true\fR, the packet is also cloned to the \fBMC_MROUTER_FLOOD\fR multicast group (which contains only the router ports with relay enabled)\[char46] If any port has \fBoptions:mcast_flood=true\fR, it is also cloned to the \fBMC_STATIC\fR multicast group\[char46] This prevents IP multicast from being unnecessarily forwarded to routers that would drop it\[char46]
 .IP \(bu
 A priority\-70 flow that outputs all packets with an Ethernet broadcast or multicast \fBeth\[char46]dst\fR to the \fBMC_FLOOD_L2\fR multicast group\[char46]
 .IP \(bu
