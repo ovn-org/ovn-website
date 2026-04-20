@@ -1,0 +1,97 @@
++++
+title = "Changelog v25.03.3"
+[_build]
+  list = 'never'
++++
+
+### Changes from v25.03.2 to v25.03.3
+
+- [f6031b7e](https://github.com/ovn-org/ovn/commit/f6031b7e0319e2747d35bc70be3be9b7c7354cbb) Set release date for 25.03.3.
+- [2240815a](https://github.com/ovn-org/ovn/commit/2240815a919e46c958e22091bf10af34d7fccf1c) pinctrl: Make sure the BFD packet contains correct amount of data.
+- [f2f840df](https://github.com/ovn-org/ovn/commit/f2f840df0f2fc52cacd96c928587c3c1a603c306) pinctrl: Unify handling of DHCPv6 options.
+- [609ef5e7](https://github.com/ovn-org/ovn/commit/609ef5e7cc81c1d01eed1b0b743bc3f2b1ba92c8) pinctrl: Limit the IP packet size to buffer size for ICMP Need Frag.
+- [cb962cdd](https://github.com/ovn-org/ovn/commit/cb962cdd3dec5d91fe566c4fe200df636deecd1b) controller: Make sure we free the route_data during change check.
+- [248eb277](https://github.com/ovn-org/ovn/commit/248eb277718b4f683ead8027d85e46fd4ae2cf8c) northd: Don't forward IP multicast to routers without IGMP relay.
+- [3565016d](https://github.com/ovn-org/ovn/commit/3565016d2289adb1e990f6666ec8760e5193c8b9) controller: Fix bfd up too early after unexpected reboot.
+- [eace8f30](https://github.com/ovn-org/ovn/commit/eace8f301cff079255a78ac300764640f117abff) ci: Bump ovn-fake-multinode tag.
+- [b2dde422](https://github.com/ovn-org/ovn/commit/b2dde4226685fa64cf11f5a23311740e8a64a5b3) Modified the CI to use ovn-fake-multinode v0.3.
+- [80d5c61a](https://github.com/ovn-org/ovn/commit/80d5c61a0ee3dfb0dcb4ca2f307d3ee5c56bc4bb) .ci: ovn-fake-multinode-tests: Test upgrades from the latest LTS (24.03).
+- [92ae411d](https://github.com/ovn-org/ovn/commit/92ae411d0b4330596ca76a3b0bb77798ac7a4b71) tests: Stabilize localnet_learn_fdb packet-in count.
+- [2d90bb49](https://github.com/ovn-org/ovn/commit/2d90bb49fc9efb2425c1de3ca09f76b273051f5d) northd: Fix requested-tnl-key not reassigned after conflict resolved by deletion.
+- [ed4799b8](https://github.com/ovn-org/ovn/commit/ed4799b814133b76ab6dafd5e66ec638c13c322a) northd: Introduce disable_garp_rarp option for logical_router table.
+- [a42ab4da](https://github.com/ovn-org/ovn/commit/a42ab4da6f37fa5267b51f097e10e3824d1cb1bb) northd: Fix L3 EVPN when remote VTEP is not L2 adjacent.
+- [3b62bb96](https://github.com/ovn-org/ovn/commit/3b62bb96eb90dd0ff32edd07a4182b510f48933d) northd: Learned route use nexthop address family for outport IP selection.
+- [c7602dfb](https://github.com/ovn-org/ovn/commit/c7602dfb8f6394876de6a05d1c45237b8fc64b7a) northd: Use nexthop address family for ECMP symmetric reply flows.
+- [398785ae](https://github.com/ovn-org/ovn/commit/398785ae19659ed62949bf369da0a23b63c0c518) northd: Use nexthop address family in find_static_route_outport.
+- [a13cbe7b](https://github.com/ovn-org/ovn/commit/a13cbe7be9094fd594a48f4b36ae8384a52786fa) controller: Fix an assertion failure with multiple mirror types.
+- [c6034151](https://github.com/ovn-org/ovn/commit/c60341513c98136d1ae183d6ee4834fd7072edf6) pinctrl: Update in-memory svc monitor structures on SB changes.
+- [33853c4a](https://github.com/ovn-org/ovn/commit/33853c4a1f2bd4464101e4265e3163395a0abc84) rhel: Make version displayed to the user customizable.
+- [75456fa6](https://github.com/ovn-org/ovn/commit/75456fa692bc9d302f9c15de5c4a9e88416b5dc6) ci: Bump action versions to support Node 24.
+- [d221ed5e](https://github.com/ovn-org/ovn/commit/d221ed5ee59064ca05abc34a1299eda6a14bb2bf) northd: Drop traffic for ECMP group with "discard" route.
+- [52c458f9](https://github.com/ovn-org/ovn/commit/52c458f9a2f3bc5f939a61a24ed4185944346c65) Add Dmitry Mityugov to AUTHORS.rst.
+- [1f4442ba](https://github.com/ovn-org/ovn/commit/1f4442ba5bc1a1ac9d946c4b8427681d47c79d26) northd: Fix a discarded qualifer warning.
+- [c49070e0](https://github.com/ovn-org/ovn/commit/c49070e061ac68d1a8d8af847dd9e584e07b0579) mac-cache: Only refresh mac bindings for chassis local ports.
+- [172ae17b](https://github.com/ovn-org/ovn/commit/172ae17bd4c50406ddeda6f410f2d9fc335b21fa) statctrl: Remove handler specific parameters.
+- [ba30df47](https://github.com/ovn-org/ovn/commit/ba30df471373626bc188970643822e24a54ba234) ic: Fix infinite route learning with same prefix and nexthop.
+- [40a84428](https://github.com/ovn-org/ovn/commit/40a84428fb2b1cab270ad6d509f9341c62c12803) pinctrl: Process packets even when the lock is taken.
+- [703dfcfd](https://github.com/ovn-org/ovn/commit/703dfcfd78eace6f83a52e9108b8491faf35031e) tests: Fix two "BGP learned routes" tests.
+- [fe6850fb](https://github.com/ovn-org/ovn/commit/fe6850fb3c3b28005d8e0da55fa0ec587802273b) tests: Fix multinode test using wrong system-id.
+- [1c811292](https://github.com/ovn-org/ovn/commit/1c81129203cc0831071bccb37faa8eb93bab1c05) ovs: Update submodule to v3.5.3.
+- [0e0efd09](https://github.com/ovn-org/ovn/commit/0e0efd09f8bc785516be0172eb615848b9d8583a) northd: Do not fully parse LSP port security.
+- [2fe98534](https://github.com/ovn-org/ovn/commit/2fe98534a876c71f2cae165b5b6d70ece5d4ca80) tests: Sort output in flaky s390x tests.
+- [66b6acf1](https://github.com/ovn-org/ovn/commit/66b6acf129a58a09693a85fbe58752d51c5f4fb4) northd: Remove redundant engine node input.
+- [f8c8b837](https://github.com/ovn-org/ovn/commit/f8c8b83701f515f14d77d05154eed8f59adc0021) controller: ACL correctly handles fragmented traffic.
+- [04ab770e](https://github.com/ovn-org/ovn/commit/04ab770ea9bfb25c0d70667991372f9207c30c58) controller: Add option to make port security compliant with RFC 9568.
+- [ff80db5f](https://github.com/ovn-org/ovn/commit/ff80db5fa11a2ed0ebcb46faad10b4579be5ff64) ovn-util: Add helper for parsing and working with masked MACs.
+- [9f9eb9e6](https://github.com/ovn-org/ovn/commit/9f9eb9e6d15f869eaafc731dc0a61c987981a443) lflow: Change the port security parsing log from INFO to WARN.
+- [15ef9a08](https://github.com/ovn-org/ovn/commit/15ef9a08f37fe218462f2c9c23c12947f4dfeff8) northd: Do not forward unknown ether type to router ports.
+- [49496ed8](https://github.com/ovn-org/ovn/commit/49496ed80fda1bafdcfc10acbe015f936077738e) inc-proc-eng: Assert that node states are in the right range.
+- [86075a01](https://github.com/ovn-org/ovn/commit/86075a018c394bcf53d2320f5c5dd624bf1a4668) northd: Commit ECMP symmetric egress traffic earlier.
+- [5e7b66aa](https://github.com/ovn-org/ovn/commit/5e7b66aaad8269310f4e9f27f4501ad072be828b) controller: Prevent crash when SB_Global is empty.
+- [0df31be8](https://github.com/ovn-org/ovn/commit/0df31be8b9e4f2ed304767536d0240264f7459fc) tests: Fix flaky 'Remote chassis flood flows' test.
+- [d20cdcda](https://github.com/ovn-org/ovn/commit/d20cdcda017c121c58852d06074078aa013208e8) tests: Don't use potentially unreachable IPs for IPFIX.
+- [664e6479](https://github.com/ovn-org/ovn/commit/664e6479bd14de7aa49fcdc6b0fe6d90f14635e1) ci: Increase the disk size for CirrusCI VM.
+- [b3d1da26](https://github.com/ovn-org/ovn/commit/b3d1da26e7b9d57e1263e4ca31156f89349c8b39) tests: Use `command -v` instead of `which`.
+- [3629cc45](https://github.com/ovn-org/ovn/commit/3629cc450531f2d33584f0746a1b6f488c2ba6bc) tests: Use find_command to check for nft command.
+- [5db58e70](https://github.com/ovn-org/ovn/commit/5db58e70c9ca90b4fa7f1c966a0c72bc41b65efd) lflow: Add missing match on eth.src for ND port security.
+- [5de4a635](https://github.com/ovn-org/ovn/commit/5de4a635ee67702802582879097f4ba2b669ff83) northd: Do not send ICMP packet too big for multicast traffic.
+- [ea167342](https://github.com/ovn-org/ovn/commit/ea16734271e4c435996d4fdab4786600009da208) ci: ovn-kubernetes: Consolidate to use ovn-kube's Dockerfile.
+- [9a527837](https://github.com/ovn-org/ovn/commit/9a5278378df38559cc478fbd47284785b0253cbb) lflow: Enable default drop for ND NS in with port security enabled.
+- [153440f0](https://github.com/ovn-org/ovn/commit/153440f0ccecb399566388233a383e49540f945a) northd: Improvements of ICMP TTL exceeded behavior.
+- [014dad66](https://github.com/ovn-org/ovn/commit/014dad66e89956b4c2456972583f033ef141b125) controller: Avoid adv the same ip prefix and priority.
+- [605bccad](https://github.com/ovn-org/ovn/commit/605bccad07caafd3c91f4fd2bf0388a0154ede4e) tests: Fix "ACL log_related" system-test.
+- [50950f6c](https://github.com/ovn-org/ovn/commit/50950f6c93a966d7d6e7115f7a9a7a8904c97eeb) northd: Fix TCP connection in stateless nat.
+- [428d7be2](https://github.com/ovn-org/ovn/commit/428d7be2e74a2ca3f6fca5864b269eedee9e1756) physical: Fix remote chassis flood ingress flows for multiple encaps.
+- [85eff866](https://github.com/ovn-org/ovn/commit/85eff8669788cea809d130c008e2463a8e3cb18f) controller: Add missing nw_ttl field to match against legit NAs.
+- [97e3fbda](https://github.com/ovn-org/ovn/commit/97e3fbda05592dc843fe1b40d630a8d3981d9729) pinctrl: Avoid unaligned access to dhcpv6 options.
+- [6c04edc6](https://github.com/ovn-org/ovn/commit/6c04edc67c5bdd07cc8e0d85cfe5dcb72bc9eb0f) controller-vtep: Properly free the ovn version at the end.
+- [e4bcaf46](https://github.com/ovn-org/ovn/commit/e4bcaf4696c3a153b6897287783d496490a5e63f) binding: Prevent maybe-uninitialized error for queue variable.
+- [b07b6e2c](https://github.com/ovn-org/ovn/commit/b07b6e2c1254c573a53558c19ae0abb434646388) northd: Do not assign requested tunnel key to the derived CR port.
+- [5a5527a0](https://github.com/ovn-org/ovn/commit/5a5527a0a4b4b5023c419d54e14380b8ffb02d21) tests: Fix ACL direction consistency.
+- [bde62cfa](https://github.com/ovn-org/ovn/commit/bde62cfa6e59316002512a66183ba6e227d7bd02) northd: Delete learned route with CR without chassis.
+- [51ad8874](https://github.com/ovn-org/ovn/commit/51ad88748c22dc86db4b7ece98c89cece97f834f) controller: CT zone allocation for DGP LSPs enabled ACL.
+- [8fefb2c5](https://github.com/ovn-org/ovn/commit/8fefb2c585169bd2bdea0c16a5133ab4a4d974d8) tests: Ignore AT_CHECK stderr for `grep ... | grep -q`.
+- [153b0b13](https://github.com/ovn-org/ovn/commit/153b0b131d9b02932a8e1b6d7312319715759229) tests: Fix test for tc rounding behavior change.
+- [d2ab6b2c](https://github.com/ovn-org/ovn/commit/d2ab6b2cbb4c6a32a59f5c54d930f224c965b25d) controller: Make sure we remove stale routes first.
+- [6f61f91d](https://github.com/ovn-org/ovn/commit/6f61f91d509b94b55ef3f3ef2755b5cb84c27241) tests/ovn-ic: Add missing OVN_CLEANUP_IC call.
+- [60654994](https://github.com/ovn-org/ovn/commit/6065499409118b4e0a2eda476b8194b8b4d0f839) tests/ovn-controller: Add missing cleanup.
+- [5c6981a3](https://github.com/ovn-org/ovn/commit/5c6981a31703f3d43de1c2aaf3714ef5f1026f56) tests/ovn: Add missing partial cleanups.
+- [2da897c8](https://github.com/ovn-org/ovn/commit/2da897c815c20540ff6b4bb75589d1cbb9644afe) tests/ovn: Add missing OVN_CLEANUP calls.
+- [be628b81](https://github.com/ovn-org/ovn/commit/be628b81693a95865c838ae8a511efe71ba0fecb) tests: Add OVN_CLEANUP_DBS and use it in tests that already stopped northd.
+- [ffab32b0](https://github.com/ovn-org/ovn/commit/ffab32b0d775e66a1856758c40215490d45d261d) tests/ovn-controller-vtep: Remove unused test net.
+- [1e245b65](https://github.com/ovn-org/ovn/commit/1e245b652b22bf507e2dcf891bebb785c8dd67c8) tests/ovn-controller-vtep: Add missing OVN_CONTROLLER_VTEP_STOP calls.
+- [9b6565ad](https://github.com/ovn-org/ovn/commit/9b6565ad4f7d578312e33ed09dce4bb59cfaa1c5) tests: Add missing OVN_CLEANUP_NORTHD calls.
+- [5823ec66](https://github.com/ovn-org/ovn/commit/5823ec66cbbe385f18721babbe9c935ed899d7fd) tests: Require scapy for 'IP packet buffering'.
+- [079b0c36](https://github.com/ovn-org/ovn/commit/079b0c36887e379b08fecba361b699746c4fbe27) ovs: Bump to include fix for non-existent rows in idl uuid lookup.
+- [dc74c128](https://github.com/ovn-org/ovn/commit/dc74c128f26bb83859f01b6c0453b280c17b4ea2) controller: Prevent learning of static routes in BGP.
+- [fb4e0f9f](https://github.com/ovn-org/ovn/commit/fb4e0f9feffadc36ca35d65f98637a098f0291f4) northd: Skip transient SB datapath IDL records.
+- [e62f7156](https://github.com/ovn-org/ovn/commit/e62f7156b0dd23c60124b384a37028de05bbebe8) pinctrl: Make sure we can learn IGMP groups only on switches.
+- [fc888fd1](https://github.com/ovn-org/ovn/commit/fc888fd146d516cd2f645116feba5a870b2258d9) pinctrl: Fix Service_Monitor reported online very slowly.
+- [826f2e2c](https://github.com/ovn-org/ovn/commit/826f2e2ccd70f3c406b046906b05aef499f3f3f6) pinctrl: Fix Service_Monitor status change not updated.
+- [89712b6f](https://github.com/ovn-org/ovn/commit/89712b6f9741556cf4eec42fcfa52d214e22ead5) pinctrl: Speed up Service_Monitor updates.
+- [d95e1809](https://github.com/ovn-org/ovn/commit/d95e1809c886802ecb30d9a43b89d8f30c34c438) pinctrl: Avoid waking-up pinctrl thread too often.
+- [099dc791](https://github.com/ovn-org/ovn/commit/099dc7911559ac6e460bd653980a55cc9ec70868) pinctrl: Fix wrong value in timer_wait_until().
+- [bbe771a7](https://github.com/ovn-org/ovn/commit/bbe771a721d0f1491501cfa2fca9eae37120d09b) pinctrl: Use proper drop counter for FDB.
+- [b75aa38e](https://github.com/ovn-org/ovn/commit/b75aa38e249968f7e08a62063dfff8674684eb15) northd: Delete learned routes when dynamic-routing is false.
+- [81c317ea](https://github.com/ovn-org/ovn/commit/81c317eaf51c51c61b8ae94b2dfd96d2817322a2) tests: Ensure all central components stop at the end of the test.
+- [12e50879](https://github.com/ovn-org/ovn/commit/12e50879e88d8df60d49229d4a7042baf4caa016) Prepare for 25.03.3.
