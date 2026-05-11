@@ -362,6 +362,8 @@ For each such localnet logical port \fIp\fR following flow is added\[char46]
 Priority 100 flow with the match \fBinport == \fIp\fB\fR and action \fBflags\[char46]localnet = 1;\fR \fBreg0[11] = lookup_fdb(inport, eth\[char46]src); next;\fR
 .RE
 .IP \(bu
+For each localnet logical port \fIp\fR, a priority\-50 fallback flow is added with the match \fBinport == \fIp\fB\fR and action \fBflags\[char46]localnet = 1; next;\fR\[char46] This marks traffic arriving from localnet ports so that downstream stages (e\[char46]g\[char46], ARP/ND responder) can condition their behavior\[char46] When FDB learning is enabled on the localnet port, the priority\-100 flow described above already sets \fBflags\[char46]localnet\fR, so this priority\-50 flow only takes effect when FDB learning is not configured\[char46]
+.IP \(bu
 One priority\-0 fallback flow that matches all packets and advances to the next table\[char46]
 .RE
 .ST "Ingress Table 4: Learn MAC of \(cqunknown\(cq ports\[char46]"
@@ -800,12 +802,12 @@ ARP requests arrive from VMs from a logical switch inport of type default\[char4
 Logical switch ARP responder proxy ARP rules can also be hit when receiving ARP requests externally on a L2 gateway port\[char46] In this case, the hypervisor acting as an L2 gateway, responds to the ARP request on behalf of a destination VM\[char46]
 .PP
 .PP
-Note that ARP requests received from \fBlocalnet\fR logical inports can either go directly to VMs, in which case the VM responds or can hit an ARP responder for a logical router port if the packet is used to resolve a logical router port next hop address\[char46] In either case, logical switch ARP responder rules will not be hit\[char46] It contains these logical flows:
+ARP/ND requests received from \fBlocalnet\fR logical inports do hit the ARP/ND responder, but the response is limited to the chassis that hosts the target VIF\[char46] This is achieved by adding a \fBflags\[char46]localnet\fR check to the priority\-50 reply flows (see below): when the request arrives from a localnet port (\fBflags\[char46]localnet == 1\fR), only the chassis on which the target port is resident will reply\[char46] When the request arrives from a non-localnet port (\fBflags\[char46]localnet == 0\fR), the response is unconditional, preserving VIF-to-VIF proxy ARP/ND behavior\[char46] It contains these logical flows:
 .RS
 .IP \(bu
 If packet was received from HW VTEP (ramp switch), and this packet is ARP or Neighbor Solicitation, such packet is passed to next table with max proirity\[char46] ARP/ND requests from HW VTEP must be handled in logical router ingress pipeline\[char46]
 .IP \(bu
-If the logical switch has no router ports with options:arp_proxy configured add a priority\-100 flows to skip the ARP responder if inport is of type \fBlocalnet\fR advances directly to the next table\[char46] ARP requests sent to \fBlocalnet\fR ports can be received by multiple hypervisors\[char46] Now, because the same mac binding rules are downloaded to all hypervisors, each of the multiple hypervisors will respond\[char46] This will confuse L2 learning on the source of the ARP requests\[char46] ARP requests received on an inport of type \fBrouter\fR are not expected to hit any logical switch ARP responder flows\[char46] However, no skip flows are installed for these packets, as there would be some additional flow cost for this and the value appears limited\[char46]
+ARP/ND requests received on an inport of type \fBrouter\fR are not expected to hit any logical switch ARP responder flows\[char46] However, no skip flows are installed for these packets, as there would be some additional flow cost for this and the value appears limited\[char46]
 .IP \(bu
 If inport \fBV\fR is of type \fBvirtual\fR adds a priority\-100 logical flows for each \fIP\fR configured in the \fBoptions:virtual-parents\fR column with the match
 .IP
@@ -860,6 +862,10 @@ Priority\-50 flows that match only broadcast ARP requests to each known IPv4 add
 .br
 \fB        \fR
 .fi
+.IP
+On logical switches that have a localnet port, the match for these flows includes an additional condition: \fB((flags\[char46]localnet == 1 &&
+is_chassis_resident(\fIport\fB)) ||
+flags\[char46]localnet == 0)\fR\[char46] This ensures that when an ARP request arrives from a localnet port, only the chassis hosting the target VIF responds\[char46] When the request arrives from a non-localnet port, the response is unconditional, preserving VIF-to-VIF proxy ARP behavior\[char46]
 .IP
 These flows are omitted for logical ports (other than router ports or \fBlocalport\fR ports) that are down (unless \fB
 ignore_lsp_down\fR is configured as true in \fBoptions\fR column of \fBNB_Global\fR table of the \fBNorthbound\fR database), for logical ports of type \fBvirtual\fR, for logical ports with \(cqunknown\(cq address set, for logical ports with the \fBoptions:disable_arp_nd_rsp=true\fR and for logical ports of a logical switch configured with \fBother_config:vlan\-passthru=true\fR\[char46]
@@ -918,12 +924,16 @@ Priority\-50 flows that match IPv6 ND neighbor solicitations to each known IP ad
 \fB        \fR
 .fi
 .IP
+On logical switches that have a localnet port, the match for these flows includes an additional condition: \fB((flags\[char46]localnet == 1 &&
+is_chassis_resident(\fIport\fB)) ||
+flags\[char46]localnet == 0)\fR\[char46] This ensures that when an ND solicitation arrives from a localnet port, only the chassis hosting the target VIF responds\[char46] When the solicitation arrives from a non-localnet port, the response is unconditional, preserving VIF-to-VIF proxy ND behavior\[char46]
+.IP
 These flows are omitted for logical ports (other than router ports or \fBlocalport\fR ports) that are down (unless \fB
 ignore_lsp_down\fR is configured as true in \fBoptions\fR column of \fBNB_Global\fR table of the \fBNorthbound\fR database), for logical ports of type \fBvirtual\fR and for logical ports with \(cqunknown\(cq address set\[char46]
 .IP
 The above NDP responder flows are added for the list of IPv6 addresses if defined in \fBoptions:arp_proxy\fR column of \fBLogical_Switch_Port\fR table for logical switch ports of type \fBrouter\fR\[char46]
 .IP \(bu
-Priority\-100 flows with match criteria like the ARP and ND flows above, except that they only match packets from the \fBinport\fR that owns the IP addresses in question, with action \fBnext;\fR\[char46] These flows prevent OVN from replying to, for example, an ARP request emitted by a VM for its own IP address\[char46] A VM only makes this kind of request to attempt to detect a duplicate IP address assignment, so sending a reply will prevent the VM from accepting the IP address that it owns\[char46]
+Priority\-100 flows with match criteria similar to the ARP and ND flows above, except that they only match packets from the \fBinport\fR that owns the IP addresses in question, with action \fBnext;\fR\[char46] These flows prevent OVN from replying to, for example, an ARP request emitted by a VM for its own IP address\[char46] A VM only makes this kind of request to attempt to detect a duplicate IP address assignment, so sending a reply will prevent the VM from accepting the IP address that it owns\[char46]
 .IP
 In place of \fBnext;\fR, it would be reasonable to use \fBdrop;\fR for the flows\(cq actions\[char46] If everything is working as it is configured, then this would produce equivalent results, since no host should reply to the request\[char46] But ARPing for one\(cqs own IP address is intended to detect situations where the network is not working as configured, so dropping the request would frustrate that intent\[char46]
 .IP \(bu
