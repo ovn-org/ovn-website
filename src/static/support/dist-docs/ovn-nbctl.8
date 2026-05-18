@@ -447,8 +447,8 @@ Without any options, this command regards it as an error if \fInfg\fR is a dupli
 [\fB\-\-if\-exists\fR] \fBnfg\-del\fR \fInfg\fR
 Deletes \fInfg\fR specified as name or uuid\[char46] It is an error if \fInfg\fR does not exist, unless \fB\-\-if\-exists\fR is specified\[char46]
 .TP
-\fBnfg\-list\fR
-Lists all network function groups\[char46]
+\fBnfg\-list\fR [\fInfg\fR]
+Lists all network function groups\[char46] If a specific network function group \fInfg\fR is given, only that group is listed\[char46]
 .TP
 [\fB\-\-may\-exist\fR] \fBnfg\-add\-nf\fR \fInfg\fR \fInf\fR
 Add a network function named \fInf\fR to a network function group named \fInfg\fR\[char46] It is an error if \fInfg\fR or \fInf\fR does not exist\[char46] Unless \fB\-\-may\-exist\fR is specified, it is an error if the \fInf\fR being added is already a part of the \fInfg\fR\[char46]
@@ -473,7 +473,7 @@ If \fIswitch\fR and \fIuuid\fR are supplied, then the QoS rule with specified uu
 Lists the QoS rules on \fIswitch\fR\[char46]
 .SS "Meter Commands"
 .TP
-\fBmeter\-add\fR \fIname\fR \fIaction\fR \fIrate\fR \fIunit\fR [\fIburst\fR]
+[\fB\-\-fair\fR] [\fB\-\-may\-exist\fR] \fBmeter\-add\fR \fIname\fR \fIaction\fR \fIrate\fR \fIunit\fR [\fIburst\fR]
 Adds the specified meter\[char46] \fIname\fR must be a unique name to identify this meter\[char46] The \fIaction\fR argument specifies what should happen when this meter is exceeded\[char46] The only supported action is \fBdrop\fR\[char46]
 .IP
 The \fIunit\fR specifies the unit for the \fIrate\fR argument; valid values are \fBkbps\fR and \fBpktps\fR for kilobits per second and packets per second, respectively\[char46] The \fIburst\fR option configures the maximum burst allowed for the band in kilobits or packets depending on whether the \fIunit\fR chosen was \fBkbps\fR or \fBpktps\fR, respectively\[char46] If a burst is not supplied, the switch is free to select some reasonable value depending on its configuration\[char46]
@@ -481,6 +481,10 @@ The \fIunit\fR specifies the unit for the \fIrate\fR argument; valid values are 
 \fBovn\-nbctl\fR only supports adding a meter with a single band, but the other commands support meters with multiple bands\[char46]
 .IP
 Names that start with \(dq__\(dq (two underscores) are reserved for internal use by OVN, so \fBovn\-nbctl\fR does not allow adding them\[char46]
+.IP
+If \fB\-\-fair\fR is specified, the meter\(cqs \fBfair\fR column is set to \fBtrue\fR, enabling fair bandwidth sharing among rows that reference this meter\[char46]
+.IP
+If \fB\-\-may\-exist\fR is specified, adding a meter with a name that already exists will update the existing meter instead of reporting an error\[char46]
 .TP
 \fBmeter\-del\fR [\fIname\fR]
 Deletes meters\[char46] By default, all meters are deleted\[char46] If \fIname\fR is supplied, only the meter with that name will be deleted\[char46]
@@ -609,6 +613,16 @@ Attaches the mirror \fIm\fR to the logical port \fIport\fR\[char46]
 .TP
 \fBlsp\-detach\-mirror\fR \fIport\fR \fIm\fR
 Detaches the mirror \fIm\fR from the logical port \fIport\fR\[char46]
+.TP
+[\fB\-\-may\-exist\fR] \fBlsp\-add\-router\-port\fR \fIswitch\fR \fIport\fR \fIlrp_peer\fR
+Creates a new logical switch port named \fIport\fR on \fIswitch\fR with type \fBrouter\fR, sets the \fBrouter\-port\fR option to \fIlrp_peer\fR, and sets addresses to \fBrouter\fR\[char46]
+.IP
+With \fB\-\-may\-exist\fR, it is not an error if the port already exists, as long as it is in the same switch, has the same type, and has the same \fBrouter\-port\fR option\[char46]
+.TP
+[\fB\-\-may\-exist\fR] \fBlsp\-add\-localnet\-port\fR \fIswitch\fR \fIport\fR \fInetwork\fR
+Creates a new logical switch port named \fIport\fR on \fIswitch\fR with type \fBlocalnet\fR, sets the \fBnetwork_name\fR option to \fInetwork\fR, and sets addresses to \fBunknown\fR\[char46]
+.IP
+With \fB\-\-may\-exist\fR, it is not an error if the port already exists, as long as it is in the same switch, has the same type, and has the same \fBnetwork_name\fR option\[char46]
 .SS "Forwarding Group Commands"
 .TP
 [\fB\-\-liveness\fR]\fBfwd\-group\-add\fR \fIgroup\fR \fIswitch\fR \fIvip\fR \fIvmac\fR \fIports\fR
@@ -696,12 +710,14 @@ It is an error if there is no matching route entry, unless \fB\-\-if\-exists\fR 
 Lists the routes on \fIrouter\fR\[char46]
 .SS "Logical Router Policy Commands"
 .TP
-[\fB\-\-may\-exist\fR] [\fB\-\-bfd\fR] [\fB\-\-route\-table\fR=\fIROUTE_TABLE\fR] \fBlr\-policy\-add\fR \fIrouter\fR \fIpriority\fR \fImatch\fR \fIaction\fR [\fInexthop\fR[,\fInexthop\fR,\[char46]\[char46]\[char46]]] [\fIoptions key=value]\fR]
-Add Policy to \fIrouter\fR which provides a way to configure permit/deny and reroute policies on the router\[char46] Permit/deny policies are similar to OVN ACLs, but exist on the logical-router\[char46] Reroute policies are needed for service-insertion and service-chaining\[char46] \fInexthop\fR is an optional parameter\[char46] It needs to be provided only when \fIaction\fR is \fIreroute\fR\[char46] Multiple \fBnexthops\fR can be specified for ECMP routing\[char46] A policy is uniquely identified by \fIpriority\fR and \fImatch\fR\[char46] Multiple policies can have the same \fIpriority\fR\[char46] \fIoptions\fR sets the router policy options as key-value pair\[char46] The supported option is : \fBpkt_mark\fR\[char46]
+[\fB\-\-may\-exist\fR] [\fB\-\-bfd\fR] [\fB\-\-chain\fR=\fICHAIN\fR] [\fB\-\-output\-port\fR=\fIOUTPUT_PORT\fR] \fBlr\-policy\-add\fR \fIrouter\fR \fIpriority\fR \fImatch\fR \fIaction\fR [\fInexthop\fR[,\fInexthop\fR,\[char46]\[char46]\[char46]]] [\fIoptions key=value]\fR]
+Add Policy to \fIrouter\fR which provides a way to configure allow, drop, jump, and reroute policies on the router\[char46] Allow and drop policies are similar to OVN ACLs, but exist on the logical-router\[char46] Reroute policies are needed for service-insertion and service-chaining\[char46] The \fIaction\fR must be one of \fBallow\fR, \fBdrop\fR, \fBjump\fR, or \fBreroute\fR\[char46] \fInexthop\fR is an optional parameter\[char46] It needs to be provided only when \fIaction\fR is \fBreroute\fR\[char46] Multiple \fBnexthops\fR can be specified for ECMP routing\[char46] A policy is uniquely identified by \fIpriority\fR and \fImatch\fR\[char46] Multiple policies can have the same \fIpriority\fR\[char46] \fIoptions\fR sets the router policy options as key-value pair\[char46] The supported option is : \fBpkt_mark\fR\[char46]
 .IP
 If \fB\-\-may\-exist\fR is specified, adding a duplicated routing policy with the same priority and match string is not really created\[char46] Without \fB\-\-may\-exist\fR, adding a duplicated routing policy results in error\[char46]
 .IP
-The \fB\-\-route\-table\fR option can be used to list the routes assigned to route table \fIROUTE_TABLE\fR instead of the default \fB<main>\fR table\[char46]
+The \fB\-\-chain\fR option specifies the policy chain name\[char46] This is used when the \fIaction\fR is \fBjump\fR\[char46]
+.IP
+The \fB\-\-output\-port\fR option specifies the output logical router port\[char46] This is only valid when the \fIaction\fR is \fBreroute\fR\[char46]
 .IP
 \fB\-\-bfd\fR option is used to link a BFD session to the OVN reroute policy\[char46] OVN will look for an already running BFD session using next-hop as lookup key in the BFD table\[char46] If the lookup fails, a new entry in the BFD table will be created using the \fInexthop\fR as \fIdst_ip\fR\[char46]
 .IP
@@ -714,10 +730,12 @@ lr\-policy\-add lr1 100 ip4\[char46]src == 192\[char46]168\[char46]100\[char46]0
 pkt_mark=100
 \fR\[char46]
 .TP
-[\fB\-\-if\-exists\fR] \fBlr\-policy\-del\fR \fIrouter\fR [\fI{priority | uuid} [match]\fR]
+[\fB\-\-if\-exists\fR] [\fB\-\-chain\fR=\fICHAIN\fR] \fBlr\-policy\-del\fR \fIrouter\fR [\fI{priority | uuid} [match]\fR]
 Deletes polices from \fIrouter\fR\[char46] If only \fIrouter\fR is supplied, all the polices from the logical router are deleted\[char46] If \fIpriority\fR and/or \fImatch\fR are also specified, then all the polices that match the conditions will be deleted from the logical router\[char46]
 .IP
 If \fIrouter\fR and \fIuuid\fR are supplied, then the policy with specified uuid is deleted\[char46] It is an error if \fIuuid\fR does not exist, unless \fB\-\-if\-exists\fR is specified\[char46]
+.IP
+If \fB\-\-chain\fR is specified, only policies in the specified chain are considered for deletion\[char46]
 .TP
 \fBlr\-policy\-list\fR \fIrouter\fR
 Lists the polices on \fIrouter\fR\[char46]
@@ -753,9 +771,16 @@ It is an error if both \fIip\fR and \fIgateway_port\fR are specified and there i
 .TP
 \fBlr\-nat\-list\fR \fIrouter\fR
 Lists the NATs on \fIrouter\fR\[char46]
+.TP
+[\fB\-\-is\-exempted\fR] \fBlr\-nat\-update\-ext\-ip\fR \fIrouter\fR \fItype\fR \fIip\fR \fIaddress_set\fR
+Updates the external IP address set for an existing NAT rule on \fIrouter\fR\[char46] \fItype\fR must be one of \fBdnat\fR, \fBsnat\fR, or \fBdnat_and_snat\fR\[char46] The command finds the matching NAT rule by \fItype\fR and \fIip\fR, then sets the \fBallowed_ext_ips\fR column of the NAT rule to \fIaddress_set\fR\[char46]
+.IP
+If \fB\-\-is\-exempted\fR is specified, sets \fBexempted_ext_ips\fR instead of \fBallowed_ext_ips\fR\[char46]
+.IP
+It is an error if no matching NAT rule is found\[char46]
 .SS "Load Balancer Commands"
 .TP
-[\fB\-\-may\-exist\fR | \fB\-\-add\-duplicate\fR | \fB\-\-reject\fR | \fB\-\-event\fR | \fB\-\-template\fR] \fBlb\-add\fR \fIlb\fR \fIvip\fR \fIips\fR [\fIprotocol\fR]
+[\fB\-\-may\-exist\fR | \fB\-\-add\-duplicate\fR | \fB\-\-reject\fR | \fB\-\-event\fR | \fB\-\-template\fR | \fB\-\-add\-route\fR] \fBlb\-add\fR \fIlb\fR \fIvip\fR \fIips\fR [\fIprotocol\fR] [\fIaddress_family\fR]
 Creates a new load balancer named \fIlb\fR with the provided \fIvip\fR and \fIips\fR or adds the \fIvip\fR to an existing \fIlb\fR\[char46] \fIvip\fR should be a virtual IP address (or an IP address and a port number with \fB:\fR as a separator)\[char46] Examples for \fIvip\fR are \fB192\[char46]168\[char46]1\[char46]4\fR, \fBfd0f::1\fR, and \fB192\[char46]168\[char46]1\[char46]5:8080\fR\[char46] \fIips\fR should be comma separated IP endpoints (or comma separated IP addresses and port numbers with \fB:\fR as a separator)\[char46] \fIips\fR must be the same address family as \fIvip\fR\[char46] Examples for \fIips\fR are \fB10\[char46]0\[char46]0\[char46]1,10\[char46]0\[char46]0\[char46]2\fRor \fB[fdef::1]:8800,[fdef::2]:8800\fR\[char46]
 .IP
 The optional argument \fIprotocol\fR must be either \fBtcp\fR, \fBudp\fR or \fBsctp\fR\[char46] This argument is useful when a port number is provided as part of the \fIvip\fR\[char46] If the \fIprotocol\fR is unspecified and a port number is provided as part of the \fIvip\fR, OVN assumes the \fIprotocol\fR to be \fBtcp\fR\[char46]
@@ -768,6 +793,10 @@ If the load balancer is created with \fB\-\-event\fR option and it has no active
 .IP
 If the load balancer is created with \fB\-\-template\fR option, local template variables may be used as arguments\[char46] These variables are stored in Chassis_Template_Var\[char46] To see the supported variable formats, see \fBovn\-nb\fR(5)\[char46] The following example adds a templated load balancer: \fBovn\-nbctl \-\-template lb\-add lb1
 ^vip:^vport ^backend udp ipv4\fR\[char46]
+.IP
+If \fB\-\-add\-route\fR is specified, a route is automatically added for the load balancer\(cqs VIP subnet\[char46]
+.IP
+The optional \fIaddress_family\fR argument specifies the address family (\fBipv4\fR or \fBipv6\fR)\[char46] This is primarily used with template load balancers\[char46]
 .IP
 The following example adds a load balancer\[char46]
 .IP
@@ -842,6 +871,9 @@ Adds a new HA chassis \fBchassis\fR to the HA Chassis group \fBgroup\fR with the
 .TP
 \fBha\-chassis\-group\-remove\-chassis\fR \fIgroup\fR \fIchassis\fR
 Removes the HA chassis \fBchassis\fR from the HA chassis group \fBgroup\fR\[char46] It is an error if \fBchassis\fR does not exist\[char46]
+.TP
+\fBha\-chassis\-group\-set\-chassis\-prio\fR \fIgroup\fR \fIchassis\fR \fIpriority\fR
+Sets the priority of an existing HA chassis \fIchassis\fR within the HA chassis group \fIgroup\fR\[char46] \fIpriority\fR must be between \fB0\fR and \fB32767\fR, inclusive\[char46] It is an error if \fIchassis\fR does not exist in \fIgroup\fR\[char46]
 .SS "Control Plane Protection Policy commands"
 .PP
 .PP
@@ -915,6 +947,12 @@ Deletes the mirror \fBm\fR\[char46]
 .TP
 \fBmirror\-list\fR
 Lists the mirrors\[char46]
+.TP
+\fBmirror\-rule\-add\fR \fImirror_name\fR \fIpriority\fR \fImatch\fR \fIaction\fR
+Adds a mirror rule to the mirror named \fImirror_name\fR\[char46] \fIpriority\fR is an integer between \fB0\fR and \fB32767\fR, inclusive\[char46] \fImatch\fR is a match expression for selecting traffic\[char46] \fIaction\fR must be \fBmirror\fR or \fBskip\fR\[char46] It is an error if a duplicate rule already exists on the mirror\[char46]
+.TP
+\fBmirror\-rule\-del\fR \fImirror_name\fR [\fIpriority\fR \fImatch\fR]
+Deletes mirror rules from the mirror named \fImirror_name\fR\[char46] If only \fImirror_name\fR is given, all mirror rules are deleted from that mirror\[char46] If \fIpriority\fR and \fImatch\fR are also given, only the rule matching both is deleted\[char46]
 .SS "Health Check commands"
 .TP
 \fBlsp\-hc\-add\fR \fIPORT\fR \fIPROTOCOL\fR \fISOURCE_IP\fR [\fIDST_PORT\fR] \fIADDRESS\fR
