@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-ic-sb" 5 " DB Schema 2.5.0" "Open vSwitch 26.03.90" "Open vSwitch Manual"
+.TH "ovn-ic-sb" 5 " DB Schema 2.6.0" "Open vSwitch 26.03.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -453,6 +453,16 @@ string, one of \fBconnected\-dynamic\fR, \fBconnected\fR, \fBloadbalancer\fR, or
 \fBexternal_ids\fR
 map of string-string pairs
 .RE
+.TQ .25in
+\fIOptions:\fR
+.RS .25in
+.TQ 2.75in
+\fBoptions\fR
+map of string-string pairs
+.TQ 2.75in
+\fBoptions : override-connected\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
+.RE
 .SS "Details:
 .ST "Core Features:"
 .PP
@@ -463,7 +473,7 @@ The availability zone that has advertised the route\[char46]
 .IP "\fBroute_table\fR: string"
 Route table within which this route was created\[char46] Empty value means \fI<main>\fR routing table\[char46]
 .IP
-Routes for directly-connected networks will be learned to \fI<main>\fR routing table and if Logical Routers have more than one Transit Switch, which interconnects them, directly-connected routes will be added via each transit switch port and configured as ECMP routes\[char46]
+Routes for directly-connected networks will be learned to \fI<main>\fR routing table and if Logical Routers have more than one Transit Switch, which interconnects them, directly-connected routes will be added via each transit switch port and configured as ECMP routes\[char46] Additionally, these routes will be advertised to other AZ and learned into route table that has the same name in the remote logical router\[char46] When learned, these routes are automatically marked with the \fBoverride\-connected\fR option, giving them higher priority than any local connected route with same prefix in that route table\[char46] This enables policy-based routing scenarios where traffic processed within a specific route table can be forcibly forwarded to remote AZ even when local connected route exists\[char46]
 .IP
 Static routes within route tables will be advertised and learned only if interconnecting transit switch\(cqs LRPs will have same value in \fBoptions:route_table\fR as NB \fBroute_table\fR or ICSB \fBroute_table\fR value respectively\[char46]
 .IP "\fBip_prefix\fR: string"
@@ -476,6 +486,14 @@ Can be one of \fBconnected\fR, \fBstatic\fR, \fBconnected\-dynamic\fR or \fBload
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
 See \fBExternal IDs\fR at the beginning of this document\[char46]
+.ST "Options:"
+.PP
+.IP "\fBoptions\fR: map of string-string pairs"
+This column provides general key/value settings\[char46] The supported options are described individually below\[char46]
+.IP "\fBoptions : override-connected\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+This option is a copy of its Northbound DB counterpart\[char46]
+.IP
+For connected routes this option is set to true if there is a route table associated with given connected route, i\[char46]e\[char46] \fBroute_table\fR is not empty\[char46]
 .bp
 .SH "Connection TABLE"
 .PP

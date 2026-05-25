@@ -336,6 +336,10 @@ Route TABLE
                                      nected, loadbalancer, or static
        Common Columns:
          external_ids                map of string-string pairs
+       Options:
+         options                     map of string-string pairs
+         options : override-connected
+                                     optional string, either true or false
 
    Details:
      Core Features:
@@ -355,10 +359,18 @@ Route TABLE
               routing  table and if Logical Routers have more than one Transit
               Switch, which interconnects them, directly-connected routes will
               be added via each transit switch port  and  configured  as  ECMP
-              routes.
+              routes.  Additionally,  these routes will be advertised to other
+              AZ and learned into route table that has the same  name  in  the
+              remote  logical router. When learned, these routes are automati‐
+              cally marked with the  override-connected  option,  giving  them
+              higher  priority than any local connected route with same prefix
+              in that route table. This enables policy-based routing scenarios
+              where traffic processed within a specific  route  table  can  be
+              forcibly  forwarded to remote AZ even when local connected route
+              exists.
 
               Static routes within route tables will be advertised and learned
-              only  if  interconnecting  transit  switch’s LRPs will have same
+              only if interconnecting transit switch’s  LRPs  will  have  same
               value in options:route_table as NB route_table or ICSB route_ta�‐
               ble value respectively.
 
@@ -370,13 +382,13 @@ Route TABLE
 
        origin: string, one of connected-dynamic, connected, loadbalancer, or
        static
-              Can be one of connected, static, connected-dynamic  or  loadbal�‐
-              ancer.  Routes  to  directly-connected subnets - LRP’s CIDRs are
-              inserted to OVN IC SB DB with connected value in origin.  Static
-              routes  are  inserted  to OVN IC SB DB with static value. Routes
-              for LB VIPs are inserted in  OVN  IC  SB  DB  with  loadbalancer
-              value.  Routes  learned from dynamic routing are inserted in OVN
-              IC SB DB  with  connected-dynamic  value.  Next  when  route  is
+              Can  be  one of connected, static, connected-dynamic or loadbal�‐
+              ancer. Routes to directly-connected subnets -  LRP’s  CIDRs  are
+              inserted  to OVN IC SB DB with connected value in origin. Static
+              routes are inserted to OVN IC SB DB with  static  value.  Routes
+              for  LB  VIPs  are  inserted  in  OVN IC SB DB with loadbalancer
+              value. Routes learned from dynamic routing are inserted  in  OVN
+              IC  SB  DB  with  connected-dynamic  value.  Next  when route is
               learned to another AZ NB DB by ovn-ic, route origin is synced to
               options:origin.
 
@@ -384,6 +396,19 @@ Route TABLE
 
        external_ids: map of string-string pairs
               See External IDs at the beginning of this document.
+
+     Options:
+
+       options: map of string-string pairs
+              This column provides general key/value settings.  The  supported
+              options are described individually below.
+
+       options : override-connected: optional string, either true or false
+              This option is a copy of its Northbound DB counterpart.
+
+              For  connected  routes  this option is set to true if there is a
+              route  table  associated  with  given  connected   route,   i.e.
+              route_table is not empty.
 
 Connection TABLE
        Configuration  for  a  database  connection to an Open vSwitch database
@@ -731,4 +756,4 @@ Service_Monitor TABLE
               Same as in Table Service_Monitor in SBDB. Copy from source  SBDB
               record.
 
-Open vSwitch 26.03.90           DB Schema 2.5.0                   ovn-ic-sb(5)
+Open vSwitch 26.03.90           DB Schema 2.6.0                   ovn-ic-sb(5)

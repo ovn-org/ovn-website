@@ -684,7 +684,7 @@ Deletes gateway chassis from \fIport\fR\[char46] It is an error if gateway chass
 Lists all the gateway chassis with priority within \fIport\fR on standard output, one per line, ordered based on priority\[char46]
 .SS "Logical Router Static Route Commands"
 .TP
-[\fB\-\-may\-exist\fR] [\fB\-\-policy\fR=\fIPOLICY\fR] [\fB\-\-route\-table\fR=\fIROUTE_TABLE\fR] [\fB\-\-ecmp\fR] [\fB\-\-ecmp\-symmetric\-reply\fR] [\fB\-\-bfd[=\fIUUID\fB\fR]] \fBlr\-route\-add\fR \fIrouter\fR \fIprefix\fR \fInexthop\fR [\fIport\fR]
+[\fB\-\-may\-exist\fR] [\fB\-\-policy\fR=\fIPOLICY\fR] [\fB\-\-route\-table\fR=\fIROUTE_TABLE\fR] [\fB\-\-ecmp\fR] [\fB\-\-ecmp\-symmetric\-reply\fR] [\fB\-\-override\-connected\fR] [\fB\-\-bfd[=\fIUUID\fB\fR]] \fBlr\-route\-add\fR \fIrouter\fR \fIprefix\fR \fInexthop\fR [\fIport\fR]
 Adds the specified route to \fIrouter\fR\[char46] \fIprefix\fR describes an IPv4 or IPv6 prefix for this route, such as \fB192\[char46]168\[char46]100\[char46]0/24\fR\[char46] \fInexthop\fR specifies the gateway to use for this route, which should be the IP address of one of \fIrouter\fR logical router ports or the IP address of a logical port\[char46] If \fIport\fR is specified, packets that match this route will be sent out that port\[char46] When \fIport\fR is omitted, OVN infers the output port based on \fInexthop\fR\[char46] Nexthop can be set to \fIdiscard\fR for dropping packets which match the given route\[char46]
 .IP
 The \fB\-\-route\-table\fR option can be used to assign the given route to a separate routing table \fIROUTE_TABLE\fR instead of the default \fB<main>\fR table\[char46] For a detailed explanation of the route lookup behavior, see the description of the field \fBLogical_Router_Static_Route:route_table\fR in the \fBovn\-nb\fR(5) manpage\[char46]
@@ -694,6 +694,8 @@ The \fB\-\-route\-table\fR option can be used to assign the given route to a sep
 The \fB\-\-ecmp\fR option allows for multiple routes with the same \fIprefix\fR \fIPOLICY\fR but different \fInexthop\fR and \fIport\fR to be added\[char46]
 .IP
 The \fB\-\-ecmp\-symmetric\-reply\fR option makes it so that traffic that arrives over an ECMP route will have its reply traffic sent out over that same route\[char46] Setting \fB\-\-ecmp\-symmetric\-reply\fR implies \fB\-\-ecmp\fR so it is not necessary to set both\[char46]
+.IP
+The \fB\-\-override\-connected\fR option makes it so that route\(cqs priority to be highest among routes with same prefix\[char46]
 .IP
 \fB\-\-bfd\fR option is used to link a BFD session to the OVN route\[char46] If the BFD session UUID is provided, it will be used for the OVN route otherwise the next-hop will be used to perform a lookup in the OVN BFD table\[char46] If the lookup fails and \fIport\fR is specified, a new entry in the BFD table will be created using the \fInexthop\fR as \fIdst_ip\fR and \fIport\fR as \fIlogical_port\fR\[char46]
 .IP
