@@ -1217,6 +1217,8 @@ Logical_Switch_Port TABLE
                                      optional string, either true or false
             options : ct-zone-limit  optional  string,  containing an integer,
                                      in range 0 to 4,294,967,295
+            options : dynamic-routing-advertise
+                                     optional string
          Options for localnet ports:
             options : network_name   optional string
             options : ethtype        optional string
@@ -1494,6 +1496,12 @@ Logical_Switch_Port TABLE
               ured.  The  value  0  means  unlimited.  When  the option is not
               present the limit is not set and the zone limit is derived  from
               OvS default datapath limit.
+
+       options : dynamic-routing-advertise: optional string
+              If  the  CMS  sets  options:dynamic-routing-redistribute to con�‐
+              nected-as-host, this parameter is used by the CMS to enable/dis‐
+              able the advertisement of the current host  IP  via  the  Adver�‐
+              tised_Route table. Default: true.
 
      Options for localnet ports:
 
@@ -2277,6 +2285,8 @@ Load_Balancer TABLE
                                      optional string, either true or false
          options : distributed       optional string
          options : event             optional string, either true or false
+         options : dynamic-routing-advertise
+                                     optional string
 
    Details:
        name: string
@@ -2516,6 +2526,12 @@ Load_Balancer TABLE
               named event-elb to rate-limit these events. The default value is
               false. If both event and reject are set, reject takes precedence
               and no event is generated.
+
+       options : dynamic-routing-advertise: optional string
+              If the CMS sets options:dynamic-routing-redistribute to lb, this
+              parameter is used by the CMS to enable/disable the advertisement
+              of the current LB Service IP via the Advertised_Route table. De‐
+              fault: true.
 
 Load_Balancer_Group TABLE
        Each  row  represents a logical grouping of load balancers. It is up to
@@ -3574,6 +3590,8 @@ Logical_Router_Port TABLE
                                      optional string
          options : dynamic-routing-redistribute
                                      optional string
+         options : dynamic-routing-advertise
+                                     optional string
          options : dynamic-routing-redistribute-local-only
                                      optional string, either true or false
          options : dynamic-routing-maintain-vrf
@@ -4007,6 +4025,12 @@ Logical_Router_Port TABLE
               If not set the value  from  options:dynamic-routing-redistribute
               on the Logical_Router will be used.
 
+       options : dynamic-routing-advertise: optional string
+              If  the  CMS  sets  options:dynamic-routing-redistribute to con�‐
+              nected-as-host, this parameter is used by the CMS to enable/dis‐
+              able the advertisement of the current host  IP  via  the  Adver�‐
+              tised_Route table. Default: true.
+
        options : dynamic-routing-redistribute-local-only: optional string, ei‐
        ther true or false
               Only relevant if options:dynamic-routing is set to true.
@@ -4169,7 +4193,7 @@ Logical_Router_Static_Route TABLE
          options : ecmp_symmetric_reply
                                      optional string
          options : origin            optional string
-         options : override-connected
+         options : dynamic-routing-advertise
                                      optional string
 
    Details:
@@ -4295,11 +4319,11 @@ Logical_Router_Static_Route TABLE
 
               2.  static
 
-       options : override-connected: optional string
-              This option can be manually set for local static routes and  au‐
-              tomatically  set  for ovn-interconnected learned routes. Default
-              value: false. This option raises route’s priority to be  highest
-              among routes with same prefix.
+       options : dynamic-routing-advertise: optional string
+              If the CMS sets options:dynamic-routing-redistribute to  static,
+              this  parameter  can be used to enable/disable the advertisement
+              of the current static route via the Advertised_Route table.  De‐
+              fault: true.
 
 Logical_Router_Policy TABLE
        Each  row  in  this  table  represents one routing policy for a logical
@@ -4421,6 +4445,8 @@ NAT TABLE
        priority                      integer, in range 0 to 32,767
        options : stateless           optional string
        options : add_route           optional string
+       options : dynamic-routing-advertise
+                                     optional string
        Common Columns:
          external_ids                map of string-string pairs
 
@@ -4575,6 +4601,12 @@ NAT TABLE
               This option only applies to NATs of type dnat and dnat_and_snat.
               For  more  information about what flows are added for IP routes,
               please see the ovn-northd manpage section on IP Routing.
+
+       options : dynamic-routing-advertise: optional string
+              If the CMS  sets  options:dynamic-routing-redistribute  to  nat,
+              this  parameter  is used by the CMS to enable/disable the adver‐
+              tisement of the current NAT external IP via the Advertised_Route
+              table. Default: true.
 
      Common Columns:
 
