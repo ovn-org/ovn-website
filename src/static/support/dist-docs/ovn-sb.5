@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-sb" 5 " DB Schema 21.9.0" "Open vSwitch 26.03.90" "Open vSwitch Manual"
+.TH "ovn-sb" 5 " DB Schema 21.10.0" "Open vSwitch 26.03.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -484,6 +484,9 @@ Southbound configuration for an OVN system\[char46] This table must have exactly
 .TQ 2.75in
 \fBnb_cfg\fR
 integer
+.TQ 2.75in
+\fBnb_cfg_timestamp\fR
+integer
 .RE
 .TQ .25in
 \fICommon Columns:\fR
@@ -557,6 +560,8 @@ boolean
 This column allow a client to track the overall configuration state of the system\[char46]
 .IP "\fBnb_cfg\fR: integer"
 Sequence number for the configuration\[char46] When a CMS or \fBovn\-nbctl\fR updates the northbound database, it increments the \fBnb_cfg\fR column in the \fBNB_Global\fR table in the northbound database\[char46] In turn, when \fBovn\-northd\fR updates the southbound database to bring it up to date with these changes, it updates this column to the same value\[char46]
+.IP "\fBnb_cfg_timestamp\fR: integer"
+The time at which \fBovn\-northd\fR last wrote \fBnb_cfg\fR to the southbound database, in milliseconds since the Unix epoch\[char46] Set atomically with each update to \fBnb_cfg\fR\[char46] Hypervisors read this value to measure end-to-end propagation latency from northbound commit to local datapath programming completion\[char46]
 .ST "Common Columns:"
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
@@ -651,9 +656,6 @@ set of strings
 .TQ 3.00in
 \fBother_config : ovn-chassis-mac-mappings\fR
 optional string
-.TQ 3.00in
-\fBother_config : port-up-notif\fR
-optional string
 .TQ .25in
 \fICommon Columns:\fR
 .RS .25in
@@ -698,8 +700,6 @@ Deprecated\[char46] This column is replaced by the \fBnb_cfg\fR column of the \f
 \fBovn\-controller\fR populates this key with the transport zones configured in the \fBexternal_ids:ovn-transport-zones\fR column of the Open_vSwitch database\(cqs \fBOpen_vSwitch\fR table\[char46] See \fBovn\-controller\fR(8) for more information\[char46]
 .IP "\fBother_config : ovn-chassis-mac-mappings\fR: optional string"
 \fBovn\-controller\fR populates this key with the set of options configured in the \fBexternal_ids:ovn-chassis-mac-mappings\fR column of the Open_vSwitch database\(cqs \fBOpen_vSwitch\fR table\[char46] See \fBovn\-controller\fR(8) for more information\[char46]
-.IP "\fBother_config : port-up-notif\fR: optional string"
-\fBovn\-controller\fR populates this key with \fBtrue\fR when it supports \fBPort_Binding\[char46]up\fR\[char46]
 .ST "Common Columns:"
 .PP
 The overall purpose of these columns is described under \fBCommon
@@ -1124,7 +1124,7 @@ The \fBreg\fR\fIX\fR symbols are 32-bit integers\[char46] The \fBxxreg\fR\fIX\fR
 \fBct\[char46]inv\fR: True for a connection entry in a bad state
 .RE
 .IP
-The \fBct_dnat\fR, \fBct_snat\fR, and \fBct_lb\fR actions initialize the following subfields:
+The \fBct_dnat\fR, \fBct_snat\fR, and \fBct_lb_mark\fR actions initialize the following subfields:
 .RS
 .IP \(bu
 \fBct\[char46]dnat\fR: True for a packet whose destination IP address has been changed\[char46]
@@ -1585,19 +1585,14 @@ This is a logical equivalent of the OpenFlow \fBset_queue\fR action\[char46] It 
 .IP
 \fBExample:\fR \fBset_queue(10);\fR
 .TP
-\fBct_lb;\fR
-.TQ .5in
-\fBct_lb(backends=\fIip\fB[:\fIport\fB][,\[char46]\[char46]\[char46]][; hash_fields=\fIfield1\fB,\fIfield2\fB,\[char46]\[char46]\[char46]][; ct_flag]);\fR
-With arguments, \fBct_lb\fR commits the packet to the connection tracking table and DNATs the packet\(cqs destination IP address (and port) to the IP address or addresses (and optional ports) specified in the \fBbackends\fR\[char46] If multiple comma-separated IP addresses are specified, each is given equal weight for picking the DNAT address\[char46] By default, \fBdp_hash\fR is used as the OpenFlow group selection method, but if \fBhash_fields\fR is specified, \fBhash\fR is used as the selection method, and the fields listed are used as the hash fields\[char46] The \fBct_flag\fR field represents one of supported flag: \fBskip_snat\fR or \fBforce_snat\fR, this flag will be stored in \fBct_label\fR register\[char46]
-.IP
-Without arguments, \fBct_lb\fR sends the packet to the connection tracking table to NAT the packets\[char46] If the packet is part of an established connection that was previously committed to the connection tracker via \fBct_lb(\fR\[char46]\[char46]\[char46]\fB)\fR, it will automatically get DNATed to the same IP address as the first packet in that connection\[char46]
-.IP
-Processing automatically moves on to the next table, as if \fBnext;\fR were specified, and later tables act on the packet as modified by the connection tracker\[char46] Connection tracking state is scoped by the logical port when the action is used in a flow for a logical switch, so overlapping addresses may be used\[char46] Connection tracking state is scoped by the logical topology when the action is used in a flow for a router\[char46]
-.TP
 \fBct_lb_mark;\fR
 .TQ .5in
 \fBct_lb_mark(backends=\fIip\fB[:\fIport\fB][,\[char46]\[char46]\[char46]][; hash_fields=\fIfield1\fB,\fIfield2\fB,\[char46]\[char46]\[char46]][; ct_flag]);\fR
-Same as \fBct_lb\fR, except that it internally uses ct_mark to store the NAT flag, while \fBct_lb\fR uses ct_label for the same purpose\[char46]
+With arguments, \fBct_lb_mark\fR commits the packet to the connection tracking table and DNATs the packet\(cqs destination IP address (and port) to the IP address or addresses (and optional ports) specified in the \fBbackends\fR\[char46] If multiple comma-separated IP addresses are specified, each is given equal weight for picking the DNAT address\[char46] By default, \fBdp_hash\fR is used as the OpenFlow group selection method, but if \fBhash_fields\fR is specified, \fBhash\fR is used as the selection method, and the fields listed are used as the hash fields\[char46] The \fBct_flag\fR field represents one of supported flag: \fBskip_snat\fR or \fBforce_snat\fR, this flag will be stored in \fBct_mark\fR register\[char46]
+.IP
+Without arguments, \fBct_lb_mark\fR sends the packet to the connection tracking table to NAT the packets\[char46] If the packet is part of an established connection that was previously committed to the connection tracker via \fBct_lb_mark(\fR\[char46]\[char46]\[char46]\fB)\fR, it will automatically get DNATed to the same IP address as the first packet in that connection\[char46]
+.IP
+Processing automatically moves on to the next table, as if \fBnext;\fR were specified, and later tables act on the packet as modified by the connection tracker\[char46] Connection tracking state is scoped by the logical port when the action is used in a flow for a logical switch, so overlapping addresses may be used\[char46] Connection tracking state is scoped by the logical topology when the action is used in a flow for a router\[char46]
 .TP
 \fBct_lb_mark_local;\fR
 .TQ .5in
