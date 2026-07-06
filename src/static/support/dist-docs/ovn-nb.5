@@ -3685,6 +3685,9 @@ integer, in range 0 to 32,767
 \fBoptions : stateless\fR
 optional string
 .TQ 3.00in
+\fBoptions : stateless_icmp_helper\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 3.00in
 \fBoptions : add_route\fR
 optional string
 .TQ 3.00in
@@ -3754,6 +3757,12 @@ The packets that the NAT rules should match, in addition to the match that is cr
 The NAT rule\(cqs priority\[char46] Rules with numerically higher priority take precedence over those with lower\[char46] The priority is taken into account only if the \fBmatch\fR is defined\[char46]
 .IP "\fBoptions : stateless\fR: optional string"
 Indicates if a dnat_and_snat rule should lead to connection tracking state or not\[char46]
+.IP "\fBoptions : stateless_icmp_helper\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+Applies only to stateless \fBdnat_and_snat\fR rules (that is, NATs with \fBoptions:stateless\fR set to \fBtrue\fR) on IPv4 addresses\[char46] Defaults to \fBtrue\fR\[char46]
+.IP
+A stateless DNAT rule rewrites only the outer IPv4 destination of inbound packets\[char46] For an inbound ICMPv4 error (for example a \fBFragmentation Needed\fR message generated for Path MTU discovery, RFC 1191, or a \fBTime Exceeded\fR message generated for a traceroute probe), the original packet embedded in the ICMP payload still carries the external, post-NAT IP as its source\[char46] When the error reaches the downstream logical switch, conntrack cannot correlate the embedded tuple with the tracked outgoing flow, the packet is marked \fBct\[char46]inv\fR and dropped by the ACL stage, and PMTU discovery and traceroute break\[char46]
+.IP
+When this option is \fBtrue\fR, \fBovn\-northd\fR emits an additional, higher-priority logical flow in the router ingress DNAT stage that matches the ICMPv4 errors which quote the original datagram - Destination Unreachable (type 3, which includes \fBFragmentation Needed\fR), Time Exceeded (type 11) and Parameter Problem (type 12) - destined to the external IP\[char46] It rewrites the outer IPv4 destination to the logical IP and, using the \fBicmp4\[char46]inner_ip4\[char46]src\fR action, un-NATs the embedded inner IPv4 source from the external IP back to the logical IP, so that conntrack can correlate the error\[char46] This makes PMTU discovery and traceroute work end-to-end\[char46] Set it to \fBfalse\fR to suppress this flow for an individual NAT entry\[char46]
 .IP "\fBoptions : add_route\fR: optional string"
 If set to \fBtrue\fR, then neighbor routers will have logical flows added that will allow for routing to the NAT address\[char46] It also will have ARP resolution logical flows added\[char46] By setting this option, it means there is no reason to create a \fBLogical_Router_Static_Route\fR from neighbor routers to this NAT address\[char46] It also means that no ARP request is required for neighbor routers to learn the IP-MAC mapping for this NAT address\[char46] This option only applies to NATs of type \fBdnat\fR and \fBdnat_and_snat\fR\[char46] For more information about what flows are added for IP routes, please see the \fBovn\-northd\fR manpage section on IP Routing\[char46]
 .IP "\fBoptions : dynamic-routing-advertise\fR: optional string"

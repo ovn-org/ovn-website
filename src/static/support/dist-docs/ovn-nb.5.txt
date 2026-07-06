@@ -4446,6 +4446,8 @@ NAT TABLE
        match                         string
        priority                      integer, in range 0 to 32,767
        options : stateless           optional string
+       options : stateless_icmp_helper
+                                     optional string, either true or false
        options : add_route           optional string
        options : dynamic-routing-advertise
                                      optional string
@@ -4591,6 +4593,35 @@ NAT TABLE
        options : stateless: optional string
               Indicates  if  a  dnat_and_snat  rule  should lead to connection
               tracking state or not.
+
+       options : stateless_icmp_helper: optional string, either true or false
+              Applies only to stateless dnat_and_snat  rules  (that  is,  NATs
+              with  options:stateless set to true) on IPv4 addresses. Defaults
+              to true.
+
+              A stateless DNAT rule rewrites only the outer  IPv4  destination
+              of  inbound  packets. For an inbound ICMPv4 error (for example a
+              Fragmentation Needed message generated for Path  MTU  discovery,
+              RFC  1191, or a Time Exceeded message generated for a traceroute
+              probe), the original packet embedded in the ICMP  payload  still
+              carries  the external, post-NAT IP as its source. When the error
+              reaches the downstream logical switch, conntrack  cannot  corre‐
+              late  the  embedded  tuple  with  the tracked outgoing flow, the
+              packet is marked ct.inv and dropped by the ACL stage,  and  PMTU
+              discovery and traceroute break.
+
+              When  this  option  is  true,  ovn-northd  emits  an additional,
+              higher-priority logical flow in the router  ingress  DNAT  stage
+              that matches the ICMPv4 errors which quote the original datagram
+              -  Destination Unreachable (type 3, which includes Fragmentation
+              Needed), Time Exceeded (type 11) and Parameter Problem (type 12)
+              - destined to the external IP. It rewrites the outer IPv4 desti‐
+              nation to the logical IP and, using the icmp4.inner_ip4.src  ac‐
+              tion,  un-NATs  the embedded inner IPv4 source from the external
+              IP back to the logical IP, so that conntrack can  correlate  the
+              error. This makes PMTU discovery and traceroute work end-to-end.
+              Set  it to false to suppress this flow for an individual NAT en‐
+              try.
 
        options : add_route: optional string
               If set to true, then neighbor routers will  have  logical  flows

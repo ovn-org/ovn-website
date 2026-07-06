@@ -1232,8 +1232,14 @@ Below are the supported \fBOVN fields\fR:
 \fBicmp4\[char46]frag_mtu\fR \fBicmp6\[char46]frag_mtu\fR
 .IP
 This field sets the low-order 16 bits of the ICMP{4,6} header field that is labelled \(dqunused\(dq in the ICMP specification as defined in the RFC 1191 with the value specified in \fIconstant\fR\[char46]
+.IP \(bu
+\fBicmp4\[char46]inner_ip4\[char46]src\fR
 .IP
-Eg\[char46] icmp4\[char46]frag_mtu = 1500;
+This field rewrites the source IPv4 address carried in the inner (original-packet) IPv4 header that is embedded in the payload of an ICMPv4 error message, setting it to \fIconstant\fR\[char46] The inner IPv4 header checksum and the outer ICMP checksum are recomputed accordingly\[char46] The action has no effect on packets that are not ICMPv4 errors\[char46]
+.IP
+It can be used by stateless NAT to fix up inbound ICMPv4 errors, for example \fBFragmentation Needed\fR messages used for Path MTU discovery (RFC 1191)\[char46] A stateless \fBdnat_and_snat\fR rule rewrites only the outer destination of such an error, while the embedded inner header still carries the external (post-NAT) IP as its source\[char46] As a result conntrack in the downstream logical switch cannot correlate the error with the tracked flow\[char46] Un-NATing the inner source back to the logical IP lets conntrack relate the error and lets the originating workload honor the PMTU signal\[char46]
+.IP
+Eg\[char46] \fBicmp4\[char46]inner_ip4\[char46]src = 10\[char46]0\[char46]0\[char46]10;\fR
 .RE
 .TP
 \fB\fIfield1\fB = \fIfield2\fB;\fR

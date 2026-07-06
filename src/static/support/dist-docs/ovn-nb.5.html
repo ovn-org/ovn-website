@@ -4447,6 +4447,8 @@
        <b>m</b><b>a</b><b>t</b><b>c</b><b>h</b>                         string
        <b>p</b><b>r</b><b>i</b><b>o</b><b>r</b><b>i</b><b>t</b><b>y</b>                      integer, in range 0 to 32,767
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>l</b><b>e</b><b>s</b><b>s</b>           optional string
+       <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>l</b><b>e</b><b>s</b><b>s</b><b>_</b><b>i</b><b>c</b><b>m</b><b>p</b><b>_</b><b>h</b><b>e</b><b>l</b><b>p</b><b>e</b><b>r</b>
+                                     optional string, either <b>t</b><b>r</b><b>u</b><b>e</b> or <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>a</b><b>d</b><b>d</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b>           optional string
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>d</b><b>y</b><b>n</b><b>a</b><b>m</b><b>i</b><b>c</b><b>-</b><b>r</b><b>o</b><b>u</b><b>t</b><b>i</b><b>n</b><b>g</b><b>-</b><b>a</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b>
                                      optional string
@@ -4592,6 +4594,35 @@
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>l</b><b>e</b><b>s</b><b>s</b>: optional string
               Indicates  if  a  dnat_and_snat  rule  should lead to connection
               tracking state or not.
+
+       <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>l</b><b>e</b><b>s</b><b>s</b><b>_</b><b>i</b><b>c</b><b>m</b><b>p</b><b>_</b><b>h</b><b>e</b><b>l</b><b>p</b><b>e</b><b>r</b>: optional string, either <b>t</b><b>r</b><b>u</b><b>e</b> or <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>
+              Applies only to stateless <b>d</b><b>n</b><b>a</b><b>t</b><b>_</b><b>a</b><b>n</b><b>d</b><b>_</b><b>s</b><b>n</b><b>a</b><b>t</b>  rules  (that  is,  NATs
+              with  <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>s</b><b>t</b><b>a</b><b>t</b><b>e</b><b>l</b><b>e</b><b>s</b><b>s</b> set to <b>t</b><b>r</b><b>u</b><b>e</b>) on IPv4 addresses. Defaults
+              to <b>t</b><b>r</b><b>u</b><b>e</b>.
+
+              A stateless DNAT rule rewrites only the outer  IPv4  destination
+              of  inbound  packets. For an inbound ICMPv4 error (for example a
+              <b>F</b><b>r</b><b>a</b><b>g</b><b>m</b><b>e</b><b>n</b><b>t</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b> <b>N</b><b>e</b><b>e</b><b>d</b><b>e</b><b>d</b> message generated for Path  MTU  discovery,
+              RFC  1191, or a <b>T</b><b>i</b><b>m</b><b>e</b> <b>E</b><b>x</b><b>c</b><b>e</b><b>e</b><b>d</b><b>e</b><b>d</b> message generated for a traceroute
+              probe), the original packet embedded in the ICMP  payload  still
+              carries  the external, post-NAT IP as its source. When the error
+              reaches the downstream logical switch, conntrack  cannot  corre‐
+              late  the  embedded  tuple  with  the tracked outgoing flow, the
+              packet is marked <b>c</b><b>t</b><b>.</b><b>i</b><b>n</b><b>v</b> and dropped by the ACL stage,  and  PMTU
+              discovery and traceroute break.
+
+              When  this  option  is  <b>t</b><b>r</b><b>u</b><b>e</b>,  <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>  emits  an additional,
+              higher-priority logical flow in the router  ingress  DNAT  stage
+              that matches the ICMPv4 errors which quote the original datagram
+              -  Destination Unreachable (type 3, which includes <b>F</b><b>r</b><b>a</b><b>g</b><b>m</b><b>e</b><b>n</b><b>t</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b>
+              <b>N</b><b>e</b><b>e</b><b>d</b><b>e</b><b>d</b>), Time Exceeded (type 11) and Parameter Problem (type 12)
+              - destined to the external IP. It rewrites the outer IPv4 desti‐
+              nation to the logical IP and, using the <b>i</b><b>c</b><b>m</b><b>p</b><b>4</b><b>.</b><b>i</b><b>n</b><b>n</b><b>e</b><b>r</b><b>_</b><b>i</b><b>p</b><b>4</b><b>.</b><b>s</b><b>r</b><b>c</b>  ac‐
+              tion,  un-NATs  the embedded inner IPv4 source from the external
+              IP back to the logical IP, so that conntrack can  correlate  the
+              error. This makes PMTU discovery and traceroute work end-to-end.
+              Set  it to <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b> to suppress this flow for an individual NAT en‐
+              try.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>a</b><b>d</b><b>d</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b>: optional string
               If set to <b>t</b><b>r</b><b>u</b><b>e</b>, then neighbor routers will  have  logical  flows
