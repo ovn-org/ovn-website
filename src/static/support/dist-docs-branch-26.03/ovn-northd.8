@@ -2118,7 +2118,7 @@ Avoid ICMP time exceeded for multicast\[char46] A priority\-32 flow with match \
 .IP \(bu
 ICMP time exceeded\[char46] For each router port \fIP\fR, whose IP address is \fIA\fR, a priority\-31 flow with match \fBinport
 == \fIP\fB && ip\[char46]ttl == {0, 1} &&
-!ip\[char46]later_frag\fR matches packets whose TTL has expired, with the following actions to send an ICMP time exceeded reply for IPv4 and IPv6 respectively:
+!ip\[char46]later_frag\fR matches packets whose TTL has expired, with the following actions to send an ICMP time exceeded reply for IPv4 and IPv6 respectively\[char46] If the router port \fBP\fR is a distributed gateway router port, then the \fBis_chassis_resident(cr\-P)\fR is also added in the match condition:
 .IP
 .nf
 \fB
@@ -3003,29 +3003,6 @@ Unknown MAC address\[char46] A priority\-100 flow for IPv4 packets with match \f
 .br
 \fB        \fR
 .fi
-.IP
-Unknown MAC address\[char46] For each IPv6 static route associated with the router with the nexthop IP: \fIG\fR, a priority\-200 flow for IPv6 packets with match \fBeth\[char46]dst == 00:00:00:00:00:00 &&
-xxreg0 == \fIG\fB\fR with the following actions is added:
-.IP
-.nf
-\fB
-.br
-\fBnd_ns {
-.br
-\fB    eth\[char46]dst = \fR\fIE\fB\fR;
-.br
-\fB    ip6\[char46]dst = \fR\fII\fB\fR
-.br
-\fB    nd\[char46]target = \fR\fIG\fB\fR;
-.br
-\fB    output;
-.br
-\fB};
-.br
-\fB        \fR
-.fi
-.IP
-Where \fIE\fR is the multicast mac derived from the Gateway IP, \fII\fR is the solicited-node multicast address corresponding to the target address \fIG\fR\[char46]
 .IP
 Unknown MAC address\[char46] A priority\-100 flow for IPv6 packets with match \fBeth\[char46]dst == 00:00:00:00:00:00\fR has the following actions:
 .IP
