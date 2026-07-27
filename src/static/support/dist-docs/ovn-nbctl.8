@@ -422,8 +422,12 @@ The \fB\-\-all\fR option will also list the port group ACLs associated with each
 .RE
 .SS "Network Function Commands"
 .TP
-[\fB\-\-may\-exist\fR] \fBnf\-add\fR \fInf\fR \fIid\fR \fIinport\fR \fIoutport\fR
-Creates a new network function named \fInf\fR with the specified \fIid\fR (an integer between 1 and 255) and logical switch ports \fIinport\fR and \fIoutport\fR\[char46] Both the ports must be on the same logical switch and must be already created\[char46] When used in an ACL action, traffic matching the ACL are redirected to the \fIinport\fR if it is from-lport ACL and to \fIoutport\fR if it is to-lport ACL\[char46] The response packets are sent through the same ports in reverse order\[char46]
+[\fB\-\-may\-exist\fR] \fBnf\-add\fR \fInf\fR \fIid\fR \fIinport\fR [\fIoutport\fR]
+Creates a new network function named \fInf\fR with the specified \fIid\fR (an integer between 1 and 255) and logical switch ports \fIinport\fR and (optionally) \fIoutport\fR\[char46] The ports must be on the same logical switch and must be already created\[char46]
+.IP
+When the network function is used in an \fBinline\fR-mode network function group, both \fIinport\fR and \fIoutport\fR must be specified\[char46] Traffic matching the ACL is redirected to the \fIinport\fR for from-lport ACLs and to the \fIoutport\fR for to-lport ACLs\[char46] The response packets are sent through the same ports in reverse order\[char46]
+.IP
+When the network function is used in a \fBvtap\fR-mode network function group, only \fIinport\fR is used; traffic matching the ACL is mirrored (cloned) to \fIinport\fR in both directions while the original packet continues to its destination\[char46] \fIoutport\fR must not be specified for vtap network functions\[char46]
 .IP
 Without any options, this command regards it as an error if \fInf\fR is a duplicate name\[char46] With \fB\-\-may\-exist\fR, adding network function with duplicate name overwrites the existing config\[char46]
 .TP
@@ -434,9 +438,15 @@ Deletes \fInf\fR specified as name or uuid\[char46] It is an error if \fInf\fR d
 Lists all network functions\[char46]
 .TP
 [\fB\-\-may\-exist\fR] \fBnfg\-add\fR \fInfg\fR \fIid\fR \fImode\fR [\fInf\fR]\[char46]\[char46]\[char46]
-Creates a new network function group named \fInfg\fR with optionally one of more \fBnf\fR added to the group\[char46] The nfs must be already created\[char46] Traffic redirection would be done towards one of the active network functions, based on health monitoring\[char46] If all are down, any one would be chosen for redirection\[char46]
+Creates a new network function group named \fInfg\fR with optionally one of more \fBnf\fR added to the group\[char46] The nfs must be already created\[char46] Traffic redirection/mirroring is performed towards one of the active network functions, based on health monitoring (inline) or port binding status (vtap)\[char46] If all are down, the configured fallback behavior applies\[char46]
 .IP
-Each network function group must have a unique \fIid\fR between \fB1\fR and \fB255\fR\[char46] The \fImode\fR must be \fBinline\fR which is currently the only supported mode\[char46]
+Each network function group must have a unique \fIid\fR between \fB1\fR and \fB255\fR\[char46] The supported values for \fImode\fR are:
+.RS
+.IP \(bu
+\fBinline\fR: traffic matching the ACL is redirected through the active network function\[char46] Both \fBinport\fR and \fBoutport\fR must be set on every member network function\[char46]
+.IP \(bu
+\fBvtap\fR: traffic matching the ACL is mirrored (cloned) to the active network function while the original packet continues to its destination\[char46] Only \fBinport\fR is used on member network functions\[char46]
+.RE
 .IP
 Without any options, this command regards it as an error if \fInfg\fR is a duplicate name\[char46] With \fB\-\-may\-exist\fR, adding network function group with duplicate name overwrites the existing config\[char46]
 .TP

@@ -637,36 +637,54 @@
                      switch is provided as an argument.
 
    <b>N</b><b>e</b><b>t</b><b>w</b><b>o</b><b>r</b><b>k</b> <b>F</b><b>u</b><b>n</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b> <b>C</b><b>o</b><b>m</b><b>m</b><b>a</b><b>n</b><b>d</b><b>s</b>
-       [<b>-</b><b>-</b><b>m</b><b>a</b><b>y</b><b>-</b><b>e</b><b>x</b><b>i</b><b>s</b><b>t</b>] <b>n</b><b>f</b><b>-</b><b>a</b><b>d</b><b>d</b> <u>n</u><u>f</u> <u>i</u><u>d</u> <u>i</u><u>n</u><u>p</u><u>o</u><u>r</u><u>t</u> <u>o</u><u>u</u><u>t</u><u>p</u><u>o</u><u>r</u><u>t</u>
+       [<b>-</b><b>-</b><b>m</b><b>a</b><b>y</b><b>-</b><b>e</b><b>x</b><b>i</b><b>s</b><b>t</b>] <b>n</b><b>f</b><b>-</b><b>a</b><b>d</b><b>d</b> <u>n</u><u>f</u> <u>i</u><u>d</u> <u>i</u><u>n</u><u>p</u><u>o</u><u>r</u><u>t</u> [<u>o</u><u>u</u><u>t</u><u>p</u><u>o</u><u>r</u><u>t</u>]
               Creates  a  new  network function named <u>n</u><u>f</u> with the specified <u>i</u><u>d</u>
               (an integer between 1 and 255) and logical switch  ports  <u>i</u><u>n</u><u>p</u><u>o</u><u>r</u><u>t</u>
-              and  <u>o</u><u>u</u><u>t</u><u>p</u><u>o</u><u>r</u><u>t</u>.  Both the ports must be on the same logical switch
-              and must be already created. When used in an ACL action, traffic
-              matching the ACL are redirected to the <u>i</u><u>n</u><u>p</u><u>o</u><u>r</u><u>t</u>  if  it  is  from-
-              lport  ACL  and  to  <u>o</u><u>u</u><u>t</u><u>p</u><u>o</u><u>r</u><u>t</u> if it is to-lport ACL. The response
-              packets are sent through the same ports in reverse order.
+              and  (optionally) <u>o</u><u>u</u><u>t</u><u>p</u><u>o</u><u>r</u><u>t</u>. The ports must be on the same logical
+              switch and must be already created.
 
-              Without any options, this command regards it as an error  if  <u>n</u><u>f</u>
-              is  a  duplicate name. With <b>-</b><b>-</b><b>m</b><b>a</b><b>y</b><b>-</b><b>e</b><b>x</b><b>i</b><b>s</b><b>t</b>, adding network function
+              When the network function is  used  in  an  <b>i</b><b>n</b><b>l</b><b>i</b><b>n</b><b>e</b>-mode  network
+              function group, both <u>i</u><u>n</u><u>p</u><u>o</u><u>r</u><u>t</u> and <u>o</u><u>u</u><u>t</u><u>p</u><u>o</u><u>r</u><u>t</u> must be specified. Traf‐
+              fic  matching the ACL is redirected to the <u>i</u><u>n</u><u>p</u><u>o</u><u>r</u><u>t</u> for from-lport
+              ACLs and to the <u>o</u><u>u</u><u>t</u><u>p</u><u>o</u><u>r</u><u>t</u> for to-lport ACLs. The response  packets
+              are sent through the same ports in reverse order.
+
+              When  the  network function is used in a <b>v</b><b>t</b><b>a</b><b>p</b>-mode network func‐
+              tion group, only <u>i</u><u>n</u><u>p</u><u>o</u><u>r</u><u>t</u> is used; traffic  matching  the  ACL  is
+              mirrored  (cloned) to <u>i</u><u>n</u><u>p</u><u>o</u><u>r</u><u>t</u> in both directions while the origi‐
+              nal packet continues to its destination.  <u>o</u><u>u</u><u>t</u><u>p</u><u>o</u><u>r</u><u>t</u>  must  not  be
+              specified for vtap network functions.
+
+              Without  any  options, this command regards it as an error if <u>n</u><u>f</u>
+              is a duplicate name. With <b>-</b><b>-</b><b>m</b><b>a</b><b>y</b><b>-</b><b>e</b><b>x</b><b>i</b><b>s</b><b>t</b>, adding  network  function
               with duplicate name overwrites the existing config.
 
        [<b>-</b><b>-</b><b>i</b><b>f</b><b>-</b><b>e</b><b>x</b><b>i</b><b>s</b><b>t</b><b>s</b>] <b>n</b><b>f</b><b>-</b><b>d</b><b>e</b><b>l</b> <u>n</u><u>f</u>
-              Deletes <u>n</u><u>f</u> specified as name or uuid. It is an error if <u>n</u><u>f</u>  does
+              Deletes  <u>n</u><u>f</u> specified as name or uuid. It is an error if <u>n</u><u>f</u> does
               not exist, unless <b>-</b><b>-</b><b>i</b><b>f</b><b>-</b><b>e</b><b>x</b><b>i</b><b>s</b><b>t</b><b>s</b> is specified.
 
        <b>n</b><b>f</b><b>-</b><b>l</b><b>i</b><b>s</b><b>t</b>
               Lists all network functions.
 
        [<b>-</b><b>-</b><b>m</b><b>a</b><b>y</b><b>-</b><b>e</b><b>x</b><b>i</b><b>s</b><b>t</b>] <b>n</b><b>f</b><b>g</b><b>-</b><b>a</b><b>d</b><b>d</b> <u>n</u><u>f</u><u>g</u> <u>i</u><u>d</u> <u>m</u><u>o</u><u>d</u><u>e</u> [<u>n</u><u>f</u>]...
-              Creates  a  new network function group named <u>n</u><u>f</u><u>g</u> with optionally
-              one of more <b>n</b><b>f</b> added to the group. The nfs must be already  cre‐
-              ated.  Traffic  redirection would be done towards one of the ac‐
-              tive network functions, based on health monitoring. If  all  are
-              down, any one would be chosen for redirection.
+              Creates a new network function group named <u>n</u><u>f</u><u>g</u>  with  optionally
+              one  of more <b>n</b><b>f</b> added to the group. The nfs must be already cre‐
+              ated. Traffic redirection/mirroring is performed towards one  of
+              the  active  network  functions, based on health monitoring (in‐
+              line) or port binding status (vtap). If all are down,  the  con‐
+              figured fallback behavior applies.
 
               Each  network function group must have a unique <u>i</u><u>d</u> between <b>1</b> and
-              <b>2</b><b>5</b><b>5</b>. The <u>m</u><u>o</u><u>d</u><u>e</u> must be <b>i</b><b>n</b><b>l</b><b>i</b><b>n</b><b>e</b> which is currently  the  only  sup‐
-              ported mode.
+              <b>2</b><b>5</b><b>5</b>. The supported values for <u>m</u><u>o</u><u>d</u><u>e</u> are:
+
+              •      <b>i</b><b>n</b><b>l</b><b>i</b><b>n</b><b>e</b>: traffic matching the ACL  is  redirected  through
+                     the active network function. Both <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> and <b>o</b><b>u</b><b>t</b><b>p</b><b>o</b><b>r</b><b>t</b> must
+                     be set on every member network function.
+
+              •      <b>v</b><b>t</b><b>a</b><b>p</b>:  traffic  matching  the ACL is mirrored (cloned) to
+                     the active network function  while  the  original  packet
+                     continues to its destination. Only <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> is used on mem‐
+                     ber network functions.
 
               Without  any options, this command regards it as an error if <u>n</u><u>f</u><u>g</u>
               is a duplicate name. With <b>-</b><b>-</b><b>m</b><b>a</b><b>y</b><b>-</b><b>e</b><b>x</b><b>i</b><b>s</b><b>t</b>, adding  network  function

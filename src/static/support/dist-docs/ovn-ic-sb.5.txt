@@ -67,6 +67,8 @@ TABLE SUMMARY
        SSL       SSL configuration.
        Service_Monitor
                  Service_Monitor configuration.
+       Address_Set
+                 Address Sets
 
 IC_SB_Global TABLE
        Interconnection  Southbound configuration. This table must have exactly
@@ -756,4 +758,35 @@ Service_Monitor TABLE
               Same as in Table Service_Monitor in SBDB. Copy from source  SBDB
               record.
 
-Open vSwitch 26.03.90           DB Schema 2.6.0                   ovn-ic-sb(5)
+Address_Set TABLE
+       Each row in this table represents an advertised Address_Set. The combi‐
+       nation  of name and availability_zone is unique: each availability zone
+       may advertise at most one address set with a given  name.  If  multiple
+       availability  zones advertise address sets with the same name, a learn‐
+       ing availability zone will merge the addresses from all of them into  a
+       single Northbound Address_Set entry.
+
+   Summary:
+       name                          string
+       addresses                     set of strings
+       availability_zone             Availability_Zone
+       Common Columns:
+         external_ids                map of string-string pairs
+
+   Details:
+       name: string
+              A  name  for  the  address  set.  Names are ASCII and must match
+              [a-zA-Z_.][a-zA-Z_.0-9]*.
+
+       addresses: set of strings
+              The set of addresses in string form.
+
+       availability_zone: Availability_Zone
+              The availability zone that has advertised the Address_Set.
+
+     Common Columns:
+
+       external_ids: map of string-string pairs
+              See External IDs at the beginning of this document.
+
+Open vSwitch 26.03.90           DB Schema 2.7.0                   ovn-ic-sb(5)

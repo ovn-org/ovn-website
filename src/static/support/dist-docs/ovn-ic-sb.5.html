@@ -68,6 +68,8 @@
        <b>S</b><b>S</b><b>L</b>       SSL configuration.
        <b>S</b><b>e</b><b>r</b><b>v</b><b>i</b><b>c</b><b>e</b><b>_</b><b>M</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b>
                  Service_Monitor configuration.
+       <b>A</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>_</b><b>S</b><b>e</b><b>t</b>
+                 Address Sets
 
 <b>I</b><b>C</b><b>_</b><b>S</b><b>B</b><b>_</b><b>G</b><b>l</b><b>o</b><b>b</b><b>a</b><b>l</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
        Interconnection  Southbound configuration. This table must have exactly
@@ -757,5 +759,36 @@
               Same as in Table Service_Monitor in SBDB. Copy from source  SBDB
               record.
 
-Open vSwitch 26.03.90           DB Schema 2.6.0                   <u>o</u><u>v</u><u>n</u><u>-</u><u>i</u><u>c</u><u>-</u><u>s</u><u>b</u>(5)
+<b>A</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>_</b><b>S</b><b>e</b><b>t</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
+       Each row in this table represents an advertised Address_Set. The combi‐
+       nation  of <b>n</b><b>a</b><b>m</b><b>e</b> and <b>a</b><b>v</b><b>a</b><b>i</b><b>l</b><b>a</b><b>b</b><b>i</b><b>l</b><b>i</b><b>t</b><b>y</b><b>_</b><b>z</b><b>o</b><b>n</b><b>e</b> is unique: each availability zone
+       may advertise at most one address set with a given  name.  If  multiple
+       availability  zones advertise address sets with the same name, a learn‐
+       ing availability zone will merge the addresses from all of them into  a
+       single Northbound <b>A</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>_</b><b>S</b><b>e</b><b>t</b> entry.
+
+   <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
+       <b>n</b><b>a</b><b>m</b><b>e</b>                          string
+       <b>a</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>e</b><b>s</b>                     set of strings
+       <b>a</b><b>v</b><b>a</b><b>i</b><b>l</b><b>a</b><b>b</b><b>i</b><b>l</b><b>i</b><b>t</b><b>y</b><b>_</b><b>z</b><b>o</b><b>n</b><b>e</b>             <b>A</b><b>v</b><b>a</b><b>i</b><b>l</b><b>a</b><b>b</b><b>i</b><b>l</b><b>i</b><b>t</b><b>y</b><b>_</b><b>Z</b><b>o</b><b>n</b><b>e</b>
+       <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
+         <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>                map of string-string pairs
+
+   <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
+       <b>n</b><b>a</b><b>m</b><b>e</b>: string
+              A  name  for  the  address  set.  Names are ASCII and must match
+              <b>[</b><b>a</b><b>-</b><b>z</b><b>A</b><b>-</b><b>Z</b><b>_</b><b>.</b><b>]</b><b>[</b><b>a</b><b>-</b><b>z</b><b>A</b><b>-</b><b>Z</b><b>_</b><b>.</b><b>0</b><b>-</b><b>9</b><b>]</b><b>*</b>.
+
+       <b>a</b><b>d</b><b>d</b><b>r</b><b>e</b><b>s</b><b>s</b><b>e</b><b>s</b>: set of strings
+              The set of addresses in string form.
+
+       <b>a</b><b>v</b><b>a</b><b>i</b><b>l</b><b>a</b><b>b</b><b>i</b><b>l</b><b>i</b><b>t</b><b>y</b><b>_</b><b>z</b><b>o</b><b>n</b><b>e</b>: <b>A</b><b>v</b><b>a</b><b>i</b><b>l</b><b>a</b><b>b</b><b>i</b><b>l</b><b>i</b><b>t</b><b>y</b><b>_</b><b>Z</b><b>o</b><b>n</b><b>e</b>
+              The availability zone that has advertised the Address_Set.
+
+     <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>C</u><u>o</u><u>l</u><u>u</u><u>m</u><u>n</u><u>s</u><u>:</u>
+
+       <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
+              See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
+
+Open vSwitch 26.03.90           DB Schema 2.7.0                   <u>o</u><u>v</u><u>n</u><u>-</u><u>i</u><u>c</u><u>-</u><u>s</u><u>b</u>(5)
 </pre></body></html>

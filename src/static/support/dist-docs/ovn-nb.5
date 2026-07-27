@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nb" 5 " DB Schema 7.18.0" "Open vSwitch 26.03.90" "Open vSwitch Manual"
+.TH "ovn-nb" 5 " DB Schema 7.19.0" "Open vSwitch 26.03.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -343,7 +343,7 @@ spline -> from 5.733980,1.308961 to 5.733980,1.308961 to 5.887581,1.308961 to 6.
 "ha_chassis*" at 6.053189,1.331366
 linethick = 1.000000;
 spline -> from 3.584701,2.510174 to 3.584701,2.510174 to 3.765941,2.478230 to 4.043238,2.429522 to 4.232181,2.396219
-"outport" at 3.905269,2.500659
+"outport?" at 3.905269,2.500659
 linethick = 1.000000;
 spline -> from 3.585607,2.508135 to 3.585607,2.508135 to 3.621402,2.495901 to 3.656970,2.479590 to 3.686875,2.457388 to 3.723576,2.430202 to 3.703639,2.393727 to 3.743512,2.371752 to 3.892129,2.290194 to 4.086735,2.294498 to 4.232407,2.315114
 "inport" at 3.905269,2.394180
@@ -591,6 +591,16 @@ optional string
 \fBoptions : ic-route-denylist\fR
 optional string
 .RE
+.TQ .25in
+\fIOptions for interconnection address_set advertisement:\fR
+.RS .25in
+.TQ 2.50in
+\fBoptions : ic-as-adv\fR
+optional string
+.TQ 2.50in
+\fBoptions : ic-as-learn\fR
+optional string
+.RE
 .RE
 .TQ .25in
 \fIConnection Options:\fR
@@ -795,6 +805,15 @@ A boolean value that enables advertising routes for load balancer vips to the gl
 A boolean value that enables learning routes for load balancer routes from the global \fBOVN_IC_Southbound\fR database\[char46] Default is \fBfalse\fR\[char46] This option takes effect only when option \fBic\-route\-learn\fR is \fBtrue\fR\[char46]
 .IP "\fBoptions : ic-route-denylist\fR: optional string"
 A string value contains a list of CIDRs delimited by \(dq,\(dq\[char46] A route will not be advertised or learned if the route\(cqs prefix belongs to any of the CIDRs listed\[char46]
+.ST "Options for interconnection address_set advertisement:"
+.PP
+.PP
+.PP
+These options control whether address_sets propagate from one OVN deployment to another via the global \fBOVN_IC_Southbound\fR\[char46]
+.IP "\fBoptions : ic-as-adv\fR: optional string"
+A boolean value that enables address_set advertisement to the global \fBOVN_IC_Southbound\fR database\[char46] Default is \fBfalse\fR\[char46]
+.IP "\fBoptions : ic-as-learn\fR: optional string"
+A boolean value that enables address_set learning from the global \fBOVN_IC_Southbound\fR database\[char46] Default is \fBfalse\fR\[char46]
 .ST "Connection Options:"
 .PP
 .IP "\fBconnections\fR: set of \fBConnection\fRs"
@@ -1236,6 +1255,8 @@ Only relevant if \fBother_config:dynamic-routing-vni\fR is set to valid VNI\[cha
 If \fBfdb\fR is specified then ovn-controller will advertise all workloads that are local to the chassis\[char46] The applies to VIFs, container ports, virtual ports, connected DGPs and connected GW routers\[char46]
 .IP
 If \fBip\fR is specified then ovn-controller will advertise all IPs/MACs bindings that are local to the chassis\[char46] This applies to VIFs and router ports\[char46]
+.IP
+If \fBnat\fR is specified then the external IP/MAC of any distributed \fBdnat_and_snat\fR NAT entry (for example a floating IP) whose distributed gateway port is attached to this logical switch is advertised as an EVPN Type\-2 route, using the NAT\(cqs \fBexternal_mac\fR\[char46] This is independent of \fBip\fR: enabling \fBip\fR alone does not advertise floating IPs, and enabling \fBnat\fR alone does not advertise VIF or router-port addresses\[char46] This mirrors the \fBnat\fR token of \fBoptions:dynamic-routing-redistribute\fR, which advertises the same NAT entries as EVPN Type\-5 routes\[char46]
 .ST "IP Multicast Snooping Options:"
 .PP
 .PP
@@ -1407,7 +1428,7 @@ optional string, must be \fBmc_unknown\fR
 \fBoptions : disable_arp_nd_rsp\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
 .TQ 2.50in
-\fBoptions : lsp_learn_mac\fR
+\fBoptions : lsp_learn_fdb\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
 .TQ 2.50in
 \fBoptions : receive_multicast\fR
@@ -1697,7 +1718,7 @@ If set to \fBtrue\fR, GARP and RARP announcements are not sent when a VIF port i
 If set to mc_unknown, packets going to this VIF get cloned to all unknown ports connected to the same Logical Switch\[char46]
 .IP "\fBoptions : disable_arp_nd_rsp\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 If set to \fBtrue\fR, ARP/ND responder flows are not installed for the IP addresses configured on this logical port\[char46] Default: \fBfalse\fR\[char46]
-.IP "\fBoptions : lsp_learn_mac\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+.IP "\fBoptions : lsp_learn_fdb\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 If set to \fBfalse\fR, source MAC address is not learnt by FDB when packets are received on this port\[char46] The default value is \fBtrue\fR\[char46]
 .IP "\fBoptions : receive_multicast\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 If set to \fBfalse\fR, multicast traffic is not forwarded to this port\[char46] The default value is \fBtrue\fR\[char46]
@@ -2016,6 +2037,12 @@ string (must be unique within table)
 .TQ 3.00in
 \fBaddresses\fR
 set of strings
+.TQ 3.00in
+\fBoptions\fR
+map of string-string pairs
+.TQ 3.00in
+\fBoptions : ic-adv\fR
+optional string
 .TQ .25in
 \fICommon Columns:\fR
 .RS .25in
@@ -2028,6 +2055,10 @@ map of string-string pairs
 A name for the address set\[char46] Names are ASCII and must match \fB[a\-zA\-Z_\[char46]][a\-zA\-Z_\[char46]0\-9]*\fR\[char46]
 .IP "\fBaddresses\fR: set of strings"
 The set of addresses in string form\[char46]
+.IP "\fBoptions\fR: map of string-string pairs"
+This column provides general key/value settings\[char46] The supported options are described individually below\[char46]
+.IP "\fBoptions : ic-adv\fR: optional string"
+A boolean value that enables advertisement of this Address_Set to the global OVN_IC_Southbound database\[char46] Default is \fBfalse\fR\[char46]
 .ST "Common Columns:"
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
@@ -2614,6 +2645,9 @@ optional string
 \fBoptions : ic-route-deny-learn\fR
 optional string
 .TQ 2.75in
+\fBoptions : ic-route-ipv4-next-hop-ipv6\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 2.75in
 \fBoptions : disable_garp_rarp\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
 .RE
@@ -2791,6 +2825,10 @@ This option expects list of CIDRs delimited by \(dq,\(dq that\(cqs present in th
 This option expects list of CIDRs delimited by \(dq,\(dq that\(cqs present in the Logical Router\[char46] A route will not be advertised if the route\(cqs prefix belongs to any of the CIDRs listed\[char46] This allows to filter CIDR prefixes in the process of advertising routes in \fBovn\-ic\fR daemon\[char46]
 .IP "\fBoptions : ic-route-deny-learn\fR: optional string"
 This option expects list of CIDRs delimited by \(dq,\(dq that\(cqs present in the Logical Router\[char46] A route will not be learned if the route\(cqs prefix belongs to any of the CIDRs listed\[char46] This allows to filter CIDR prefixes in the process of learning routes in \fBovn\-ic\fR daemon\[char46]
+.IP "\fBoptions : ic-route-ipv4-next-hop-ipv6\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+A boolean value that, when \fBtrue\fR, advertises this Logical Router\(cqs IPv4 routes into the global \fBOVN_IC_Southbound\fR database using the IPv6 address of the interconnect \fBLogical_Router_Port\fR as next hop instead of its IPv4 address (\(dqIPv4 over IPv6\(dq)\[char46] This requires the interconnect port to have an IPv6 address; otherwise the IPv4 next hop is used as usual\[char46] The default value is \fBfalse\fR\[char46]
+.IP
+This option can be overridden per transit \fBLogical_Router_Port\fR by setting the option of the same name on that port\[char46]
 .IP "\fBoptions : disable_garp_rarp\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 If set to \fBtrue\fR, GARP and RARP announcements are not sent by all the VIF peer ports of this logical router\[char46] The default value is \fBfalse\fR\[char46]
 .ST "Common Columns:"
@@ -3142,6 +3180,9 @@ optional string
 \fBoptions : ic-route-deny-learn\fR
 optional string
 .TQ 2.75in
+\fBoptions : ic-route-ipv4-next-hop-ipv6\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 2.75in
 \fBoptions : dynamic-routing-no-learning\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
 .RE
@@ -3312,6 +3353,10 @@ Designates lookup for \fBLogical_Router_Static_Routes\fR with the specified \fBr
 If set, logical flows will be added to router pipeline to check packet length\[char46] If packet length is greater than the value set, ICMPv4 type 3 (Destination Unreachable) code 4 (Fragmentation Needed and Don\(cqt Fragment was Set) or ICMPv6 type 2 (Packet Too Big) code 0 (no route to destination) packets will be generated\[char46] This allows for Path MTU Discovery\[char46]
 .IP "\fBoptions : routing-protocol-redirect\fR: optional string"
 This option expects a name of a Logical Switch Port that\(cqs present in the peer\(cqs Logical Switch\[char46] If set, it causes any traffic that\(cqs destined for Logical Router Port\(cqs IP addresses (including its IPv6 LLA) and the ports associated with routing protocols defined ip \fBrouting\-protocols\fR option, to be redirected to the specified Logical Switch Port\[char46] This allows external routing daemons to be bound to a port in OVN\(cqs Logical Switch and act as if they were listening on Logical Router Port\(cqs IP addresses\[char46]
+.IP
+When used with dynamic routing (when \fBoptions:dynamic-routing\fR is set to \fBtrue\fR), if the specified Logical Switch Port is bound locally and connected to a veth pair, \fBovn\-controller\fR is able to automatically discover the peer interface name and use it for route learning\[char46] This removes the need to manually configure \fBoptions:dynamic-routing-port-name\fR and/or \fBexternal_ids:dynamic-routing-port-mapping\fR for veth-based routing daemon integrations\[char46] If those options are set they always take precedence over auto-discovery\[char46]
+.IP
+The auto-discovery feature relies on the peer interface index being reported in the \fBOpen_vSwitch\fR \fBInterface\fR table \fBstatus:peer_ifindex\fR key, which is only populated for veth devices on Linux systems by a sufficiently recent version of Open vSwitch\[char46] If the bound interface is not a veth device, if the peer cannot be resolved, or if OVS does not report \fBstatus:peer_ifindex\fR, the system will fallback to learning routes from all interfaces on the Logical Router Port\[char46]
 .IP "\fBoptions : routing-protocols\fR: optional string"
 This option expects a comma-separated list of routing, and routing-related protocols, whose control plane traffic will be redirected to a port specified in \fBrouting\-protocol\-redirect\fR option\[char46] Currently supported options are:
 .RS
@@ -3395,6 +3440,8 @@ This option expects list of CIDRs delimited by \(dq,\(dq that\(cqs present in th
 This option expects list of CIDRs delimited by \(dq,\(dq that\(cqs present in the Logical Router Port\[char46] A route will not be advertised if the route\(cqs prefix belongs to any of the CIDRs listed\[char46] This allows to filter CIDR prefixes in the process of advertising routes in \fBovn\-ic\fR daemon\[char46]
 .IP "\fBoptions : ic-route-deny-learn\fR: optional string"
 This option expects list of CIDRs delimited by \(dq,\(dq that\(cqs present in the Logical Router Port\[char46] A route will not be learned if the route\(cqs prefix belongs to any of the CIDRs listed\[char46] This allows to filter CIDR prefixes in the process of learning routes in \fBovn\-ic\fR daemon\[char46]
+.IP "\fBoptions : ic-route-ipv4-next-hop-ipv6\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+Overrides the \fBic\-route\-ipv4\-next\-hop\-ipv6\fR option of the \fBLogical_Router\fR for routes advertised through this transit port\[char46] When \fBtrue\fR, IPv4 routes are advertised using this port\(cqs IPv6 address as next hop (\(dqIPv4 over IPv6\(dq); when \fBfalse\fR, the IPv4 next hop is used\[char46] If unset, the Logical Router option applies\[char46]
 .IP "\fBoptions : dynamic-routing-no-learning\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
 .IP
@@ -3767,6 +3814,8 @@ When this option is \fBtrue\fR, \fBovn\-northd\fR emits an additional, higher-pr
 If set to \fBtrue\fR, then neighbor routers will have logical flows added that will allow for routing to the NAT address\[char46] It also will have ARP resolution logical flows added\[char46] By setting this option, it means there is no reason to create a \fBLogical_Router_Static_Route\fR from neighbor routers to this NAT address\[char46] It also means that no ARP request is required for neighbor routers to learn the IP-MAC mapping for this NAT address\[char46] This option only applies to NATs of type \fBdnat\fR and \fBdnat_and_snat\fR\[char46] For more information about what flows are added for IP routes, please see the \fBovn\-northd\fR manpage section on IP Routing\[char46]
 .IP "\fBoptions : dynamic-routing-advertise\fR: optional string"
 If the CMS sets \fBoptions:dynamic-routing-redistribute\fR to \fBnat\fR, this parameter is used by the CMS to enable/disable the advertisement of the current NAT external IP via the \fBAdvertised_Route\fR table\[char46] Default: \fBtrue\fR\[char46]
+.IP
+For a distributed \fBdnat_and_snat\fR entry (a floating IP, with both \fBexternal_mac\fR and \fBlogical_port\fR set) this also controls the EVPN Type\-2 advertisement: when the provider \fBLogical_Switch\fR that carries the NAT\(cqs distributed gateway port has \fBnat\fR set in its \fBother_config:dynamic-routing-redistribute\fR, the external IP/MAC are published in the \fBAdvertised_MAC_Binding\fR table\[char46] Setting this option to \fBfalse\fR opts the individual floating IP out of that advertisement as well\[char46]
 .ST "Common Columns:"
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
@@ -4696,7 +4745,7 @@ See \fBExternal IDs\fR at the beginning of this document\[char46]
 .PP
 .PP
 .PP
-Each row contains a list of \fBNetwork_Function\fR\[char46] Traffic redirection is achieved by referencing a \fBNetwork_Function_Group\fR from an \fBACL\fR\[char46] Health monitoring of each \fBNetwork_Function\fR is performed based on parameters defined in \fBNetwork_Function_Health_Check\fR\[char46] Traffic matching the ACL is redirected to one of the active \fBNetwork_Functions\fR\[char46] If all are detected as down, traffic is redirected to one of the \fBNetwork_Functions\fR regardless of status\[char46]
+Each row contains a list of \fBNetwork_Function\fR\[char46] Traffic redirection/mirroring is achieved by referencing a \fBNetwork_Function_Group\fR from an \fBACL\fR\[char46] For \fBinline\fR mode, health monitoring of each \fBNetwork_Function\fR is performed based on parameters defined in \fBNetwork_Function_Health_Check\fR\[char46] Health monitoring is not applicable for \fBvtap\fR mode; a vtap network function is always considered active as long as its port is bound\[char46] Traffic matching the ACL is redirected (inline) or mirrored (vtap) to one of the active \fBNetwork_Functions\fR\[char46] If all are detected as down, the fallback method is applied\[char46]
 .SS "Summary:
 .TQ 3.00in
 \fBname\fR
@@ -4715,7 +4764,7 @@ set of \fBNetwork_Function\fRs
 optional \fBNetwork_Function\fR
 .TQ 3.00in
 \fBmode\fR
-string, must be \fBinline\fR
+string, either \fBinline\fR or \fBvtap\fR
 .TQ .25in
 \fICommon Columns:\fR
 .RS .25in
@@ -4731,7 +4780,7 @@ A unique integer between 1 and 255 must be assigned to each \fBNetwork_Function_
 .IP "\fBfallback\fR: optional string, either \fBfail\-close\fR or \fBfail\-open\fR"
 Fallback setting when no active network functions are available\[char46]
 .IP
-Supports following fallback mechanisms\[char46] If not specified, fail-close will be applied when no active Network Functions are available\[char46]
+Supports following fallback mechanisms\[char46] If not specified: for \fBinline\fR mode, fail-close is applied when no active Network Functions are available; for \fBvtap\fR mode, fallback is always fail-open\[char46]
 .RS
 .TP
 \fBfail\-open\fR
@@ -4743,9 +4792,19 @@ Traffic gets dropped when there is no active Network Function available\[char46]
 .IP "\fBnetwork_function\fR: set of \fBNetwork_Function\fRs"
 A list of network functions which belong to this group\[char46]
 .IP "\fBnetwork_function_active\fR: optional \fBNetwork_Function\fR"
-Current active Network_Function\[char46] This column is populated by northd based on health monitoring status\[char46]
-.IP "\fBmode\fR: string, must be \fBinline\fR"
-Traffic forwarding mode, with default and only value as \(dqinline\(dq\[char46] The \(dqinline\(dq mode means that the network function is directly in the path of traffic, with traffic being redirected through it\[char46]
+Current active Network_Function\[char46] This column is populated by northd based on health monitoring status for \fBinline\fR mode\[char46] For \fBvtap\fR mode, health monitoring is not applicable; northd sets the active network function based on port binding status\[char46]
+.IP "\fBmode\fR: string, either \fBinline\fR or \fBvtap\fR"
+Network Function insertion mode\[char46]
+.IP
+Supports following modes\[char46]
+.RS
+.TP
+\fBinline\fR
+In this mode, traffic redirection happens inline through active Network Function ports\[char46]
+.TP
+\fBvtap\fR
+In this mode, traffic is mirrored to active Network Function port\[char46]
+.RE
 .ST "Common Columns:"
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
@@ -4755,7 +4814,7 @@ See \fBExternal IDs\fR at the beginning of this document\[char46]
 .PP
 .PP
 .PP
-Each row represents one network function entity\[char46] This contains a pair of logical_switch_ports\[char46] Traffic that matches the ACL is redirected to \fBinport\fR for from-lport ACLs and to \fBoutport\fR for to-lport ACLs\[char46] Once the traffic is received on the other port, it continues through the standard OVN pipeline\[char46] Response traffic follows the reverse path: it is redirected to the \fBoutport\fR for from-lport ACLs and to the \fBinport\fR for to-lport ACLs\[char46] Once the traffic is received on the other port, it is processed by the regular OVN pipeline\[char46] \fBNOTE\fR: 1\[char46] The Network Function MUST NOT modify the packet headers\[char46] 2\[char46] The Network Function is not supported when used in conjunction with Load Balancer\[char46]
+Each row represents one network function entity\[char46] This contains a single logical switch port when deployed in vtap mode and pair of logical switch ports when deployed in inline mode\[char46] In inline mode, traffic that matches the ACL is redirected to \fBinport\fR for from-lport ACLs and to \fBoutport\fR for to-lport ACLs\[char46] Once the traffic is received on the other port, it continues through the standard OVN pipeline\[char46] Response traffic follows the reverse path: it is redirected to the \fBoutport\fR for from-lport ACLs and to the \fBinport\fR for to-lport ACLs\[char46] Once the traffic is received on the other port, it is processed by the regular OVN pipeline\[char46] \fBNOTE\fR: 1\[char46] The Network Function MUST NOT modify the packet headers\[char46] 2\[char46] The Network Function is not supported when used in conjunction with Load Balancer\[char46] In vtap mode, traffic that matches the ACL is mirrored to \fBinport\fR in all cases\[char46]
 .SS "Summary:
 .TQ 3.00in
 \fBname\fR
@@ -4768,7 +4827,7 @@ integer, in range 1 to 255 (must be unique within table)
 \fBLogical_Switch_Port\fR
 .TQ 3.00in
 \fBoutport\fR
-\fBLogical_Switch_Port\fR
+optional \fBLogical_Switch_Port\fR
 .TQ 3.00in
 \fBhealth_check\fR
 optional \fBNetwork_Function_Health_Check\fR
@@ -4785,11 +4844,11 @@ Name of the \fBNetwork_Function\fR\[char46] Name should be unique\[char46]
 .IP "\fBid\fR: integer, in range 1 to 255 (must be unique within table)"
 A unique integer between 1 and 255 must be assigned to each \fBNetwork_Function\fR\[char46]
 .IP "\fBinport\fR: \fBLogical_Switch_Port\fR"
-\fBLogical_Switch_Port\fR where request traffic for from-lport ACL and response traffic for to-lport ACL is redirected\[char46]
-.IP "\fBoutport\fR: \fBLogical_Switch_Port\fR"
-\fBLogical_Switch_Port\fR where request traffic for to-lport ACL and response traffic for from-lport ACL is redirected\[char46]
+\fBLogical_Switch_Port\fR where request traffic for from-lport ACL and response traffic for to-lport ACL is redirected when network function is deployed in inline mode\[char46] In vtap mode, traffic matching both to-lport and from-lport ACLs is mirrored to the inport\[char46]
+.IP "\fBoutport\fR: optional \fBLogical_Switch_Port\fR"
+\fBLogical_Switch_Port\fR where request traffic for to-lport ACL and response traffic for from-lport ACL is redirected when network function is deployed in inline mode\[char46] This is not applicable when network function is deployed in vtap mode\[char46]
 .IP "\fBhealth_check\fR: optional \fBNetwork_Function_Health_Check\fR"
-\fBNetwork_Function_Health_Check\fR associated with this network function\[char46]
+\fBNetwork_Function_Health_Check\fR associated with this network function\[char46] Health check is applicable only for \fBinline\fR mode\[char46] It is not applicable when the network function is deployed in \fBvtap\fR mode; this column should be left unset for vtap network functions\[char46]
 .ST "Common Columns:"
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
