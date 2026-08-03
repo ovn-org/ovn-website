@@ -1252,7 +1252,7 @@ Only relevant if \fBother_config:dynamic-routing-vni\fR is set to valid VNI\[cha
 .IP "\fBother_config : dynamic-routing-redistribute\fR: optional string"
 Only relevant if \fBother_config:dynamic-routing-vni\fR is set to valid VNI\[char46]
 .IP
-If \fBfdb\fR is specified then ovn-controller will advertise all workloads that are local to the chassis\[char46] The applies to VIFs, container ports, virtual ports, connected DGPs and connected GW routers\[char46]
+If \fBfdb\fR is specified then ovn-controller will advertise all workloads that are local to the chassis\[char46] This applies to VIFs, container ports, virtual ports, connected DGPs and connected GW routers\[char46] Additionally, dynamically learned FDB entries (from ports with \fBunknown\fR addresses) are also advertised\[char46] For VIF ports, only entries learned on the local chassis are advertised; for localnet ports, entries are advertised on all chassis where the datapath is local\[char46]
 .IP
 If \fBip\fR is specified then ovn-controller will advertise all IPs/MACs bindings that are local to the chassis\[char46] This applies to VIFs and router ports\[char46]
 .IP
@@ -3056,6 +3056,9 @@ optional boolean
 .TQ 3.00in
 \fBdhcp_relay\fR
 optional \fBDHCP_Relay\fR
+.TQ 3.00in
+\fBoptions : dhcpv4_primary_ip\fR
+optional string
 .TQ .25in
 \fIDistributed Gateway Ports:\fR
 .RS .25in
@@ -3224,6 +3227,10 @@ The Ethernet address that belongs to this router port\[char46]
 This column is used to administratively set port state\[char46] If this column is empty or is set to \fBtrue\fR, the port is enabled\[char46] If this column is set to \fBfalse\fR, the port is disabled\[char46] A disabled port has all ingress and egress traffic dropped\[char46]
 .IP "\fBdhcp_relay\fR: optional \fBDHCP_Relay\fR"
 This column is used to enabled DHCP Relay\[char46] Please refer to \fBDHCP_Relay\fR table\[char46]
+.IP "\fBoptions : dhcpv4_primary_ip\fR: optional string"
+Optional\[char46] Selects which of the logical router port\(cqs IPv4 addresses \fBovn\-northd\fR uses as the relay agent address (\fBgiaddr\fR) in DHCP packets relayed via this port (see \fBdhcp_relay\fR)\[char46] The value must be a bare IPv4 host address (no prefix length, e\[char46]g\[char46] \fB10\[char46]0\[char46]0\[char46]1\fR) that equals one of the addresses configured in \fBnetworks\fR\[char46] If the value is not a valid IPv4 address or does not match one of the addresses in \fBnetworks\fR, \fBovn\-northd\fR skips emitting DHCP relay flows for this port\[char46]
+.IP
+When unset, \fBovn\-northd\fR defaults to the first address in \fBnetworks\fR as ordered by OVSDB: the CIDR that sorts first as a string\[char46] This default may not match the address intended as the DHCP relay address of the port, so on multi-IP ports this option should be set explicitly\[char46] On single-IP ports the only configured address is always used and the option may be left unset\[char46]
 .ST "Distributed Gateway Ports:"
 .PP
 .PP

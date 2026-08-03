@@ -386,36 +386,52 @@ RUNTIME MANAGEMENT COMMANDS
                      node is specified, only the handlers for that engine node
                      are listed.
 
+              inc-engine/enable-stopwatch [node]
+                     Enables the per-node and per-handler stopwatches  in  the
+                     incremental processing engine. If node is specified, only
+                     that  node’s stopwatches are enabled; otherwise all nodes
+                     are affected. While enabled, every engine node  recompute
+                     and  change  handler  invocation is timed and the results
+                     can be viewed  with  the  stopwatch/show  command.  Stop‐
+                     watches  are disabled by default because they add measur‐
+                     able CPU overhead.
+
+              inc-engine/disable-stopwatch [node]
+                     Disables the per-node and per-handler stopwatches in  the
+                     incremental processing engine. If node is specified, only
+                     that node’s stopwatches are disabled; otherwise all nodes
+                     are affected. This is the default state.
+
 ACTIVE-STANDBY FOR HIGH AVAILABILITY
-       You may run ovn-northd more than once in an OVN deployment.  When  con‐
-       nected  to  a  standalone or clustered DB setup, OVN will automatically
+       You  may  run ovn-northd more than once in an OVN deployment. When con‐
+       nected to a standalone or clustered DB setup,  OVN  will  automatically
        ensure that only one of them is active at a time. If multiple instances
-       of ovn-northd are running and the active ovn-northd fails, one  of  the
+       of  ovn-northd  are running and the active ovn-northd fails, one of the
        hot standby instances of ovn-northd will automatically take over.
 
    Active-Standby with multiple OVN DB servers
        You may run multiple OVN DB servers in an OVN deployment with:
 
-              •      OVN  DB  servers deployed in active/passive mode with one
+              •      OVN DB servers deployed in active/passive mode  with  one
                      active and multiple passive ovsdb-servers.
 
-              •      ovn-northd also deployed on all these nodes,  using  unix
+              •      ovn-northd  also  deployed on all these nodes, using unix
                      ctl sockets to connect to the local OVN DB servers.
 
-       In  such deployments, the ovn-northds on the passive nodes will process
-       the DB changes and compute logical flows to be thrown  out  later,  be‐
-       cause  write transactions are not allowed by the passive ovsdb-servers.
+       In such deployments, the ovn-northds on the passive nodes will  process
+       the  DB  changes  and compute logical flows to be thrown out later, be‐
+       cause write transactions are not allowed by the passive  ovsdb-servers.
        It results in unnecessary CPU usage.
 
-       With the help of  runtime  management  command  pause,  you  can  pause
-       ovn-northd  on these nodes. When a passive node becomes master, you can
-       use the runtime management command resume to resume the  ovn-northd  to
+       With  the  help  of  runtime  management  command  pause, you can pause
+       ovn-northd on these nodes. When a passive node becomes master, you  can
+       use  the  runtime management command resume to resume the ovn-northd to
        process the DB changes.
 
 LOGICAL FLOW TABLE STRUCTURE
-       For  a  detailed description of the logical flow tables that ovn-northd
-       populates in the OVN_Southbound database, including logical switch  and
-       router  datapath  pipelines  and  drop sampling behavior, see ovn-logi�‐
+       For a detailed description of the logical flow tables  that  ovn-northd
+       populates  in the OVN_Southbound database, including logical switch and
+       router datapath pipelines and drop  sampling  behavior,  see  ovn-logi�‐
        cal-flows(7).
 
 OVN 26.03.90                      ovn-northd                     ovn-northd(8)
