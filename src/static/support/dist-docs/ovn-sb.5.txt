@@ -165,6 +165,8 @@ TABLE SUMMARY
                  Chassis_Template_Var configuration.
        Advertised_Route
                  Advertised_Route configuration.
+       Advertised_Route_Status
+                 Advertised_Route_Status configuration.
        Learned_Route
                  Learned_Route configuration.
        ECMP_Nexthop
@@ -3974,8 +3976,8 @@ Service_Monitor TABLE
 
        type: optional string, one of load-balancer, logical-switch-port, or
        network-function
-              The type of the service. Supported  values  are  "load-balancer"
-              and "network-function".
+              The type of the service. Supported values  are  "load-balancer",
+              "network-function", and "logical-switch-port".
 
        ip: string
               Destination  IP  used in monitor packets. For load-balancer ser‐
@@ -4314,6 +4316,113 @@ Advertised_Route TABLE
        external_ids: map of string-string pairs
               See External IDs at the beginning of this document.
 
+              The following keys control distributed Load_Balancer routes:
+
+              source ovn-northd  sets  this  to  lb  on  routes  derived  from
+                     Load_Balancer  VIPs.  It  is  absent on other routes. The
+                     controller applies LB-specific handling when this key and
+                     distributed-lb=true are both present.
+
+              distributed-lb
+                     Set to true by ovn-northd when the  route  belongs  to  a
+                     Load  Balancer  whose  options:distributed  option is en‐
+                     abled. The health gate, administrative  enable  flag  and
+                     status table apply only to routes carrying this key.
+
+              health-checks
+                     For  a  health-checked  distributed  Load_Balancer route,
+                     ovn-northd  records  each  relevant  backend  as   proto�‐
+                     col,IP,port.  When  more than one backend is relevant the
+                     tuples are separated by semicolons. ovn-controller  looks
+                     up  matching  Service_Monitor  rows.  When a shared route
+                     (same VIP IP and backend LSP) has at least one  contribu‐
+                     tor without a health check, the key is absent so the con‐
+                     troller does not gate the route.
+
+              enabled
+                     Administrative  enable  flag for routes carrying distrib�‐
+                     uted-lb=true. A value of false withdraws  the  route  re‐
+                     gardless  of  Service_Monitor  health.  An  absent key is
+                     treated as enabled. A  privileged  administrative  writer
+                     can use this key to withdraw a route.
+Advertised_Route_Status TABLE
+       Each  record reports the desired and kernel route state of one distrib‐
+       uted Load Balancer Advertised_Route on one chassis. Several chassis can
+       report the same route.
+
+       A controller creates a row  for  each  external_ids:distributed-lb=true
+       route selected for its chassis, including withdrawn routes. Other route
+       types  have  no status rows. A missing row means that the route was not
+       selected for the chassis or that the controller has not  published  its
+       state. Status rows do not indicate controller liveness.
+
+       ovn-controller  manages  these  rows. RBAC restricts each controller to
+       its chassis name. Normal controller shutdown and ovn-sbctl  chassis-del
+       remove the corresponding rows. A controller failure followed by generic
+       database  deletion of the Chassis can leave rows with cleared weak ref‐
+       erences. The copied route UUID and chassis name  remain  available  for
+       identifying those rows.
+
+   Summary:
+       advertised_route              optional   weak   reference   to   Adver�‐
+                                     tised_Route
+       advertised_route_uuid         uuid
+       chassis                       optional weak reference to Chassis
+       chassis_name                  string
+       desired_status                string, either advertised or withdrawn
+       withdrawal_reasons            map of string-string pairs
+       operational_status            string, one  of  installed,  unknown,  or
+                                     withdrawn
+       error                         optional string
+
+   Details:
+       advertised_route: optional weak reference to Advertised_Route
+              The route for which the chassis made the advertisement decision.
+
+       advertised_route_uuid: uuid
+              A  copy  of  the  UUID of advertised_route. It remains after the
+              weak reference is cleared and avoids duplicate empty  values  in
+              the status index when several routes are deleted.
+
+       chassis: optional weak reference to Chassis
+              The chassis that made the advertisement decision.
+
+       chassis_name: string
+              A copy of the name of chassis. RBAC uses this value to authorize
+              controller  writes.  It remains after the weak chassis reference
+              is cleared.
+
+       desired_status: string, either advertised or withdrawn
+              The chassis’s current decision. advertised means the  controller
+              intends  to  install  the  route for export, and withdrawn means
+              that it does not. The withdrawal_reasons  map  describes  why  a
+              route is withdrawn.
+
+       withdrawal_reasons: map of string-string pairs
+              Machine-readable reasons for the current desired_status. The map
+              is empty when the desired state is advertised. Initially, admin�‐
+              istrative-policy=disabled  reports an external_ids enabled=false
+              override, and service-monitor=no-online-backend reports that the
+              relevant Service_Monitor records prevented advertisement. Future
+              controller inputs can add reason keys without changing  the  de‐
+              sired-state values. Readers must ignore unknown keys.
+
+       operational_status: string, one of installed, unknown, or withdrawn
+              The  result  of reconciling the desired state with the chassis’s
+              kernel routing table. installed means  reconciliation  completed
+              with  this  route  selected. withdrawn means reconciliation com‐
+              pleted with this route excluded.  unknown  means  reconciliation
+              has not yet completed or failed. error can contain more detail.
+
+              This  column  reports  OVN’s  kernel  route.  It does not report
+              whether an external routing daemon exported the prefix.  Equiva‐
+              lent  Advertised_Route  rows  with  the same prefix, nexthop and
+              priority can share one kernel route.
+
+       error: optional string
+              A description of the current route-table reconciliation failure.
+              It is cleared after successful reconciliation.
+
 Learned_Route TABLE
        Each record represents a route that learned by ovn using  some  dynamic
        routing  logic  outside  of ovn. It is populated by ovn-controller with
@@ -4419,4 +4528,4 @@ Advertised_MAC_Binding TABLE
        external_ids: map of string-string pairs
               See External IDs at the beginning of this document.
 
-Open vSwitch 26.03.90          DB Schema 21.11.0                     ovn-sb(5)
+Open vSwitch 26.03.90          DB Schema 21.12.0                     ovn-sb(5)

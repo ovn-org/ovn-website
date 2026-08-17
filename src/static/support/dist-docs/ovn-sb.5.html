@@ -166,6 +166,8 @@
                  Chassis_Template_Var configuration.
        <b>A</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b>
                  Advertised_Route configuration.
+       <b>A</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>_</b><b>S</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b>
+                 Advertised_Route_Status configuration.
        <b>L</b><b>e</b><b>a</b><b>r</b><b>n</b><b>e</b><b>d</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b>
                  Learned_Route configuration.
        <b>E</b><b>C</b><b>M</b><b>P</b><b>_</b><b>N</b><b>e</b><b>x</b><b>t</b><b>h</b><b>o</b><b>p</b>
@@ -3975,8 +3977,8 @@
 
        <b>t</b><b>y</b><b>p</b><b>e</b>: optional string, one of <b>l</b><b>o</b><b>a</b><b>d</b><b>-</b><b>b</b><b>a</b><b>l</b><b>a</b><b>n</b><b>c</b><b>e</b><b>r</b>, <b>l</b><b>o</b><b>g</b><b>i</b><b>c</b><b>a</b><b>l</b><b>-</b><b>s</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b><b>-</b><b>p</b><b>o</b><b>r</b><b>t</b>, or
        <b>n</b><b>e</b><b>t</b><b>w</b><b>o</b><b>r</b><b>k</b><b>-</b><b>f</b><b>u</b><b>n</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>
-              The type of the service. Supported  values  are  "load-balancer"
-              and "network-function".
+              The type of the service. Supported values  are  "load-balancer",
+              "network-function", and "logical-switch-port".
 
        <b>i</b><b>p</b>: string
               Destination  IP  used in monitor packets. For load-balancer ser‐
@@ -4315,6 +4317,113 @@
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
               See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
 
+              The following keys control distributed Load_Balancer routes:
+
+              <b>s</b><b>o</b><b>u</b><b>r</b><b>c</b><b>e</b> <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>  sets  this  to  <b>l</b><b>b</b>  on  routes  derived  from
+                     Load_Balancer  VIPs.  It  is  absent on other routes. The
+                     controller applies LB-specific handling when this key and
+                     <b>d</b><b>i</b><b>s</b><b>t</b><b>r</b><b>i</b><b>b</b><b>u</b><b>t</b><b>e</b><b>d</b><b>-</b><b>l</b><b>b</b><b>=</b><b>t</b><b>r</b><b>u</b><b>e</b> are both present.
+
+              <b>d</b><b>i</b><b>s</b><b>t</b><b>r</b><b>i</b><b>b</b><b>u</b><b>t</b><b>e</b><b>d</b><b>-</b><b>l</b><b>b</b>
+                     Set to <b>t</b><b>r</b><b>u</b><b>e</b> by <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b> when the  route  belongs  to  a
+                     Load  Balancer  whose  <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b><b>:</b><b>d</b><b>i</b><b>s</b><b>t</b><b>r</b><b>i</b><b>b</b><b>u</b><b>t</b><b>e</b><b>d</b>  option is en‐
+                     abled. The health gate, administrative  enable  flag  and
+                     status table apply only to routes carrying this key.
+
+              <b>h</b><b>e</b><b>a</b><b>l</b><b>t</b><b>h</b><b>-</b><b>c</b><b>h</b><b>e</b><b>c</b><b>k</b><b>s</b>
+                     For  a  health-checked  distributed  Load_Balancer route,
+                     <b>o</b><b>v</b><b>n</b><b>-</b><b>n</b><b>o</b><b>r</b><b>t</b><b>h</b><b>d</b>  records  each  relevant  backend  as   <b>p</b><b>r</b><b>o</b><b>t</b><b>o</b>‐‐
+                     <b>c</b><b>o</b><b>l</b><b>,</b><b>I</b><b>P</b><b>,</b><b>p</b><b>o</b><b>r</b><b>t</b>.  When  more than one backend is relevant the
+                     tuples are separated by semicolons. <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  looks
+                     up  matching  <b>S</b><b>e</b><b>r</b><b>v</b><b>i</b><b>c</b><b>e</b><b>_</b><b>M</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b>  rows.  When a shared route
+                     (same VIP IP and backend LSP) has at least one  contribu‐
+                     tor without a health check, the key is absent so the con‐
+                     troller does not gate the route.
+
+              <b>e</b><b>n</b><b>a</b><b>b</b><b>l</b><b>e</b><b>d</b>
+                     Administrative  enable  flag for routes carrying <b>d</b><b>i</b><b>s</b><b>t</b><b>r</b><b>i</b><b>b</b>‐‐
+                     <b>u</b><b>t</b><b>e</b><b>d</b><b>-</b><b>l</b><b>b</b><b>=</b><b>t</b><b>r</b><b>u</b><b>e</b>. A value of <b>f</b><b>a</b><b>l</b><b>s</b><b>e</b> withdraws  the  route  re‐
+                     gardless  of  Service_Monitor  health.  An  absent key is
+                     treated as enabled. A  privileged  administrative  writer
+                     can use this key to withdraw a route.
+<b>A</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>_</b><b>S</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
+       Each  record reports the desired and kernel route state of one distrib‐
+       uted Load Balancer <b>A</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b> on one chassis. Several chassis can
+       report the same route.
+
+       A controller creates a row  for  each  <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b><b>:</b><b>d</b><b>i</b><b>s</b><b>t</b><b>r</b><b>i</b><b>b</b><b>u</b><b>t</b><b>e</b><b>d</b><b>-</b><b>l</b><b>b</b><b>=</b><b>t</b><b>r</b><b>u</b><b>e</b>
+       route selected for its chassis, including withdrawn routes. Other route
+       types  have  no status rows. A missing row means that the route was not
+       selected for the chassis or that the controller has not  published  its
+       state. Status rows do not indicate controller liveness.
+
+       <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b>  manages  these  rows. RBAC restricts each controller to
+       its chassis name. Normal controller shutdown and <b>o</b><b>v</b><b>n</b><b>-</b><b>s</b><b>b</b><b>c</b><b>t</b><b>l</b>  <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>-</b><b>d</b><b>e</b><b>l</b>
+       remove the corresponding rows. A controller failure followed by generic
+       database  deletion of the Chassis can leave rows with cleared weak ref‐
+       erences. The copied route UUID and chassis name  remain  available  for
+       identifying those rows.
+
+   <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
+       <b>a</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b>              optional   weak   reference   to   <b>A</b><b>d</b><b>v</b><b>e</b><b>r</b>‐‐
+                                     <b>t</b><b>i</b><b>s</b><b>e</b><b>d</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b>
+       <b>a</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>_</b><b>u</b><b>u</b><b>i</b><b>d</b>         uuid
+       <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>                       optional weak reference to <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>
+       <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>n</b><b>a</b><b>m</b><b>e</b>                  string
+       <b>d</b><b>e</b><b>s</b><b>i</b><b>r</b><b>e</b><b>d</b><b>_</b><b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b>                string, either <b>a</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b> or <b>w</b><b>i</b><b>t</b><b>h</b><b>d</b><b>r</b><b>a</b><b>w</b><b>n</b>
+       <b>w</b><b>i</b><b>t</b><b>h</b><b>d</b><b>r</b><b>a</b><b>w</b><b>a</b><b>l</b><b>_</b><b>r</b><b>e</b><b>a</b><b>s</b><b>o</b><b>n</b><b>s</b>            map of string-string pairs
+       <b>o</b><b>p</b><b>e</b><b>r</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b><b>a</b><b>l</b><b>_</b><b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b>            string, one  of  <b>i</b><b>n</b><b>s</b><b>t</b><b>a</b><b>l</b><b>l</b><b>e</b><b>d</b>,  <b>u</b><b>n</b><b>k</b><b>n</b><b>o</b><b>w</b><b>n</b>,  or
+                                     <b>w</b><b>i</b><b>t</b><b>h</b><b>d</b><b>r</b><b>a</b><b>w</b><b>n</b>
+       <b>e</b><b>r</b><b>r</b><b>o</b><b>r</b>                         optional string
+
+   <b>D</b><b>e</b><b>t</b><b>a</b><b>i</b><b>l</b><b>s</b><b>:</b>
+       <b>a</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b>: optional weak reference to <b>A</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b>
+              The route for which the chassis made the advertisement decision.
+
+       <b>a</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b><b>_</b><b>u</b><b>u</b><b>i</b><b>d</b>: uuid
+              A  copy  of  the  UUID of <b>a</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b><b>_</b><b>r</b><b>o</b><b>u</b><b>t</b><b>e</b>. It remains after the
+              weak reference is cleared and avoids duplicate empty  values  in
+              the status index when several routes are deleted.
+
+       <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>: optional weak reference to <b>C</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>
+              The chassis that made the advertisement decision.
+
+       <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b><b>_</b><b>n</b><b>a</b><b>m</b><b>e</b>: string
+              A copy of the name of <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>. RBAC uses this value to authorize
+              controller  writes.  It remains after the weak chassis reference
+              is cleared.
+
+       <b>d</b><b>e</b><b>s</b><b>i</b><b>r</b><b>e</b><b>d</b><b>_</b><b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b>: string, either <b>a</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b> or <b>w</b><b>i</b><b>t</b><b>h</b><b>d</b><b>r</b><b>a</b><b>w</b><b>n</b>
+              The chassis’s current decision. <b>a</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b> means the  controller
+              intends  to  install  the  route for export, and <b>w</b><b>i</b><b>t</b><b>h</b><b>d</b><b>r</b><b>a</b><b>w</b><b>n</b> means
+              that it does not. The <b>w</b><b>i</b><b>t</b><b>h</b><b>d</b><b>r</b><b>a</b><b>w</b><b>a</b><b>l</b><b>_</b><b>r</b><b>e</b><b>a</b><b>s</b><b>o</b><b>n</b><b>s</b>  map  describes  why  a
+              route is withdrawn.
+
+       <b>w</b><b>i</b><b>t</b><b>h</b><b>d</b><b>r</b><b>a</b><b>w</b><b>a</b><b>l</b><b>_</b><b>r</b><b>e</b><b>a</b><b>s</b><b>o</b><b>n</b><b>s</b>: map of string-string pairs
+              Machine-readable reasons for the current <b>d</b><b>e</b><b>s</b><b>i</b><b>r</b><b>e</b><b>d</b><b>_</b><b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b>. The map
+              is empty when the desired state is <b>a</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b>. Initially, <b>a</b><b>d</b><b>m</b><b>i</b><b>n</b>‐‐
+              <b>i</b><b>s</b><b>t</b><b>r</b><b>a</b><b>t</b><b>i</b><b>v</b><b>e</b><b>-</b><b>p</b><b>o</b><b>l</b><b>i</b><b>c</b><b>y</b><b>=</b><b>d</b><b>i</b><b>s</b><b>a</b><b>b</b><b>l</b><b>e</b><b>d</b>  reports an <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b> <b>e</b><b>n</b><b>a</b><b>b</b><b>l</b><b>e</b><b>d</b><b>=</b><b>f</b><b>a</b><b>l</b><b>s</b><b>e</b>
+              override, and <b>s</b><b>e</b><b>r</b><b>v</b><b>i</b><b>c</b><b>e</b><b>-</b><b>m</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b><b>=</b><b>n</b><b>o</b><b>-</b><b>o</b><b>n</b><b>l</b><b>i</b><b>n</b><b>e</b><b>-</b><b>b</b><b>a</b><b>c</b><b>k</b><b>e</b><b>n</b><b>d</b> reports that the
+              relevant <b>S</b><b>e</b><b>r</b><b>v</b><b>i</b><b>c</b><b>e</b><b>_</b><b>M</b><b>o</b><b>n</b><b>i</b><b>t</b><b>o</b><b>r</b> records prevented advertisement. Future
+              controller inputs can add reason keys without changing  the  de‐
+              sired-state values. Readers must ignore unknown keys.
+
+       <b>o</b><b>p</b><b>e</b><b>r</b><b>a</b><b>t</b><b>i</b><b>o</b><b>n</b><b>a</b><b>l</b><b>_</b><b>s</b><b>t</b><b>a</b><b>t</b><b>u</b><b>s</b>: string, one of <b>i</b><b>n</b><b>s</b><b>t</b><b>a</b><b>l</b><b>l</b><b>e</b><b>d</b>, <b>u</b><b>n</b><b>k</b><b>n</b><b>o</b><b>w</b><b>n</b>, or <b>w</b><b>i</b><b>t</b><b>h</b><b>d</b><b>r</b><b>a</b><b>w</b><b>n</b>
+              The  result  of reconciling the desired state with the chassis’s
+              kernel routing table. <b>i</b><b>n</b><b>s</b><b>t</b><b>a</b><b>l</b><b>l</b><b>e</b><b>d</b> means  reconciliation  completed
+              with  this  route  selected. <b>w</b><b>i</b><b>t</b><b>h</b><b>d</b><b>r</b><b>a</b><b>w</b><b>n</b> means reconciliation com‐
+              pleted with this route excluded.  <b>u</b><b>n</b><b>k</b><b>n</b><b>o</b><b>w</b><b>n</b>  means  reconciliation
+              has not yet completed or failed. <b>e</b><b>r</b><b>r</b><b>o</b><b>r</b> can contain more detail.
+
+              This  column  reports  OVN’s  kernel  route.  It does not report
+              whether an external routing daemon exported the prefix.  Equiva‐
+              lent  <b>A</b><b>d</b><b>v</b><b>e</b><b>r</b><b>t</b><b>i</b><b>s</b><b>e</b><b>d</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b>  rows  with  the same prefix, nexthop and
+              priority can share one kernel route.
+
+       <b>e</b><b>r</b><b>r</b><b>o</b><b>r</b>: optional string
+              A description of the current route-table reconciliation failure.
+              It is cleared after successful reconciliation.
+
 <b>L</b><b>e</b><b>a</b><b>r</b><b>n</b><b>e</b><b>d</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
        Each record represents a route that learned by ovn using  some  dynamic
        routing  logic  outside  of ovn. It is populated by <b>o</b><b>v</b><b>n</b><b>-</b><b>c</b><b>o</b><b>n</b><b>t</b><b>r</b><b>o</b><b>l</b><b>l</b><b>e</b><b>r</b> with
@@ -4420,5 +4529,5 @@
        <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>: map of string-string pairs
               See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
 
-Open vSwitch 26.03.90          DB Schema 21.11.0                     <u>o</u><u>v</u><u>n</u><u>-</u><u>s</u><u>b</u>(5)
+Open vSwitch 26.03.90          DB Schema 21.12.0                     <u>o</u><u>v</u><u>n</u><u>-</u><u>s</u><u>b</u>(5)
 </pre></body></html>
