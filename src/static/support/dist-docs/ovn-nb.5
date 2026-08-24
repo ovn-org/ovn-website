@@ -1,6 +1,6 @@
 '\" p
 .\" -*- nroff -*-
-.TH "ovn-nb" 5 " DB Schema 7.19.0" "Open vSwitch 26.03.90" "Open vSwitch Manual"
+.TH "ovn-nb" 5 " DB Schema 7.19.0" "Open vSwitch 26.09.90" "Open vSwitch Manual"
 .fp 5 L CR              \\" Make fixed-width font available as \\fL.
 .de TQ
 .  br
@@ -3150,6 +3150,9 @@ optional string
 \fBoptions : ic-route-filter-tag\fR
 optional string
 .TQ 2.75in
+\fBoptions : ic-route-learn-tag-rules\fR
+optional string
+.TQ 2.75in
 \fBoptions : requested-chassis\fR
 optional string
 .TQ 2.75in
@@ -3391,6 +3394,22 @@ When configured, represents a match expression, in the same expression language 
 This option expects a name of a route-tag that\(cqs present in the Logical Router Port\[char46] If set, it causes any route advertised by the Logical Router Port to include the \fBroute\-tag\fR in the \fB external_ids \fR register of the advertised route entry in the \fBRoute\fR table of the \fBOVN_IC_Southbound\fR database\[char46] This allows to tag and filter route tags in the process of advertising and learning routes in \fBovn\-ic\fR daemon\[char46]
 .IP "\fBoptions : ic-route-filter-tag\fR: optional string"
 This option expects a name of a filtered route-tag that\(cqs present in the Logical Router Port\[char46] If set, it causes any route learned by the Logical Router Port with the \fBroute\-tag\fR present in the external_ids register of the advertised route entry in the \fBRoute\fR table of the \fBOVN_IC_Southbound\fR database, will be filtered and not learned by the \fBovn\-ic\fR daemon\[char46]
+.IP
+This option is deprecated and will be removed in the 28\[char46]09 release\[char46] Use \fBoptions:ic-route-learn-tag-rules\fR instead, which supports more than one route tag and which, when set, causes this option to be ignored\[char46]
+.IP "\fBoptions : ic-route-learn-tag-rules\fR: optional string"
+This option controls, based on route tags, which routes the \fBovn\-ic\fR daemon learns through this Logical Router Port\[char46] It expects a value in one of the following two forms, where \fBtags\fR is a comma-separated list of route-tag names, for example \fBallow:vpc1,vpc2\fR:
+.RS
+.IP \(bu
+\fBallow:tags\fR - only routes whose \fBic\-route\-tag\fR matches one of the listed tags are learned\[char46] Every other route, including routes that carry no \fBic\-route\-tag\fR at all, is not learned\[char46]
+.IP \(bu
+\fBblock:tags\fR - routes whose \fBic\-route\-tag\fR matches one of the listed tags are not learned\[char46] Every other route, including routes that carry no \fBic\-route\-tag\fR at all, is learned\[char46]
+.RE
+.IP
+The \fBic\-route\-tag\fR of a route is the one present in the \fBexternal_ids\fR register of the advertised route entry in the \fBRoute\fR table of the \fBOVN_IC_Southbound\fR database\[char46] As commas separate the tags, a route tag cannot contain a comma\[char46] Values that use neither the \fBallow:\fR nor the \fBblock:\fR prefix, as well as values with an empty tag list, are invalid and are ignored (no route is filtered by this option)\[char46]
+.IP
+The two forms are mutually exclusive: only the leading prefix is honored and everything after it is a route tag name\[char46] In \fBallow:vpc1,block:vpc2\fR, for example, the allowed tags are \fBvpc1\fR and \fBblock:vpc2\fR\[char46]
+.IP
+This option supersedes the deprecated \fBoptions:ic-route-filter-tag\fR option: whenever a valid value is set here, the route tags to learn are the ones defined by this option only and \fBoptions:ic-route-filter-tag\fR is ignored\[char46]
 .IP "\fBoptions : requested-chassis\fR: optional string"
 If set, identifies a specific chassis (by name or hostname) that is allowed to bind this port\[char46] This option is valid only for chassis that have \fBoptions:is\-remote=true\fR, in other words for chassis that are in different Availability zone\[char46] The option accepts only single value\[char46]
 .IP
@@ -4753,6 +4772,9 @@ See \fBExternal IDs\fR at the beginning of this document\[char46]
 .PP
 .PP
 Each row contains a list of \fBNetwork_Function\fR\[char46] Traffic redirection/mirroring is achieved by referencing a \fBNetwork_Function_Group\fR from an \fBACL\fR\[char46] For \fBinline\fR mode, health monitoring of each \fBNetwork_Function\fR is performed based on parameters defined in \fBNetwork_Function_Health_Check\fR\[char46] Health monitoring is not applicable for \fBvtap\fR mode; a vtap network function is always considered active as long as its port is bound\[char46] Traffic matching the ACL is redirected (inline) or mirrored (vtap) to one of the active \fBNetwork_Functions\fR\[char46] If all are detected as down, the fallback method is applied\[char46]
+.PP
+.PP
+\fBKnown limitation (inline mode)\fR: in topologies where a post-NF flood copy may reach the same logical inport from a different node than the packet\(cqs original ingress node, the lookup runs on a different node than where the inport was learned, so loopback copies are not identified\[char46] For example: OVN-IC L2 stretch with the NF and IC gateway on different chassis\[char46] With \fBunknown\fR-addressed ports, the post-NF packet can be flooded across AZs and come back to the source AZ via another node, so the lookup does not hit the original learn entry\[char46]
 .SS "Summary:
 .TQ 3.00in
 \fBname\fR
