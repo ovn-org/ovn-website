@@ -52,7 +52,7 @@ The logical network data is ultimately controlled by the cloud management system
 Logical network data is likely to change more quickly than physical network data\[char46] This is especially true in a container environment where containers are created and destroyed (and therefore added to and deleted from logical switches) quickly\[char46]
 .PP
 .PP
-The \fBLogical_Flow\fR, \fBMulticast_Group\fR, \fBAddress_Group\fR, \fBDHCP_Options\fR, \fBDHCPv6_Options\fR, and \fBDNS\fR tables contain logical network data\[char46]
+The \fBLogical_Flow\fR, \fBMulticast_Group\fR, \fBAddress_Set\fR, \fBDHCP_Options\fR, \fBDHCPv6_Options\fR, and \fBDNS\fR tables contain logical network data\[char46]
 .ST "Logical-physical bindings"
 .PP
 .PP
@@ -522,6 +522,10 @@ optional string
 .TQ 2.50in
 \fBoptions : bfd-mult\fR
 optional string
+.RE
+.TQ .25in
+\fIOptions for debug drop sampling:\fR
+.RS .25in
 .TQ 2.50in
 \fBoptions : debug_drop_domain_id\fR
 optional string
@@ -557,7 +561,7 @@ boolean
 .SS "Details:
 .ST "Status:"
 .PP
-This column allow a client to track the overall configuration state of the system\[char46]
+This column allows a client to track the overall configuration state of the system\[char46]
 .IP "\fBnb_cfg\fR: integer"
 Sequence number for the configuration\[char46] When a CMS or \fBovn\-nbctl\fR updates the northbound database, it increments the \fBnb_cfg\fR column in the \fBNB_Global\fR table in the northbound database\[char46] In turn, when \fBovn\-northd\fR updates the southbound database to bring it up to date with these changes, it updates this column to the same value\[char46]
 .IP "\fBnb_cfg_timestamp\fR: integer"
@@ -586,6 +590,8 @@ BFD option \fBdecay\-min\-rx\fR value to use when configuring BFD on tunnel inte
 BFD option \fBmin\-tx\fR value to use when configuring BFD on tunnel interfaces\[char46]
 .IP "\fBoptions : bfd-mult\fR: optional string"
 BFD option \fBmult\fR value to use when configuring BFD on tunnel interfaces\[char46]
+.ST "Options for debug drop sampling:"
+.PP
 .IP "\fBoptions : debug_drop_domain_id\fR: optional string"
 If set to a 8-bit number and if \fBdebug_drop_collector_set\fR is also configured, \fBovn\-controller\fR will add a \fBsample\fR action to every flow that does not come from a logical flow that contains a \(cqdrop\(cq action\[char46] The 8 most significant bits of the observation_domain_id field will be those specified in the \fB debug_drop_domain_id\fR\[char46] The 24 least significant bits of the observation_domain_id field will be zero\[char46]
 .IP
@@ -724,7 +730,7 @@ Stores all VTEP logical switch names connected by this gateway chassis\[char46] 
 .PP
 .PP
 .PP
-Each row in this table maintains per chassis private data that are accessed only by the owning chassis (write only) and ovn-northd, not by any other chassis\[char46] These data are stored in this separate table instead of the \fBChassis\fR table for performance considerations: the rows in this table can be conditionally monitored by chassises so that each chassis only get update notifications for its own row, to avoid unnecessary chassis private data update flooding in a large scale deployment\[char46]
+Each row in this table maintains per chassis private data that are accessed only by the owning chassis (write only) and ovn-northd, not by any other chassis\[char46] These data are stored in this separate table instead of the \fBChassis\fR table for performance considerations: the rows in this table can be conditionally monitored by chassises so that each chassis only gets update notifications for its own row, to avoid unnecessary chassis private data update flooding in a large scale deployment\[char46]
 .SS "Summary:
 .TQ 3.00in
 \fBname\fR
@@ -807,7 +813,7 @@ If set, overrides the UDP destination port\[char46]
 .IP "\fBoptions : is_default\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 When there are multiple encaps for a chassis with different IPs, this option indicates if the encap is the default one that matches the IP in \fBexternal_ids:ovn-encap-ip-default\fR column of the Open_vSwitch database\(cqs \fBOpen_vSwitch\fR table\[char46]
 .IP "\fBip\fR: string"
-The IPv4 address of the encapsulation tunnel endpoint\[char46]
+The IPv4 or IPv6 address of the encapsulation tunnel endpoint\[char46]
 .IP "\fBchassis_name\fR: string"
 The name of the chassis that created this encap\[char46]
 .bp
@@ -880,7 +886,7 @@ In more detail, to start, OVN searches the \fBLogical_Flow\fR table for a row wi
 The \fBnext\fR action causes the above process to be repeated recursively, except that OVN searches for \fBtable_id\fR of 1 instead of 0\[char46] Similarly, any \fBnext\fR action in a row found in that table would cause a further search for a \fBtable_id\fR of 2, and so on\[char46] When recursive processing completes, flow control returns to the action following \fBnext\fR\[char46]
 .PP
 .PP
-The \fBoutput\fR action also introduces recursion\[char46] Its effect depends on the current value of the \fBoutport\fR field\[char46] Suppose \fBoutport\fR designates a logical port\[char46] First, OVN compares \fBinport\fR to \fBoutport\fR; if they are equal, it treats the \fBoutput\fR as a no-op by default\[char46] In the common case, where they are different, the packet enters the egress pipeline\[char46] This transition to the egress pipeline discards register data, e\[char46]g\[char46] \fBreg0\fR \[char46]\[char46]\[char46] \fBreg9\fR and connection tracking state, to achieve uniform behavior regardless of whether the egress pipeline is on a different hypervisor (because registers aren\(cqt preserve across tunnel encapsulation)\[char46]
+The \fBoutput\fR action also introduces recursion\[char46] Its effect depends on the current value of the \fBoutport\fR field\[char46] Suppose \fBoutport\fR designates a logical port\[char46] First, OVN compares \fBinport\fR to \fBoutport\fR; if they are equal, it treats the \fBoutput\fR as a no-op by default\[char46] In the common case, where they are different, the packet enters the egress pipeline\[char46] This transition to the egress pipeline discards register data, e\[char46]g\[char46] \fBreg0\fR \[char46]\[char46]\[char46] \fBreg9\fR and connection tracking state, to achieve uniform behavior regardless of whether the egress pipeline is on a different hypervisor (because registers aren\(cqt preserved across tunnel encapsulation)\[char46]
 .PP
 .PP
 To execute the egress pipeline, OVN again searches the \fBLogical_Flow\fR table for a row with correct \fBlogical_datapath\fR or a \fBlogical_dp_group\fR, a \fBtable_id\fR of 0, a \fBmatch\fR that is true for the packet, but now looking for a \fBpipeline\fR of \fBegress\fR\[char46] If no matching row is found, the output becomes a no-op\[char46] Otherwise, OVN executes the actions for the matching flow (which is chosen from multiple, if necessary, as already described)\[char46]
@@ -994,11 +1000,11 @@ A predicate whose expansion refers to any nominal field or predicate (see \fBLev
 .IP \(bu
 \fIOrdinal\fR\[char46] In statistics, ordinal values can be ordered on a scale\[char46] OVN considers a field (or subfield) to be ordinal if its bits can be examined individually\[char46] This is true for the OpenFlow fields that OpenFlow or Open vSwitch makes ``maskable\[char46]\(cq\(cq
 .IP
-Any use of a ordinal field may specify a single bit or a range of bits, e\[char46]g\[char46] \fBvlan\[char46]tci[13\[char46]\[char46]15]\fR refers to the PCP field within the VLAN TCI, and \fBeth\[char46]dst[40]\fR refers to the multicast bit in the Ethernet destination address\[char46]
+Any use of an ordinal field may specify a single bit or a range of bits, e\[char46]g\[char46] \fBvlan\[char46]tci[13\[char46]\[char46]15]\fR refers to the PCP field within the VLAN TCI, and \fBeth\[char46]dst[40]\fR refers to the multicast bit in the Ethernet destination address\[char46]
 .IP
 OVN supports all the usual arithmetic relations (\fB==\fR, \fB!=\fR, \fB<\fR, \fB<=\fR, \fB>\fR, and \fB>=\fR) on ordinal fields and their subfields, because OVN can implement these in OpenFlow and Open vSwitch as collections of bitwise tests\[char46]
 .IP \(bu
-\fINominal\fR\[char46] In statistics, nominal values cannot be usefully compared except for equality\[char46] This is true of OpenFlow port numbers, Ethernet types, and IP protocols are examples: all of these are just identifiers assigned arbitrarily with no deeper meaning\[char46] In OpenFlow and Open vSwitch, bits in these fields generally aren\(cqt individually addressable\[char46]
+\fINominal\fR\[char46] In statistics, nominal values cannot be usefully compared except for equality\[char46] OpenFlow port numbers, Ethernet types, and IP protocols are examples: all of these are just identifiers assigned arbitrarily with no deeper meaning\[char46] In OpenFlow and Open vSwitch, bits in these fields generally aren\(cqt individually addressable\[char46]
 .IP
 OVN only supports arithmetic tests for equality on nominal fields, because OpenFlow and Open vSwitch provide no way for a flow to efficiently implement other comparisons on them\[char46] (A test for inequality can be sort of built out of two flows with different priorities, but OVN matching expressions always generate flows with a single priority\[char46])
 .IP
@@ -1011,7 +1017,7 @@ Only predicates (see above) have a Boolean level of measurement\[char46]
 This isn\(cqt a standard level of measurement\[char46]
 .RE
 .IP
-\fBPrerequisites\fR\[char46] Any symbol can have prerequisites, which are additional condition implied by the use of the symbol\[char46] For example, For example, \fBicmp4\[char46]type\fR symbol might have prerequisite \fBicmp4\fR, which would cause an expression \fBicmp4\[char46]type ==
+\fBPrerequisites\fR\[char46] Any symbol can have prerequisites, which are additional condition implied by the use of the symbol\[char46] For example, \fBicmp4\[char46]type\fR symbol might have prerequisite \fBicmp4\fR, which would cause an expression \fBicmp4\[char46]type ==
 0\fR to be interpreted as \fBicmp4\[char46]type == 0 &&
 icmp4\fR, which would in turn expand to \fBicmp4\[char46]type == 0
 && eth\[char46]type == 0x800 && ip4\[char46]proto == 1\fR (assuming \fBicmp4\fR is a predicate defined as suggested under \fBTypes\fR above)\[char46]
@@ -1050,7 +1056,7 @@ Tests for a range may be expressed using a syntax like \fB1024 <=
 tcp\[char46]src <= 49151\fR, which is equivalent to \fB1024 <=
 tcp\[char46]src && tcp\[char46]src <= 49151\fR\[char46]
 .IP
-For a one-bit field or predicate, a mention of its name is equivalent to \fB\fIsymobl\fB == 1\fR, e\[char46]g\[char46] \fBvlan\[char46]present\fR is equivalent to \fBvlan\[char46]present == 1\fR\[char46] The same is true for one-bit subfields, e\[char46]g\[char46] \fBvlan\[char46]tci[12]\fR\[char46] There is no technical limitation to implementing the same for ordinal fields of all widths, but the implementation is expensive enough that the syntax parser requires writing an explicit comparison against zero to make mistakes less likely, e\[char46]g\[char46] in \fBtcp\[char46]src != 0\fR the comparison against 0 is required\[char46]
+For a one-bit field or predicate, a mention of its name is equivalent to \fB\fIsymbol\fB == 1\fR, e\[char46]g\[char46] \fBvlan\[char46]present\fR is equivalent to \fBvlan\[char46]present == 1\fR\[char46] The same is true for one-bit subfields, e\[char46]g\[char46] \fBvlan\[char46]tci[12]\fR\[char46] There is no technical limitation to implementing the same for ordinal fields of all widths, but the implementation is expensive enough that the syntax parser requires writing an explicit comparison against zero to make mistakes less likely, e\[char46]g\[char46] in \fBtcp\[char46]src != 0\fR the comparison against 0 is required\[char46]
 .IP
 \fBOperator precedence\fR is as shown below, from highest to lowest\[char46] There are two exceptions where parentheses are required even though the table would suggest that they are not: \fB&&\fR and \fB||\fR require parentheses when used together, and \fB!\fR requires parentheses when applied to a relational expression\[char46] Thus, in \fB(eth\[char46]type == 0x800 || eth\[char46]type == 0x86dd)
 && ip\[char46]proto == 6\fR or \fB!(arp\[char46]op == 1)\fR, the parentheses are mandatory\[char46]
@@ -1223,7 +1229,7 @@ Sets data or metadata field \fIfield\fR to constant value \fIconstant\fR, e\[cha
 .IP
 Assigning to a field with prerequisites implicitly adds those prerequisites to \fBmatch\fR; thus, for example, a flow that sets \fBtcp\[char46]dst\fR applies only to TCP flows, regardless of whether its \fBmatch\fR mentions any TCP field\[char46]
 .IP
-Not all fields are modifiable (e\[char46]g\[char46] \fBeth\[char46]type\fR and \fBip\[char46]proto\fR are read-only), and not all modifiable fields may be partially modified (e\[char46]g\[char46] \fBip\[char46]ttl\fR must assigned as a whole)\[char46] The \fBoutport\fR field is modifiable in the \fBingress\fR pipeline but not in the \fBegress\fR pipeline\[char46]
+Not all fields are modifiable (e\[char46]g\[char46] \fBeth\[char46]type\fR and \fBip\[char46]proto\fR are read-only), and not all modifiable fields may be partially modified (e\[char46]g\[char46] \fBip\[char46]ttl\fR must be assigned as a whole)\[char46] The \fBoutport\fR field is modifiable in the \fBingress\fR pipeline but not in the \fBegress\fR pipeline\[char46]
 .TP
 \fB\fIovn_field\fB = \fIconstant\fB;\fR
 Sets OVN field \fIovn_field\fR to constant value \fIconstant\fR\[char46]
@@ -1279,7 +1285,7 @@ Apply connection tracking to the flow, initializing \fBct_state\fR for matching 
 As a side effect, IP fragments will be reassembled for matching\[char46] If a fragmented packet is output, then it will be sent with any overlapping fragments squashed\[char46] The connection tracking state is scoped by the logical port when the action is used in a flow for a logical switch, so overlapping addresses may be used\[char46] To allow traffic related to the matched flow, execute \fBct_commit
 \fR\[char46] Connection tracking state is scoped by the logical topology when the action is used in a flow for a router\[char46]
 .IP
-It is possible to have actions follow \fBct_next\fR, but they will not have access to any of its side-effects and is not generally useful\[char46]
+It is possible to have actions follow \fBct_next\fR, but they will not have access to any of its side-effects and are not generally useful\[char46]
 .TP
 \fBct_commit { };\fR
 .TQ .5in
@@ -1311,7 +1317,7 @@ Note that this action is meaningful only in the Logical Router Datapath as the L
 \fBct_snat(\fIIP\fB);\fR
 \fBct_snat\fR sends the packet through the SNAT zone to unSNAT any packet that was SNATed in the opposite direction\[char46] The packet is automatically sent to the next tables as if followed by the \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
 .IP
-\fBct_snat(\fIIP\fB)\fR sends the packet through the SNAT zone to change the source IP address of the packet to the one provided inside the parenthesis and commits the connection\[char46] The packet is then automatically sent to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
+\fBct_snat(\fIIP\fB)\fR sends the packet through the SNAT zone to change the source IP address of the packet to the one provided inside the parentheses and commits the connection\[char46] The packet is then automatically sent to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
 .TP
 \fBct_dnat_in_czone;\fR
 .TQ .5in
@@ -1325,7 +1331,7 @@ Note that this action is meaningful only in the Logical Router Datapath as the L
 \fBct_snat_in_czone(\fIIP\fB);\fR
 \fBct_snat_in_czone\fR sends the packet through the common NAT zone to unSNAT any packet that was SNATed in the opposite direction\[char46] The packet is automatically sent to the next tables as if followed by the \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
 .IP
-\fBct_snat_in_czone(\fIIP\fB)\fR sends the packet\e through the common NAT zone to change the source IP address of the packet to the one provided inside the parenthesis and commits the connection\[char46] The packet is then automatically sent to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
+\fBct_snat_in_czone(\fIIP\fB)\fR sends the packet through the common NAT zone to change the source IP address of the packet to the one provided inside the parentheses and commits the connection\[char46] The packet is then automatically sent to the next tables as if followed by \fBnext;\fR action\[char46] The next tables will see the changes in the packet caused by the connection tracker\[char46]
 .TP
 \fBct_clear;\fR
 Clears connection tracking state\[char46]
@@ -1413,25 +1419,36 @@ reg9[5] = chk_evpn_arp(arp\[char46]tpa);
 \fR
 .TP
 \fB\fIP\fB = get_fdb(\fIA\fB);\fR
-\fBParameters\fR:48-bit MAC address field \fIA\fR\[char46]
+\fBParameters\fR: 48-bit MAC address field \fIA\fR\[char46]
 .IP
-Looks up \fIA\fR in fdb table\[char46] If an entry is found, stores the logical port key to the out parameter \fBP\fR\[char46]
+Looks up \fIA\fR in the \fBFDB\fR table\[char46] If an entry is found, stores the logical port key to the out parameter \fBP\fR\[char46]
 .IP
 \fBExample:\fR \fBoutport = get_fdb(eth\[char46]src);\fR
+.TP
+\fB\fIP\fB = get_remote_fdb(\fIA\fB);
+\fR
+\fBParameters\fR: 48-bit MAC address field \fIA\fR\[char46]
+.IP
+\fBResult\fR: stored to a logical port field \fIP\fR\[char46]
+.IP
+Looks up \fIA\fR in the remote \fBFDB\fR table\[char46] If an entry is found, store the logical port key to the out parameter \fBP\fR\[char46] This is similar to \fBget_fdb\fR but looks up remote \fBFDB\fR entries learned from other chassis\[char46]
+.IP
+\fBExample:\fR \fBoutport = get_remote_fdb(eth\[char46]dst);
+\fR
 .TP
 \fBput_fdb(\fIP\fB, \fIA\fB);\fR
 \fBParameters\fR: logical port string field \fIP\fR, 48-bit MAC address field \fIA\fR\[char46]
 .IP
-Adds or updates the entry for Ethernet address \fIA\fR in fdb table, setting its logical port key to \fIP\fR\[char46]
+Adds or updates the entry for Ethernet address \fIA\fR in the \fBFDB\fR table, setting its logical port key to \fIP\fR\[char46]
 .IP
-\fBExample:\fR \fBput_fdb(inport, arp\[char46]spa);\fR
+\fBExample:\fR \fBput_fdb(inport, eth\[char46]src);\fR
 .TP
 \fB\fIR\fB = lookup_fdb(\fIP\fB, \fIA\fB);\fR
-\fBParameters\fR: 48-bit MAC address field \fIM\fR, logical port string field \fIP\fR\[char46]
+\fBParameters\fR: logical port string field \fIP\fR, 48-bit MAC address field \fIA\fR\[char46]
 .IP
 \fBResult\fR: stored to a 1-bit subfield \fIR\fR\[char46]
 .IP
-Looks up \fIA\fR in fdb table\[char46] If an entry is found and the logical port key is \fIP\fR, \fBP\fR, stores \fB1\fR in the 1-bit subfield \fIR\fR, else 0\[char46] If \fBflags\[char46]localnet\fR is set then \fB1\fR is stored if an entry is found and the logical port key is \fIP\fR or if an entry is found and the entry port type is VIF\[char46]
+Looks up \fIA\fR in the \fBFDB\fR table\[char46] If an entry is found and the logical port key is \fIP\fR, \fBP\fR, stores \fB1\fR in the 1-bit subfield \fIR\fR, else 0\[char46] If \fBflags\[char46]localnet\fR is set then \fB1\fR is stored if an entry is found and the logical port key is \fIP\fR or if an entry is found and the entry port type is VIF\[char46]
 .IP
 \fBExample:\fR \fB
 reg0[0] = lookup_fdb(inport, eth\[char46]src);
@@ -1579,7 +1596,7 @@ When this action is applied to a DHCP request packet (DHCPDISCOVER or DHCPREQUES
 .IP
 When this action is applied to a non-DHCP packet or a DHCP packet that is not DHCPDISCOVER or DHCPREQUEST, it leaves the packet unchanged and stores 0 in \fIR\fR\[char46]
 .IP
-The contents of the \fBDHCP_Option\fR table control the DHCP option names and values that this action supports\[char46]
+The contents of the \fBDHCP_Options\fR table control the DHCP option names and values that this action supports\[char46]
 .IP
 \fBExample:\fR \fB
 reg0[0] = put_dhcp_opts(offerip = 10\[char46]0\[char46]0\[char46]2, router = 10\[char46]0\[char46]0\[char46]1,
@@ -1595,7 +1612,7 @@ Valid only in the ingress pipeline\[char46]
 .IP
 When this action is applied to a DHCPv6 request packet, it changes the packet into a DHCPv6 reply, replaces the options by those specified as parameters, and stores 1 in \fIR\fR\[char46]
 .IP
-When this action is applied to a non-DHCPv6 packet or an invalid DHCPv6 request packet , it leaves the packet unchanged and stores 0 in \fIR\fR\[char46]
+When this action is applied to a non-DHCPv6 packet or an invalid DHCPv6 request packet, it leaves the packet unchanged and stores 0 in \fIR\fR\[char46]
 .IP
 The contents of the \fBDHCPv6_Options\fR table control the DHCPv6 option names and values that this action supports\[char46]
 .IP
@@ -1669,7 +1686,7 @@ Valid only in the ingress pipeline\[char46]
 .IP
 When this action is applied to an IPv6 Router solicitation request packet, it changes the packet into an IPv6 Router Advertisement reply and adds the options specified in the parameters, and stores 1 in \fIR\fR\[char46]
 .IP
-When this action is applied to a non-IPv6 Router solicitation packet or an invalid IPv6 request packet , it leaves the packet unchanged and stores 0 in \fIR\fR\[char46]
+When this action is applied to a non-IPv6 Router solicitation packet or an invalid IPv6 request packet, it leaves the packet unchanged and stores 0 in \fIR\fR\[char46]
 .IP
 \fBExample:\fR \fB
 reg0[3] = put_nd_ra_opts(addr_mode = \(dqslaac\(dq,
@@ -1769,7 +1786,8 @@ The ICMPv6 packet that this action operates on is initialized based on the IPv6 
 .IP
 \fBPrerequisite:\fR \fBip6\fR
 .TP
-\fBtcp_reset;\fR
+\fBtcp_reset { \fIaction\fB; \fR\[char46]\[char46]\[char46]\fB };
+\fR
 This action transforms the current TCP packet according to the following pseudocode:
 .IP
 .nf
@@ -1792,17 +1810,24 @@ This action transforms the current TCP packet according to the following pseudoc
 \fB\fR
 .fi
 .IP
-Then, the action drops all TCP options and payload data, and updates the TCP checksum\[char46] IP ttl is set to 255\[char46]
+Then, the action drops all TCP options and payload data, and updates the TCP checksum\[char46] IP ttl is set to 255\[char46] The nested actions are executed on the resulting RST packet\[char46]
 .IP
 \fBPrerequisite:\fR \fBtcp\fR
+.TP
+\fBsctp_abort { \fIaction\fB; \fR\[char46]\[char46]\[char46]\fB };
+\fR
+This action transforms the current SCTP packet into an ABORT chunk\[char46] The nested actions, such as \fBoutput\fR, are executed on the resulting ABORT packet\[char46]
+.IP
+\fBPrerequisite:\fR \fBsctp\fR
 .TP
 \fBreject { \fIaction\fB; \fR\[char46]\[char46]\[char46]\fB };\fR
 If the original packet is IPv4 or IPv6 TCP packet, it replaces it with IPv4 or IPv6 TCP RST packet and executes the inner actions\[char46] Otherwise it replaces it with an ICMPv4 or ICMPv6 packet and executes the inner actions\[char46]
 .IP
 The inner actions should not attempt to swap eth source with eth destination and IP source with IP destination as this action implicitly does that\[char46]
 .TP
-\fBtrigger_event;\fR
-This action is used to allow ovs-vswitchd to report CMS related events writing them in \fBController_Event\fR table\[char46] It is possible to associate a meter to a each event in order to not overload pinctrl thread under heavy load; each meter is identified though a defined naming convention\[char46] Supported events:
+\fBtrigger_event(event = \(dq\fIevent_type\fB\(dq, \[char46]\[char46]\[char46]);
+\fR
+This action is used to allow ovs-vswitchd to report CMS related events writing them in the \fBController_Event\fR table\[char46] It is possible to associate a meter to each event in order to not overload pinctrl thread under heavy load; each meter is identified though a defined naming convention\[char46] Supported events:
 .RS
 .IP \(bu
 \fIempty_lb_backends\fR\[char46] This event is raised if a received packet is destined for a load balancer VIP that has no configured backend destinations\[char46] For this event, the event info includes the load balancer VIP, the load balancer UUID, and the transport protocol\[char46] Associated meter: \fBevent\-elb\fR
@@ -1826,7 +1851,20 @@ Handles the service monitor reply received from the VIF of the logical port \fIP
 \fBExample:\fR \fBhandle_svc_check(inport);\fR
 .TP
 \fBhandle_dhcpv6_reply;\fR
-Handle DHCPv6 prefix delegation advertisements/replies from a IPv6 delegation server\[char46] \fBovn\-controller\fR will add an entry \fBipv6_ra_pd_list\fR in the \fBoptions\fR table for each prefix received from the delegation server
+Handle DHCPv6 prefix delegation advertisements/replies from an IPv6 delegation server and manage the prefix delegation state machine\[char46] \fBovn\-controller\fR will add an entry \fBipv6_ra_pd_list\fR in the \fBoptions\fR table for each prefix received from the delegation server
+.TP
+\fBhandle_bfd_msg();\fR
+This action sends BFD packets to \fBovn\-controller\fR for processing\[char46] \fBovn\-controller\fR handles BFD protocol messages received on tunnel or logical ports\[char46]
+.TP
+\fBflood_remote;\fR
+This action floods the packet to all remote ports, i\[char46]e\[char46], ports that reside on other chassis\[char46]
+.TP
+\fB\fIR\fB = ct_proto();\fR
+\fBResult\fR: stored to an 8-bit subfield \fIR\fR\[char46]
+.IP
+This action returns the IP protocol of the conntrack original-direction tuple\[char46]
+.IP
+\fBExample:\fR \fBreg1[16\[char46]\[char46]23] = ct_proto();\fR
 .TP
 \fB\fIR\fB = select(\fIN1\fB[=\fIW1\fB], \fIN2\fB[=\fIW2\fB], \[char46]\[char46]\[char46]);\fR
 .TQ .5in
@@ -1843,50 +1881,47 @@ Processing automatically moves on to the next table, as if \fBnext;\fR were spec
 .IP
 \fBExample:\fR \fBreg8[16\[char46]\[char46]31] = select(1=20, 2=30, 3=50);\fR \fBExample:\fR \fBreg8[16\[char46]\[char46]31] = select(values=(1=20, 2=30, 3=50); hash_fields=\(dqip_proto,src_ip,dst_ip\(dq);\fR
 .TP
-\fBhandle_dhcpv6_reply;\fR
-This action is used to parse DHCPv6 replies from IPv6 Delegation Router and managed IPv6 Prefix delegation state machine
-.TP
 \fB\fIR\fB = chk_lb_hairpin();\fR
 This action checks if the packet under consideration was destined to a load balancer VIP and it is hairpinned, i\[char46]e\[char46], after load balancing the destination IP matches the source IP\[char46] If it is so, then the 1-bit destination register \fIR\fR is set to 1\[char46]
 .TP
 \fB\fIR\fB = chk_lb_hairpin_reply();\fR
 This action checks if the packet under consideration is from one of the backend IP of a load balancer VIP and the destination IP is the load balancer VIP\[char46] If it is so, then the 1-bit destination register \fIR\fR is set to 1\[char46]
 .TP
-\fB\fIR\fB = ct_snat_to_vip;\fR
+\fBct_snat_to_vip;\fR
 This action sends the packet through the SNAT zone to change the source IP address of the packet to the load balancer VIP if the original destination IP was load balancer VIP and commits the connection\[char46] This action applies successfully only for the hairpinned traffic i\[char46]e if the action \fBchk_lb_hairpin\fR returned success\[char46] This action doesn\(cqt take any arguments and it determines the SNAT IP internally\[char46] The packet is not automatically sent to the next table\[char46] The caller has to execute the \fBnext;\fR action explicitly after this action to advance the packet to the next stage\[char46]
 .TP
 \fB\fIR\fB = check_in_port_sec();\fR
-This action checks if the packet under consideration passes the inport port security checks\[char46] If the packet fails the port security checks, then \fB1\fR is stored in the destination register \fIR\fR\[char46] Else 0 is stored\[char46] The port security values to check are retrieved from the the \fBinport\fR logical port\[char46]
+This action checks if the packet under consideration passes the inport port security checks\[char46] If the packet fails the port security checks, then \fB1\fR is stored in the destination register \fIR\fR\[char46] Else 0 is stored\[char46] The port security values to check are retrieved from the \fBinport\fR logical port\[char46]
 .IP
 This action should be used in the ingress logical switch pipeline\[char46]
 .IP
-\fBExample:\fR \fBreg8[0\[char46]\[char46]7] = check_in_port_sec();\fR
+\fBExample:\fR \fBreg0[15] = check_in_port_sec();\fR
 .TP
 \fB\fIR\fB = check_out_port_sec();\fR
-This action checks if the packet under consideration passes the outport port security checks\[char46] If the packet fails the port security checks, then \fB1\fR is stored in the destination register \fIR\fR\[char46] Else 0 is stored\[char46] The port security values to check are retrieved from the the \fBoutport\fR logical port\[char46]
+This action checks if the packet under consideration passes the outport port security checks\[char46] If the packet fails the port security checks, then \fB1\fR is stored in the destination register \fIR\fR\[char46] Else 0 is stored\[char46] The port security values to check are retrieved from the \fBoutport\fR logical port\[char46]
 .IP
 This action should be used in the egress logical switch pipeline\[char46]
 .IP
-\fBExample:\fR \fBreg8[0\[char46]\[char46]7] = check_out_port_sec();\fR
+\fBExample:\fR \fBreg0[15] = check_out_port_sec();\fR
 .TP
 \fBcommit_ecmp_nh(\fIipv6\fB);\fR
 \fBParameters\fR: IPv4/IPv6 traffic\[char46]
 .IP
-This action translates to an openflow \(dqlearn\(dq action that inserts two new flows in tables 76 and 77\[char46]
+This action translates to an openflow \(dqlearn\(dq action that inserts two new flows in tables referenced by table 100 and 101\[char46]
 .RS
 .IP \(bu
-Match on the the 5-tuple and the expected next-hop mac address in table 76: \fBnw_src=ip0\fR, \fBnw_dst=ip1\fR, \fBip_proto\fR,\fBtp_src=l4_port0\fR, \fBtp_dst=l4_port1\fR,\fBdl_src=ethaddr\fR and set \fBreg9[5]\fR\[char46]
+Match on the 5-tuple and the expected next-hop mac address in table 100: \fBnw_src=ip0\fR, \fBnw_dst=ip1\fR, \fBip_proto\fR,\fBtp_src=l4_port0\fR, \fBtp_dst=l4_port1\fR,\fBdl_src=ethaddr\fR and set \fBreg9[5]\fR\[char46]
 .IP \(bu
-Match on the 5-tuple in table 77: \fBnw_src=ip1\fR, \fBnw_dst=ip0\fR, \fBip_proto\fR, \fBtp_src=l4_port1\fR, \fBtp_dst=l4_port0\fR and set \fBreg9[5]\fR to 1
+Match on the 5-tuple in table 101: \fBnw_src=ip1\fR, \fBnw_dst=ip0\fR, \fBip_proto\fR, \fBtp_src=l4_port1\fR, \fBtp_dst=l4_port0\fR and set \fBreg9[5]\fR to 1
 .RE
 .IP
 This action is applied if the packet arrives via ECMP route or if it is routed via an ECMP route
 .TP
-\fB\fIR\fB = check_ecmp_nh_mac();\fR
-This action checks if the packet under consideration matches any flow in table 76\[char46] If it is so, then the 1-bit destination register \fIR\fR is set to 1\[char46]
+\fB\fIR\fB = chk_ecmp_nh_mac();\fR
+This action checks if the packet under consideration matches any flow in table 100\[char46] If it is so, then the 1-bit destination register \fIR\fR is set to 1\[char46]
 .TP
-\fB\fIR\fB = check_ecmp_nh();\fR
-This action checks if the packet under consideration matches the any flow in table 77\[char46] If it is so, then the 1-bit destination register \fIR\fR is set to 1\[char46]
+\fB\fIR\fB = chk_ecmp_nh();\fR
+This action checks if the packet under consideration matches any flow in table 101\[char46] If it is so, then the 1-bit destination register \fIR\fR is set to 1\[char46]
 .TP
 \fB
 commit_lb_aff(\fIvip\fB, \fIbackend\fB,
@@ -1894,16 +1929,16 @@ commit_lb_aff(\fIvip\fB, \fIbackend\fB,
 \fR
 \fBParameters\fR: load-balancer virtual ip:port \fIvip\fR, load-balancer backend ip:port \fIbackend\fR, load-balancer protocol \fIproto\fR, affinity timeout \fItimeout\fR\[char46]
 .IP
-This action translates to an openflow \(dqlearn\(dq action that inserts a new flow in table 78\[char46]
+This action translates to an openflow \(dqlearn\(dq action that inserts a new flow in table 102\[char46]
 .RS
 .IP \(bu
-Match on the 4-tuple in table 78: \fBnw_src=ip client\fR, \fBnw_dst=vip ip\fR, \fBip_proto\fR, \fBtp_dst=vip port\fR and set \fBreg9[6]\fR to 1, \fBreg4\fR and \fBreg8\fR to backend ip and port respectively\[char46] For IPv6 register \fBxxreg1\fR is used to store the backend ip\[char46]
+Match on the 4-tuple in table 102: \fBnw_src=ip client\fR, \fBnw_dst=vip ip\fR, \fBip_proto\fR, \fBtp_dst=vip port\fR and set \fBreg9[6]\fR to 1, \fBreg4\fR and \fBreg8\fR to backend ip and port respectively\[char46] For IPv6 register \fBxxreg1\fR is used to store the backend ip\[char46]
 .RE
 .IP
-This action is applied for new connections received by a specific load-balacer with affinity timeout configured\[char46]
+This action is applied for new connections received by a specific load-balancer with affinity timeout configured\[char46]
 .TP
 \fB\fIR\fB = chk_lb_aff();\fR
-This action checks if the packet under consideration matches any flow in table 78\[char46] If it is so, then the 1-bit destination register \fIR\fR is set to 1\[char46]
+This action checks if the packet under consideration matches any flow in table 102\[char46] If it is so, then the 1-bit destination register \fIR\fR is set to 1\[char46]
 .TP
 \fB\fIR\fB = ct_nw_dst();\fR
 This action checks if the packet is tracked and stores the conntrack original destination IPv4 address in the register \fIR\fR of 32-bit size\[char46]
@@ -1935,7 +1970,7 @@ The unsigned 32-bit integer identifier of the sample collector to send sampled p
 An unsigned 8-bit integer that identifies the sampling application\[char46] It will be placed in the 8 most significant bits of the \fBObservationDomainID\fR field of IPFIX samples\[char46] The 24 less significant bits will be automatically filled in with the datapath key\[char46] Defaults to 0\[char46]
 .TP
 \fBobs_point=\fR\fIid\fR
-An unsigned 32-bit integer to be used as \fBObsservationPointID\fR or the string \fB@cookie\fR to indicate that the first 32 bits of the \fBLogical_Flow\fR\(cqs UUID shall be used instead\[char46]
+An unsigned 32-bit integer to be used as \fBObservationPointID\fR or the string \fB@cookie\fR to indicate that the first 32 bits of the \fBLogical_Flow\fR\(cqs UUID shall be used instead\[char46]
 .RE
 .TP
 \fBmac_cache_use;\fR
@@ -2098,7 +2133,7 @@ A name for this meter\[char46]
 .IP
 Names that begin with \(dq__\(dq (two underscores) are reserved for OVN internal use and should not be added manually\[char46]
 .IP "\fBunit\fR: string, either \fBkbps\fR or \fBpktps\fR"
-The unit for \fBrate\fR and \fBburst_rate\fR parameters in the \fBbands\fR entry\[char46] \fBkbps\fR specifies kilobits per second, and \fBpktps\fR specifies packets per second\[char46]
+The unit for \fBrate\fR and \fBburst_size\fR parameters in the \fBbands\fR entry\[char46] \fBkbps\fR specifies kilobits per second, and \fBpktps\fR specifies packets per second\[char46]
 .IP "\fBbands\fR: set of 1 or more \fBMeter_Band\fRs"
 The bands associated with this meter\[char46] Each band specifies a rate above which the band is to take the action \fBaction\fR\[char46] If multiple bands\(cq rates are exceeded, then the band with the highest rate among the exceeded bands is selected\[char46]
 .bp
@@ -2121,7 +2156,7 @@ integer, in range 0 to 4,294,967,295
 .IP "\fBaction\fR: string, must be \fBdrop\fR"
 The action to execute when this band matches\[char46] The only supported action is \fBdrop\fR\[char46]
 .IP "\fBrate\fR: integer, in range 1 to 4,294,967,295"
-The rate limit for this band, in kilobits per second or bits per second, depending on whether the parent \fBMeter\fR entry\(cqs \fBunit\fR column specified \fBkbps\fR or \fBpktps\fR\[char46]
+The rate limit for this band, in kilobits per second or packets per second, depending on whether the parent \fBMeter\fR entry\(cqs \fBunit\fR column specified \fBkbps\fR or \fBpktps\fR\[char46]
 .IP "\fBburst_size\fR: integer, in range 0 to 4,294,967,295"
 The maximum burst allowed for the band in kilobits or packets, depending on whether \fBkbps\fR or \fBpktps\fR was selected in the parent \fBMeter\fR entry\(cqs \fBunit\fR column\[char46] If the size is zero, the switch is free to select some reasonable value depending on its configuration\[char46]
 .bp
@@ -2132,7 +2167,7 @@ The maximum burst allowed for the band in kilobits or packets, depending on whet
 Each row in this table represents a logical datapath, which implements a logical pipeline among the ports in the \fBPort_Binding\fR table associated with it\[char46] In practice, the pipeline in a given logical datapath implements either a logical switch or a logical router\[char46]
 .PP
 .PP
-The main purpose of a row in this table is provide a physical binding for a logical datapath\[char46] A logical datapath does not have a physical location, so its physical binding information is limited: just \fBtunnel_key\fR\[char46] The rest of the data in this table does not affect packet forwarding\[char46]
+The main purpose of a row in this table is to provide a physical binding for a logical datapath\[char46] A logical datapath does not have a physical location, so its physical binding information is limited: just \fBtunnel_key\fR\[char46] The rest of the data in this table does not affect packet forwarding\[char46]
 .SS "Summary:
 .TQ 3.00in
 \fBtunnel_key\fR
@@ -2397,6 +2432,18 @@ optional string
 \fIDynamic Routing:\fR
 .RS .25in
 .TQ 2.75in
+\fBoptions : dynamic-routing\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 2.75in
+\fBoptions : dynamic-routing-maintain-vrf\fR
+optional string, either \fBtrue\fR or \fBfalse\fR
+.TQ 2.75in
+\fBoptions : dynamic-routing-vrf-name\fR
+optional string
+.TQ 2.75in
+\fBoptions : dynamic-routing-port-name\fR
+optional string
+.TQ 2.75in
 \fBoptions : dynamic-routing-redistribute-local-only\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
 .TQ 2.75in
@@ -2440,11 +2487,11 @@ map of string-string pairs
 .IP "\fBdatapath\fR: \fBDatapath_Binding\fR"
 The logical datapath to which the logical port belongs\[char46]
 .IP "\fBlogical_port\fR: string (must be unique within table)"
-A logical port\[char46] For a logical switch port, this is taken from \fBname\fR in the OVN_Northbound database\(cqs \fBLogical_Switch_Port\fR table\[char46] For a logical router port, this is taken from \fBname\fR in the OVN_Northbound database\(cqs \fBLogical_Router_port\fR table\[char46] (This means that logical switch ports and router port names must not share names in an OVN deployment\[char46]) OVN does not prescribe a particular format for the logical port ID\[char46]
+A logical port\[char46] For a logical switch port, this is taken from \fBname\fR in the OVN_Northbound database\(cqs \fBLogical_Switch_Port\fR table\[char46] For a logical router port, this is taken from \fBname\fR in the OVN_Northbound database\(cqs \fBLogical_Router_Port\fR table\[char46] (This means that logical switch ports and router port names must not share names in an OVN deployment\[char46]) OVN does not prescribe a particular format for the logical port ID\[char46]
 .IP "\fBencap\fR: optional weak reference to \fBEncap\fR"
-Points to preferred encapsulation configuration to transmit logical dataplane packets to this chassis\[char46] The entry is reference to a \fBEncap\fR record\[char46]
+Points to preferred encapsulation configuration to transmit logical dataplane packets to this chassis\[char46] The entry is a reference to a \fBEncap\fR record\[char46]
 .IP "\fBadditional_encap\fR: set of weak reference to \fBEncap\fRs"
-Points to preferred encapsulation configuration to transmit logical dataplane packets to this additional chassis\[char46] The entry is reference to a \fBEncap\fR record\[char46] See also \fBadditional_chassis\fR\[char46]
+Points to preferred encapsulation configuration to transmit logical dataplane packets to this additional chassis\[char46] The entry is a reference to a \fBEncap\fR record\[char46] See also \fBadditional_chassis\fR\[char46]
 .IP "\fBchassis\fR: optional weak reference to \fBChassis\fR"
 The meaning of this column depends on the value of the \fBtype\fR column\[char46] This is the meaning for each \fBtype\fR
 .RS
@@ -2466,6 +2513,15 @@ The physical location of the L3 gateway\[char46] To successfully identify a chas
 .TP
 l2gateway
 The physical location of this L2 gateway\[char46] To successfully identify a chassis, this column must be a \fBChassis\fR record\[char46] This is populated by \fBovn\-controller\fR based on the value of the \fBoptions:l2gateway\-chassis\fR column in this table\[char46]
+.TP
+external
+A logical port representing an externally connected entity\[char46] An \fBexternal\fR port requires a \fBha_chassis_group\fR and a \fBlocalnet\fR port on the same logical switch to be functional\[char46] \fBovn\-northd\fR syncs the HA chassis group from the corresponding \fBLogical_Switch_Port\fR and generates logical flows that direct traffic through the \fBlocalnet\fR port on the bound chassis\[char46] Without a \fBha_chassis_group\fR, no logical flows are generated for the port\[char46]
+.TP
+remote
+A logical router port whose peer resides on a remote chassis (one whose \fBother_config\fR:\fBis\-remote\fR is \fBtrue\fR)\[char46] This type is set instead of \fBpatch\fR when \fBovn\-northd\fR determines that the requested chassis is remote\[char46]
+.TP
+mirror
+A synthetic port binding created for lport-level mirroring\[char46] It acts similarly to a container port (without VLAN tagging) and has its \fBmirror_port\fR column set to point to the mirror target port\[char46]
 .RE
 .IP "\fBadditional_chassis\fR: set of weak reference to \fBChassis\fR"
 The meaning of this column is the same as for the \fBchassis\fR\[char46] The column is used to track an additional physical location of the logical port\[char46] Used with regular (empty \fBtype\fR) port bindings\[char46]
@@ -2474,7 +2530,11 @@ A list of \fBGateway_Chassis\fR\[char46]
 .IP
 This should only be populated for ports with \fBtype\fR set to \fBchassisredirect\fR\[char46] This column defines the list of chassis used as gateways where traffic will be redirected through\[char46]
 .IP "\fBha_chassis_group\fR: optional \fBHA_Chassis_Group\fR"
-This should only be populated for ports with \fBtype\fR set to \fBchassisredirect\fR\[char46] This column defines the HA chassis group with a list of HA chassis used as gateways where traffic will be redirected through\[char46]
+A list of HA chassis for this port binding\[char46] It is populated for ports with \fBtype\fR set to \fBchassisredirect\fR or \fBexternal\fR\[char46]
+.IP
+For \fBchassisredirect\fR ports, the HA chassis are used as gateways where traffic will be redirected through\[char46]
+.IP
+For \fBexternal\fR ports, the HA chassis group determines which chassis binds the port and handles its traffic through a \fBlocalnet\fR port on the same logical switch\[char46]
 .IP "\fBup\fR: optional boolean"
 This is set to \fBtrue\fR whenever all OVS flows required by this Port_Binding have been installed\[char46] This is populated by \fBovn\-controller\fR\[char46]
 .IP "\fBtunnel_key\fR: integer, in range 1 to 32,767"
@@ -2600,9 +2660,9 @@ When multiple chassis are set for the port, and the logical switch is connected 
 .IP "\fBoptions : requested-encap-ip\fR: optional string"
 If set, \fBovn\-northd\fR resolves and sets \fBencap\fR for this port based on the requested tunnel endpoint IP\[char46] If absent, \fBovn\-controller\fR may manage \fBencap\fR from local interface \fBexternal_ids:encap\-ip\fR\[char46]
 .IP "\fBoptions : activation-strategy\fR: optional string"
-If used with multiple chassis set in \fBrequested-chassis\fR, specifies an activation strategy for all additional chassis\[char46] By default, no activation strategy is used, meaning additional port locations are immediately available for use\[char46] The option supports a comma separated list where you can combine 3 protocols, \(dqrarp\(dq, \(dqgarp\(dq and \(dqna\(dq\[char46] When any of the protocols is set, the port is blocked for ingress and egress communication until a specified protocol packet is sent from a new location\[char46] The activation strategy is useful in live migration scenarios for virtual machines\[char46]
+If used with multiple chassis set in \fBoptions:requested-chassis\fR, specifies an activation strategy for all additional chassis\[char46] By default, no activation strategy is used, meaning additional port locations are immediately available for use\[char46] The option supports a comma separated list where you can combine 3 protocols, \(dqrarp\(dq, \(dqgarp\(dq and \(dqna\(dq\[char46] When any of the protocols is set, the port is blocked for ingress and egress communication until a specified protocol packet is sent from a new location\[char46] The activation strategy is useful in live migration scenarios for virtual machines\[char46]
 .IP "\fBoptions : additional-chassis-activated\fR: optional string"
-When \fBactivation-strategy\fR is set, this option indicates that the port was activated using the strategy specified\[char46]
+When \fBoptions:activation-strategy\fR is set, this option indicates that the port was activated using the strategy specified\[char46]
 .IP "\fBoptions : iface-id-ver\fR: optional string"
 If set, this port will be bound by \fBovn\-controller\fR only if this same key and value is configured in the \fBexternal_ids\fR column in the Open_vSwitch database\(cqs \fBInterface\fR table\[char46]
 .IP "\fBoptions : qos_min_rate\fR: optional string"
@@ -2622,7 +2682,7 @@ If the CMS sets \fBother_config:dynamic-routing-redistribute\fR to \fBfdb\fR and
 .PP
 .PP
 .PP
-These options apply to the distributed parent ports of logical ports with \fBtype\fR of \fBchasssisredirect\fR\[char46]
+These options apply to the distributed parent ports of logical ports with \fBtype\fR of \fBchassisredirect\fR\[char46]
 .IP "\fBoptions : chassis-redirect-port\fR: optional string"
 The name of the chassis redirect port derived from this port if this port is a distributed parent of a chassis redirect port\[char46]
 .ST "Chassis Redirect Options:"
@@ -2638,6 +2698,20 @@ The value is copied from the column \fBoptions\fR in the OVN_Northbound database
 A boolean option that is set to true if the distributed parent of this chassis redirect port does not need distributed processing\[char46]
 .ST "Dynamic Routing:"
 .PP
+.IP "\fBoptions : dynamic-routing\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+Set to \fBtrue\fR by \fBovn\-northd\fR on \fBchassisredirect\fR and \fBl3gateway\fR port bindings when the parent logical router has dynamic routing enabled\[char46] This enables \fBovn\-controller\fR to advertise and learn routes for this port\[char46]
+.IP "\fBoptions : dynamic-routing-maintain-vrf\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
+Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
+.IP
+When set to \fBtrue\fR, \fBovn\-controller\fR creates and maintains a VRF for this port\(cqs routing protocol session\[char46] Copied from the \fBLogical_Router_Port\fR \fBoptions:dynamic\-routing\-maintain\-vrf\fR option\[char46]
+.IP "\fBoptions : dynamic-routing-vrf-name\fR: optional string"
+Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
+.IP
+The VRF name to use for this port\(cqs routing protocol session\[char46] Copied from the \fBLogical_Router\fR \fBoptions:dynamic\-routing\-vrf\-name\fR option\[char46]
+.IP "\fBoptions : dynamic-routing-port-name\fR: optional string"
+Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
+.IP
+The port name within the VRF for this port\(cqs routing protocol session\[char46] Copied from the \fBLogical_Router_Port\fR \fBoptions:dynamic\-routing\-port\-name\fR option\[char46]
 .IP "\fBoptions : dynamic-routing-redistribute-local-only\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
 Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
 .IP
@@ -2668,7 +2742,7 @@ This column is set by \fBovn\-controller\fR with one of the value from the \fBop
 .IP "\fBexternal_ids : name\fR: optional string"
 For a logical switch port, \fBovn\-northd\fR copies this from \fBexternal_ids:neutron:port_name\fR in the \fBLogical_Switch_Port\fR table in the OVN_Northbound database, if it is a nonempty string\[char46]
 .IP
-For a logical switch port, \fBovn\-northd\fR does not currently set this key\[char46]
+For a logical router port, \fBovn\-northd\fR does not currently set this key\[char46]
 .ST "Common Columns:"
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
@@ -2703,6 +2777,9 @@ The logical router flow table executes a \fBput_arp\fR action\[char46] To record
 .IP 7. .4in
 On hypervisor 1, \fBovn\-controller\fR receives the updated \fBMAC_Binding\fR table from the OVN southbound database\[char46] The next packet destined to \fIA\fR through the logical router is sent directly to the bound Ethernet address\[char46]
 .RE
+.PP
+.PP
+In EVPN deployments, \fBovn\-controller\fR also writes rows to this table for MAC bindings learned through EVPN Type\-2 routes (via FRR and the kernel neighbor table)\[char46] These entries are keyed by the router port connected to the EVPN logical switch and behave identically to ARP/ND-learned bindings for consumption and aging purposes\[char46]
 .SS "Summary:
 .TQ 3.00in
 \fBlogical_port\fR
@@ -2868,7 +2945,14 @@ This indicates that the value of the DHCPv6 option is a MAC address\[char46]
 .IP
 Example\[char46] \(dqname=server_id\(dq, \(dqcode=2\(dq, \(dqtype=mac\(dq\[char46]
 .IP
-put_dhcpv6_opts(\[char46]\[char46]\[char46], server_id = 01:02:03:04L05:06,\[char46]\[char46]\[char46])
+put_dhcpv6_opts(\[char46]\[char46]\[char46], server_id = 01:02:03:04:05:06,\[char46]\[char46]\[char46])
+.TP
+\fBvalue: domain\fR
+This indicates that the value of the DHCPv6 option is a domain name encoded in DNS wire format (RFC 1035), where each label is preceded by its length\[char46]
+.IP
+Example\[char46] \(dqname=fqdn\(dq, \(dqcode=39\(dq, \(dqtype=domain\(dq\[char46]
+.IP
+put_dhcpv6_opts(\[char46]\[char46]\[char46], fqdn = host\[char46]example\[char46]com,\[char46]\[char46]\[char46])
 .RE
 .bp
 .SH "Connection TABLE"
@@ -3002,7 +3086,7 @@ Maximum number of milliseconds of idle time on connection to the client before s
 Key-value pair of \fBis_connected\fR is always updated\[char46] Other key-value pairs in the status columns may be updated depends on the \fBtarget\fR type\[char46]
 .PP
 .PP
-When \fBtarget\fR specifies a connection method that listens for inbound connections (e\[char46]g\[char46] \fBptcp:\fR or \fBpunix:\fR), both \fBn_connections\fR and \fBis_connected\fR may also be updated while the remaining key-value pairs are omitted\[char46]
+When \fBtarget\fR specifies a connection method that listens for inbound connections (e\[char46]g\[char46] \fBptcp:\fR or \fBpunix:\fR), both \fBstatus:n_connections\fR and \fBis_connected\fR may also be updated while the remaining key-value pairs are omitted\[char46]
 .PP
 .PP
 On the other hand, when \fBtarget\fR specifies an outbound connection, all key-value pairs may be updated, except the above-mentioned two key-value pairs associated with inbound connection targets\[char46] They are omitted\[char46]
@@ -3523,7 +3607,7 @@ Destination IP used in monitor packets\[char46] For load-balancer service this i
 .IP "\fBmac\fR: string"
 Destination MAC address used in monitor packets\[char46] This is applicable only for network-function services\[char46]
 .IP "\fBprotocol\fR: optional string, one of \fBicmp\fR, \fBtcp\fR, or \fBudp\fR"
-The protocol of the service\[char46] For \fBtype\fR load-balancer, supported protocols are tcp and udp\[char46] For \fBtype\fR \(dqnetwork-function\(dq, supported protocol is icmp, and the health probe is done by injecting an icmp echo request packet into the \fBinport\fR of the Network_Function and then montoring the same packet coming out of the \fBoutport\fR\[char46] For \fBtype\fR \(dqlogical-switch-port\(dq, supported protocols are \fBtcp\fR, \fBudp\fR and \fBicmp\fR\[char46]
+The protocol of the service\[char46] For \fBtype\fR load-balancer, supported protocols are tcp and udp\[char46] For \fBtype\fR \(dqnetwork-function\(dq, supported protocol is icmp, and the health probe is done by injecting an icmp echo request packet into the \fBinport\fR of the Network_Function and then monitoring the same packet coming out of the \fBoutport\fR\[char46] For \fBtype\fR \(dqlogical-switch-port\(dq, supported protocols are \fBtcp\fR, \fBudp\fR and \fBicmp\fR\[char46]
 .IP "\fBport\fR: integer, in range 0 to 65,535"
 The TCP or UDP port of the service\[char46]
 .IP "\fBlogical_input_port\fR: string"
@@ -3537,7 +3621,7 @@ Source IPv4 or IPv6 address to use in the service monitor packet\[char46]
 .IP "\fBchassis_name\fR: string"
 The name of the chassis where the logical port is bound\[char46]
 .IP "\fBremote\fR: boolean"
-Set to true if backend locates on remote ovn deployment\[char46]
+Set to true if backend is located on a remote ovn deployment\[char46]
 .IP "\fBic_learned\fR: boolean"
 Set to true if the service monitor was propagated from another OVN deployment via ovn-ic management\[char46]
 .IP "\fBoptions : interval\fR: optional string, containing an integer"
@@ -3559,6 +3643,8 @@ For TCP service, \fBovn\-controller\fR sends a SYN to the service and expects an
 For UDP service, \fBovn\-controller\fR sends a UDP packet to the service and doesn\(cqt expect any reply\[char46] If it receives an ICMP reply, then it considers the service to be \fBoffline\fR\[char46]
 .IP
 For ICMP service, \fBovn\-controller\fR sends an ICMP Echo Request and expects an ICMP Echo Reply to consider service to be \fBonline\fR\[char46] If no reply is received or if an ICMP error message is received, the service is considered \fBoffline\fR\[char46]
+.IP
+The value \fBerror\fR is also valid but is not currently set by \fBovn\-controller\fR\[char46]
 .ST "Common Columns:"
 .PP
 .IP "\fBexternal_ids\fR: map of string-string pairs"
@@ -3607,7 +3693,7 @@ map of string-string pairs
 .RE
 .SS "Details:
 .IP "\fBname\fR: string"
-A name for the load balancer\[char46] This name has no special meaning or purpose other than to provide convenience for human interaction with the ovn-nb database\[char46]
+A name for the load balancer\[char46] This name has no special meaning or purpose other than to provide convenience for human interaction with the ovn-sb database\[char46]
 .IP "\fBvips\fR: map of string-string pairs"
 A map of virtual IP addresses (and an optional port number with \fB:\fR as a separator) associated with this load balancer and their corresponding endpoint IP addresses (and optional port numbers with \fB:\fR as separators) separated by commas\[char46]
 .IP "\fBprotocol\fR: optional string, one of \fBsctp\fR, \fBtcp\fR, or \fBudp\fR"
@@ -3718,7 +3804,7 @@ BFD port logical states\[char46] Possible values are:
 .PP
 .PP
 .PP
-This table is primarily used to learn the MACs observed on a VIF (or a localnet port with \(cqlocalnet_learn_fdb\(cq enabled) which belongs to a \fBLogical_Switch_Port\fR record in \fBOVN_Northbound\fR whose port security is disabled and \(cqunknown\(cq address set\[char46] If port security is disabled on a \fBLogical_Switch_Port\fR record, OVN should allow traffic with any source mac from the VIF\[char46] This table will be used to deliver a packet to the VIF, If a packet\(cqs \fBeth\[char46]dst\fR is learnt\[char46]
+This table is primarily used to learn the MACs observed on a VIF (or a localnet port with \(cqlocalnet_learn_fdb\(cq enabled) which belongs to a \fBLogical_Switch_Port\fR record in \fBOVN_Northbound\fR whose port security is disabled and \(cqunknown\(cq address set\[char46] If port security is disabled on a \fBLogical_Switch_Port\fR record, OVN should allow traffic with any source mac from the VIF\[char46] This table will be used to deliver a packet to the VIF, if a packet\(cqs \fBeth\[char46]dst\fR is learnt\[char46]
 .SS "Summary:
 .TQ 3.00in
 \fBmac\fR
@@ -3846,7 +3932,7 @@ Administrative enable flag for routes carrying \fBdistributed\-lb=true\fR\[char4
 .PP
 .PP
 .PP
-Each record represents a route that learned by ovn using some dynamic routing logic outside of ovn\[char46] It is populated by \fBovn\-controller\fR with routes it learns locally\[char46]
+Each record represents a route that was learned by ovn using some dynamic routing logic outside of ovn\[char46] It is populated by \fBovn\-controller\fR with routes it learns locally\[char46]
 .SS "Summary:
 .TQ 3.00in
 \fBdatapath\fR
