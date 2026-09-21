@@ -30,7 +30,7 @@ ovn-trace \- Open Virtual Network logical network tracing utility
 .SH "DESCRIPTION"
 .PP
 .PP
-This utility simulates packet forwarding within an OVN logical network\[char46] It can be used to run through ``what-if\(cq\(cq scenarios: if a packet originates at a logical port, what will happen to it and where will it ultimately end up? Users already familiar with the Open vSwitch \fBofproto/trace\fR command described in \fBovs\-vswitch\fR(8) will find \fBovn\-trace\fR to be a similar tool for logical networks\[char46]
+This utility simulates packet forwarding within an OVN logical network\[char46] It can be used to run through ``what-if\(cq\(cq scenarios: if a packet originates at a logical port, what will happen to it and where will it ultimately end up? Users already familiar with the Open vSwitch \fBofproto/trace\fR command described in \fBovs\-vswitchd\fR(8) will find \fBovn\-trace\fR to be a similar tool for logical networks\[char46]
 .PP
 .PP
 \fBovn\-trace\fR works by reading the \fBLogical_Flow\fR and other tables from the OVN southbound database (see \fBovn\-sb\fR(5))\[char46] It simulates a packet\(cqs path through logical networks by repeatedly looking it up in the logical flow table, following the entire tree of possibilities\[char46]
@@ -107,7 +107,7 @@ The execution of OVN logical actions naturally forms a ``control stack\(cq\(cq t
 OVN ``programs\(cq\(cq traces also tend to encounter long strings of logical flows with match expression \fB1\fR (which matches every packet) and the single action \fBnext;\fR\[char46] These are uninteresting and merely clutter output, so \fBovn\-trace\fR omits them entirely even from detailed output\[char46]
 .PP
 .PP
-The following excerpt from detailed \fBovn\-trace\fR output shows a section for a packet traversing the ingress pipeline of logical datapath \fBls1\fR with ingress logical port \fBlp111\fR\[char46] The packet matches a logical flow in table 0 (aka \fBls_in_port_sec_l2\fR) with priority 50 and executes \fBnext(1);\fR to pass to table 1\[char46] Tables 1 through 11 are trivial and omitted\[char46] In table 19 (aka \fBls_in_l2_lkup\fR), the packet matches a flow with priority 50 based on its Ethernet destination address and the flow\(cqs actions output the packet to the \fBlrp11\-attachement\fR logical port\[char46]
+The following excerpt from detailed \fBovn\-trace\fR output shows a section for a packet traversing the ingress pipeline of logical datapath \fBls1\fR with ingress logical port \fBlp111\fR\[char46] The packet matches a logical flow in table 0 (aka \fBls_in_check_port_sec\fR) with priority 50, which checks if the packet passes the inport security checks and stores the result to reg0[15] and executes \fBnext;\fR to pass to table 1\[char46] Tables 1 through 32 are trivial and omitted\[char46] In table 33 (aka \fBls_in_l2_lkup\fR), the packet matches a flow with priority 50 based on its Ethernet destination address and the flow\(cqs actions output the packet to the \fBlrp11\-attachment\fR logical port\[char46]
 .PP
 .nf
 \fL
@@ -116,15 +116,17 @@ The following excerpt from detailed \fBovn\-trace\fR output shows a section for 
 .br
 \fL    \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
 .br
-\fL    0\[char46] ls_in_port_sec_l2: inport == \(dqlp111\(dq, priority 50
+\fL     0\[char46] ls_in_check_port_sec (northd\[char46]c:10650): 1, priority 50, uuid 5e3c7151
 .br
-\fL    next(1);
+\fL        reg0[15] = check_in_port_sec();
 .br
-\fL    19\[char46] ls_in_l2_lkup: eth\[char46]dst == 00:00:00:00:ff:11, priority 50
+\fL        next;
 .br
-\fL    outport = \(dqlrp11\-attachment\(dq;
+\fL     33\[char46] ls_in_l2_lkup (northd\[char46]c:11754): eth\[char46]dst == 00:00:00:00:ff:11, priority 50, uuid 33a37615
 .br
-\fL    output;
+\fL         outport = \(dqlrp11\-attachment\(dq;
+.br
+\fL         output;
 .br
 \fL  \fR
 .fi
@@ -138,11 +140,15 @@ Summary output includes the logical pipelines visited by a packet and the logica
 .br
 \fL    ingress(dp=\(dqls1\(dq, inport=\(dqlp111\(dq) {
 .br
-\fL    outport = \(dqlrp11\-attachment\(dq;
+\fL        reg0[15] = check_in_port_sec();
 .br
-\fL    output;
+\fL        next;
 .br
-\fL    \[char46]\[char46]\[char46]
+\fL        outport = \(dqlp11\-attachment\(dq;
+.br
+\fL        output;
+.br
+\fL        \[char46]\[char46]\[char46]
 .br
 \fL    };
 .br
@@ -152,7 +158,7 @@ Summary output includes the logical pipelines visited by a packet and the logica
 .PP
 .PP
 Minimal output includes only actions that modify packet data (not including OVN registers or metadata such as \fBoutport\fR) and \fBoutput\fR actions that actually deliver a packet to a logical port (excluding patch ports)\[char46] The operands of actions that modify packet data are displayed reduced to constants, e\[char46]g\[char46] \fBip4\[char46]dst =
-reg0;\fR might be show as \fBip4\[char46]dst = 192\[char46]168\[char46]0\[char46]1;\fR if that was the value actually loaded\[char46] This yields output even simpler than the summary format\[char46] (Users familiar with Open vSwitch may recognize this as similar in spirit to the datapath actions listed at the bottom of \fBofproto/trace\fR output\[char46])
+reg0;\fR might be shown as \fBip4\[char46]dst = 192\[char46]168\[char46]0\[char46]1;\fR if that was the value actually loaded\[char46] This yields output even simpler than the summary format\[char46] (Users familiar with Open vSwitch may recognize this as similar in spirit to the datapath actions listed at the bottom of \fBofproto/trace\fR output\[char46])
 .PP
 .PP
 The minimal output format reflects the externally seen behavior of the logical networks more than it does the implementation\[char46] This makes this output format the most suitable for use in regression tests, because it is least likely to change when logical flow tables are rearranged without semantic change\[char46]
@@ -166,20 +172,32 @@ Some OVN logical actions use or update state that is not available in the southb
 By default \fBovn\-trace\fR treats flows as ``tracked\(cq\(cq and ``established\[char46]\(cq\(cq See the description of the \fB\-\-ct\fR option for a way to override this behavior\[char46]
 .TP
 \fBct_dnat\fR (without an argument)
-Forks the pipeline\[char46] In one fork, advances to the next table as if \fBnext;\fR were executed\[char46] The packet is not changed, on the assumption that no NAT state was available\[char46] In the other fork, the pipeline continues without change after the \fBct_dnat\fR action\[char46]
+.TQ .5in
+\fBct_dnat_in_czone\fR (without an argument)
+Forks the pipeline\[char46] In one fork, advances to the next table as if \fBnext;\fR were executed\[char46] The packet is not changed, on the assumption that no NAT state was available\[char46] In the other fork, the pipeline continues without change after the \fBct_dnat\fR (or \fBct_dnat_in_czone\fR) action\[char46]
 .TP
 \fBct_snat\fR (without an argument)
-This action distinguishes between gateway routers and distributed routers\[char46] A gateway router is defined as a logical datapath that contains an \fBl3gateway\fR port; any other logical datapath is a distributed router\[char46] On a gateway router, \fBct_snat;\fR is treated as a no-op\[char46] On a distributed router, it is treated the same way as \fBct_dnat;\fR\[char46]
+.TQ .5in
+\fBct_snat_in_czone\fR (without an argument)
+This action distinguishes between gateway routers and distributed routers\[char46] A gateway router is defined as a logical datapath that contains an \fBl3gateway\fR port; any other logical datapath is a distributed router\[char46] On a gateway router, \fBct_snat;\fR is treated as a no-op\[char46] On a distributed router, it is treated the same way as \fBct_dnat;\fR\[char46] \fBct_snat_in_czone;\fR is handled the same way as \fBct_snat;\fR\[char46]
 .TP
 \fBct_dnat(\fIip\fB)\fR
 .TQ .5in
 \fBct_snat(\fIip\fB)\fR
-Forks the pipeline\[char46] In one fork, sets \fBip4\[char46]dst\fR (or \fBip4\[char46]src\fR) to \fIip\fR and \fBct\[char46]dnat\fR (or \fBct\[char46]snat\fR) to 1 and advances to the next table as if \fBnext;\fR were executed\[char46] In the other fork, the pipeline continues without change after the \fBct_dnat\fR (or \fBct_snat\fR) action\[char46]
+.TQ .5in
+\fBct_dnat_in_czone(\fIip\fB)\fR
+.TQ .5in
+\fBct_snat_in_czone(\fIip\fB)\fR
+Forks the pipeline\[char46] In one fork, sets \fBip4\[char46]dst\fR (or \fBip4\[char46]src\fR) to \fIip\fR and \fBct\[char46]dnat\fR (or \fBct\[char46]snat\fR) to 1 and advances to the next table as if \fBnext;\fR were executed\[char46] In the other fork, the pipeline continues without change after the \fBct_dnat\fR (or \fBct_snat\fR) action\[char46] The \fBct_dnat_in_czone\fR and \fBct_snat_in_czone\fR actions are handled the same way as \fBct_dnat\fR and \fBct_snat\fR\[char46]
 .TP
 \fBct_lb_mark;\fR
 .TQ .5in
 \fBct_lb_mark(\fIip\fB\fR[\fB:\fIport\fB\fR]\[char46]\[char46]\[char46]\fB);\fR
-Forks the pipeline\[char46] In one fork, sets \fBip4\[char46]dst\fR (or \fBip6\[char46]dst\fR) to one of the load-balancer addresses and the destination port to its associated port, if any, and sets \fBct\[char46]dnat\fR to 1\[char46] With one or more arguments, gives preference to the address specified on \fB\-\-lb\-dst\fR, if any; without arguments, uses the address and port specified on \fB\-\-lb\-dst\fR\[char46] In the other fork, the pipeline continues without change after the \fBct_lb_mark\fR action\[char46]
+.TQ .5in
+\fBct_lb_mark_local;\fR
+.TQ .5in
+\fBct_lb_mark_local(\fIip\fB\fR[\fB:\fIport\fB\fR]\[char46]\[char46]\[char46]\fB);\fR
+Forks the pipeline\[char46] In one fork, sets \fBip4\[char46]dst\fR (or \fBip6\[char46]dst\fR) to one of the load-balancer addresses and the destination port to its associated port, if any, and sets \fBct\[char46]dnat\fR to 1\[char46] With one or more arguments, gives preference to the address specified on \fB\-\-lb\-dst\fR, if any; without arguments, uses the address and port specified on \fB\-\-lb\-dst\fR\[char46] In the other fork, the pipeline continues without change after the \fBct_lb_mark\fR action\[char46] \fBct_lb_mark_local\fR is handled the same way as \fBct_lb_mark\fR\[char46]
 .TP
 \fBct_commit\fR
 .TQ .5in
@@ -187,13 +205,25 @@ Forks the pipeline\[char46] In one fork, sets \fBip4\[char46]dst\fR (or \fBip6\[
 .TQ .5in
 \fBput_nd\fR
 These actions are treated as no-ops\[char46]
+.TP
+\fBct_commit_to_zone\fR
+.TQ .5in
+\fBct_commit_nat\fR
+Forks the pipeline into the next table as if \fBnext;\fR were executed, treating the flow as tracked\[char46] The packet is not changed, on the assumption that no NAT state was available\[char46] In the other fork, the pipeline continues without change after the action\[char46]
+.TP
+\fBct_clear\fR
+Clears the connection tracking state of the traced packet, so that later actions that depend on connection tracking (such as \fBct_next\fR) see an untracked flow\[char46]
+.TP
+\fBselect\fR
+Selects one of the destinations listed in the action\[char46] By default, one is chosen at random; use the \fB\-\-select\-id\fR option to select a specific one\[char46] \fBovn\-trace\fR forks the pipeline into the next table, with the selected id written to the action\(cqs result field\[char46]
+.TP
+\fBct_snat_to_vip\fR
+Looks up the load-balancer virtual IP addresses in the southbound database\[char46] If the packet\(cqs connection-tracked destination IP matches a virtual IP address, \fBovn\-trace\fR notes that the source address is translated to that virtual IP address; otherwise the packet is not changed\[char46]
 .RE
 .SH "DAEMON MODE"
 .PP
 .PP
 If \fBovn\-trace\fR is invoked with the \fB\-\-detach\fR option (see \fBDaemon Options\fR, below), it runs in the background as a daemon and accepts commands from \fBovn\-appctl\fR (or another JSON-RPC client) indefinitely\[char46] The currently supported commands are described below\[char46]
-.PP
-.PP
 .RS
 .TP
 \fBtrace\fR [\fIoptions\fR] [\fIdatapath\fR] \fImicroflow\fR
@@ -237,7 +267,7 @@ When \fBovn\-trace\fR omits uninteresting logical flows from output, it does not
 This option sets the \fBct_state\fR flags that a \fBct_next\fR logical action will report\[char46] The \fIflags\fR must be a comma- or space-separated list of the following connection tracking flags:
 .RS
 .IP \(bu
-\fBtrk\fR: Include to indicate connection tracking has taken place\[char46] (This bit is set automatically even if not listed in \fIflags\fR\[char46]
+\fBtrk\fR: Include to indicate connection tracking has taken place\[char46] (This bit is set automatically even if not listed in \fIflags\fR)\[char46]
 .IP \(bu
 \fBnew\fR: Include to indicate a new flow\[char46]
 .IP \(bu
@@ -403,6 +433,14 @@ Specifies the server name to use for TLS Server Name Indication (SNI)\[char46] B
 .TP
 \fB\-\-db\fR \fIdatabase\fR
 The OVSDB database remote to contact\[char46] If the \fBOVN_SB_DB\fR environment variable is set, its value is used as the default\[char46] Otherwise, the default is \fBunix:/db\[char46]sock\fR, but this default is unlikely to be useful outside of single-machine OVN test environments\[char46]
+.TP
+\fB\-\-leader\-only\fR
+.TQ .5in
+\fB\-\-no\-leader\-only\fR
+By default, or with \fB\-\-leader\-only\fR, when the database server is a clustered database, \fBovn\-trace\fR reads only from the cluster leader\[char46] This ensures that the data \fBovn\-trace\fR reads is up-to-date\[char46] With \fB\-\-no\-leader\-only\fR, \fBovn\-trace\fR uses any server in the cluster, which means that it can read stale data\[char46] Refer to \fBUnderstanding Cluster Consistency\fR in \fBovsdb\fR(7) for more information\[char46]
+.TP
+\fB\-\-unixctl=\fR\fIsocket\fR
+Sets the name of the control socket on which \fBovn\-trace\fR listens for runtime management commands when run in daemon mode with \fB\-\-detach\fR\[char46] If \fIsocket\fR does not begin with \fB/\fR, it is interpreted as relative to \fB\fR\[char46] If \fB\-\-unixctl\fR is not specified, the default socket is \fB/ovn\-trace\[char46]\fR\fIpid\fR\fB\[char46]ctl\fR, where \fIpid\fR is \fBovn\-trace\fR\(cqs process ID\[char46]
 .RS
 .TP
 \fB\-h\fR
