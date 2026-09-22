@@ -35,7 +35,7 @@ An OVN deployment consists of several components:
 
 * Cloud Management System (CMS): integrates OVN into a physical network by
 managing the OVN logical network elements and connecting the OVN logical network
-infrastructure to physical network elements. Exmaples include OpenStack Neutron's
+infrastructure to physical network elements. Examples include OpenStack Neutron's
 [ml2/ovn](https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/app-ovn.html)
 plugin and the [ovn-kubernetes](https://github.com/ovn-org/ovn-kubernetes) project.
 * OVN Databases: stores data representing the OVN logical and physical networks.
