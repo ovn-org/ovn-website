@@ -21,18 +21,128 @@
 .SH "NAME"
 .PP
 .PP
-ovn-controller-vtep \- Open Virtual Network local controller for vtep enabled physical switches\[char46]
+ovn-controller-vtep \- Open Virtual Network local controller for VTEP-enabled physical switches\[char46]
 .SH "SYNOPSIS"
 .PP
-\fBovn\-controller\-vtep\fR [\fIoptions\fR] [\fI\-\-vtep-db=vtep-database\fR] [\fI\-\-ovnsb-db=ovnsb-database\fR]
+\fBovn\-controller\-vtep\fR [\fIoptions\fR]
 .SH "DESCRIPTION"
 .PP
 .PP
-\fBovn\-controller\-vtep\fR is the local controller daemon in OVN, the Open Virtual Network, for VTEP enabled physical switches\[char46] It connects up to the OVN Southbound database (see \fBovn\-sb\fR(5)) over the OVSDB protocol, and down to the VTEP database (see \fBvtep\fR(5)) over the OVSDB protocol\[char46]
+\fBovn\-controller\-vtep\fR integrates hardware VTEP physical switches into OVN\[char46] It connects to the OVN Southbound database (see \fBovn\-sb\fR(5)) and to a hardware_vtep database (see \fBvtep\fR(5)) over the OVSDB protocol\[char46]
+.PP
+.PP
+In the OVN Southbound database, \fBovn\-controller\-vtep\fR registers each hardware_vtep \fBPhysical_Switch\fR as a \fBChassis\fR\[char46] It creates a VXLAN \fBEncap\fR using the physical switch\(cqs first \fBtunnel_ips\fR value and records the hardware_vtep logical switches attached to the chassis\[char46] It updates the chassis association of matching \fBvtep\fR \fBPort_Binding\fR rows when there is no conflicting binding\[char46] If a matching row is already associated with that chassis and has an \fBup\fR value, it sets that value to \fBtrue\fR\[char46] A binding matches when its \fBoptions\fR:\fBvtep\-physical\-switch\fR and \fBoptions\fR:\fBvtep\-logical\-switch\fR values identify the physical switch and one of its bound hardware_vtep logical switches\[char46]
+.PP
+.PP
+In the hardware_vtep database, \fBovn\-controller\-vtep\fR sets each bound \fBtunnel_key\fR from the corresponding OVN logical datapath and sets \fBreplication_mode\fR to \fBsource_node\fR\[char46] For each attached logical switch, it maintains \fBUcast_Macs_Remote\fR entries for MAC addresses behind other OVN chassis and for MAC addresses learned by other VTEPs and recorded in the OVN Southbound \fBFDB\fR table\[char46] It also maintains an \fBunknown\-dst\fR \fBMcast_Macs_Remote\fR entry with the locators used for source-node replication\[char46] Conversely, MAC addresses learned locally by the hardware VTEP in \fBUcast_Macs_Local\fR are mirrored into the OVN Southbound \fBFDB\fR table; stale mirrored entries are removed\[char46]
+.SH "OPTIONS"
+.TP
+\fB\-d\fR \fIdatabase\fR
+.TQ .5in
+\fB\-\-ovnsb\-db=\fIdatabase\fB\fR
+Connects to \fIdatabase\fR as the OVN Southbound database\[char46] If the \fBOVN_SB_DB\fR environment variable is set, its value is used as the default\[char46] Otherwise, the default is \fBunix:/ovnsb_db\[char46]sock\fR\[char46]
+.TP
+\fB\-D\fR \fIdatabase\fR
+.TQ .5in
+\fB\-\-vtep\-db=\fIdatabase\fB\fR
+Connects to \fIdatabase\fR as the hardware_vtep database\[char46] The default is \fBunix:\fIovs-rundir\fB/db\[char46]sock\fR, where \fIovs-rundir\fR is the local Open vSwitch run directory\[char46] The \fBOVS_RUNDIR\fR environment variable overrides that directory\[char46]
+.PP
+.PP
+\fIdatabase\fR in the above options must be an OVSDB active connection method, as described in \fBovsdb\fR(7)\[char46]
+.SS "Daemon Options"
+.TP
+\fB\-\-pidfile\fR[\fB=\fR\fIpidfile\fR]
+Causes a file (by default, \fB\fIprogram\fB\[char46]pid\fR) to be created indicating the PID of the running process\[char46] If the \fIpidfile\fR argument is not specified, or if it does not begin with \fB/\fR, then it is created in \fB\fR\[char46]
+.IP
+If \fB\-\-pidfile\fR is not specified, no pidfile is created\[char46]
+.TP
+\fB\-\-overwrite\-pidfile\fR
+By default, when \fB\-\-pidfile\fR is specified and the specified pidfile already exists and is locked by a running process, the daemon refuses to start\[char46] Specify \fB\-\-overwrite\-pidfile\fR to cause it to instead overwrite the pidfile\[char46]
+.IP
+When \fB\-\-pidfile\fR is not specified, this option has no effect\[char46]
+.TP
+\fB\-\-detach\fR
+Runs this program as a background process\[char46] The process forks, and in the child it starts a new session, closes the standard file descriptors (which has the side effect of disabling logging to the console), and changes its current directory to the root (unless \fB\-\-no\-chdir\fR is specified)\[char46] After the child completes its initialization, the parent exits\[char46]
+.TP
+\fB\-\-monitor\fR
+Creates an additional process to monitor this program\[char46] If it dies due to a signal that indicates a programming error (\fBSIGABRT\fR, \fBSIGALRM\fR, \fBSIGBUS\fR, \fBSIGFPE\fR, \fBSIGILL\fR, \fBSIGPIPE\fR, \fBSIGSEGV\fR, \fBSIGXCPU\fR, or \fBSIGXFSZ\fR) then the monitor process starts a new copy of it\[char46] If the daemon dies or exits for another reason, the monitor process exits\[char46]
+.IP
+This option is normally used with \fB\-\-detach\fR, but it also functions without it\[char46]
+.TP
+\fB\-\-no\-chdir\fR
+By default, when \fB\-\-detach\fR is specified, the daemon changes its current working directory to the root directory after it detaches\[char46] Otherwise, invoking the daemon from a carelessly chosen directory would prevent the administrator from unmounting the file system that holds that directory\[char46]
+.IP
+Specifying \fB\-\-no\-chdir\fR suppresses this behavior, preventing the daemon from changing its current working directory\[char46] This may be useful for collecting core files, since it is common behavior to write core dumps into the current working directory and the root directory is not a good directory to use\[char46]
+.IP
+This option has no effect when \fB\-\-detach\fR is not specified\[char46]
+.TP
+\fB\-\-no\-self\-confinement\fR
+By default this daemon will try to self-confine itself to work with files under well-known directories determined at build time\[char46] It is better to stick with this default behavior and not to use this flag unless some other Access Control is used to confine daemon\[char46] Note that in contrast to other access control implementations that are typically enforced from kernel-space (e\[char46]g\[char46] DAC or MAC), self-confinement is imposed from the user-space daemon itself and hence should not be considered as a full confinement strategy, but instead should be viewed as an additional layer of security\[char46]
+.TP
+\fB\-\-user=\fR\fIuser\fR\fB:\fR\fIgroup\fR
+Causes this program to run as a different user specified in \fIuser\fR\fB:\fR\fIgroup\fR, thus dropping most of the root privileges\[char46] Short forms \fIuser\fR and \fB:\fR\fIgroup\fR are also allowed, with current user or group assumed, respectively\[char46] Only daemons started by the root user accepts this argument\[char46]
+.IP
+On Linux, daemons will be granted \fBCAP_IPC_LOCK\fR and \fBCAP_NET_BIND_SERVICES\fR before dropping root privileges\[char46] Daemons that interact with a datapath, such as \fBovs\-vswitchd\fR, will be granted three additional capabilities, namely \fBCAP_NET_ADMIN\fR, \fBCAP_NET_BROADCAST\fR and \fBCAP_NET_RAW\fR\[char46] The capability change will apply even if the new user is root\[char46]
+.SS "Logging Options"
+.TP
+\fB\-v\fR[\fIspec\fR]
+.TQ .5in
+\fB\-\-verbose=\fR[\fIspec\fR]
+Sets logging levels\[char46] Without any \fIspec\fR, sets the log level for every module and destination to \fBdbg\fR\[char46] Otherwise, \fIspec\fR is a list of words separated by spaces or commas or colons, up to one from each category below:
+.RS
+.IP \(bu
+A valid module name, as displayed by the \fBvlog/list\fR command on \fBovs\-appctl\fR(8), limits the log level change to the specified module\[char46]
+.IP \(bu
+\fBsyslog\fR, \fBconsole\fR, or \fBfile\fR, to limit the log level change to only to the system log, to the console, or to a file, respectively\[char46] (If \fB\-\-detach\fR is specified, the daemon closes its standard file descriptors, so logging to the console will have no effect\[char46])
+.IP \(bu
+\fBoff\fR, \fBemer\fR, \fBerr\fR, \fBwarn\fR, \fBinfo\fR, or \fBdbg\fR, to control the log level\[char46] Messages of the given severity or higher will be logged, and messages of lower severity will be filtered out\[char46] \fBoff\fR filters out all messages\[char46] See \fBovs\-appctl\fR(8) for a definition of each log level\[char46]
+.RE
+.IP
+Case is not significant within \fIspec\fR\[char46]
+.IP
+Regardless of the log levels set for \fBfile\fR, logging to a file will not take place unless \fB\-\-log\-file\fR is also specified (see below)\[char46]
+.IP
+For compatibility with older versions of OVS, \fBany\fR is accepted as a word but has no effect\[char46]
+.TP
+\fB\-v\fR
+.TQ .5in
+\fB\-\-verbose\fR
+Sets the maximum logging verbosity level, equivalent to \fB\-\-verbose=dbg\fR\[char46]
+.TP
+\fB\-vPATTERN:\fR\fIdestination\fR\fB:\fR\fIpattern\fR
+.TQ .5in
+\fB\-\-verbose=PATTERN:\fR\fIdestination\fR\fB:\fR\fIpattern\fR
+Sets the log pattern for \fIdestination\fR to \fIpattern\fR\[char46] Refer to \fBovs\-appctl\fR(8) for a description of the valid syntax for \fIpattern\fR\[char46]
+.TP
+\fB\-vFACILITY:\fR\fIfacility\fR
+.TQ .5in
+\fB\-\-verbose=FACILITY:\fR\fIfacility\fR
+Sets the RFC5424 facility of the log message\[char46] \fIfacility\fR can be one of \fBkern\fR, \fBuser\fR, \fBmail\fR, \fBdaemon\fR, \fBauth\fR, \fBsyslog\fR, \fBlpr\fR, \fBnews\fR, \fBuucp\fR, \fBclock\fR, \fBftp\fR, \fBntp\fR, \fBaudit\fR, \fBalert\fR, \fBclock2\fR, \fBlocal0\fR, \fBlocal1\fR, \fBlocal2\fR, \fBlocal3\fR, \fBlocal4\fR, \fBlocal5\fR, \fBlocal6\fR or \fBlocal7\fR\[char46] If this option is not specified, \fBdaemon\fR is used as the default for the local system syslog and \fBlocal0\fR is used while sending a message to the target provided via the \fB\-\-syslog\-target\fR option\[char46]
+.TP
+\fB\-\-log\-file\fR[\fB=\fR\fIfile\fR]
+Enables logging to a file\[char46] If \fIfile\fR is specified, then it is used as the exact name for the log file\[char46] The default log file name used if \fIfile\fR is omitted is \fB/usr/local/var/log/ovn/\fIprogram\fB\[char46]log\fR\[char46]
+.TP
+\fB\-\-syslog\-target=\fR\fIhost\fR\fB:\fR\fIport\fR
+Send syslog messages to UDP \fIport\fR on \fIhost\fR, in addition to the system syslog\[char46] The \fIhost\fR must be a numerical IP address, not a hostname\[char46]
+.TP
+\fB\-\-syslog\-method=\fR\fImethod\fR
+Specify \fImethod\fR as how syslog messages should be sent to syslog daemon\[char46] The following forms are supported:
+.RS
+.IP \(bu
+\fBlibc\fR, to use the libc \fBsyslog()\fR function\[char46] Downside of using this options is that libc adds fixed prefix to every message before it is actually sent to the syslog daemon over \fB/dev/log\fR UNIX domain socket\[char46]
+.IP \(bu
+\fBunix:\fIfile\fB\fR, to use a UNIX domain socket directly\[char46] It is possible to specify arbitrary message format with this option\[char46] However, \fBrsyslogd 8\[char46]9\fR and older versions use hard coded parser function anyway that limits UNIX domain socket use\[char46] If you want to use arbitrary message format with older \fBrsyslogd\fR versions, then use UDP socket to localhost IP address instead\[char46]
+.IP \(bu
+\fBudp:\fIip\fB:\fIport\fB\fR, to use a UDP socket\[char46] With this method it is possible to use arbitrary message format also with older \fBrsyslogd\fR\[char46] When sending syslog messages over UDP socket extra precaution needs to be taken into account, for example, syslog daemon needs to be configured to listen on the specified UDP port, accidental iptables rules could be interfering with local syslog traffic and there are some security considerations that apply to UDP sockets, but do not apply to UNIX domain sockets\[char46]
+.IP \(bu
+\fBnull\fR, to discard all messages logged to syslog\[char46]
+.RE
+.IP
+The default is taken from the \fBOVS_SYSLOG_METHOD\fR environment variable; if it is unset, the default is \fBlibc\fR\[char46]
 .SS "PKI Options"
 .PP
 .PP
-PKI configuration is required in order to use SSL/TLS for the connections to the VTEP and Southbound databases\[char46]
+PKI configuration is required to use SSL/TLS for connections to the hardware_vtep and OVN Southbound databases\[char46]
 .RS
 .TP
 \fB\-p\fR \fIprivkey\[char46]pem\fR
@@ -93,15 +203,30 @@ Prints a brief help message to the console\[char46]
 .TQ .5in
 \fB\-\-version\fR
 Prints version information to the console\[char46]
+.SH "RUNTIME MANAGEMENT COMMANDS"
+.PP
+.PP
+\fBovn\-appctl\fR can send the following commands to a running \fBovn\-controller\-vtep\fR process:
+.RS
+.TP
+\fBexit\fR
+Causes \fBovn\-controller\-vtep\fR to gracefully terminate\[char46]
+.TP
+\fBsb\-connection\-status\fR
+Prints whether the connection to the OVN Southbound database is currently connected\[char46]
+.TP
+\fBvtep\-connection\-status\fR
+Prints whether the connection to the hardware_vtep database is currently connected\[char46]
+.RE
 .SH "CONFIGURATION"
 .PP
 .PP
-\fBovn\-controller\-vtep\fR retrieves its configuration information from both the ovnsb and the vtep database\[char46] If the database locations are not given from command line, the default is the \fBdb\[char46]sock\fR in local OVSDB\(cqs \(cqrun\(cq directory\[char46] The database location must take one of the following forms:
+\fBovn\-controller\-vtep\fR retrieves its configuration information from both the OVN Southbound and hardware_vtep databases\[char46] The database locations can be selected with the options described above\[char46] A database location must take one of the following forms:
 .RS
 .IP \(bu
 \fBssl:\fIhost\fB:\fIport\fB\fR
 .IP
-The specified SSL/TLS \fIport\fR on the give \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address (IPv4 or IPv6)\[char46] If \fIhost\fR is an IPv6 address, then wrap \fIhost\fR with square brackets, e\[char46]g\[char46]: \fBssl:[::1]:6640\fR\[char46] The \fB\-\-private\-key\fR, \fB\-\-certificate\fR and either of \fB\-\-ca\-cert\fR or \fB\-\-bootstrap\-ca\-cert\fR options are mandatory when this form is used\[char46]
+The specified SSL/TLS \fIport\fR on the given \fIhost\fR, which can either be a DNS name (if built with unbound library) or an IP address (IPv4 or IPv6)\[char46] If \fIhost\fR is an IPv6 address, then wrap \fIhost\fR with square brackets, e\[char46]g\[char46]: \fBssl:[::1]:6640\fR\[char46] The \fB\-\-private\-key\fR, \fB\-\-certificate\fR and either of \fB\-\-ca\-cert\fR or \fB\-\-bootstrap\-ca\-cert\fR options are mandatory when this form is used\[char46]
 .IP \(bu
 \fBtcp:\fIhost\fB:\fIport\fB\fR
 .IP
@@ -113,16 +238,14 @@ Connect to the Unix domain server socket named \fIfile\fR\[char46]
 .RE
 .PP
 .PP
-\fBovn\-controller\-vtep\fR assumes it gets configuration information from the following keys in the \fBGlobal\fR table of the connected \fBhardware_vtep\fR database:
-.PP
-.PP
+\fBovn\-controller\-vtep\fR reads the following keys from the \fBGlobal\fR table of the connected hardware_vtep database:
 .RS
 .TP
 \fBother_config:ovn\-match\-northd\-version\fR
-The boolean flag indicates if \fBovn\-controller\-vtep\fR needs to check \fBovn\-northd\fR version\[char46] If this flag is set to true and the \fBovn\-northd\(cqs\fR version (reported in the Southbound database) doesn\(cqt match with the \fBovn\-controller\-vtep\(cqs\fR internal version, then it will stop processing the southbound and connected \fBhardware_vtep\fR database changes\[char46] The default value is considered false if this option is not defined\[char46]
+When this boolean value is \fBtrue\fR, \fBovn\-controller\-vtep\fR processes database changes only when its internal version matches the northd internal version reported in the OVN Southbound database\[char46] When the versions do not match, it continues monitoring both databases but does not update either one\[char46] Default: \fBfalse\fR\[char46]
 .TP
 \fBother_config:ovn\-remote\-probe\-interval\fR
 The inactivity probe interval of the connection to the OVN Southbound database, in milliseconds\[char46] If the value is zero, it disables the connection keepalive feature\[char46]
 .IP
-If the value is nonzero, then it will be forced to a value of at least 1000 ms\[char46]
+If the value is not specified, the default is \fB0\fR ms when the connection does not need probes and \fB5000\fR ms otherwise\[char46] If the value is nonzero, then it will be forced to a value of at least 1000 ms\[char46]
 .RE

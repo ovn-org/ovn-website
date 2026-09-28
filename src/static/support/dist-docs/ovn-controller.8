@@ -177,6 +177,16 @@ This option is not useful in normal operation, because the SSL/TLS peer must alr
 Sets the name of the control socket on which \fB\fIprogram\fB\fR listens for runtime management commands (see \fIRUNTIME MANAGEMENT COMMANDS,\fR below)\[char46] If \fIsocket\fR does not begin with \fB/\fR, it is interpreted as relative to \fB\fR\[char46] If \fB\-\-unixctl\fR is not used at all, the default socket is \fB/\fIprogram\fB\[char46]\fR\fIpid\fR\fB\[char46]ctl\fR, where \fIpid\fR is \fB\fIprogram\fB\fR\(cqs process ID\[char46]
 .IP
 Specifying \fBnone\fR for \fIsocket\fR disables the control socket feature\[char46]
+.RS
+.TP
+\fB\-n\fR \fIchassis\fR
+.TQ .5in
+\fB\-\-chassis\fR=\fIchassis\fR
+Use \fIchassis\fR as the chassis name\[char46] This takes precedence over the name in the \fBsystem\-id\-override\fR file and \fBexternal_ids:system\-id\fR in the local Open vSwitch database\[char46]
+.TP
+\fB\-\-dump\-inc\-proc\-graph\fR[\fB=\fInode\fB\fR]
+Dump the incremental processing engine graph in DOT format to stdout and then exit\[char46] If \fInode\fR is specified, only the subgraph rooted at that engine node is printed\[char46]
+.RE
 .ST ""
 .TP
 \fB\-h\fR
@@ -320,7 +330,9 @@ This setting works together with the Northbound dynamic-routing-port-name option
 Note: When using the \fBrouting\-protocol\-redirect\fR option with veth pairs on Linux systems, this mapping may not be necessary as \fBovn\-controller\fR can automatically discover the veth peer interface name\[char46] See the \fBrouting\-protocol\-redirect\fR option documentation in \fBovn\-nb\fR(5) for details\[char46]
 .TP
 \fBexternal_ids:ovn\-cleanup\-on\-exit\fR
-The boolean flag indicates if ovn-controller should perform cleanup on exit\[char46] In order to keep backward compatibility the \fB\-\-restart\fR exit flag has priority over this flag\[char46]
+A boolean value that controls whether \fBovn\-controller\fR releases this chassis\(cqs logical port bindings and removes its \fBChassis\fR, \fBChassis_Private\fR, \fBEncap\fR, and \fBIGMP_Group\fR rows when it terminates through the \fBexit\fR runtime command\[char46] The default value is \fBtrue\fR\[char46]
+.IP
+If set to \fBfalse\fR, cleanup is skipped as if \fBexit \-\-restart\fR had been used\[char46] The \fB\-\-restart\fR argument always skips cleanup, regardless of this setting\[char46] The chassis-specific form, \fBexternal_ids:ovn\-cleanup\-on\-exit\-[chassis]\fR, is also supported as described below\[char46]
 .TP
 \fBexternal_ids:ovn\-evpn\-vxlan\-ports\fR
 Comma separated list of UDP ports used as a destination port for the EVPN tunnels created by this ovn-controller\[char46]
@@ -344,7 +356,7 @@ Chassis-specific configuration options in the database plus the ability to confi
 This value is read from local OVS integration bridge row of \fBBridge\fR table and populated in \fBother_config:datapath-type\fR of the \fBChassis\fR table in the OVN_Southbound database\[char46]
 .TP
 \fBiface\-types\fR from \fBOpen_vSwitch\fR table
-This value is populated in \fBexternal_ids:iface-types\fR of the \fBChassis\fR table in the OVN_Southbound database\[char46]
+This value is populated in \fBother_config:iface-types\fR of the \fBChassis\fR table in the OVN_Southbound database\[char46]
 .TP
 \fBprivate_key\fR, \fBcertificate\fR, \fBca_cert\fR, and \fBbootstrap_ca_cert\fR from \fBSSL\fR table
 These values provide the SSL/TLS configuration used for connecting to the OVN southbound database server when an SSL/TLS connection type is configured via \fBexternal_ids:ovn\-remote\fR\[char46] Note that this SSL/TLS configuration can also be provided via command-line options, the configuration in the database takes precedence if both are present\[char46]
@@ -374,22 +386,22 @@ The presence of this key identifies a patch port as one created by \fBovn\-contr
 .IP
 Each \fBl2gateway\fR logical port is implemented as a pair of patch ports, one in the integration bridge, one in a different bridge, with the same \fBexternal_ids:ovn\-l2gateway\-port\fR value\[char46]
 .TP
-\fBexternal\-ids:ovn\-l3gateway\-port\fR in the \fBPort\fR table
-This key identifies a patch port as one created by \fBovn\-controller\fR to implement a \fBl3gateway\fR logical port\[char46] Its value is the name of the logical port with type set to \fBl3gateway\fR\[char46] This patch port is similar to the OVN logical patch port, except that \fBl3gateway\fR port can only be bound to a particular chassis\[char46]
+\fBexternal_ids:ovn\-l3gateway\-port\fR in the \fBPort\fR table
+Older versions of \fBovn\-controller\fR used this key on patch ports\[char46] Current versions do not create or use such ports\[char46] During normal operation after the startup delay, they remove obsolete patch-port pairs discovered through a port with this key on the integration bridge\[char46]
 .TP
-\fBexternal\-ids:ovn\-logical\-patch\-port\fR in the \fBPort\fR table
-This key identifies a patch port as one created by \fBovn\-controller\fR to implement an OVN logical patch port within the integration bridge\[char46] Its value is the name of the OVN logical patch port that it implements\[char46]
+\fBexternal_ids:ovn\-logical\-patch\-port\fR in the \fBPort\fR table
+Older versions of \fBovn\-controller\fR used this key on patch ports\[char46] Current versions do not create or use such ports\[char46] During normal operation after the startup delay, they remove obsolete patch-port pairs discovered through a port with this key on the integration bridge\[char46]
 .TP
-\fBexternal\-ids:ovn\-startup\-ts\fR in the \fBBridge\fR table
+\fBexternal_ids:ovn\-startup\-ts\fR in the \fBBridge\fR table
 This key represents the timestamp (in milliseconds) at which \fBovn\-controller\fR process was started\[char46]
 .TP
-\fBexternal\-ids:ovn\-nb\-cfg\fR in the \fBBridge\fR table
+\fBexternal_ids:ovn\-nb\-cfg\fR in the \fBBridge\fR table
 This key represents the last known \fBOVN_Southbound\[char46]SB_Global\[char46]nb_cfg\fR value for which all flows have been successfully installed in OVS\[char46]
 .TP
-\fBexternal\-ids:ovn\-nb\-cfg\-ts\fR in the \fBBridge\fR table
+\fBexternal_ids:ovn\-nb\-cfg\-ts\fR in the \fBBridge\fR table
 This key represents the timestamp (in milliseconds) of the last known \fBOVN_Southbound\[char46]SB_Global\[char46]nb_cfg\fR value for which all flows have been successfully installed in OVS\[char46]
 .TP
-\fBexternal\-ids:ovn\-nb\-cfg\-sb\-ts\fR in the \fBBridge\fR table
+\fBexternal_ids:ovn\-nb\-cfg\-sb\-ts\fR in the \fBBridge\fR table
 This key records the value of \fBOVN_Southbound\[char46]SB_Global\[char46]nb_cfg_timestamp\fR that corresponded to the \fBovn\-nb\-cfg\fR generation for which all flows have been successfully installed in OVS\[char46] It is the wall-clock time (in milliseconds since the Unix epoch) at which \fBovn\-northd\fR wrote that \fBnb_cfg\fR value to the Southbound database\[char46] The difference between this timestamp and \fBovn\-nb\-cfg\-ts\fR gives the per-chassis end-to-end propagation latency for that configuration generation\[char46] The key is absent when no timestamp is available (e\[char46]g\[char46] when \fBNB_Global\[char46]options:enable_chassis_nb_cfg_update\fR is \fBfalse\fR)\[char46]
 .TP
 \fBexternal_ids:ovn\-installed\fR and \fBexternal_ids:ovn\-installed\-ts\fR in the \fBInterface\fR table
@@ -405,28 +417,64 @@ Presence of this key indicates that the \fBPort/Interface\fR was created by ovn-
 .RS
 .TP
 \fBChassis\fR
-Upon startup, \fBovn\-controller\fR creates a row in this table to represent its own chassis\[char46] Upon graceful termination, e\[char46]g\[char46] with \fBovn\-appctl \-t ovn\-controller exit\fR (but not \fBSIGTERM\fR), \fBovn\-controller\fR removes its row\[char46]
+\fBovn\-controller\fR creates and maintains the row that represents its chassis\[char46] It writes the \fBname\fR, \fBhostname\fR, \fBencaps\fR, \fBother_config\fR, and \fBtransport_zones\fR columns\[char46] It removes the row during exit cleanup\[char46]
+.TP
+\fBChassis_Private\fR
+\fBovn\-controller\fR creates and maintains the private row for its chassis\[char46] It writes the \fBname\fR, \fBchassis\fR, \fBnb_cfg\fR, and \fBnb_cfg_timestamp\fR columns\[char46] It removes the row during exit cleanup\[char46]
 .TP
 \fBEncap\fR
-Upon startup, \fBovn\-controller\fR creates a row or rows in this table that represent the tunnel encapsulations by which its chassis can be reached, and points its \fBChassis\fR row to them\[char46] Upon graceful termination, \fBovn\-controller\fR removes these rows\[char46]
+\fBovn\-controller\fR creates and maintains rows for the tunnel encapsulations by which its chassis can be reached\[char46] It writes the \fBtype\fR, \fBip\fR, \fBoptions\fR, and \fBchassis_name\fR columns\[char46] These non-root rows are removed with their owning \fBChassis\fR row during exit cleanup\[char46]
 .TP
 \fBPort_Binding\fR
-At runtime, \fBovn\-controller\fR sets the \fBchassis\fR columns of ports that are resident on its chassis to point to its \fBChassis\fR row, and, conversely, clears the \fBchassis\fR column of ports that point to its \fBChassis\fR row but are no longer resident on its chassis\[char46] The \fBchassis\fR column has a weak reference type, so when \fBovn\-controller\fR gracefully exits and removes its \fBChassis\fR row, the database server automatically clears any remaining references to that row\[char46]
+\fBovn\-controller\fR claims and releases logical ports by updating the \fBchassis\fR and \fBadditional_chassis\fR columns\[char46] It also updates the \fBup\fR, \fBencap\fR, \fBadditional_encap\fR, \fBvirtual_parent\fR, and \fBoptions\fR columns when required by the corresponding port behavior\[char46] Exit cleanup releases bindings owned by this chassis\[char46]
 .TP
 \fBMAC_Binding\fR
-At runtime, \fBovn\-controller\fR updates the \fBMAC_Binding\fR table as instructed by \fBput_arp\fR and \fBput_nd\fR logical actions\[char46] These changes persist beyond the lifetime of \fBovn\-controller\fR\[char46]
+\fBovn\-controller\fR creates and updates rows as instructed by \fBput_arp\fR and \fBput_nd\fR logical actions, while simulating GARPs on peer router datapaths, and when synchronizing EVPN neighbors\[char46] It also refreshes timestamps for active bindings\[char46] It writes the \fBlogical_port\fR, \fBip\fR, \fBmac\fR, \fBdatapath\fR, and \fBtimestamp\fR columns\[char46] These changes persist beyond the lifetime of \fBovn\-controller\fR, except that EVPN-synchronized rows are removed when their corresponding neighbors become stale\[char46]
+.TP
+\fBController_Event\fR
+\fBovn\-controller\fR inserts events generated by controller actions\[char46] It writes the \fBevent_type\fR, \fBevent_info\fR, \fBchassis\fR, and \fBseq_num\fR columns\[char46]
+.TP
+\fBIGMP_Group\fR
+\fBovn\-controller\fR creates, updates, and removes rows for multicast groups learned on its chassis\[char46] It writes the \fBaddress\fR, \fBprotocol\fR, \fBdatapath\fR, \fBchassis\fR, \fBports\fR, and \fBchassis_name\fR columns\[char46] It removes rows owned by this chassis during exit cleanup\[char46]
+.TP
+\fBService_Monitor\fR
+\fBovn\-controller\fR writes the \fBstatus\fR column with the result of each service health check\[char46] See \fBovn\-sb\fR(5) for the status values\[char46]
+.TP
+\fBBFD\fR
+\fBovn\-controller\fR writes the \fBstatus\fR column as BFD sessions change state\[char46] See \fBovn\-sb\fR(5) for the state values\[char46]
+.TP
+\fBFDB\fR
+\fBovn\-controller\fR creates and updates forwarding database entries as instructed by the \fBput_fdb\fR logical action\[char46] It also refreshes timestamps for active entries\[char46] It writes the \fBmac\fR, \fBdp_key\fR, \fBport_key\fR, and \fBtimestamp\fR columns\[char46]
+.TP
+\fBLearned_Route\fR
+When built with Linux Netlink support (\fBHAVE_NETLINK\fR), \fBovn\-controller\fR synchronizes routes learned from the host routing table\[char46] It creates and removes rows and writes the \fBdatapath\fR, \fBlogical_port\fR, \fBip_prefix\fR, and \fBnexthop\fR columns\[char46]
 .RE
 .SH "RUNTIME MANAGEMENT COMMANDS"
 .PP
 .PP
-\fBovn\-appctl\fR can send commands to a running \fBovn\-controller\fR process\[char46] The currently supported commands are described below\[char46]
+\fBovn\-appctl\fR can send commands to a running \fBovn\-controller\fR process\[char46] The following list describes commands specific to \fBovn\-controller\fR and its incremental processing engine\[char46] Shared OVS libraries can register additional commands; use \fBovn\-appctl \-t ovn\-controller list\-commands\fR to list the commands available in a running process\[char46]
 .RS
 .TP
-\fBexit\fR
-Causes \fBovn\-controller\fR to gracefully terminate\[char46]
+\fBexit\fR [\fB\-\-restart\fR]
+Causes \fBovn\-controller\fR to gracefully terminate\[char46] With \fB\-\-restart\fR, it skips the database cleanup normally done on exit\[char46]
 .TP
 \fBct\-zone\-list\fR
 Lists each local logical port and its connection tracking zone\[char46]
+.TP
+\fBevpn/remote\-vtep\-list\fR
+Lists the remote EVPN VTEPs learned from the host neighbor table, including their IP addresses, UDP ports, and VNIs\[char46] This command is registered in all builds, but when \fBovn\-controller\fR is built without Linux Netlink support (\fBHAVE_NETLINK\fR), it does not send a reply and \fBovn\-appctl\fR waits indefinitely by default\[char46]
+.TP
+\fBevpn/vtep\-arp\-list\fR
+Lists the EVPN ARP and IPv6 neighbor entries maintained by \fBovn\-controller\fR\[char46]
+.TP
+\fBevpn/vtep\-binding\-list\fR
+Lists the bindings between remote EVPN VTEPs and OVN datapaths\[char46]
+.TP
+\fBevpn/vtep\-fdb\-list\fR
+Lists the EVPN forwarding database entries maintained by \fBovn\-controller\fR\[char46]
+.TP
+\fBevpn/vtep\-multicast\-group\-list\fR
+Lists the EVPN multicast groups and their remote VTEP bindings\[char46]
 .TP
 \fBmeter\-table\-list\fR
 Lists each meter table entry and its local meter id\[char46]
@@ -444,7 +492,7 @@ The \fImicroflow\fR argument describes the packet whose forwarding is to be simu
 Show OVN SBDB connection status for the chassis\[char46]
 .TP
 \fBrecompute\fR
-Trigger a full compute iteration in \fBovn\-controller\fR based on the contents of the Southbound database and local OVS database\[char46]
+Trigger a full compute iteration in \fBovn\-controller\fR based on the contents of the Southbound database and local OVS database\[char46] This command is deprecated; use \fBinc\-engine/recompute\fR instead\[char46]
 .IP
 This command is intended to use only in the event of a bug in the incremental processing engine in \fBovn\-controller\fR to avoid inconsistent states\[char46] It should therefore be used with care as full recomputes are cpu intensive\[char46]
 .TP
@@ -456,14 +504,50 @@ If all databases in a clustered southbound database are removed from disk, then 
 \fBdebug/delay\-nb\-cfg\-report\fR \fIseconds\fR
 This command is used to delay ovn-controller updating the \fBnb_cfg\fR back to \fBOVN_Southbound\fR database\[char46] This is useful when \fBovn\-nbctl \-\-wait=hv\fR is used to measure end-to-end latency in a large scale environment\[char46] See \fBovn\-nbctl\fR(8) for more details\[char46]
 .TP
+\fBdebug/dump\-lflow\-conj\-ids\fR
+Dumps the logical flow conjunction IDs currently allocated by \fBovn\-controller\fR\[char46]
+.TP
+\fBdebug/dump\-local\-bindings\fR
+Dumps the local logical port binding data maintained by \fBovn\-controller\fR\[char46]
+.TP
+\fBdebug/dump\-local\-datapaths\fR
+Dumps the local datapaths maintained by \fBovn\-controller\fR\[char46]
+.TP
+\fBdebug/dump\-local\-template\-vars\fR
+Dumps the chassis-local template variables maintained by \fBovn\-controller\fR\[char46]
+.TP
+\fBdebug/dump\-mac\-bindings\fR
+Dumps the local MAC bindings maintained by \fBovn\-controller\fR\[char46]
+.TP
+\fBdebug/dump\-peer\-ports\fR
+Dumps the peer ports associated with local datapaths\[char46]
+.TP
+\fBdebug/dump\-related\-ports\fR
+Dumps the logical ports related to this chassis\[char46]
+.TP
+\fBdebug/enable\-timewarp\fR
+Enables the time-warp facility and registers the \fBtime/stop\fR and \fBtime/warp\fR commands, which respectively stop and advance the monotonic clock for debugging and testing time-based behavior\[char46]
+.TP
+\fBdebug/pause\fR
+Pauses the main \fBovn\-controller\fR processing loop for debugging\[char46]
+.TP
+\fBdebug/resume\fR
+Resumes a processing loop paused by \fBdebug/pause\fR\[char46]
+.TP
+\fBdebug/status\fR
+Reports whether the main processing loop is running or paused\[char46]
+.TP
 \fBlflow\-cache/flush\fR
 Flushes the \fBovn\-controller\fR logical flow cache\[char46]
 .TP
 \fBlflow\-cache/show\-stats\fR
 Displays logical flow cache statistics: enabled/disabled, per cache type entry counts\[char46]
 .TP
+\fBflush\-lflow\-cache\fR
+Flushes the logical flow cache\[char46] This command is deprecated; use \fBlflow\-cache/flush\fR instead\[char46]
+.TP
 \fBinc\-engine/show\-stats\fR
-Display \fBovn\-controller\fR engine counters\[char46] For each engine node the following counters have been added:
+Displays the following \fBovn\-controller\fR counters for each engine node:
 .RS
 .IP \(bu
 \fBrecompute\fR
@@ -473,11 +557,20 @@ Display \fBovn\-controller\fR engine counters\[char46] For each engine node the 
 \fBcancel\fR
 .RE
 .TP
-\fBinc\-engine/show\-stats \fIengine_node_name\fB \fIcounter_name\fB\fR
+\fBinc\-engine/show\-stats\fR \fIengine_node_name\fR [\fIcounter_name\fR]
 Display the \fBovn\-controller\fR engine counter(s) for the specified \fIengine_node_name\fR\[char46] \fIcounter_name\fR is optional and can be one of \fBrecompute\fR, \fBcompute\fR or \fBcancel\fR\[char46]
 .TP
 \fBinc\-engine/clear\-stats\fR
 Reset \fBovn\-controller\fR engine counters\[char46]
+.TP
+\fBinc\-engine/recompute\fR
+Triggers a full recompute of the incremental processing engine on the next iteration\[char46]
+.TP
+\fBinc\-engine/compute\-log\-timeout\fR \fImsecs\fR
+Sets the threshold in milliseconds that determines the log severity for engine recomputes and incremental change handlers\[char46] Events taking more than \fImsecs\fR milliseconds are logged at \fBINFO\fR, subject to rate limiting; shorter events and events taking exactly \fImsecs\fR milliseconds are logged at \fBDEBUG\fR\[char46] The default threshold is 500 milliseconds\[char46]
+.TP
+\fBinc\-engine/list\-stopwatches\fR [\fInode\fR]
+Lists the engine nodes and their change handler names\[char46] If \fInode\fR is specified, only the handlers for that engine node are listed\[char46]
 .TP
 \fBinc\-engine/enable\-stopwatch\fR [\fInode\fR]
 Enables the per-node and per-handler stopwatches in the incremental processing engine\[char46] If \fInode\fR is specified, only that node\(cqs stopwatches are enabled; otherwise all nodes are affected\[char46] While enabled, every engine node recompute and change handler invocation is timed and the results can be viewed with the \fBstopwatch/show\fR command\[char46] Stopwatches are disabled by default because they add measurable CPU overhead\[char46]

@@ -69,7 +69,7 @@ The OVN Northbound Database has only two clients: the OVN/CMS Plugin above it an
 The \fIOVN Southbound Database\fR is the center of the system\[char46] Its clients are \fBovn\-northd\fR(8) above it and \fBovn\-controller\fR(8) on every transport node below it\[char46]
 .IP
 The OVN Southbound Database contains three kinds of data: \fIPhysical
-Network\fR (PN) tables that specify how to reach hypervisor and other nodes, \fILogical Network\fR (LN) tables that describe the logical network in terms of ``logical datapath flows,\(cq\(cq and \fIBinding\fR tables that link logical network components\(cq locations to the physical network\[char46] The hypervisors populate the PN and Port_Binding tables, whereas \fBovn\-northd\fR(8) populates the LN tables\[char46]
+Network\fR (PN) tables that specify how to reach hypervisor and other nodes, \fILogical Network\fR (LN) tables that describe the logical network in terms of ``logical datapath flows,\(cq\(cq and \fIBinding\fR tables that link logical network components\(cq locations to the physical network\[char46] \fBovn\-northd\fR(8) populates the LN tables and creates the logical port rows in the \fBPort_Binding\fR table\[char46] Each \fBovn\-controller\fR(8) populates the PN tables for its chassis and updates the binding state for the ports that it claims\[char46] The \fBovn\-controller\-vtep\fR daemon also updates the binding state for VTEP ports that it claims\[char46]
 .IP
 OVN Southbound Database performance must scale with the number of transport nodes\[char46] This will likely require some work on \fBovsdb\-server\fR(1) as we encounter bottlenecks\[char46] Clustering for availability may be needed\[char46]
 .RE
@@ -78,7 +78,7 @@ OVN Southbound Database performance must scale with the number of transport node
 The remaining components are replicated onto each hypervisor:
 .RS
 .IP \(bu
-\fBovn\-controller\fR(8) is OVN\(cqs agent on each hypervisor and software gateway\[char46] Northbound, it connects to the OVN Southbound Database to learn about OVN configuration and status and to populate the PN table and the \fBChassis\fR column in \fBBinding\fR table with the hypervisor\(cqs status\[char46] Southbound, it connects to \fBovs\-vswitchd\fR(8) as an OpenFlow controller, for control over network traffic, and to the local \fBovsdb\-server\fR(1) to allow it to monitor and control Open vSwitch configuration\[char46]
+\fBovn\-controller\fR(8) is OVN\(cqs agent on each hypervisor and software gateway\[char46] Northbound, it connects to the OVN Southbound Database to learn about OVN configuration and status and to populate the PN tables and the \fBchassis\fR and \fBup\fR columns in the \fBPort_Binding\fR table with the hypervisor\(cqs status\[char46] It also populates the \fBvirtual_parent\fR column for virtual ports\[char46] The \fBovn\-controller\-vtep\fR daemon populates the \fBchassis\fR and \fBup\fR columns for VTEP ports\[char46] Southbound, it connects to \fBovs\-vswitchd\fR(8) as an OpenFlow controller, for control over network traffic, and to the local \fBovsdb\-server\fR(1) to allow it to monitor and control Open vSwitch configuration\[char46]
 .IP \(bu
 \fBovs\-vswitchd\fR(8) and \fBovsdb\-server\fR(1) are conventional components of Open vSwitch\[char46]
 .RE
@@ -158,7 +158,7 @@ The remaining components are replicated onto each hypervisor:
 Configuration data in OVN flows from north to south\[char46] The CMS, through its OVN/CMS plugin, passes the logical network configuration to \fBovn\-northd\fR via the northbound database\[char46] In turn, \fBovn\-northd\fR compiles the configuration into a lower-level form and passes it to all of the chassis via the southbound database\[char46]
 .PP
 .PP
-Status information in OVN flows from south to north\[char46] OVN currently provides only a few forms of status information\[char46] First, \fBovn\-northd\fR populates the \fBup\fR column in the northbound \fBLogical_Switch_Port\fR table: if a logical port\(cqs \fBchassis\fR column in the southbound \fBPort_Binding\fR table is nonempty, it sets \fBup\fR to \fBtrue\fR, otherwise to \fBfalse\fR\[char46] This allows the CMS to detect when a VM\(cqs networking has come up\[char46]
+Status information in OVN flows from south to north\[char46] OVN currently provides only a few forms of status information\[char46] First, \fBovn\-northd\fR populates the \fBup\fR column in the northbound \fBLogical_Switch_Port\fR table from the corresponding southbound \fBPort_Binding\fR row\[char46] For an ordinary VIF, the \fBchassis\fR column must be set and the \fBup\fR column must be \fBtrue\fR\[char46] Logical ports of type \fBrouter\fR or \fBswitch\fR are always reported up\[char46] Ports bound to a chassis marked as remote are also reported up regardless of the southbound \fBup\fR value\[char46] This allows the CMS to detect when a VM\(cqs networking has come up\[char46]
 .PP
 .PP
 Second, OVN provides feedback to the CMS on the realization of its configuration, that is, whether the configuration provided by the CMS has taken effect\[char46] This feature requires the CMS to participate in a sequence number protocol, which works the following way:
@@ -201,6 +201,9 @@ Settings\fR in \fBovs\-vsctl\fR(8) for more information\[char46]
 .TP
 \fBother\-config:disable\-in\-band=true\fR
 Suppresses in-band control flows for the integration bridge\[char46] It would be unusual for such flows to show up anyway, because OVN uses a local controller (over a Unix domain socket) instead of a remote controller\[char46] It\(cqs possible, however, for some other bridge in the same system to have an in-band remote controller, and in that case this suppresses the flows that in-band control would ordinarily set up\[char46] Refer to the documentation for more information\[char46]
+.TP
+\fBother\-config:hwaddr=\fImac\fB\fR
+Sets the integration bridge\(cqs hardware address\[char46] When \fBovn\-controller\fR creates the bridge, it generates a random address for this setting so that adding the first non-local port does not change the bridge datapath ID and force OpenFlow controllers to reconnect\[char46]
 .RE
 .PP
 .PP
@@ -449,34 +452,33 @@ The steps in this example refer often to details of the OVN and OVN Northbound d
 .IP 1. .4in
 A VIF\(cqs life cycle begins when a CMS administrator creates a new VIF using the CMS user interface or API and adds it to a switch (one implemented by OVN as a logical switch)\[char46] The CMS updates its own configuration\[char46] This includes associating unique, persistent identifier \fIvif-id\fR and Ethernet address \fImac\fR with the VIF\[char46]
 .IP 2. .4in
-The CMS plugin updates the OVN Northbound database to include the new VIF, by adding a row to the \fBLogical_Switch_Port\fR table\[char46] In the new row, \fBname\fR is \fIvif-id\fR, \fBmac\fR is \fImac\fR, \fBswitch\fR points to the OVN logical switch\(cqs Logical_Switch record, and other columns are initialized appropriately\[char46]
+The CMS plugin updates the OVN Northbound database to include the new VIF, by adding a row to the \fBLogical_Switch_Port\fR table\[char46] In the new row, \fBname\fR is \fIvif-id\fR, \fBaddresses\fR contains \fImac\fR, and other columns are initialized appropriately\[char46] The CMS plugin also adds the new logical switch port to the \fBports\fR column of the corresponding \fBLogical_Switch\fR row\[char46]
 .IP 3. .4in
-\fBovn\-northd\fR receives the OVN Northbound database update\[char46] In turn, it makes the corresponding updates to the OVN Southbound database, by adding rows to the OVN Southbound database \fBLogical_Flow\fR table to reflect the new port, e\[char46]g\[char46] add a flow to recognize that packets destined to the new port\(cqs MAC address should be delivered to it, and update the flow that delivers broadcast and multicast packets to include the new port\[char46] It also creates a record in the \fBBinding\fR table and populates all its columns except the column that identifies the \fBchassis\fR\[char46]
+\fBovn\-northd\fR receives the OVN Northbound database update\[char46] In turn, it makes the corresponding updates to the OVN Southbound database, by adding rows to the OVN Southbound database \fBLogical_Flow\fR table to reflect the new port, e\[char46]g\[char46] add a flow to recognize that packets destined to the new port\(cqs MAC address should be delivered to it, and update the flow that delivers broadcast and multicast packets to include the new port\[char46] It also creates a record in the \fBPort_Binding\fR table and populates the fields derived from the northbound configuration\[char46] The controllers maintain the row\(cqs binding and readiness state\[char46]
 .IP 4. .4in
 On every hypervisor, \fBovn\-controller\fR receives the \fBLogical_Flow\fR table updates that \fBovn\-northd\fR made in the previous step\[char46] As long as the VM that owns the VIF is powered off, \fBovn\-controller\fR cannot do much; it cannot, for example, arrange to send packets to or receive packets from the VIF, because the VIF does not actually exist anywhere\[char46]
 .IP 5. .4in
 Eventually, a user powers on the VM that owns the VIF\[char46] On the hypervisor where the VM is powered on, the integration between the hypervisor and Open vSwitch (described in \fBDocumentation/topics/integration\[char46]rst\fR in the Open vSwitch source tree) adds the VIF to the OVN integration bridge and stores \fIvif-id\fR in \fBexternal_ids\fR:\fBiface\-id\fR to indicate that the interface is an instantiation of the new VIF\[char46] (None of this code is new in OVN; this is pre-existing integration work that has already been done on hypervisors that support OVS\[char46])
 .IP 6. .4in
-On the hypervisor where the VM is powered on, \fBovn\-controller\fR notices \fBexternal_ids\fR:\fBiface\-id\fR in the new Interface\[char46] In response, in the OVN Southbound DB, it updates the \fBBinding\fR table\(cqs \fBchassis\fR column for the row that links the logical port from \fBexternal_ids\fR:\fB
-iface\-id\fR to the hypervisor\[char46] Afterward, \fBovn\-controller\fR updates the local hypervisor\(cqs OpenFlow tables so that packets to and from the VIF are properly handled\[char46]
+On the hypervisor where the VM is powered on, \fBovn\-controller\fR notices \fBexternal_ids\fR:\fBiface\-id\fR in the new Interface\[char46] In response, \fBovn\-controller\fR updates the \fBPort_Binding\fR row\(cqs \fBchassis\fR column to claim the logical port and updates the local hypervisor\(cqs OpenFlow tables so that packets to and from the VIF are properly handled\[char46] After the local flows are installed and ready, it sets the \fBup\fR column in the \fBPort_Binding\fR row\[char46]
 .IP 7. .4in
-Some CMS systems, including OpenStack, fully start a VM only when its networking is ready\[char46] To support this, \fBovn\-northd\fR notices the \fBchassis\fR column updated for the row in \fBBinding\fR table and pushes this upward by updating the \fBup\fR column in the OVN Northbound database\(cqs \fBLogical_Switch_Port\fR table to indicate that the VIF is now up\[char46] The CMS, if it uses this feature, can then react by allowing the VM\(cqs execution to proceed\[char46]
+Some CMS systems, including OpenStack, fully start a VM only when its networking is ready\[char46] To support this, \fBovn\-northd\fR notices the \fBup\fR column set in the \fBPort_Binding\fR table and pushes this upward by updating the \fBup\fR column in the OVN Northbound database\(cqs \fBLogical_Switch_Port\fR table to indicate that the VIF is now up\[char46] The CMS, if it uses this feature, can then react by allowing the VM\(cqs execution to proceed\[char46]
 .IP 8. .4in
-On every hypervisor but the one where the VIF resides, \fBovn\-controller\fR notices the completely populated row in the \fBBinding\fR table\[char46] This provides \fBovn\-controller\fR the physical location of the logical port, so each instance updates the OpenFlow tables of its switch (based on logical datapath flows in the OVN DB \fBLogical_Flow\fR table) so that packets to and from the VIF can be properly handled via tunnels\[char46]
+On every hypervisor but the one where the VIF resides, \fBovn\-controller\fR notices the \fBchassis\fR claim in the \fBPort_Binding\fR table\[char46] This provides \fBovn\-controller\fR the physical location of the logical port, so each remote instance updates the OpenFlow tables of its switch (based on logical datapath flows in the OVN DB \fBLogical_Flow\fR table) so that packets to and from the VIF can be properly handled via tunnels\[char46] The \fBup\fR column separately reports whether the local flows on the claiming hypervisor are ready; it does not determine whether remote hypervisors react to the chassis claim\[char46]
 .IP 9. .4in
 Eventually, a user powers off the VM that owns the VIF\[char46] On the hypervisor where the VM was powered off, the VIF is deleted from the OVN integration bridge\[char46]
 .IP 10. .4in
-On the hypervisor where the VM was powered off, \fBovn\-controller\fR notices that the VIF was deleted\[char46] In response, it removes the \fBChassis\fR column content in the \fBBinding\fR table for the logical port\[char46]
+On the hypervisor where the VM was powered off, \fBovn\-controller\fR notices that the VIF was deleted\[char46] In response, it clears the \fBup\fR column and removes the \fBchassis\fR column content in the \fBPort_Binding\fR table for the logical port\[char46] Both changes become visible in the same database transaction\[char46]
 .IP 11. .4in
-On every hypervisor, \fBovn\-controller\fR notices the empty \fBChassis\fR column in the \fBBinding\fR table\(cqs row for the logical port\[char46] This means that \fBovn\-controller\fR no longer knows the physical location of the logical port, so each instance updates its OpenFlow table to reflect that\[char46]
+On every hypervisor, \fBovn\-controller\fR sees the cleared \fBup\fR and \fBchassis\fR columns in the \fBPort_Binding\fR row\[char46] This indicates that the local flows are no longer ready and that the logical port no longer has a known physical location, so each instance updates its OpenFlow table to reflect that\[char46]
 .IP 12. .4in
 Eventually, when the VIF (or its entire VM) is no longer needed by anyone, an administrator deletes the VIF using the CMS user interface or API\[char46] The CMS updates its own configuration\[char46]
 .IP 13. .4in
 The CMS plugin removes the VIF from the OVN Northbound database, by deleting its row in the \fBLogical_Switch_Port\fR table\[char46]
 .IP 14. .4in
-\fBovn\-northd\fR receives the OVN Northbound update and in turn updates the OVN Southbound database accordingly, by removing or updating the rows from the OVN Southbound database \fBLogical_Flow\fR table and \fBBinding\fR table that were related to the now-destroyed VIF\[char46]
+\fBovn\-northd\fR receives the OVN Northbound update and in turn updates the OVN Southbound database accordingly, by removing or updating the rows from the OVN Southbound database \fBLogical_Flow\fR table and \fBPort_Binding\fR table that were related to the now-destroyed VIF\[char46]
 .IP 15. .4in
-On every hypervisor, \fBovn\-controller\fR receives the \fBLogical_Flow\fR table updates that \fBovn\-northd\fR made in the previous step\[char46] \fBovn\-controller\fR updates OpenFlow tables to reflect the update, although there may not be much to do, since the VIF had already become unreachable when it was removed from the \fBBinding\fR table in a previous step\[char46]
+On every hypervisor, \fBovn\-controller\fR receives the \fBLogical_Flow\fR table updates that \fBovn\-northd\fR made in the previous step\[char46] \fBovn\-controller\fR updates OpenFlow tables to reflect the update, although there may not be much to do, since the VIF had already become unreachable when it was removed from the \fBPort_Binding\fR table in a previous step\[char46]
 .RE
 .SS "Life Cycle of a Container Interface Inside a VM"
 .PP
@@ -503,15 +505,15 @@ A CIF\(cqs life cycle begins when a container is spawned inside a VM by the eith
 .IP 2. .4in
 The container spawning entity (either directly or through the CMS that manages the underlying infrastructure) updates the OVN Northbound database to include the new CIF, by adding a row to the \fBLogical_Switch_Port\fR table\[char46] In the new row, \fBname\fR is any unique identifier, \fBparent_name\fR is the \fIvif-id\fR of the VM through which the CIF\(cqs network traffic is expected to go through and the \fBtag\fR is the VLAN tag that identifies the network traffic of that CIF\[char46]
 .IP 3. .4in
-\fBovn\-northd\fR receives the OVN Northbound database update\[char46] In turn, it makes the corresponding updates to the OVN Southbound database, by adding rows to the OVN Southbound database\(cqs \fBLogical_Flow\fR table to reflect the new port and also by creating a new row in the \fBBinding\fR table and populating all its columns except the column that identifies the \fBchassis\fR\[char46]
+\fBovn\-northd\fR receives the OVN Northbound database update\[char46] In turn, it makes the corresponding updates to the OVN Southbound database, by adding rows to the OVN Southbound database\(cqs \fBLogical_Flow\fR table to reflect the new port and also by creating a new row in the \fBPort_Binding\fR table and populating the fields derived from the northbound configuration\[char46] The controllers maintain the row\(cqs binding and readiness state\[char46]
 .IP 4. .4in
-On every hypervisor, \fBovn\-controller\fR subscribes to the changes in the \fBBinding\fR table\[char46] When a new row is created by \fBovn\-northd\fR that includes a value in \fBparent_port\fR column of \fBBinding\fR table, the \fBovn\-controller\fR in the hypervisor whose OVN integration bridge has that same value in \fIvif-id\fR in \fBexternal_ids\fR:\fBiface\-id\fR updates the local hypervisor\(cqs OpenFlow tables so that packets to and from the VIF with the particular VLAN \fBtag\fR are properly handled\[char46] Afterward it updates the \fBchassis\fR column of the \fBBinding\fR to reflect the physical location\[char46]
+On every hypervisor, \fBovn\-controller\fR subscribes to the changes in the \fBPort_Binding\fR table\[char46] When a new row is created by \fBovn\-northd\fR that includes a value in \fBparent_port\fR column of \fBPort_Binding\fR table, the \fBovn\-controller\fR on the hypervisor whose OVN integration bridge has that same value in \fIvif-id\fR in \fBexternal_ids\fR:\fBiface\-id\fR claims the CIF on the same chassis as its parent\[char46] A CIF has no separate OVS interface and does not wait for its own flow-installation barrier\[char46] Its readiness is gated on the parent VIF, and it is marked up once the parent \fBPort_Binding\fR is up\[char46]
 .IP 5. .4in
-One can only start the application inside the container after the underlying network is ready\[char46] To support this, \fBovn\-northd\fR notices the updated \fBchassis\fR column in \fBBinding\fR table and updates the \fBup\fR column in the OVN Northbound database\(cqs \fBLogical_Switch_Port\fR table to indicate that the CIF is now up\[char46] The entity responsible to start the container application queries this value and starts the application\[char46]
+One can only start the application inside the container after the underlying network is ready\[char46] To support this, \fBovn\-northd\fR notices the \fBup\fR column set in the \fBPort_Binding\fR table and updates the \fBup\fR column in the OVN Northbound database\(cqs \fBLogical_Switch_Port\fR table to indicate that the CIF is now up\[char46] The entity responsible to start the container application queries this value and starts the application\[char46]
 .IP 6. .4in
 Eventually the entity that created and started the container, stops it\[char46] The entity, through the CMS (or directly) deletes its row in the \fBLogical_Switch_Port\fR table\[char46]
 .IP 7. .4in
-\fBovn\-northd\fR receives the OVN Northbound update and in turn updates the OVN Southbound database accordingly, by removing or updating the rows from the OVN Southbound database \fBLogical_Flow\fR table that were related to the now-destroyed CIF\[char46] It also deletes the row in the \fBBinding\fR table for that CIF\[char46]
+\fBovn\-northd\fR receives the OVN Northbound update and in turn updates the OVN Southbound database accordingly, by removing or updating the rows from the OVN Southbound database \fBLogical_Flow\fR table that were related to the now-destroyed CIF\[char46] It also deletes the row in the \fBPort_Binding\fR table for that CIF\[char46]
 .IP 8. .4in
 On every hypervisor, \fBovn\-controller\fR receives the \fBLogical_Flow\fR table updates that \fBovn\-northd\fR made in the previous step\[char46] \fBovn\-controller\fR updates OpenFlow tables to reflect the update\[char46]
 .RE
@@ -538,7 +540,7 @@ Geneve tunnels pass this field as part of the tunnel key\[char46] Ramp switch VX
 logical output port field
 A field that denotes the logical port from which the packet will leave the logical datapath\[char46] This is initialized to 0 at the beginning of the logical ingress pipeline\[char46] OVN stores this in Open vSwitch extension register number 15\[char46]
 .IP
-Geneve and regular VXLAN tunnels pass this field as part of the tunnel key\[char46] Ramp switch VXLAN tunnels do not transmit the logical output port field, and since they do not carry a logical output port field in the tunnel key, when a packet is received from ramp switch VXLAN tunnel by an OVN hypervisor, the packet is resubmitted to table 8 to determine the output port(s); when the packet reaches table 54, these packets are resubmitted to table 56 for local delivery by checking a MLF_RCV_FROM_RAMP flag, which is set when the packet arrives from a ramp tunnel\[char46]
+Geneve and regular VXLAN tunnels pass this field as part of the tunnel key\[char46] Ramp switch VXLAN tunnels do not transmit the logical output port field, and since they do not carry a logical output port field in the tunnel key, when a packet is received from ramp switch VXLAN tunnel by an OVN hypervisor, the packet is resubmitted to \fBOFTABLE_LOG_INGRESS_PIPELINE\fR to determine the output port(s); when the packet reaches \fBOFTABLE_REMOTE_OUTPUT\fR, a higher-priority rule in \fBOFTABLE_REMOTE_OUTPUT\fR resubmits these packets to \fBOFTABLE_LOCAL_OUTPUT\fR for local delivery when the MLF_RCV_FROM_RAMP flag is set and MLF_ALLOW_LOOPBACK is clear\[char46] MLF_RCV_FROM_RAMP is set when the packet arrives from a ramp tunnel\[char46]
 .TP
 conntrack zone field for logical ports
 A field that denotes the connection tracking zone for logical ports\[char46] The value only has local significance and is not meaningful between chassis\[char46] This is initialized to 0 at the beginning of the logical ingress pipeline\[char46] OVN stores this in the lower 16 bits of the Open vSwitch extension register number 13\[char46]
@@ -561,14 +563,14 @@ VM\fR, above, for more information)\[char46]
 Initially, a VM or container on the ingress hypervisor sends a packet on a port attached to the OVN integration bridge\[char46] Then:
 .RS
 .IP 1. .4in
-OpenFlow table 0 performs physical-to-logical translation\[char46] It matches the packet\(cqs ingress port\[char46] Its actions annotate the packet with logical metadata, by setting the logical datapath field to identify the logical datapath that the packet is traversing and the logical input port field to identify the ingress port\[char46] Then it resubmits to table 8 to enter the logical ingress pipeline\[char46]
+OpenFlow table \fBOFTABLE_PHY_TO_LOG\fR performs physical-to-logical translation\[char46] It matches the packet\(cqs ingress port\[char46] Its actions annotate the packet with logical metadata, by setting the logical datapath field to identify the logical datapath that the packet is traversing and the logical input port field to identify the ingress port\[char46] Then it resubmits to \fBOFTABLE_LOG_INGRESS_PIPELINE\fR to enter the logical ingress pipeline\[char46]
 .IP
 Packets that originate from a container nested within a VM are treated in a slightly different way\[char46] The originating container can be distinguished based on the VIF-specific VLAN ID, so the physical-to-logical translation flows additionally match on VLAN ID and the actions strip the VLAN header\[char46] Following this step, OVN treats packets from containers just like any other packets\[char46]
 .IP
-Table 0 also processes packets that arrive from other chassis\[char46] It distinguishes them from other packets by ingress port, which is a tunnel\[char46] As with packets just entering the OVN pipeline, the actions annotate these packets with logical datapath metadata\[char46] For tunnel types that support it, they are also annotated with logical ingress port metadata\[char46] In addition, the actions set the logical output port field, which is available because in OVN tunneling occurs after the logical output port is known\[char46] These pieces of information are obtained from the tunnel encapsulation metadata (see \fBTunnel
-Encapsulations\fR for encoding details)\[char46] Then the actions resubmit to table 62 to enter the logical egress pipeline\[char46]
+\fBOFTABLE_PHY_TO_LOG\fR also processes packets that arrive from other chassis\[char46] It distinguishes them from other packets by ingress port, which is a tunnel\[char46] As with packets just entering the OVN pipeline, the actions annotate these packets with logical datapath metadata\[char46] For tunnel types that support it, they are also annotated with logical ingress port metadata\[char46] In addition, the actions set the logical output port field, which is available because in OVN tunneling occurs after the logical output port is known\[char46] These pieces of information are obtained from the tunnel encapsulation metadata (see \fBTunnel
+Encapsulations\fR for encoding details)\[char46] For ordinary VXLAN and other tunnel packets, the actions resubmit to \fBOFTABLE_LOCAL_OUTPUT\fR to deliver them to the local hypervisor\[char46] Ramp switch VXLAN packets are an exception: because they do not carry the logical output port field, the actions resubmit them to \fBOFTABLE_LOG_INGRESS_PIPELINE\fR to determine the logical output port before delivering them locally\[char46]
 .IP 2. .4in
-OpenFlow tables 8 through 41 execute the logical ingress pipeline from the \fBLogical_Flow\fR table in the OVN Southbound database\[char46] These tables are expressed entirely in terms of logical concepts like logical ports and logical datapaths\[char46] A big part of \fBovn\-controller\fR\(cqs job is to translate them into equivalent OpenFlow (in particular it translates the table numbers: \fBLogical_Flow\fR tables 0 through 33 become OpenFlow tables 8 through 41)\[char46]
+OpenFlow tables starting at \fBOFTABLE_LOG_INGRESS_PIPELINE\fR execute the logical ingress pipeline from the \fBLogical_Flow\fR table in the OVN Southbound database\[char46] These tables are expressed entirely in terms of logical concepts like logical ports and logical datapaths\[char46] A big part of \fBovn\-controller\fR\(cqs job is to translate them into equivalent OpenFlow\[char46] The logical switch ingress stages run from \fBls_in_check_port_sec\fR through \fBls_in_l2_unknown\fR, while the logical router ingress stages run from \fBlr_in_admission\fR through \fBlr_in_ecmp_stateful_egr\fR\[char46] Both are translated to OpenFlow tables starting at \fBOFTABLE_LOG_INGRESS_PIPELINE\fR\[char46]
 .IP
 Each logical flow maps to one or more OpenFlow flows\[char46] An actual packet ordinarily matches only one of these, although in some cases it can match more than one of these flows (which is not a problem because all of them have the same actions)\[char46] \fBovn\-controller\fR uses the first 32 bits of the logical flow\(cqs UUID as the cookie for its OpenFlow flow or flows\[char46] (This is not necessarily unique, since the first 32 bits of a logical flow\(cqs UUID is not necessarily unique\[char46])
 .IP
@@ -581,12 +583,12 @@ Most OVN actions have fairly obvious implementations in OpenFlow (with OVS exten
 .RS
 .TP
 \fBoutput:\fR
-Implemented by resubmitting the packet to table 52\[char46] If the pipeline executes more than one \fBoutput\fR action, then each one is separately resubmitted to table 52\[char46] This can be used to send multiple copies of the packet to multiple ports\[char46] (If the packet was not modified between the \fBoutput\fR actions, and some of the copies are destined to the same hypervisor, then using a logical multicast output port would save bandwidth between hypervisors\[char46])
+Implemented by resubmitting the packet to \fBOFTABLE_OUTPUT_LARGE_PKT_DETECT\fR\[char46] If the pipeline executes more than one \fBoutput\fR action, then each one is separately resubmitted to \fBOFTABLE_OUTPUT_LARGE_PKT_DETECT\fR\[char46] This can be used to send multiple copies of the packet to multiple ports\[char46] (If the packet was not modified between the \fBoutput\fR actions, and some of the copies are destined to the same hypervisor, then using a logical multicast output port would save bandwidth between hypervisors\[char46])
 .TP
 \fBget_arp(\fIP\fB, \fIA\fB);\fR
 .TQ .5in
 \fBget_nd(\fIP\fB, \fIA\fB);\fR
-Implemented by storing arguments into OpenFlow fields, then resubmitting to table 90, which \fBovn\-controller\fR populates with flows generated from the \fBMAC_Binding\fR table in the OVN Southbound database\[char46] If there is a match in table 90, then its actions store the bound MAC in the Ethernet destination address field\[char46]
+Implemented by storing arguments into OpenFlow fields, then resubmitting to \fBOFTABLE_MAC_BINDING\fR, which \fBovn\-controller\fR populates with flows generated from the \fBMAC_Binding\fR table in the OVN Southbound database\[char46] If there is a match in \fBOFTABLE_MAC_BINDING\fR, then its actions store the bound MAC in the Ethernet destination address field\[char46]
 .IP
 (The OpenFlow actions save and restore the OpenFlow fields used for the arguments, so that the OVN actions do not have to be aware of this temporary use\[char46])
 .TP
@@ -600,40 +602,42 @@ Implemented by storing the arguments into OpenFlow fields, then outputting a pac
 \fB\fIR\fB = lookup_arp(\fIP\fB, \fIA\fB, \fIM\fB);\fR
 .TQ .5in
 \fB\fIR\fB = lookup_nd(\fIP\fB, \fIA\fB, \fIM\fB);\fR
-Implemented by storing arguments into OpenFlow fields, then resubmitting to table 91, which \fBovn\-controller\fR populates with flows generated from the \fBMAC_Binding\fR table in the OVN Southbound database\[char46] If there is a match in table 91, then its actions set the logical flow flag \fBMLF_LOOKUP_MAC\fR\[char46]
+Implemented by storing arguments into OpenFlow fields, then resubmitting to \fBOFTABLE_MAC_LOOKUP\fR, which \fBovn\-controller\fR populates with flows generated from the \fBMAC_Binding\fR table in the OVN Southbound database\[char46] If there is a match in \fBOFTABLE_MAC_LOOKUP\fR, then its actions set the logical flow flag \fBMLF_LOOKUP_MAC\fR\[char46]
 .IP
 (The OpenFlow actions save and restore the OpenFlow fields used for the arguments, so that the OVN actions do not have to be aware of this temporary use\[char46])
 .RE
 .IP 3. .4in
-OpenFlow tables 52 through 57 implement the \fBoutput\fR action in the logical ingress pipeline\[char46] Specifically, table 52 serves as an entry point to egress pipeline\[char46] Table 52 detects IP packets that are too big for a corresponding interface\[char46] Table 53 produces ICMPv4 Fragmentation Needed (or ICMPv6 Too Big) errors and deliver them back to the offending port\[char46] Table 54 handles packets to remote hypervisors, table 56 handles packets to the local hypervisor, and table 57 checks whether packets whose logical ingress and egress port are the same should be discarded\[char46]
+OpenFlow tables from \fBOFTABLE_OUTPUT_LARGE_PKT_DETECT\fR through \fBOFTABLE_CHECK_LOOPBACK\fR implement the \fBoutput\fR action in the logical ingress pipeline\[char46] Specifically, \fBOFTABLE_OUTPUT_LARGE_PKT_DETECT\fR serves as an entry point to egress pipeline and detects IP packets that are too big for a corresponding interface\[char46] \fBOFTABLE_OUTPUT_LARGE_PKT_PROCESS\fR produces ICMPv4 Fragmentation Needed (or ICMPv6 Too Big) errors and delivers them back to the offending port\[char46] \fBOFTABLE_REMOTE_OUTPUT\fR handles packets to remote hypervisors, \fBOFTABLE_REMOTE_VTEP_OUTPUT\fR handles packets to remote VTEPs, \fBOFTABLE_LOCAL_OUTPUT\fR handles packets to the local hypervisor, and \fBOFTABLE_CHECK_LOOPBACK\fR checks whether packets whose logical ingress and egress port are the same should be discarded\[char46]
 .IP
-Logical patch ports are a special case\[char46] Logical patch ports do not have a physical location and effectively reside on every hypervisor\[char46] Thus, flow table 56, for output to ports on the local hypervisor, naturally implements output to unicast logical patch ports too\[char46] However, applying the same logic to a logical patch port that is part of a logical multicast group yields packet duplication, because each hypervisor that contains a logical port in the multicast group will also output the packet to the logical patch port\[char46] Thus, multicast groups implement output to logical patch ports in table 54\[char46]
+Logical patch ports are a special case\[char46] Logical patch ports do not have a physical location and effectively reside on every hypervisor\[char46] Thus, flow table \fBOFTABLE_LOCAL_OUTPUT\fR, for output to ports on the local hypervisor, naturally implements output to unicast logical patch ports too\[char46] However, applying the same logic to a logical patch port that is part of a logical multicast group yields packet duplication, because each hypervisor that contains a logical port in the multicast group will also output the packet to the logical patch port\[char46] Thus, multicast groups implement output to logical patch ports in \fBOFTABLE_REMOTE_OUTPUT\fR\[char46]
 .IP
-Each flow in table 54 matches on a logical output port for unicast or multicast logical ports that include a logical port on a remote hypervisor\[char46] Each flow\(cqs actions implement sending a packet to the port it matches\[char46] For unicast logical output ports on remote hypervisors, the actions set the tunnel key to the correct value, then send the packet on the tunnel port to the correct hypervisor\[char46] (When the remote hypervisor receives the packet, table 0 there will recognize it as a tunneled packet and pass it along to table 56\[char46]) For multicast logical output ports, the actions send one copy of the packet to each remote hypervisor, in the same way as for unicast destinations\[char46] If a multicast group includes a logical port or ports on the local hypervisor, then its actions also resubmit to table 56\[char46] Table 54 also includes:
+Each flow in \fBOFTABLE_REMOTE_OUTPUT\fR matches on a logical output port for unicast or multicast logical ports that include a logical port on a remote hypervisor\[char46] Each flow\(cqs actions implement sending a packet to the port it matches\[char46] For unicast logical output ports on remote hypervisors, the actions set the tunnel key to the correct value, then send the packet on the tunnel port to the correct hypervisor\[char46] (When the remote hypervisor receives the packet, \fBOFTABLE_PHY_TO_LOG\fR there will recognize it as a tunneled packet and pass it along to \fBOFTABLE_LOCAL_OUTPUT\fR\[char46]) For multicast logical output ports, the actions send one copy of the packet to each remote hypervisor, in the same way as for unicast destinations\[char46] If a multicast group includes a logical port or ports on the local hypervisor, then its actions also resubmit to \fBOFTABLE_LOCAL_OUTPUT\fR\[char46] \fBOFTABLE_REMOTE_OUTPUT\fR also includes:
 .RS
 .IP \(bu
-A higher-priority rule to match packets received from ramp switch tunnels, based on flag MLF_RCV_FROM_RAMP, and resubmit these packets to table 56 for local delivery\[char46] Packets received from ramp switch tunnels reach here because of a lack of logical output port field in the tunnel key and thus these packets needed to be submitted to table 8 to determine the output port\[char46]
+A higher-priority rule to match packets received from ramp switch tunnels, based on flag MLF_RCV_FROM_RAMP, when MLF_ALLOW_LOOPBACK is clear, and resubmit these packets to \fBOFTABLE_LOCAL_OUTPUT\fR for local delivery\[char46] Packets received from ramp switch tunnels reach here because of a lack of logical output port field in the tunnel key and thus these packets needed to be submitted to \fBOFTABLE_LOG_INGRESS_PIPELINE\fR to determine the output port\[char46]
 .IP \(bu
-A higher-priority rule to match packets received from ports of type \fBlocalport\fR, based on the logical input port, and resubmit these packets to table 56 for local delivery\[char46] Ports of type \fBlocalport\fR exist on every hypervisor and by definition their traffic should never go out through a tunnel\[char46]
+A higher-priority rule to match packets received from ports of type \fBlocalport\fR, based on the logical input port, and resubmit these packets to \fBOFTABLE_LOCAL_OUTPUT\fR for local delivery\[char46] Ports of type \fBlocalport\fR exist on every hypervisor and by definition their traffic should never go out through a tunnel\[char46]
 .IP \(bu
-A higher-priority rule to match packets that have the MLF_LOCAL_ONLY logical flow flag set, and whose destination is a multicast address\[char46] This flag indicates that the packet should not be delivered to remote hypervisors, even if the multicast destination includes ports on remote hypervisors\[char46] This flag is used when \fBovn\-controller\fR is the originator of the multicast packet\[char46] Since each \fBovn\-controller\fR instance is originating these packets, the packets only need to be delivered to local ports\[char46]
+A higher-priority rule to match packets that have the MLF_LOCAL_ONLY logical flow flag set\[char46] This flag indicates that the packet should not be delivered to remote hypervisors, even if a multicast destination includes ports on remote hypervisors\[char46] This flag is used when \fBovn\-controller\fR is the originator of the multicast packet\[char46] Since each \fBovn\-controller\fR instance is originating these packets, the packets only need to be delivered to local ports\[char46]
 .IP \(bu
-A fallback flow that resubmits to table 56 if there is no other match\[char46]
+A fallback flow that resubmits to \fBOFTABLE_REMOTE_VTEP_OUTPUT\fR if there is no other match\[char46]
 .RE
 .IP
-Flows in table 56 resemble those in table 54 but for logical ports that reside locally rather than remotely\[char46] For unicast logical output ports on the local hypervisor, the actions just resubmit to table 57\[char46] For multicast output ports that include one or more logical ports on the local hypervisor, for each such logical port \fIP\fR, the actions change the logical output port to \fIP\fR, then resubmit to table 57\[char46]
+\fBOFTABLE_REMOTE_VTEP_OUTPUT\fR handles output to remote VTEPs\[char46] Matching flows set the tunnel metadata and output the packet through the appropriate tunnel\[char46] A fallback flow resubmits packets that are not directed to a remote VTEP to \fBOFTABLE_LOCAL_OUTPUT\fR\[char46]
 .IP
-A special case is that when a localnet port exists on the datapath, remote port is connected by switching to the localnet port\[char46] In this case, instead of adding a flow in table 54 to reach the remote port, a flow is added in table 56 to switch the logical outport to the localnet port, and resubmit to table 56 as if it were unicasted to a logical port on the local hypervisor\[char46]
+Flows in \fBOFTABLE_LOCAL_OUTPUT\fR resemble those in \fBOFTABLE_REMOTE_OUTPUT\fR but for logical ports that reside locally rather than remotely\[char46] For unicast logical output ports on the local hypervisor, the actions just resubmit to \fBOFTABLE_CHECK_LOOPBACK\fR\[char46] For multicast output ports that include one or more logical ports on the local hypervisor, for each such logical port \fIP\fR, the actions change the logical output port to \fIP\fR, then resubmit to \fBOFTABLE_CHECK_LOOPBACK\fR\[char46]
 .IP
-Table 57 matches and drops packets for which the logical input and output ports are the same and the MLF_ALLOW_LOOPBACK flag is not set\[char46] It also drops MLF_LOCAL_ONLY packets directed to a localnet port, provided they aren\(cqt RAs sent from a gateway or distributed router which is checked via the presence of the bitflag MLF_OVERRIDE_LOCAL_ONLY\[char46] It resubmits other packets to table 62\[char46]
+A special case is that when a localnet port exists on the datapath, remote port is connected by switching to the localnet port\[char46] In this case, instead of adding a flow in \fBOFTABLE_REMOTE_OUTPUT\fR to reach the remote port, a flow is added in \fBOFTABLE_LOCAL_OUTPUT\fR to switch the logical outport to the localnet port, and resubmit to \fBOFTABLE_LOCAL_OUTPUT\fR as if it were unicasted to a logical port on the local hypervisor\[char46]
+.IP
+\fBOFTABLE_CHECK_LOOPBACK\fR matches and drops packets for which the logical input and output ports are the same and the MLF_ALLOW_LOOPBACK flag is not set\[char46] It also drops MLF_LOCAL_ONLY packets directed to a localnet port, provided they aren\(cqt RAs sent from a gateway or distributed router which is checked via the presence of the bitflag MLF_OVERRIDE_LOCAL_ONLY\[char46] It resubmits other packets to \fBOFTABLE_LOG_EGRESS_PIPELINE\fR\[char46]
 .IP 4. .4in
-OpenFlow tables 62 through 77 execute the logical egress pipeline from the \fBLogical_Flow\fR table in the OVN Southbound database\[char46] The egress pipeline can perform a final stage of validation before packet delivery\[char46] Eventually, it may execute an \fBoutput\fR action, which \fBovn\-controller\fR implements by resubmitting to table 88\[char46] A packet for which the pipeline never executes \fBoutput\fR is effectively dropped (although it may have been transmitted through a tunnel across a physical network)\[char46]
+OpenFlow tables starting at \fBOFTABLE_LOG_EGRESS_PIPELINE\fR execute the logical egress pipeline from the \fBLogical_Flow\fR table in the OVN Southbound database\[char46] The egress pipeline can perform a final stage of validation before packet delivery\[char46] Eventually, it may execute an \fBoutput\fR action, which \fBovn\-controller\fR implements by resubmitting to \fBOFTABLE_SAVE_INPORT\fR\[char46] A packet for which the pipeline never executes \fBoutput\fR is effectively dropped (although it may have been transmitted through a tunnel across a physical network)\[char46]
 .IP
 The egress pipeline cannot change the logical output port or cause further tunneling\[char46]
 .IP 5. .4in
-Table 88 bypasses OpenFlow loopback when MLF_ALLOW_LOOPBACK is set\[char46] Logical loopback was handled in table 57, but OpenFlow by default also prevents loopback to the OpenFlow ingress port\[char46] Thus, when MLF_ALLOW_LOOPBACK is set, OpenFlow table 88 saves the OpenFlow ingress port, sets it to zero, resubmits to table 89 for logical-to-physical transformation, and then restores the OpenFlow ingress port, effectively disabling OpenFlow loopback prevents\[char46] When MLF_ALLOW_LOOPBACK is unset, table 88 flow simply resubmits to table 89\[char46]
+\fBOFTABLE_SAVE_INPORT\fR bypasses OpenFlow loopback when MLF_ALLOW_LOOPBACK is set\[char46] Logical loopback was handled in \fBOFTABLE_CHECK_LOOPBACK\fR, but OpenFlow by default also prevents loopback to the OpenFlow ingress port\[char46] Thus, when MLF_ALLOW_LOOPBACK is set, OpenFlow table \fBOFTABLE_SAVE_INPORT\fR saves the OpenFlow ingress port, sets it to zero, resubmits to \fBOFTABLE_LOG_TO_PHY\fR for logical-to-physical transformation, and then restores the OpenFlow ingress port, effectively disabling OpenFlow loopback prevention\[char46] When MLF_ALLOW_LOOPBACK is unset, the \fBOFTABLE_SAVE_INPORT\fR flow simply resubmits to \fBOFTABLE_LOG_TO_PHY\fR\[char46]
 .IP 6. .4in
-OpenFlow table 89 performs logical-to-physical translation, the opposite of table 0\[char46] It matches the packet\(cqs logical egress port\[char46] Its actions output the packet to the port attached to the OVN integration bridge that represents that logical port\[char46] If the logical egress port is a container nested with a VM, then before sending the packet the actions push on a VLAN header with an appropriate VLAN ID\[char46]
+OpenFlow table \fBOFTABLE_LOG_TO_PHY\fR performs logical-to-physical translation, the opposite of \fBOFTABLE_PHY_TO_LOG\fR\[char46] It matches the packet\(cqs logical egress port\[char46] Its actions output the packet to the port attached to the OVN integration bridge that represents that logical port\[char46] If the logical egress port is a container nested with a VM, then before sending the packet the actions push on a VLAN header with an appropriate VLAN ID\[char46]
 .RE
 .SS "Logical Routers and Logical Patch Ports"
 .PP
@@ -641,16 +645,17 @@ OpenFlow table 89 performs logical-to-physical translation, the opposite of tabl
 Typically logical routers and logical patch ports do not have a physical location and effectively reside on every hypervisor\[char46] This is the case for logical patch ports between logical routers and logical switches behind those logical routers, to which VMs (and VIFs) attach\[char46]
 .PP
 .PP
-Consider a packet sent from one virtual machine or container to another VM or container that resides on a different subnet\[char46] The packet will traverse tables 0 to 89 as described in the previous section \fBArchitectural Physical Life Cycle of a Packet\fR, using the logical datapath representing the logical switch that the sender is attached to\[char46] At table 54, the packet will use the fallback flow that resubmits locally to table 56 on the same hypervisor\[char46] In this case, all of the processing from table 0 to table 89 occurs on the hypervisor where the sender resides\[char46]
+Consider a packet sent from one virtual machine or container to another VM or container that resides on a different subnet\[char46] The packet will traverse \fBOFTABLE_PHY_TO_LOG\fR through \fBOFTABLE_LOG_TO_PHY\fR as described in the previous section \fBArchitectural Physical Life Cycle of a Packet\fR, using the logical datapath representing the logical switch that the sender is attached to\[char46] At \fBOFTABLE_REMOTE_OUTPUT\fR, the packet will use the fallback flow that resubmits to \fBOFTABLE_REMOTE_VTEP_OUTPUT\fR\[char46] Its fallback flow then resubmits locally to \fBOFTABLE_LOCAL_OUTPUT\fR on the same hypervisor\[char46] In this case, all of the processing from \fBOFTABLE_PHY_TO_LOG\fR to \fBOFTABLE_LOG_TO_PHY\fR occurs on the hypervisor where the sender resides\[char46]
 .PP
 .PP
-When the packet reaches table 89, the logical egress port is a logical patch port\[char46] \fBovn\-controller\fR implements output to the logical patch is packet by cloning and resubmitting directly to the first OpenFlow flow table in the ingress pipeline, setting the logical ingress port to the peer logical patch port, and using the peer logical patch port\(cqs logical datapath (that represents the logical router)\[char46]
+When the packet reaches \fBOFTABLE_LOG_TO_PHY\fR, the logical egress port is a logical patch port\[char46] \fBovn\-controller\fR implements output to the logical patch port by cloning and resubmitting the packet directly to the first OpenFlow flow table in the ingress pipeline, setting the logical ingress port to the peer logical patch port, and using the peer logical patch port\(cqs logical datapath (that represents the logical router)\[char46]
 .PP
 .PP
-The packet re-enters the ingress pipeline in order to traverse tables 8 to 89 again, this time using the logical datapath representing the logical router\[char46] The processing continues as described in the previous section \fBArchitectural Physical Life Cycle of a Packet\fR\[char46] When the packet reaches table 89, the logical egress port will once again be a logical patch port\[char46] In the same manner as described above, this logical patch port will cause the packet to be resubmitted to OpenFlow tables 8 to 89, this time using the logical datapath representing the logical switch that the destination VM or container is attached to\[char46]
+The packet re-enters the ingress pipeline in order to traverse OpenFlow tables from \fBOFTABLE_LOG_INGRESS_PIPELINE\fR to \fBOFTABLE_LOG_TO_PHY\fR again, this time using the logical datapath representing the logical router\[char46] The processing continues as described in the previous section \fBArchitectural Physical Life Cycle of a
+Packet\fR\[char46] When the packet reaches \fBOFTABLE_LOG_TO_PHY\fR, the logical egress port will once again be a logical patch port\[char46] In the same manner as described above, this logical patch port will cause the packet to be resubmitted to OpenFlow tables from \fBOFTABLE_LOG_INGRESS_PIPELINE\fR to \fBOFTABLE_LOG_TO_PHY\fR, this time using the logical datapath representing the logical switch that the destination VM or container is attached to\[char46]
 .PP
 .PP
-The packet traverses tables 8 to 89 a third and final time\[char46] If the destination VM or container resides on a remote hypervisor, then table 54 will send the packet on a tunnel port from the sender\(cqs hypervisor to the remote hypervisor\[char46] Finally table 89 will output the packet directly to the destination VM or container\[char46]
+The packet traverses from \fBOFTABLE_LOG_INGRESS_PIPELINE\fR to \fBOFTABLE_LOG_TO_PHY\fR a third and final time\[char46] If the destination VM or container resides on a remote hypervisor, then \fBOFTABLE_REMOTE_OUTPUT\fR will send the packet on a tunnel port from the sender\(cqs hypervisor to the remote hypervisor\[char46] Finally \fBOFTABLE_LOG_TO_PHY\fR will output the packet directly to the destination VM or container\[char46]
 .PP
 .PP
 The following sections describe two exceptions, where logical routers and/or logical patch ports are associated with a physical location\[char46]
@@ -660,7 +665,7 @@ The following sections describe two exceptions, where logical routers and/or log
 A \fIgateway router\fR is a logical router that is bound to a physical location\[char46] This includes all of the logical patch ports of the logical router, as well as all of the peer logical patch ports on logical switches\[char46] In the OVN Southbound database, the \fBPort_Binding\fR entries for these logical patch ports use the type \fBl3gateway\fR rather than \fBpatch\fR, in order to distinguish that these logical patch ports are bound to a chassis\[char46]
 .PP
 .PP
-When a hypervisor processes a packet on a logical datapath representing a logical switch, and the logical egress port is a \fBl3gateway\fR port representing connectivity to a gateway router, the packet will match a flow in table 54 that sends the packet on a tunnel port to the chassis where the gateway router resides\[char46] This processing in table 54 is done in the same manner as for VIFs\[char46]
+When a hypervisor processes a packet on a logical datapath representing a logical switch, and the logical egress port is a \fBl3gateway\fR port representing connectivity to a gateway router, the packet will match a flow in \fBOFTABLE_REMOTE_OUTPUT\fR that sends the packet on a tunnel port to the chassis where the gateway router resides\[char46] This processing in \fBOFTABLE_REMOTE_OUTPUT\fR is done in the same manner as for VIFs\[char46]
 .ST "Distributed Gateway Ports"
 .PP
 .PP
@@ -686,16 +691,16 @@ In order to support one-to-many SNAT (aka IP masquerading), where multiple logic
 The details of flow restrictions to specific chassis are described in the \fBovn\-northd\fR documentation\[char46]
 .PP
 .PP
-While most of the physical location dependent aspects of distributed gateway ports can be handled by restricting some flows to specific chassis, one additional mechanism is required\[char46] When a packet leaves the ingress pipeline and the logical egress port is the distributed gateway port, one of two different sets of actions is required at table 54:
+While most of the physical location dependent aspects of distributed gateway ports can be handled by restricting some flows to specific chassis, one additional mechanism is required\[char46] When a packet leaves the ingress pipeline and the logical egress port is the distributed gateway port, one of two different sets of actions is required at \fBOFTABLE_REMOTE_OUTPUT\fR:
 .RS
 .IP \(bu
-If the packet can be handled locally on the sender\(cqs hypervisor (e\[char46]g\[char46] one-to-one NAT traffic), then the packet should just be resubmitted locally to table 56, in the normal manner for distributed logical patch ports\[char46]
+If the packet can be handled locally on the sender\(cqs hypervisor (e\[char46]g\[char46] one-to-one NAT traffic), then the packet should just be resubmitted locally to \fBOFTABLE_LOCAL_OUTPUT\fR, in the normal manner for distributed logical patch ports\[char46]
 .IP \(bu
-However, if the packet needs to be handled on the chassis associated with the distributed gateway port (e\[char46]g\[char46] one-to-many SNAT traffic or non-NAT traffic), then table 54 must send the packet on a tunnel port to that chassis\[char46]
+However, if the packet needs to be handled on the chassis associated with the distributed gateway port (e\[char46]g\[char46] one-to-many SNAT traffic or non-NAT traffic), then \fBOFTABLE_REMOTE_OUTPUT\fR must send the packet on a tunnel port to that chassis\[char46]
 .RE
 .PP
 .PP
-In order to trigger the second set of actions, the \fBchassisredirect\fR type of southbound \fBPort_Binding\fR has been added\[char46] Setting the logical egress port to the type \fBchassisredirect\fR logical port is simply a way to indicate that although the packet is destined for the distributed gateway port, it needs to be redirected to a different chassis\[char46] At table 54, packets with this logical egress port are sent to a specific chassis, in the same way that table 54 directs packets whose logical egress port is a VIF or a type \fBl3gateway\fR port to different chassis\[char46] Once the packet arrives at that chassis, table 56 resets the logical egress port to the value representing the distributed gateway port\[char46] For each distributed gateway port, there is one type \fBchassisredirect\fR port, in addition to the distributed logical patch port representing the distributed gateway port\[char46]
+In order to trigger the second set of actions, the \fBchassisredirect\fR type of southbound \fBPort_Binding\fR has been added\[char46] Setting the logical egress port to the type \fBchassisredirect\fR logical port is simply a way to indicate that although the packet is destined for the distributed gateway port, it needs to be redirected to a different chassis\[char46] At \fBOFTABLE_REMOTE_OUTPUT\fR, packets with this logical egress port are sent to a specific chassis, in the same way that \fBOFTABLE_REMOTE_OUTPUT\fR directs packets whose logical egress port is a VIF or a type \fBl3gateway\fR port to different chassis\[char46] Once the packet arrives at that chassis, \fBOFTABLE_LOCAL_OUTPUT\fR resets the logical egress port to the value representing the distributed gateway port\[char46] For each distributed gateway port, there is one type \fBchassisredirect\fR port, in addition to the distributed logical patch port representing the distributed gateway port\[char46]
 .ST "High Availability for Distributed Gateway Ports"
 .PP
 .PP
@@ -899,7 +904,7 @@ Beside binding to the VTEP gateway chassis, the \fB
 ovn\-controller\-vtep\fR will update the \fItunnel_key\fR column of the VTEP logical switch to the corresponding \fB
 Datapath_Binding\fR table entry\(cqs \fItunnel_key\fR for the bound OVN logical network\[char46]
 .IP 6. .4in
-Next, the \fBovn\-controller\-vtep\fR will keep reacting to the configuration change in the \fBPort_Binding\fR in the \fBOVN_Northbound\fR database, and updating the \fBUcast_Macs_Remote\fR table in the \fBVTEP\fR database\[char46] This allows the VTEP gateway to understand where to forward the unicast traffic coming from the extended external network\[char46]
+Next, the \fBovn\-controller\-vtep\fR will keep reacting to the configuration change in the \fBPort_Binding\fR table in the \fBOVN_Southbound\fR database, and updating the \fBUcast_Macs_Remote\fR table in the \fBVTEP\fR database\[char46] This allows the VTEP gateway to understand where to forward the unicast traffic coming from the extended external network\[char46]
 .IP 7. .4in
 Eventually, the VTEP gateway\(cqs life cycle ends when the administrator unregisters the VTEP gateway from the \fBVTEP\fR database\[char46] The \fBovn\-controller\-vtep\fR will recognize the event and remove all related configurations (\fBChassis\fR table entry and port bindings) in the \fBOVN_Southbound\fR database\[char46]
 .IP 8. .4in
@@ -944,7 +949,10 @@ The tunnel keys for transit switch datapaths and related port bindings must be a
 Once each AZ\(cqs NB and SB databases are populated with interconnection switches and ports, and agreed upon the tunnel keys, data plane communication between the AZs are established\[char46]
 .PP
 .PP
-When VXLAN tunneling is enabled in an OVN cluster, due to the limited range available for VNIs, Interconnection feature is not supported\[char46]
+OVN interconnection supports VXLAN tunneling for transit switches\[char46] To use VXLAN for cross-AZ traffic, the \fBoptions:vxlan_mode\fR option in the interconnection northbound database must be set to \fBtrue\fR\[char46] The option defaults to \fBfalse\fR\[char46] Enabling it requires an IC-SB VXLAN encapsulation to exist\[char46] Transit routers do not support VXLAN tunnel key allocation\[char46]
+.PP
+.PP
+For each transit switch, \fBovn\-ic\fR sets \fBother_config:ic\-vxlan_mode\fR in the availability zone\(cqs northbound \fBLogical_Switch\fR row to either \fBtrue\fR or \fBfalse\fR\[char46] Currently, northd selects the reduced VXLAN range based on the presence of this key rather than its value\[char46] Therefore, the maximum number of non-transit logical switches and logical routers in an availability zone is 1023 whenever an interconnection transit switch exists, even when interconnection VXLAN mode is disabled\[char46]
 .ST "A day in the life of a packet crossing AZs"
 .RS
 .IP 1. .4in
@@ -1013,7 +1021,7 @@ A set of strings containing the names of columns or column:key pairs that may be
 .RE
 .PP
 .PP
-RBAC configuration for the OVN southbound database is maintained by ovn-northd\[char46] With RBAC enabled, modifications are only permitted for the \fBChassis\fR, \fBEncap\fR, \fBPort_Binding\fR, and \fBMAC_Binding\fR tables, and are restricted as follows:
+RBAC configuration for the OVN southbound database is maintained by ovn-northd\[char46] With RBAC enabled, modifications are only permitted for the \fBChassis\fR, \fBChassis_Private\fR, \fBController_Event\fR, \fBEncap\fR, \fBFDB\fR, \fBPort_Binding\fR, \fBMAC_Binding\fR, \fBService_Monitor\fR, \fBIGMP_Group\fR, \fBBFD\fR, and \fBLearned_Route\fR tables, and are restricted as follows:
 .RS
 .TP
 \fBChassis\fR
@@ -1021,7 +1029,21 @@ RBAC configuration for the OVN southbound database is maintained by ovn-northd\[
 .IP
 \fBInsert/Delete\fR: authorized row insertion and deletion are permitted\[char46]
 .IP
-\fBUpdate\fR: The columns \fBnb_cfg\fR, \fBexternal_ids\fR, \fBencaps\fR, and \fBvtep_logical_switches\fR may be modified when authorized\[char46]
+\fBUpdate\fR: The columns \fBnb_cfg\fR, \fBexternal_ids\fR, \fBencaps\fR, \fBvtep_logical_switches\fR, \fBother_config\fR, and \fBtransport_zones\fR may be modified when authorized\[char46]
+.TP
+\fBChassis_Private\fR
+\fBAuthorization\fR: client ID must match the chassis name\[char46]
+.IP
+\fBInsert/Delete\fR: authorized row insertion and deletion are permitted\[char46]
+.IP
+\fBUpdate\fR: The columns \fBnb_cfg\fR, \fBnb_cfg_timestamp\fR, \fBchassis\fR, and \fBexternal_ids\fR may be modified when authorized\[char46]
+.TP
+\fBController_Event\fR
+\fBAuthorization\fR: disabled (all clients are considered authorized)\[char46]
+.IP
+\fBInsert/Delete\fR: authorized row insertion and deletion are permitted\[char46]
+.IP
+\fBUpdate\fR: The columns \fBchassis\fR, \fBevent_info\fR, \fBevent_type\fR, and \fBseq_num\fR may be modified by ovn-controller\[char46]
 .TP
 \fBEncap\fR
 \fBAuthorization\fR: client ID must match the chassis name\[char46]
@@ -1030,26 +1052,54 @@ RBAC configuration for the OVN southbound database is maintained by ovn-northd\[
 .IP
 \fBUpdate\fR: The columns \fBtype\fR, \fBoptions\fR, and \fBip\fR can be modified\[char46]
 .TP
+\fBFDB\fR
+\fBAuthorization\fR: disabled (all clients are considered authorized)\[char46]
+.IP
+\fBInsert/Delete\fR: authorized row insertion and deletion are permitted\[char46]
+.IP
+\fBUpdate\fR: The columns \fBdp_key\fR, \fBmac\fR, \fBport_key\fR, and \fBtimestamp\fR may be modified by ovn-controller\[char46]
+.TP
 \fBPort_Binding\fR
 \fBAuthorization\fR: disabled (all clients are considered authorized\[char46] A future enhancement may add columns (or keys to \fBexternal_ids\fR) in order to control which chassis are allowed to bind each port\[char46]
 .IP
-\fBInsert/Delete\fR: row insertion/deletion are not permitted (ovn-northd maintains rows in this table\[char46]
+\fBInsert/Delete\fR: row insertion and deletion are not permitted (ovn-northd maintains rows in this table)\[char46]
 .IP
-\fBUpdate\fR: Only modifications to the \fBchassis\fR column are permitted\[char46]
+\fBUpdate\fR: Only modifications to the \fBchassis\fR, \fBadditional_chassis\fR, \fBencap\fR, \fBadditional_encap\fR, \fBup\fR, \fBvirtual_parent\fR, and \fBoptions\fR columns are permitted\[char46]
 .TP
 \fBMAC_Binding\fR
 \fBAuthorization\fR: disabled (all clients are considered to be authorized)\[char46]
 .IP
 \fBInsert/Delete\fR: row insertion/deletion are permitted\[char46]
 .IP
-\fBUpdate\fR: The columns \fBlogical_port\fR, \fBip\fR, \fBmac\fR, and \fBdatapath\fR may be modified by ovn-controller\[char46]
+\fBUpdate\fR: The columns \fBlogical_port\fR, \fBip\fR, \fBmac\fR, \fBdatapath\fR, and \fBtimestamp\fR may be modified by ovn-controller\[char46]
 .TP
 \fBIGMP_Group\fR
-\fBAuthorization\fR: disabled (all clients are considered to be authorized)\[char46]
+\fBAuthorization\fR: client ID must match the chassis name\[char46]
 .IP
-\fBInsert/Delete\fR: row insertion/deletion are permitted\[char46]
+\fBInsert/Delete\fR: authorized row insertion and deletion are permitted\[char46]
 .IP
-\fBUpdate\fR: The columns \fBaddress\fR, \fBchassis\fR, \fBdatapath\fR, and \fBports\fR may be modified by ovn-controller\[char46]
+\fBUpdate\fR: The columns \fBaddress\fR, \fBprotocol\fR, \fBchassis\fR, \fBdatapath\fR, and \fBports\fR may be modified by ovn-controller\[char46]
+.TP
+\fBService_Monitor\fR
+\fBAuthorization\fR: client ID must match the chassis name\[char46]
+.IP
+\fBInsert/Delete\fR: row insertion and deletion are not permitted\[char46]
+.IP
+\fBUpdate\fR: Only modifications to the \fBstatus\fR column are permitted\[char46]
+.TP
+\fBBFD\fR
+\fBAuthorization\fR: client ID must match the chassis name\[char46]
+.IP
+\fBInsert/Delete\fR: row insertion and deletion are not permitted\[char46]
+.IP
+\fBUpdate\fR: Only modifications to the \fBstatus\fR column are permitted\[char46]
+.TP
+\fBLearned_Route\fR
+\fBAuthorization\fR: disabled (all clients are considered authorized)\[char46]
+.IP
+\fBInsert/Delete\fR: authorized row insertion and deletion are permitted\[char46]
+.IP
+\fBUpdate\fR: The columns \fBdatapath\fR, \fBlogical_port\fR, \fBip_prefix\fR, \fBnexthop\fR, and \fBexternal_ids\fR may be modified by ovn-controller\[char46]
 .RE
 .PP
 .PP
@@ -1109,13 +1159,11 @@ No logical ingress port identifier\[char46]
 The limited space available for metadata when VXLAN tunnels are enabled in a cluster put the following functional limitations onto features available to users:
 .RS
 .IP \(bu
-The maximum number of networks is reduced to 4096\[char46]
+The maximum number of logical datapaths (networks) is reduced to 4095\[char46]
 .IP \(bu
 The maximum number of ports per network is reduced to 2048\[char46]
 .IP \(bu
 ACLs matching against logical ingress port identifiers are not supported\[char46]
-.IP \(bu
-OVN interconnection feature is not supported\[char46]
 .RE
 .PP
 .PP
@@ -1169,4 +1217,4 @@ line <-> invis "" above from B0.nw + (0,textht) to B2.ne + (0,textht)
 For connecting to gateways, in addition to Geneve, OVN supports VXLAN, because VXLAN-only support is common on top-of-rack (ToR) switches\[char46] Currently, gateways have a feature set that matches the capabilities as defined by the VTEP schema, so fewer bits of metadata are necessary\[char46] In the future, gateways that do not support encapsulations with large amounts of metadata may continue to have a reduced feature set\[char46]
 .PP
 .PP
-\fBVXLAN mode\fR is recommended to be disabled if VXLAN encap at hypervisors is needed only to support HW VTEP L2 Gateway functionality\[char46] See man ovn-nb(5) for table \fBNB_Global\fR column \fBoptions\fR key \fBvxlan_mode\fR for more details\[char46]
+\fBVXLAN mode\fR is recommended to be disabled if VXLAN encap at hypervisors is needed only to support HW VTEP L2 Gateway functionality\[char46] See man ovn-nb(5) for the \fBoptions:vxlan_mode\fR option for more details\[char46]

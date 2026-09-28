@@ -74,7 +74,7 @@ When the daemon is no longer needed, kill it and unset the environment variable,
 .fi
 .PP
 .PP
-When using daemon mode, an alternative to the \fBOVN_SB_DAEMON\fR environment variable is to specify a path for the Unix socket\[char46] When starting the ovn-sbctl daemon, specify the \fB\-u\fR option with a full path to the location of the socket file\[char46] Here is an exmple:
+When using daemon mode, an alternative to the \fBOVN_SB_DAEMON\fR environment variable is to specify a path for the Unix socket\[char46] When starting the ovn-sbctl daemon, specify the \fB\-u\fR option with a full path to the location of the socket file\[char46] Here is an example:
 .PP
 .nf
 \fL
@@ -94,6 +94,17 @@ Then to connect to the running daemon, use the \fB\-u\fR option with the full pa
 .br
 \fL    \fR
 .fi
+.PP
+.PP
+When running in daemon mode, \fBovn\-sbctl\fR uses the \fBsbctl_probe_interval\fR value from the \fBoptions\fR column in the \fBSB_Global\fR table to configure the inactivity probe interval (in milliseconds) for the database connection\[char46] The default is 120000 ms (120 seconds)\[char46] To override, set the value with:
+.PP
+.nf
+\fL
+.br
+\fL      ovn\-sbctl set SB_Global \[char46] options:sbctl_probe_interval=60000
+.br
+\fL    \fR
+.fi
 .ST "Daemon Commands"
 .PP
 .PP
@@ -101,7 +112,7 @@ Daemon mode is internally implemented using the same mechanism used by \fBovn\-a
 .RS
 .TP
 \fBrun\fR [\fIoptions\fR] \fIcommand\fR [\fIarg\fR\[char46]\[char46]\[char46]] [\fB\-\-\fR [\fIoptions\fR] \fIcommand\fR [\fIarg\fR\[char46]\[char46]\[char46]] \[char46]\[char46]\[char46]]
-Instructs the daemon process to run one or more \fBovn\-sbctl\fR commands described above and reply with the results of running these commands\[char46] Accepts the \fB\-\-timeout\fR, \fB\-\-dry\-run\fR, \fB\-\-oneline\fR, and the options described under \fBTable Formatting Options\fR in addition to the the command-specific options\[char46]
+Instructs the daemon process to run one or more \fBovn\-sbctl\fR commands described above and reply with the results of running these commands\[char46] Accepts the \fB\-\-timeout\fR, \fB\-\-dry\-run\fR, \fB\-\-oneline\fR, and the options described under \fBTable Formatting Options\fR in addition to the command-specific options\[char46]
 .TP
 \fBexit\fR
 Causes \fBovn\-sbctl\fR to gracefully terminate\[char46]
@@ -126,7 +137,7 @@ By default, or with \fB\-\-leader\-only\fR, when the database server is a cluste
 \fB\-\-shuffle\-remotes\fR
 .TQ .5in
 \fB\-\-no\-shuffle\-remotes\fR
-By default, or with \fB\-\-shuffle\-remotes\fR, when there are multiple remotes specified in the OVSDB connection string specified by \fB\-\-db\fR or the \fBOVN_SB_DB\fR environment variable, the order of the remotes will be shuffled before the client tries to connect\[char46] The remotes will be shuffled only once to a new order before the first connection attempt\[char46] The following retries, if any, will follow the same new order\[char46] The default behavior is to make sure clients of a clustered database can distribute evenly to all members of the cluster\[char46] With \fB\-\-no\-shuffle\-remotes\fR, \fBovn\-sbctl\fR will use the original order specified in the connection string to connect\[char46] This allows user to specify the preferred order, which is particularly useful for testing\[char46]
+By default, or with \fB\-\-shuffle\-remotes\fR, when there are multiple remotes specified in the OVSDB connection string specified by \fB\-\-db\fR or the \fBOVN_SB_DB\fR environment variable, the order of the remotes will be shuffled before the client tries to connect\[char46] The remotes will be shuffled only once to a new order before the first connection attempt\[char46] The following retries, if any, will follow the same new order\[char46] The default behavior is to make sure clients of a clustered database can distribute evenly to all members of the cluster\[char46] With \fB\-\-no\-shuffle\-remotes\fR, \fBovn\-sbctl\fR will use the original order specified in the connection string to connect\[char46] This allows a user to specify the preferred order, which is particularly useful for testing\[char46]
 .TP
 \fB\-\-no\-syslog\fR
 By default, \fBovn\-sbctl\fR logs its arguments and the details of any changes that it makes to the system log\[char46] This option disables this logging\[char46]
@@ -134,7 +145,7 @@ By default, \fBovn\-sbctl\fR logs its arguments and the details of any changes t
 This option is equivalent to \fB\-\-verbose=sbctl:syslog:warn\fR\[char46]
 .TP
 \fB\-\-oneline\fR
-Modifies the output format so that the output for each command is printed on a single line\[char46] New-line characters that would otherwise separate lines are printed as \efB\e\en\efR, and any instances of \efB\e\e\efR that would otherwise appear in the output are doubled\[char46] Prints a blank line for each command that has no output\[char46] This option does not affect the formatting of output from the \fBlist\fR or \fBfind\fR commands; see \fBTable Formatting Options\fR below\[char46]
+Modifies the output format so that the output for each command is printed on a single line\[char46] New-line characters that would otherwise separate lines are printed as \fB\en\fR, and any instances of \fB\e\fR that would otherwise appear in the output are doubled\[char46] Prints a blank line for each command that has no output\[char46] This option does not affect the formatting of output from the \fBlist\fR or \fBfind\fR commands; see \fBTable Formatting Options\fR below\[char46]
 .TP
 \fB\-\-dry\-run\fR
 Prevents \fBovn\-sbctl\fR from actually modifying the database\[char46]
@@ -178,7 +189,7 @@ By default this daemon will try to self-confine itself to work with files under 
 Causes this program to run as a different user specified in \fIuser\fR\fB:\fR\fIgroup\fR, thus dropping most of the root privileges\[char46] Short forms \fIuser\fR and \fB:\fR\fIgroup\fR are also allowed, with current user or group assumed, respectively\[char46] Only daemons started by the root user accepts this argument\[char46]
 .IP
 On Linux, daemons will be granted \fBCAP_IPC_LOCK\fR and \fBCAP_NET_BIND_SERVICES\fR before dropping root privileges\[char46] Daemons that interact with a datapath, such as \fBovs\-vswitchd\fR, will be granted three additional capabilities, namely \fBCAP_NET_ADMIN\fR, \fBCAP_NET_BROADCAST\fR and \fBCAP_NET_RAW\fR\[char46] The capability change will apply even if the new user is root\[char46]
-.SS "Logging options"
+.SS "Logging Options"
 .TP
 \fB\-v\fR[\fIspec\fR]
 .TQ .5in
@@ -235,6 +246,8 @@ Specify \fImethod\fR as how syslog messages should be sent to syslog daemon\[cha
 .IP
 The default is taken from the \fBOVS_SYSLOG_METHOD\fR environment variable; if it is unset, the default is \fBlibc\fR\[char46]
 .SS "Table Formatting Options"
+.PP
+.PP
 These options control the format of output from the \fBlist\fR and \fBfind\fR commands\[char46]
 .RS
 .TP
@@ -376,10 +389,10 @@ Creates a new chassis named \fIchassis\fR\[char46] \fIencap-type\fR is a comma-s
 .IP
 Without \fB\-\-may\-exist\fR, attempting to create a chassis that exists is an error\[char46] With \fB\-\-may\-exist\fR, this command does nothing if \fIchassis\fR already exists\[char46]
 .TP
-[\fB\-\-if\-exists\fR] \fIchassis-del \fIchassis\fI\fR
-Deletes \fIchassis\fR and its \fIencaps\fR and \fIgateway_ports\fR\[char46]
+[\fB\-\-if\-exists\fR] \fBchassis\-del \fIchassis\fB\fR
+Deletes \fIchassis\fR, its \fIencaps\fR and the associated Chassis_Private record (if it exists)\[char46]
 .IP
-Without \fB\-\-if\-exists\fR, attempting to delete a chassis that does not exist is an error\[char46] With \fB\-\-if\-exists\fR attempting to delete a chassis that does not exist has no effect\[char46]
+Without \fB\-\-if\-exists\fR, attempting to delete a chassis that does not exist is an error\[char46] With \fB\-\-if\-exists\fR, attempting to delete a chassis that does not exist has no effect\[char46]
 .RE
 .SS "Port Binding Commands"
 .PP
@@ -390,12 +403,12 @@ These commands manipulate \fBOVN_Southbound\fR port bindings\[char46]
 [\fB\-\-may\-exist\fR] \fBlsp\-bind \fIlogical-port\fB \fIchassis\fB\fR
 Binds the logical port named \fIlogical-port\fR to \fIchassis\fR\[char46]
 .IP
-Without \fB\-\-may\-exist\fR, attempting to bind a logical port that has already been bound is an error\[char46] With \fB\-\-may\-exist\fR, this command does nothing if \fIlogical-port\fR has already been bound to a chassis\[char46]
+Without \fB\-\-may\-exist\fR, attempting to bind a logical port that has already been bound is an error\[char46] With \fB\-\-may\-exist\fR, this command does nothing if \fIlogical-port\fR has already been bound to the specified chassis\[char46] It is still an error if the port is bound to a different chassis\[char46]
 .TP
 [\fB\-\-if\-exists\fR] \fBlsp\-unbind \fIlogical-port\fB\fR
 Removes the binding of \fIlogical-port\fR\[char46]
 .IP
-Without \fB\-\-if\-exists\fR, attempting to unbind a logical port that is not bound is an error\[char46] With \fB\-\-if\-exists\fR, attempting to unbind logical port that is not bound has no effect\[char46]
+Without \fB\-\-if\-exists\fR, attempting to unbind a logical port that is not bound is an error\[char46] With \fB\-\-if\-exists\fR, attempting to unbind a logical port that is not bound has no effect\[char46]
 .RE
 .SS "Logical Flow Commands"
 .TP
@@ -410,17 +423,23 @@ If \fB\-\-ovs\fR is included, \fBovn\-sbctl\fR attempts to obtain and display th
 .IP
 By default, OpenFlow flow output includes only match and actions\[char46] Add \fB\-\-stats\fR to include all OpenFlow information, such as packet and byte counters, duration, and timeouts\[char46]
 .IP
-If \fB\-\-vflows\fR is included, other southbound database records directly used for generating OpenFlow flows are also listed\[char46] This includes: \fIport-bindings\fR, \fImac-bindings\fR, \fImulticast-groups\fR, \fIchassis\fR\[char46] The \fB\-\-ovs\fR and \fB\-\-stats\fR can also be used in conjunction with \fB\-\-vflows\fR\[char46]
+If \fB\-\-vflows\fR is included, other southbound database records directly used for generating OpenFlow flows are also listed\[char46] This includes: \fIport-bindings\fR, \fImac-bindings\fR, \fImulticast-groups\fR, \fIchassis\fR and \fIload-balancers\fR\[char46] The \fB\-\-ovs\fR and \fB\-\-stats\fR options can also be used in conjunction with \fB\-\-vflows\fR\[char46]
 .TP
-[\fB\-\-uuid\fR] \fBdump\-flows\fR [\fIlogical-datapath\fR]
-Alias for \fBlflow\-list\fR\[char46]
+\fBdump\-flows\fR
+Alias for \fBlflow-list\fR and accepts all the same options\[char46]
 .TP
 \fBcount\-flows\fR [\fIlogical-datapath\fR]
-prints numbers of logical flows per table and per datapath\[char46]
+Prints the number of logical flows per table and per datapath\[char46]
+.SS "IP Multicast Commands"
+.TP
+\fBip\-multicast\-flush\fR [\fIswitch\fR]
+Flushes the learned IP multicast groups for the logical switch identified by \fIswitch\fR, which may be given as a UUID or as a datapath name\[char46] If \fIswitch\fR is not specified, flushes learned multicast groups for all logical switches\[char46]
+.IP
+This works by incrementing the \fBseq_no\fR column of the \fBIP_Multicast\fR record for the datapath\[char46] \fBovn\-controller\fR monitors this value and flushes its locally learned multicast groups when it detects a change\[char46]
 .SS "Remote Connectivity Commands"
 .PP
 .PP
-These commands manipulate the \fBconnections\fR column in the \fBSB_Global\fR table and rows in the \fBConnection\fR table\[char46] When \fBovsdb\-server\fR is configured to use the \fBconnections\fR column for OVSDB connections, this allows the administrator to use \efBovn\e-sbctl\efR to configure database connections\[char46]
+These commands manipulate the \fBconnections\fR column in the \fBSB_Global\fR table and rows in the \fBConnection\fR table\[char46] When \fBovsdb\-server\fR is configured to use the \fBconnections\fR column for OVSDB connections, this allows the administrator to use \fBovn\-sbctl\fR to configure database connections\[char46]
 .RS
 .TP
 \fBget\-connection\fR
@@ -430,7 +449,20 @@ Prints the configured connection(s)\[char46]
 Deletes the configured connection(s)\[char46]
 .TP
 [\fB\-\-inactivity\-probe=\fR\fImsecs\fR] \fBset\-connection\fR \fItarget\fR\[char46]\[char46]\[char46]
-Sets the configured manager target or targets\[char46] Use \fB\-\-inactivity\-probe=\fR\fImsecs\fR to override the default idle connection inactivity probe time\[char46] Use 0 to disable inactivity probes\[char46]
+Sets the configured connection target or targets\[char46] Use \fB\-\-inactivity\-probe=\fR\fImsecs\fR to override the default idle connection inactivity probe time\[char46] Use 0 to disable inactivity probes\[char46]
+.IP
+Each \fItarget\fR may be preceded by zero or more of the following modifiers, which apply to all subsequent targets until changed:
+.RS
+.TP
+\fBread\-only\fR
+Sets the \fBread_only\fR column for subsequent connections to \fBtrue\fR, restricting them to read-only transactions\[char46]
+.TP
+\fBread\-write\fR
+Sets the \fBread_only\fR column for subsequent connections to \fBfalse\fR, allowing them to modify the database\[char46] This is the default\[char46]
+.TP
+\fBrole=\fR\fIname\fR
+Sets the \fBrole\fR column for subsequent connections to \fIname\fR\[char46] The default is the empty string\[char46]
+.RE
 .RE
 .SS "SSL/TLS Configuration Commands"
 .PP

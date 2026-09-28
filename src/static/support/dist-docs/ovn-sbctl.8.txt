@@ -65,7 +65,7 @@ DAEMON MODE
        When using daemon mode, an alternative to the OVN_SB_DAEMON environment
        variable  is  to  specify a path for the Unix socket. When starting the
        ovn-sbctl daemon, specify the -u option with a full path to  the  loca‐
-       tion of the socket file. Here is an exmple:
+       tion of the socket file. Here is an example:
 
              ovn-sbctl --detach -u /tmp/mysock.ctl
 
@@ -74,6 +74,15 @@ DAEMON MODE
        path to the socket created when the daemon was started:
 
              ovn-sbctl -u /tmp/mysock.ctl show
+
+
+       When running in daemon mode, ovn-sbctl  uses  the  sbctl_probe_interval
+       value  from  the options column in the SB_Global table to configure the
+       inactivity probe interval (in milliseconds) for  the  database  connec‐
+       tion.  The  default  is  120000  ms (120 seconds). To override, set the
+       value with:
+
+             ovn-sbctl set SB_Global . options:sbctl_probe_interval=60000
 
 
      Daemon Commands
@@ -88,98 +97,97 @@ DAEMON MODE
                      commands described above and reply with  the  results  of
                      running these commands. Accepts the --timeout, --dry-run,
                      --oneline,  and the options described under Table Format�‐
-                     ting Options in addition to the the command-specific  op‐
-                     tions.
+                     ting Options in addition to the command-specific options.
 
               exit   Causes ovn-sbctl to gracefully terminate.
 
 OPTIONS
-       The  options  listed below affect the behavior of ovn-sbctl as a whole.
+       The options listed below affect the behavior of ovn-sbctl as  a  whole.
        Some individual commands also accept their own options, which are given
-       just before the command name. If the first command on the command  line
-       has  options,  then those options must be separated from the global op‐
+       just  before the command name. If the first command on the command line
+       has options, then those options must be separated from the  global  op‐
        tions by --.
 
-       ovn-sbctl also accepts options from the  OVN_SBCTL_OPTIONS  environment
-       variable,  in  the same format as on the command line. Options from the
+       ovn-sbctl  also  accepts options from the OVN_SBCTL_OPTIONS environment
+       variable, in the same format as on the command line. Options  from  the
        command line override those in the environment.
 
               --db database
-                     The OVSDB database remote to contact.  If  the  OVN_SB_DB
+                     The  OVSDB  database  remote to contact. If the OVN_SB_DB
                      environment variable is set, its value is used as the de‐
                      fault. Otherwise, the default is unix:/ovnsb_db.sock, but
-                     this  default is unlikely to be useful outside of single-
+                     this default is unlikely to be useful outside of  single-
                      machine OVN test environments.
 
               --leader-only
               --no-leader-only
                    By default, or with --leader-only, when the database server
                    is a clustered database, ovn-sbctl will avoid servers other
-                   than the cluster leader. This ensures that  any  data  that
+                   than  the  cluster  leader. This ensures that any data that
                    ovn-sbctl   reads   and   reports   is   up-to-date.   With
-                   --no-leader-only, ovn-sbctl will  use  any  server  in  the
+                   --no-leader-only,  ovn-sbctl  will  use  any  server in the
                    cluster, which means that for read-only transactions it can
-                   report  and act on stale data (transactions that modify the
+                   report and act on stale data (transactions that modify  the
                    database are always serialized even with --no-leader-only).
-                   Refer to Understanding Cluster Consistency in ovsdb(7)  for
+                   Refer  to Understanding Cluster Consistency in ovsdb(7) for
                    more information.
 
               --shuffle-remotes
               --no-shuffle-remotes
-                   By  default, or with --shuffle-remotes, when there are mul‐
-                   tiple remotes specified  in  the  OVSDB  connection  string
-                   specified  by  --db  or the OVN_SB_DB environment variable,
+                   By default, or with --shuffle-remotes, when there are  mul‐
+                   tiple  remotes  specified  in  the  OVSDB connection string
+                   specified by --db or the  OVN_SB_DB  environment  variable,
                    the order of the remotes will be shuffled before the client
                    tries to connect. The remotes will be shuffled only once to
-                   a new order before the first connection attempt.  The  fol‐
+                   a  new  order before the first connection attempt. The fol‐
                    lowing retries, if any, will follow the same new order. The
-                   default  behavior  is  to  make sure clients of a clustered
-                   database can distribute evenly to all members of the  clus‐
-                   ter.  With  --no-shuffle-remotes,  ovn-sbctl  will  use the
-                   original order specified in the connection string  to  con‐
-                   nect.  This  allows  user  to  specify the preferred order,
+                   default behavior is to make sure  clients  of  a  clustered
+                   database  can distribute evenly to all members of the clus‐
+                   ter. With  --no-shuffle-remotes,  ovn-sbctl  will  use  the
+                   original  order  specified in the connection string to con‐
+                   nect. This allows a user to specify  the  preferred  order,
                    which is particularly useful for testing.
 
               --no-syslog
                    By default, ovn-sbctl logs its arguments and the details of
-                   any changes that it makes to the system  log.  This  option
+                   any  changes  that  it makes to the system log. This option
                    disables this logging.
 
                    This option is equivalent to --verbose=sbctl:syslog:warn.
 
               --oneline
                    Modifies the output format so that the output for each com‐
-                   mand  is printed on a single line. New-line characters that
-                   would otherwise separate lines are  printed  as  \fB\\n\fR,
-                   and  any  instances of \fB\\\fR that would otherwise appear
-                   in the output are doubled. Prints a  blank  line  for  each
-                   command that has no output. This option does not affect the
-                   formatting  of  output  from the list or find commands; see
-                   Table Formatting Options below.
+                   mand is printed on a single line. New-line characters  that
+                   would  otherwise  separate lines are printed as \n, and any
+                   instances of \ that would otherwise appear  in  the  output
+                   are  doubled. Prints a blank line for each command that has
+                   no output. This option does not affect  the  formatting  of
+                   output from the list or find commands; see Table Formatting
+                   Options below.
 
               --dry-run
                    Prevents ovn-sbctl from actually modifying the database.
 
               -t secs
               --timeout=secs
-                   By default, or with a secs of 0,  ovn-sbctl  waits  forever
-                   for  a  response from the database. This option limits run‐
+                   By  default,  or  with a secs of 0, ovn-sbctl waits forever
+                   for a response from the database. This option  limits  run‐
                    time to approximately secs seconds. If the timeout expires,
                    ovn-sbctl will exit with a SIGALRM signal. (A timeout would
-                   normally happen only if the database cannot  be  contacted,
+                   normally  happen  only if the database cannot be contacted,
                    or if the system is overloaded.)
 
    Daemon Options
        --pidfile[=pidfile]
               Causes a file (by default, program.pid) to be created indicating
-              the  PID  of the running process. If the pidfile argument is not
+              the PID of the running process. If the pidfile argument  is  not
               specified, or if it does not begin with /, then it is created in
               .
 
               If --pidfile is not specified, no pidfile is created.
 
        --overwrite-pidfile
-              By default, when --pidfile is specified and the  specified  pid‐
+              By  default,  when --pidfile is specified and the specified pid‐
               file already exists and is locked by a running process, the dae‐
               mon refuses to start. Specify --overwrite-pidfile to cause it to
               instead overwrite the pidfile.
@@ -187,33 +195,33 @@ OPTIONS
               When --pidfile is not specified, this option has no effect.
 
        --detach
-              Runs  this  program  as a background process. The process forks,
-              and in the child it starts a new session,  closes  the  standard
+              Runs this program as a background process.  The  process  forks,
+              and  in  the  child it starts a new session, closes the standard
               file descriptors (which has the side effect of disabling logging
-              to  the  console), and changes its current directory to the root
-              (unless --no-chdir is specified). After the child completes  its
+              to the console), and changes its current directory to  the  root
+              (unless  --no-chdir is specified). After the child completes its
               initialization, the parent exits.
 
        --monitor
-              Creates  an  additional  process  to monitor this program. If it
-              dies due to a signal that indicates a programming  error  (SIGA�‐
+              Creates an additional process to monitor  this  program.  If  it
+              dies  due  to a signal that indicates a programming error (SIGA�‐
               BRT, SIGALRM, SIGBUS, SIGFPE, SIGILL, SIGPIPE, SIGSEGV, SIGXCPU,
               or SIGXFSZ) then the monitor process starts a new copy of it. If
               the daemon dies or exits for another reason, the monitor process
               exits.
 
-              This  option  is  normally used with --detach, but it also func‐
+              This option is normally used with --detach, but  it  also  func‐
               tions without it.
 
        --no-chdir
-              By default, when --detach is specified, the daemon  changes  its
-              current  working  directory  to  the root directory after it de‐
-              taches. Otherwise, invoking the daemon from a carelessly  chosen
-              directory  would  prevent  the administrator from unmounting the
+              By  default,  when --detach is specified, the daemon changes its
+              current working directory to the root  directory  after  it  de‐
+              taches.  Otherwise, invoking the daemon from a carelessly chosen
+              directory would prevent the administrator  from  unmounting  the
               file system that holds that directory.
 
-              Specifying --no-chdir suppresses this behavior,  preventing  the
-              daemon  from changing its current working directory. This may be
+              Specifying  --no-chdir  suppresses this behavior, preventing the
+              daemon from changing its current working directory. This may  be
               useful for collecting core files, since it is common behavior to
               write core dumps into the current working directory and the root
               directory is not a good directory to use.
@@ -221,58 +229,58 @@ OPTIONS
               This option has no effect when --detach is not specified.
 
        --no-self-confinement
-              By default this daemon will try to self-confine itself  to  work
-              with  files  under  well-known  directories  determined at build
-              time. It is better to stick with this default behavior  and  not
-              to  use  this  flag  unless some other Access Control is used to
-              confine daemon. Note that in contrast to  other  access  control
-              implementations  that  are  typically enforced from kernel-space
-              (e.g. DAC or MAC), self-confinement is imposed  from  the  user-
+              By  default  this daemon will try to self-confine itself to work
+              with files under  well-known  directories  determined  at  build
+              time.  It  is better to stick with this default behavior and not
+              to use this flag unless some other Access  Control  is  used  to
+              confine  daemon.  Note  that in contrast to other access control
+              implementations that are typically  enforced  from  kernel-space
+              (e.g.  DAC  or  MAC), self-confinement is imposed from the user-
               space daemon itself and hence should not be considered as a full
-              confinement  strategy,  but instead should be viewed as an addi‐
+              confinement strategy, but instead should be viewed as  an  addi‐
               tional layer of security.
 
        --user=user:group
-              Causes this program to run as  a  different  user  specified  in
-              user:group,  thus  dropping  most  of the root privileges. Short
-              forms user and :group are also allowed,  with  current  user  or
-              group  assumed,  respectively.  Only daemons started by the root
+              Causes  this  program  to  run  as a different user specified in
+              user:group, thus dropping most of  the  root  privileges.  Short
+              forms  user  and  :group  are also allowed, with current user or
+              group assumed, respectively. Only daemons started  by  the  root
               user accepts this argument.
 
               On   Linux,   daemons   will   be   granted   CAP_IPC_LOCK   and
-              CAP_NET_BIND_SERVICES  before  dropping root privileges. Daemons
-              that interact with a datapath, such  as  ovs-vswitchd,  will  be
-              granted  three  additional  capabilities,  namely CAP_NET_ADMIN,
-              CAP_NET_BROADCAST and CAP_NET_RAW. The  capability  change  will
+              CAP_NET_BIND_SERVICES before dropping root  privileges.  Daemons
+              that  interact  with  a  datapath, such as ovs-vswitchd, will be
+              granted three  additional  capabilities,  namely  CAP_NET_ADMIN,
+              CAP_NET_BROADCAST  and  CAP_NET_RAW.  The capability change will
               apply even if the new user is root.
 
-   Logging options
+   Logging Options
        -v[spec]
        --verbose=[spec]
-            Sets  logging  levels.  Without  any  spec, sets the log level for
-            every module and destination to dbg. Otherwise, spec is a list  of
+            Sets logging levels. Without any spec,  sets  the  log  level  for
+            every  module and destination to dbg. Otherwise, spec is a list of
             words separated by spaces or commas or colons, up to one from each
             category below:
 
-            •      A  valid module name, as displayed by the vlog/list command
+            •      A valid module name, as displayed by the vlog/list  command
                    on ovs-appctl(8), limits the log level change to the speci‐
                    fied module.
 
-            •      syslog, console, or file, to limit the log level change  to
-                   only  to  the system log, to the console, or to a file, re‐
-                   spectively. (If --detach is specified,  the  daemon  closes
-                   its  standard  file  descriptors, so logging to the console
+            •      syslog,  console, or file, to limit the log level change to
+                   only to the system log, to the console, or to a  file,  re‐
+                   spectively.  (If  --detach  is specified, the daemon closes
+                   its standard file descriptors, so logging  to  the  console
                    will have no effect.)
 
-            •      off, emer, err, warn, info, or  dbg,  to  control  the  log
-                   level.  Messages  of  the  given severity or higher will be
-                   logged, and messages of lower  severity  will  be  filtered
-                   out.  off filters out all messages. See ovs-appctl(8) for a
+            •      off,  emer,  err,  warn,  info,  or dbg, to control the log
+                   level. Messages of the given severity  or  higher  will  be
+                   logged,  and  messages  of  lower severity will be filtered
+                   out. off filters out all messages. See ovs-appctl(8) for  a
                    definition of each log level.
 
             Case is not significant within spec.
 
-            Regardless of the log levels set for file, logging to a file  will
+            Regardless  of the log levels set for file, logging to a file will
             not take place unless --log-file is also specified (see below).
 
             For compatibility with older versions of OVS, any is accepted as a
@@ -280,135 +288,135 @@ OPTIONS
 
        -v
        --verbose
-            Sets  the  maximum  logging  verbosity level, equivalent to --ver�‐
+            Sets the maximum logging verbosity  level,  equivalent  to  --ver�‐
             bose=dbg.
 
        -vPATTERN:destination:pattern
        --verbose=PATTERN:destination:pattern
-            Sets the log pattern for destination to pattern. Refer to  ovs-ap�‐
+            Sets  the log pattern for destination to pattern. Refer to ovs-ap�‐
             pctl(8) for a description of the valid syntax for pattern.
 
        -vFACILITY:facility
        --verbose=FACILITY:facility
-            Sets  the RFC5424 facility of the log message. facility can be one
+            Sets the RFC5424 facility of the log message. facility can be  one
             of kern, user, mail, daemon, auth, syslog, lpr, news, uucp, clock,
-            ftp, ntp, audit, alert, clock2, local0,  local1,  local2,  local3,
+            ftp,  ntp,  audit,  alert, clock2, local0, local1, local2, local3,
             local4, local5, local6 or local7. If this option is not specified,
-            daemon  is used as the default for the local system syslog and lo�‐
-            cal0 is used while sending a message to the  target  provided  via
+            daemon is used as the default for the local system syslog and  lo�‐
+            cal0  is  used  while sending a message to the target provided via
             the --syslog-target option.
 
        --log-file[=file]
-            Enables  logging  to a file. If file is specified, then it is used
+            Enables logging to a file. If file is specified, then it  is  used
             as the exact name for the log file. The default log file name used
             if file is omitted is /usr/local/var/log/ovn/program.log.
 
        --syslog-target=host:port
-            Send syslog messages to UDP port on host, in addition to the  sys‐
-            tem  syslog.  The host must be a numerical IP address, not a host‐
+            Send  syslog messages to UDP port on host, in addition to the sys‐
+            tem syslog. The host must be a numerical IP address, not  a  host‐
             name.
 
        --syslog-method=method
-            Specify method as how syslog messages should  be  sent  to  syslog
+            Specify  method  as  how  syslog messages should be sent to syslog
             daemon. The following forms are supported:
 
-            •      libc,  to use the libc syslog() function. Downside of using
-                   this options is that libc adds fixed prefix to  every  mes‐
-                   sage  before  it is actually sent to the syslog daemon over
+            •      libc, to use the libc syslog() function. Downside of  using
+                   this  options  is that libc adds fixed prefix to every mes‐
+                   sage before it is actually sent to the syslog  daemon  over
                    /dev/log UNIX domain socket.
 
             •      unix:file, to use a UNIX domain socket directly. It is pos‐
                    sible to specify arbitrary message format with this option.
-                   However, rsyslogd 8.9 and older  versions  use  hard  coded
-                   parser  function anyway that limits UNIX domain socket use.
-                   If you want to use  arbitrary  message  format  with  older
-                   rsyslogd  versions, then use UDP socket to localhost IP ad‐
+                   However,  rsyslogd  8.9  and  older versions use hard coded
+                   parser function anyway that limits UNIX domain socket  use.
+                   If  you  want  to  use  arbitrary message format with older
+                   rsyslogd versions, then use UDP socket to localhost IP  ad‐
                    dress instead.
 
-            •      udp:ip:port, to use a UDP socket. With this  method  it  is
-                   possible  to  use  arbitrary message format also with older
-                   rsyslogd. When sending syslog messages over UDP socket  ex‐
+            •      udp:ip:port,  to  use  a UDP socket. With this method it is
+                   possible to use arbitrary message format  also  with  older
+                   rsyslogd.  When sending syslog messages over UDP socket ex‐
                    tra precaution needs to be taken into account, for example,
                    syslog daemon needs to be configured to listen on the spec‐
-                   ified  UDP  port, accidental iptables rules could be inter‐
-                   fering with local syslog traffic and there are  some  secu‐
-                   rity  considerations  that apply to UDP sockets, but do not
+                   ified UDP port, accidental iptables rules could  be  inter‐
+                   fering  with  local syslog traffic and there are some secu‐
+                   rity considerations that apply to UDP sockets, but  do  not
                    apply to UNIX domain sockets.
 
             •      null, to discard all messages logged to syslog.
 
-            The default is taken from the OVS_SYSLOG_METHOD environment  vari‐
+            The  default is taken from the OVS_SYSLOG_METHOD environment vari‐
             able; if it is unset, the default is libc.
 
    Table Formatting Options
-       These  options control the format of output from the list and find com‐
+       These options control the format of output from the list and find  com‐
        mands.
 
               -f format
               --format=format
-                   Sets the type of table formatting. The following  types  of
+                   Sets  the  type of table formatting. The following types of
                    format are available:
 
                    table  2-D text tables with aligned columns.
 
                    list (default)
-                          A  list  with one column per line and rows separated
+                          A list with one column per line and  rows  separated
                           by a blank line.
 
                    html   HTML tables.
 
                    csv    Comma-separated values as defined in RFC 4180.
 
-                   json   JSON format as defined in RFC 4627. The output is  a
-                          sequence  of JSON objects, each of which corresponds
-                          to one table. Each JSON  object  has  the  following
+                   json   JSON  format as defined in RFC 4627. The output is a
+                          sequence of JSON objects, each of which  corresponds
+                          to  one  table.  Each  JSON object has the following
                           members with the noted values:
 
                           caption
-                                 The  table’s  caption. This member is omitted
+                                 The table’s caption. This member  is  omitted
                                  if the table has no caption.
 
                           headings
-                                 An array with one element per  table  column.
-                                 Each  array  element  is  a string giving the
+                                 An  array  with one element per table column.
+                                 Each array element is  a  string  giving  the
                                  corresponding column’s heading.
 
                           data   An array with one element per table row. Each
                                  element is also an array with one element per
-                                 table column. The elements  of  this  second-
+                                 table  column.  The  elements of this second-
                                  level array are the cells that constitute the
-                                 table.  Cells  that  represent  OVSDB data or
-                                 data types are expressed in  the  format  de‐
-                                 scribed  in  the  OVSDB  specification; other
+                                 table. Cells that  represent  OVSDB  data  or
+                                 data  types  are  expressed in the format de‐
+                                 scribed in  the  OVSDB  specification;  other
                                  cells are simply expressed as text strings.
 
               -d format
               --data=format
-                   Sets the formatting for cells within output  tables  unless
+                   Sets  the  formatting for cells within output tables unless
                    the table format is set to json, in which case json format‐
-                   ting  is  always  used when formatting cells. The following
+                   ting is always used when formatting  cells.  The  following
                    types of format are available:
 
                    string (default)
-                          The simple format described in the  Database  Values
+                          The  simple  format described in the Database Values
                           section of ovs-vsctl(8).
 
-                   bare   The  simple format with punctuation stripped off: []
-                          and {} are omitted  around  sets,  maps,  and  empty
-                          columns,  items within sets and maps are space-sepa‐
+                   bare   The simple format with punctuation stripped off:  []
+                          and  {}  are  omitted  around  sets, maps, and empty
+                          columns, items within sets and maps are  space-sepa‐
                           rated, and strings are never quoted. This format may
                           be easier for scripts to parse.
 
                    json   The RFC 4627 JSON format as described above.
 
               --no-headings
-                   This option suppresses the heading row that  otherwise  ap‐
+                   This  option  suppresses the heading row that otherwise ap‐
                    pears in the first row of table output.
 
               --pretty
-                   By  default, JSON in output is printed as compactly as pos‐
+                   By default, JSON in output is printed as compactly as  pos‐
                    sible. This option causes JSON in output to be printed in a
-                   more readable fashion. Members of objects and  elements  of
+                   more  readable  fashion. Members of objects and elements of
                    arrays are printed one per line, with indentation.
 
                    This option does not affect JSON in tables, which is always
@@ -418,63 +426,63 @@ OPTIONS
                    Equivalent to --format=list --data=bare --no-headings.
 
    PKI Options
-       PKI  configuration is required to use SSL/TLS for the connection to the
+       PKI configuration is required to use SSL/TLS for the connection to  the
        database.
 
               -p privkey.pem
               --private-key=privkey.pem
-                   Specifies a PEM file containing the  private  key  used  as
+                   Specifies  a  PEM  file  containing the private key used as
                    identity for outgoing SSL/TLS connections.
 
               -c cert.pem
               --certificate=cert.pem
-                   Specifies  a  PEM file containing a certificate that certi‐
+                   Specifies a PEM file containing a certificate  that  certi‐
                    fies the private key specified on -p or --private-key to be
                    trustworthy. The certificate must be signed by the certifi‐
-                   cate authority (CA) that the peer  in  SSL/TLS  connections
+                   cate  authority  (CA)  that the peer in SSL/TLS connections
                    will use to verify it.
 
               -C cacert.pem
               --ca-cert=cacert.pem
                    Specifies a PEM file containing the CA certificate for ver‐
-                   ifying  certificates  presented  to this program by SSL/TLS
+                   ifying certificates presented to this  program  by  SSL/TLS
                    peers. (This may be the same certificate that SSL/TLS peers
                    use to verify the certificate specified on -c or --certifi�‐
-                   cate, or it may be a different one, depending  on  the  PKI
+                   cate,  or  it  may be a different one, depending on the PKI
                    design in use.)
 
               -C none
               --ca-cert=none
-                   Disables  verification of certificates presented by SSL/TLS
-                   peers. This introduces a security risk,  because  it  means
-                   that  certificates  cannot be verified to be those of known
+                   Disables verification of certificates presented by  SSL/TLS
+                   peers.  This  introduces  a security risk, because it means
+                   that certificates cannot be verified to be those  of  known
                    trusted hosts.
 
               --ssl-server-name=servername
-                   Specifies the server name to use for TLS Server Name  Indi‐
-                   cation  (SNI). By default, the hostname from the connection
-                   string is used for SNI. This option allows  overriding  the
+                   Specifies  the server name to use for TLS Server Name Indi‐
+                   cation (SNI). By default, the hostname from the  connection
+                   string  is  used for SNI. This option allows overriding the
                    SNI hostname, which is useful when connecting through prox‐
                    ies or service meshes where the connection endpoint differs
                    from the intended server name.
 
               --bootstrap-ca-cert=cacert.pem
-                     When  cacert.pem  exists, this option has the same effect
-                     as -C or --ca-cert. If it does not exist, then  the  exe‐
-                     cutable  will  attempt  to obtain the CA certificate from
+                     When cacert.pem exists, this option has the  same  effect
+                     as  -C  or --ca-cert. If it does not exist, then the exe‐
+                     cutable will attempt to obtain the  CA  certificate  from
                      the SSL/TLS peer on its first SSL/TLS connection and save
-                     it to the named PEM file. If it is  successful,  it  will
-                     immediately  drop  the connection and reconnect, and from
-                     then on all SSL/TLS connections must be authenticated  by
+                     it  to  the  named PEM file. If it is successful, it will
+                     immediately drop the connection and reconnect,  and  from
+                     then  on all SSL/TLS connections must be authenticated by
                      a certificate signed by the CA certificate thus obtained.
 
-                     This  option  exposes the SSL/TLS connection to a man-in-
-                     the-middle attack obtaining the initial  CA  certificate,
+                     This option exposes the SSL/TLS connection to  a  man-in-
+                     the-middle  attack  obtaining the initial CA certificate,
                      but it may be useful for bootstrapping.
 
-                     This  option is only useful if the SSL/TLS peer sends its
-                     CA certificate as part of the SSL/TLS certificate  chain.
-                     SSL/TLS  protocols  do not require the server to send the
+                     This option is only useful if the SSL/TLS peer sends  its
+                     CA  certificate as part of the SSL/TLS certificate chain.
+                     SSL/TLS protocols do not require the server to  send  the
                      CA certificate.
 
                      This option is mutually exclusive with -C and --ca-cert.
@@ -498,12 +506,12 @@ COMMANDS
                      has already been initialized, this command has no effect.
 
               [--filter=filter-rule[,filter-rule]...] show
-                     Prints a brief overview  of  the  database  contents.  If
-                     --filter  is  specified,  output is filtered according to
-                     the rules. Each filter-rule has the form  table-name(fil‐
-                     ter[|filter]...).  If table-name is omitted, filtering is
-                     applied to the Chassis table by default. A row  is  shown
-                     only  if its printed representation (including all refer‐
+                     Prints  a  brief  overview  of  the database contents. If
+                     --filter is specified, output is  filtered  according  to
+                     the  rules. Each filter-rule has the form table-name(fil‐
+                     ter[|filter]...). If table-name is omitted, filtering  is
+                     applied  to  the Chassis table by default. A row is shown
+                     only if its printed representation (including all  refer‐
                      enced rows) contains at least one of the specified filter
                      substrings.
 
@@ -511,20 +519,21 @@ COMMANDS
        These commands manipulate OVN_Southbound chassis.
 
               [--may-exist] chassis-add chassis encap-type encap-ip
-                     Creates a new chassis  named  chassis.  encap-type  is  a
-                     comma-separated  list  of  tunnel types. The chassis will
-                     have one encap entry for each specified tunnel type  with
+                     Creates  a  new  chassis  named  chassis. encap-type is a
+                     comma-separated list of tunnel types.  The  chassis  will
+                     have  one encap entry for each specified tunnel type with
                      encap-ip as the destination IP for each.
 
-                     Without  --may-exist, attempting to create a chassis that
-                     exists is an error. With --may-exist, this  command  does
+                     Without --may-exist, attempting to create a chassis  that
+                     exists  is  an error. With --may-exist, this command does
                      nothing if chassis already exists.
 
               [--if-exists] chassis-del chassis
-                     Deletes chassis and its encaps and gateway_ports.
+                     Deletes chassis, its  encaps  and  the  associated  Chas‐
+                     sis_Private record (if it exists).
 
                      Without  --if-exists, attempting to delete a chassis that
-                     does not exist is an error. With  --if-exists  attempting
+                     does not exist is an error. With --if-exists,  attempting
                      to delete a chassis that does not exist has no effect.
 
    Port Binding Commands
@@ -536,66 +545,79 @@ COMMANDS
                      Without  --may-exist,  attempting  to bind a logical port
                      that has already been bound is an error.  With  --may-ex�‐
                      ist,  this  command  does nothing if logical-port has al‐
-                     ready been bound to a chassis.
+                     ready been bound to the specified chassis. It is still an
+                     error if the port is bound to a different chassis.
 
               [--if-exists] lsp-unbind logical-port
                      Removes the binding of logical-port.
 
                      Without --if-exists, attempting to unbind a logical  port
                      that is not bound is an error. With --if-exists, attempt‐
-                     ing  to  unbind logical port that is not bound has no ef‐
+                     ing to unbind a logical port that is not bound has no ef‐
                      fect.
 
    Logical Flow Commands
        [--uuid] [--ovs[=remote]] [--stats] [--vflows] lflow-list [logical-
        datapath] [lflow...]
-              List logical flows. If logical-datapath is specified, only  list
-              flows  for  that  logical  datapath. The logical-datapath may be
-              given as a UUID or as a datapath name  (reporting  an  error  if
+              List  logical flows. If logical-datapath is specified, only list
+              flows for that logical datapath.  The  logical-datapath  may  be
+              given  as  a  UUID  or as a datapath name (reporting an error if
               multiple datapaths have the same name).
 
-              If  at least one lflow is given, only matching logical flows, if
-              any, are listed. Each lflow may be specified as a  UUID  or  the
-              first  few characters of a UUID, optionally prefixed by 0x. (Be‐
-              cause ovn-controller sets OpenFlow flow cookies to the first  32
-              bits  of  the  corresponding  logical flow’s UUID, this makes it
-              easy to look up the logical flow  that  generated  a  particular
+              If at least one lflow is given, only matching logical flows,  if
+              any,  are  listed.  Each lflow may be specified as a UUID or the
+              first few characters of a UUID, optionally prefixed by 0x.  (Be‐
+              cause  ovn-controller sets OpenFlow flow cookies to the first 32
+              bits of the corresponding logical flow’s  UUID,  this  makes  it
+              easy  to  look  up  the logical flow that generated a particular
               OpenFlow flow.)
 
               If --uuid is specified, the output includes the first 32 bits of
               each logical flow’s UUID. This makes it easier to find the Open‐
               Flow flows that correspond to a given logical flow.
 
-              If  --ovs  is included, ovn-sbctl attempts to obtain and display
-              the OpenFlow flows that correspond to each OVN logical flow.  To
-              do    so,    ovn-sbctl   connects   to   remote   (by   default,
+              If --ovs is included, ovn-sbctl attempts to obtain  and  display
+              the  OpenFlow flows that correspond to each OVN logical flow. To
+              do   so,   ovn-sbctl   connects   to   remote    (by    default,
               unix:/br-int.mgmt) over OpenFlow and retrieves the flows. If re‐
-              mote is specified, it must  be  an  active  OpenFlow  connection
-              method  described  in ovsdb(7). Please see the discussion of the
-              similar --ovs option in ovn-trace(8) for more information  about
+              mote  is  specified,  it  must  be an active OpenFlow connection
+              method described in ovsdb(7). Please see the discussion  of  the
+              similar  --ovs option in ovn-trace(8) for more information about
               the OpenFlow flow output.
 
-              By  default,  OpenFlow  flow  output includes only match and ac‐
-              tions. Add --stats to include all OpenFlow information, such  as
+              By default, OpenFlow flow output includes  only  match  and  ac‐
+              tions.  Add --stats to include all OpenFlow information, such as
               packet and byte counters, duration, and timeouts.
 
-              If  --vflows  is included, other southbound database records di‐
-              rectly used for generating OpenFlow flows are also listed.  This
-              includes:  port-bindings,  mac-bindings, multicast-groups, chas‐
-              sis. The --ovs and --stats can also be used in conjunction  with
-              --vflows.
+              If --vflows is included, other southbound database  records  di‐
+              rectly  used for generating OpenFlow flows are also listed. This
+              includes: port-bindings, mac-bindings, multicast-groups, chassis
+              and load-balancers. The --ovs and --stats options  can  also  be
+              used in conjunction with --vflows.
 
-       [--uuid] dump-flows [logical-datapath]
-              Alias for lflow-list.
+       dump-flows
+              Alias for lflow-list and accepts all the same options.
 
        count-flows [logical-datapath]
-              prints numbers of logical flows per table and per datapath.
+              Prints the number of logical flows per table and per datapath.
+
+   IP Multicast Commands
+       ip-multicast-flush [switch]
+              Flushes  the  learned IP multicast groups for the logical switch
+              identified by switch, which may be given as a UUID or as a data‐
+              path name. If switch is not specified, flushes learned multicast
+              groups for all logical switches.
+
+              This works by incrementing the seq_no column of the IP_Multicast
+              record for the datapath. ovn-controller monitors this value  and
+              flushes  its  locally learned multicast groups when it detects a
+              change.
 
    Remote Connectivity Commands
        These commands manipulate the connections column in the SB_Global table
-       and  rows  in  the Connection table. When ovsdb-server is configured to
-       use the connections column for OVSDB connections, this allows  the  ad‐
-       ministrator to use \fBovn\-sbctl\fR to configure database connections.
+       and rows in the Connection table. When ovsdb-server  is  configured  to
+       use  the  connections column for OVSDB connections, this allows the ad‐
+       ministrator to use ovn-sbctl to configure database connections.
 
               get-connection
                      Prints the configured connection(s).
@@ -604,10 +626,28 @@ COMMANDS
                      Deletes the configured connection(s).
 
               [--inactivity-probe=msecs] set-connection target...
-                     Sets  the configured manager target or targets. Use --in�‐
-                     activity-probe=msecs to override the default idle connec‐
-                     tion inactivity probe time. Use 0 to  disable  inactivity
-                     probes.
+                     Sets the configured connection  target  or  targets.  Use
+                     --inactivity-probe=msecs  to  override  the  default idle
+                     connection inactivity probe time. Use 0 to disable  inac‐
+                     tivity probes.
+
+                     Each  target  may be preceded by zero or more of the fol‐
+                     lowing modifiers, which apply to all  subsequent  targets
+                     until changed:
+
+                     read-only
+                            Sets  the  read_only column for subsequent connec‐
+                            tions  to  true,  restricting  them  to  read-only
+                            transactions.
+
+                     read-write
+                            Sets  the  read_only column for subsequent connec‐
+                            tions to false, allowing them to modify the  data‐
+                            base. This is the default.
+
+                     role=name
+                            Sets the role column for subsequent connections to
+                            name. The default is the empty string.
 
    SSL/TLS Configuration Commands
        When ovsdb-server is configured to connect using SSL/TLS, the following
