@@ -1224,6 +1224,11 @@ This table implements switching behavior\[char46] It contains these logical flow
 .IP \(bu
 A priority\-110 flow with the match \fBeth\[char46]src == \fIE\fB\fR for all logical switch datapaths and applies the action \fBhandle_svc_check(inport)\fR\[char46] Where \fIE\fR is the service monitor mac defined in the \fBoptions:svc_monitor_mac\fR column of \fBNB_Global\fR table\[char46]
 .IP \(bu
+For each load balancer backend that is health checked from an address belonging to a logical router port, a priority\-110 flow matching the probe reply on \fBinport == B\fR and applying \fBhandle_svc_check(inport)\fR, where \fIB\fR is the backend\(cqs logical switch port\[char46]
+.IP \(bu
+A \fBtype=external\fR port has no VIF of its own, so its replies reach the switch through a localnet port and the flow above cannot match\[char46] For such a backend an additional copy of the flow is added for each localnet port \fIL\fR on the switch, matching \fBinport == L\fR instead and applying \fBinport = B;
+handle_svc_check(inport);\fR so that \fBovn\-controller\fR can tell which service monitor the reply belongs to\[char46] The action list ends there, so the assigned \fBinport\fR is not visible to any later table\[char46]
+.IP \(bu
 A priority\-100 flow that punts all IGMP/MLD packets to \fBovn\-controller\fR if multicast snooping is enabled on the logical switch\[char46]
 .IP \(bu
 A priority\-100 flow that forwards all DHCP broadcast packets coming from VIFs to the logical router port\(cqs MAC when DHCP relay is enabled on the logical switch\[char46]
