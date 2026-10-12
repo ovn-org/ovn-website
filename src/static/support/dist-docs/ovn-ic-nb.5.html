@@ -56,6 +56,8 @@
          <b>e</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b><b>_</b><b>i</b><b>d</b><b>s</b>                map of string-string pairs
        <u>C</u><u>o</u><u>m</u><u>m</u><u>o</u><u>n</u> <u>o</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
          <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>                     map of string-string pairs
+         <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>-</b><b>b</b><b>a</b><b>c</b><b>k</b><b>o</b><b>f</b><b>f</b><b>-</b><b>i</b><b>n</b><b>t</b><b>e</b><b>r</b><b>v</b><b>a</b><b>l</b><b>-</b><b>m</b><b>s</b>
+                                     optional string
          <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>_</b><b>p</b><b>r</b><b>o</b><b>b</b><b>e</b><b>_</b><b>i</b><b>n</b><b>t</b><b>e</b><b>r</b><b>v</b><b>a</b><b>l</b>
                                      optional string
          <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>v</b><b>x</b><b>l</b><b>a</b><b>n</b><b>_</b><b>m</b><b>o</b><b>d</b><b>e</b>        optional string
@@ -91,9 +93,25 @@
               This  column  provides general key/value settings. The supported
               options are described individually below.
 
+       <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>-</b><b>b</b><b>a</b><b>c</b><b>k</b><b>o</b><b>f</b><b>f</b><b>-</b><b>i</b><b>n</b><b>t</b><b>e</b><b>r</b><b>v</b><b>a</b><b>l</b><b>-</b><b>m</b><b>s</b>: optional string
+              Upper bound, in milliseconds, on how long <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b>  postpones  the
+              next run of its incremental-processing engine. After each engine
+              run,  the  next  run  is delayed by the duration of the run that
+              just finished, capped by this value. This  coalesces  bursts  of
+              change-driven  runs  into  fewer,  larger  runs, trading a small
+              amount of latency for reduced CPU usage when the  databases  are
+              changing rapidly.
+
+              This  throttling  only applies to the natural, change-driven in‐
+              cremental path. A forced full recompute is never delayed and al‐
+              ways runs immediately.
+
+              The default value is <b>0</b>, which disables the backoff so  each  run
+              is scheduled as soon as there is work to do.
+
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>i</b><b>c</b><b>_</b><b>p</b><b>r</b><b>o</b><b>b</b><b>e</b><b>_</b><b>i</b><b>n</b><b>t</b><b>e</b><b>r</b><b>v</b><b>a</b><b>l</b>: optional string
-              The inactivity probe interval of the connection to  the  OVN  IC
-              Northbound  and  Southbound  databases from <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b>, in millisec‐
+              The  inactivity  probe  interval of the connection to the OVN IC
+              Northbound and Southbound databases from  <b>o</b><b>v</b><b>n</b><b>-</b><b>i</b><b>c</b>,  in  millisec‐
               onds. If the value is zero, it disables the connection keepalive
               feature.
 
@@ -101,22 +119,22 @@
               least 1000 ms.
 
        <b>o</b><b>p</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b> <b>:</b> <b>v</b><b>x</b><b>l</b><b>a</b><b>n</b><b>_</b><b>m</b><b>o</b><b>d</b><b>e</b>: optional string
-              This field allows the client to enable  VXLAN  as  encapsulation
+              This  field  allows  the client to enable VXLAN as encapsulation
               protocol for for cross-AZ traffic. Default value is false.
 
      <u>C</u><u>o</u><u>n</u><u>n</u><u>e</u><u>c</u><u>t</u><u>i</u><u>o</u><u>n</u> <u>O</u><u>p</u><u>t</u><u>i</u><u>o</u><u>n</u><u>s</u><u>:</u>
 
        <b>c</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b><b>s</b>: set of <b>C</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b><b>t</b><b>i</b><b>o</b><b>n</b>s
-              Database  clients  to  which  the  Open  vSwitch database server
-              should connect or on which it should listen, along with  options
-              for  how these connections should be configured. See the <b>C</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b>‐‐
+              Database clients to  which  the  Open  vSwitch  database  server
+              should  connect or on which it should listen, along with options
+              for how these connections should be configured. See the  <b>C</b><b>o</b><b>n</b><b>n</b><b>e</b><b>c</b>‐‐
               <b>t</b><b>i</b><b>o</b><b>n</b> table for more information.
 
        <b>s</b><b>s</b><b>l</b>: optional <b>S</b><b>S</b><b>L</b>
               Global SSL/TLS configuration.
 
 <b>T</b><b>r</b><b>a</b><b>n</b><b>s</b><b>i</b><b>t</b><b>_</b><b>S</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
-       Each row represents one transit logical switch for interconnection  be‐
+       Each  row represents one transit logical switch for interconnection be‐
        tween different OVN deployments (availability zones).
 
    <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
@@ -144,7 +162,7 @@
               See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
 
 <b>T</b><b>r</b><b>a</b><b>n</b><b>s</b><b>i</b><b>t</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
-       Each  row represents one transit logical router for interconnection be‐
+       Each row represents one transit logical router for interconnection  be‐
        tween different OVN deployments (availability zones).
 
    <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
@@ -172,7 +190,7 @@
               See <b>E</b><b>x</b><b>t</b><b>e</b><b>r</b><b>n</b><b>a</b><b>l</b> <b>I</b><b>D</b><b>s</b> at the beginning of this document.
 
 <b>T</b><b>r</b><b>a</b><b>n</b><b>s</b><b>i</b><b>t</b><b>_</b><b>R</b><b>o</b><b>u</b><b>t</b><b>e</b><b>r</b><b>_</b><b>P</b><b>o</b><b>r</b><b>t</b> <b>T</b><b>A</b><b>B</b><b>L</b><b>E</b>
-       Each row represents one transit logical router for interconnection  be‐
+       Each  row represents one transit logical router for interconnection be‐
        tween different OVN deployments (availability zones).
 
    <b>S</b><b>u</b><b>m</b><b>m</b><b>a</b><b>r</b><b>y</b><b>:</b>
@@ -195,7 +213,11 @@
               The Ethernet address that belongs to this router port.
 
        <b>c</b><b>h</b><b>a</b><b>s</b><b>s</b><b>i</b><b>s</b>: string
-              The chassis this router port should be bound to.
+              The chassis this router port should be bound to. If  empty,  the
+              port  is  local to all availability zones, that is, every avail‐
+              ability zone instantiates it as a distributed router port of its
+              own copy of the transit router. This is useful  for  ports  that
+              connect a transit router to a transit switch.
 
        <b>t</b><b>r</b><b>_</b><b>u</b><b>u</b><b>i</b><b>d</b>: uuid
               This is the UUID of the northbound IC logical datapath this port

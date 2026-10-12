@@ -55,6 +55,8 @@ IC_NB_Global TABLE
          external_ids                map of string-string pairs
        Common options:
          options                     map of string-string pairs
+         options : ic-backoff-interval-ms
+                                     optional string
          options : ic_probe_interval
                                      optional string
          options : vxlan_mode        optional string
@@ -90,9 +92,25 @@ IC_NB_Global TABLE
               This  column  provides general key/value settings. The supported
               options are described individually below.
 
+       options : ic-backoff-interval-ms: optional string
+              Upper bound, in milliseconds, on how long ovn-ic  postpones  the
+              next run of its incremental-processing engine. After each engine
+              run,  the  next  run  is delayed by the duration of the run that
+              just finished, capped by this value. This  coalesces  bursts  of
+              change-driven  runs  into  fewer,  larger  runs, trading a small
+              amount of latency for reduced CPU usage when the  databases  are
+              changing rapidly.
+
+              This  throttling  only applies to the natural, change-driven in‐
+              cremental path. A forced full recompute is never delayed and al‐
+              ways runs immediately.
+
+              The default value is 0, which disables the backoff so  each  run
+              is scheduled as soon as there is work to do.
+
        options : ic_probe_interval: optional string
-              The inactivity probe interval of the connection to  the  OVN  IC
-              Northbound  and  Southbound  databases from ovn-ic, in millisec‐
+              The  inactivity  probe  interval of the connection to the OVN IC
+              Northbound and Southbound databases from  ovn-ic,  in  millisec‐
               onds. If the value is zero, it disables the connection keepalive
               feature.
 
@@ -100,22 +118,22 @@ IC_NB_Global TABLE
               least 1000 ms.
 
        options : vxlan_mode: optional string
-              This field allows the client to enable  VXLAN  as  encapsulation
+              This  field  allows  the client to enable VXLAN as encapsulation
               protocol for for cross-AZ traffic. Default value is false.
 
      Connection Options:
 
        connections: set of Connections
-              Database  clients  to  which  the  Open  vSwitch database server
-              should connect or on which it should listen, along with  options
-              for  how these connections should be configured. See the Connec�‐
+              Database clients to  which  the  Open  vSwitch  database  server
+              should  connect or on which it should listen, along with options
+              for how these connections should be configured. See the  Connec�‐
               tion table for more information.
 
        ssl: optional SSL
               Global SSL/TLS configuration.
 
 Transit_Switch TABLE
-       Each row represents one transit logical switch for interconnection  be‐
+       Each  row represents one transit logical switch for interconnection be‐
        tween different OVN deployments (availability zones).
 
    Summary:
@@ -143,7 +161,7 @@ Transit_Switch TABLE
               See External IDs at the beginning of this document.
 
 Transit_Router TABLE
-       Each  row represents one transit logical router for interconnection be‐
+       Each row represents one transit logical router for interconnection  be‐
        tween different OVN deployments (availability zones).
 
    Summary:
@@ -171,7 +189,7 @@ Transit_Router TABLE
               See External IDs at the beginning of this document.
 
 Transit_Router_Port TABLE
-       Each row represents one transit logical router for interconnection  be‐
+       Each  row represents one transit logical router for interconnection be‐
        tween different OVN deployments (availability zones).
 
    Summary:
@@ -194,7 +212,11 @@ Transit_Router_Port TABLE
               The Ethernet address that belongs to this router port.
 
        chassis: string
-              The chassis this router port should be bound to.
+              The chassis this router port should be bound to. If  empty,  the
+              port  is  local to all availability zones, that is, every avail‐
+              ability zone instantiates it as a distributed router port of its
+              own copy of the transit router. This is useful  for  ports  that
+              connect a transit router to a transit switch.
 
        tr_uuid: uuid
               This is the UUID of the northbound IC logical datapath this port

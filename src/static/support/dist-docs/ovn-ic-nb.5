@@ -140,6 +140,9 @@ map of string-string pairs
 \fBoptions\fR
 map of string-string pairs
 .TQ 2.75in
+\fBoptions : ic-backoff-interval-ms\fR
+optional string
+.TQ 2.75in
 \fBoptions : ic_probe_interval\fR
 optional string
 .TQ 2.75in
@@ -172,6 +175,12 @@ See \fBExternal IDs\fR at the beginning of this document\[char46]
 .PP
 .IP "\fBoptions\fR: map of string-string pairs"
 This column provides general key/value settings\[char46] The supported options are described individually below\[char46]
+.IP "\fBoptions : ic-backoff-interval-ms\fR: optional string"
+Upper bound, in milliseconds, on how long \fBovn\-ic\fR postpones the next run of its incremental-processing engine\[char46] After each engine run, the next run is delayed by the duration of the run that just finished, capped by this value\[char46] This coalesces bursts of change-driven runs into fewer, larger runs, trading a small amount of latency for reduced CPU usage when the databases are changing rapidly\[char46]
+.IP
+This throttling only applies to the natural, change-driven incremental path\[char46] A forced full recompute is never delayed and always runs immediately\[char46]
+.IP
+The default value is \fB0\fR, which disables the backoff so each run is scheduled as soon as there is work to do\[char46]
 .IP "\fBoptions : ic_probe_interval\fR: optional string"
 The inactivity probe interval of the connection to the OVN IC Northbound and Southbound databases from \fBovn\-ic\fR, in milliseconds\[char46] If the value is zero, it disables the connection keepalive feature\[char46]
 .IP
@@ -303,7 +312,7 @@ A name that uniquely identifies the transit logical router port\[char46]
 .IP "\fBmac\fR: string"
 The Ethernet address that belongs to this router port\[char46]
 .IP "\fBchassis\fR: string"
-The chassis this router port should be bound to\[char46]
+The chassis this router port should be bound to\[char46] If empty, the port is local to all availability zones, that is, every availability zone instantiates it as a distributed router port of its own copy of the transit router\[char46] This is useful for ports that connect a transit router to a transit switch\[char46]
 .IP "\fBtr_uuid\fR: uuid"
 This is the UUID of the northbound IC logical datapath this port is associated with\[char46]
 .IP "\fBnetworks\fR: set of strings"
