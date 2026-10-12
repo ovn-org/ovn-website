@@ -1,0 +1,643 @@
+ovn-ctl(8)                        OVN Manual                        ovn-ctl(8)
+
+NAME
+       ovn-ctl - Open Virtual Network northbound daemon lifecycle utility
+
+SYNOPSIS
+       ovn-ctl [options] command [-- extra_args]
+
+DESCRIPTION
+       This  program is intended to be invoked internally by Open Virtual Net‐
+       work startup scripts. System administrators should not normally  invoke
+       it directly.
+
+COMMANDS
+       start_northd
+       start_controller
+       start_controller_vtep
+       start_ic
+       stop_northd
+       stop_controller
+       stop_controller_vtep
+       stop_ic
+       restart_northd
+       restart_controller
+       restart_controller_vtep
+       restart_ic
+       promote_ovnnb
+       promote_ovnsb
+       demote_ovnnb
+       demote_ovnsb
+       status_ovnnb
+       status_ovnsb
+       start_ovsdb
+       start_nb_ovsdb
+       start_sb_ovsdb
+       stop_ovsdb
+       stop_nb_ovsdb
+       stop_sb_ovsdb
+       restart_ovsdb
+       run_nb_ovsdb
+       run_sb_ovsdb
+       promote_ic_nb
+       promote_ic_sb
+       demote_ic_nb
+       demote_ic_sb
+       status_ic_nb
+       status_ic_sb
+       start_ic_ovsdb
+       start_ic_nb_ovsdb
+       start_ic_sb_ovsdb
+       stop_ic_ovsdb
+       stop_ic_nb_ovsdb
+       stop_ic_sb_ovsdb
+       restart_ic_ovsdb
+       run_ic_nb_ovsdb
+       run_ic_sb_ovsdb
+       start_ovnbr_ovsdb
+       start_br_controller
+       stop_ovnbr_ovsdb
+       stop_br_controller
+       restart_ovnbr_ovsdb
+       restart_br_controller
+       status_ovnbr_ovsdb
+       status_br_controller
+       run_ovnbr_ovsdb
+
+OPTIONS
+       --ovn-northd-priority=NICE  sets  the  ovn-northd process niceness. The
+       default is -10.
+
+       --ovn-northd-wrapper=WRAPPER runs ovn-northd under the specified  wrap‐
+       per.
+
+       --ovn-controller-priority=NICE  sets  the  ovn-controller process nice‐
+       ness. The default is -10.
+
+       --ovn-controller-wrapper=WRAPPER runs ovn-controller under  the  speci‐
+       fied wrapper.
+
+       --ovn-ic-priority=NICE sets the ovn-ic process niceness. The default is
+       -10.
+
+       --ovn-ic-wrapper=WRAPPER runs ovn-ic under the specified wrapper.
+
+       --ovnbr-controller-priority=NICE  sets  the  ovn-br-controller  process
+       niceness. The default is -10.
+
+       --ovnbr-controller-wrapper=WRAPPER  runs  ovn-br-controller  under  the
+       specified wrapper.
+
+       --ovsdb-nb-wrapper=WRAPPER  runs  the  Northbound database server under
+       the specified wrapper.
+
+       --ovsdb-sb-wrapper=WRAPPER runs the Southbound  database  server  under
+       the specified wrapper.
+
+       --ovsdb-ovnbr-wrapper=WRAPPER  runs  the OVN bridge controller database
+       server under the specified wrapper.
+
+       --ovn-user=USER[:GROUP] runs OVN daemons as the specified user and  op‐
+       tional group.
+
+       --ovn-manage-ovsdb=yes|no controls whether start_northd and stop_northd
+       also manage the NB and SB database servers. The default is yes.
+
+       --ovn-controller-system-id=SYSTEM_ID  sets  the  chassis name passed to
+       ovn-controller. The default is empty.
+
+       --ovsdb-disable-file-column-diff=yes|no   controls   whether   database
+       servers are started with --disable-file-column-diff. The default is no.
+
+       -h | --help displays usage information.
+
+FILE LOCATION OPTIONS
+       --db-sock=SOCKET sets the local Open vSwitch database socket.
+
+       --db-nb-file=FILE sets the Northbound database file.
+
+       --db-sb-file=FILE sets the Southbound database file.
+
+       --db-nb-sock=SOCKET  and --db-sb-sock=SOCKET set the NB and SB database
+       sockets.    Their    defaults    are    OVN_RUNDIR/ovnnb_db.sock    and
+       OVN_RUNDIR/ovnsb_db.sock, respectively.
+
+       --db-nb-schema=FILE sets the Northbound database schema file.
+
+       --db-sb-schema=FILE sets the Southbound database schema file.
+
+       --db-ic-nb-sock=SOCKET and --db-ic-sb-sock=SOCKET set the IC-NB and IC-
+       SB  database  sockets.  Their defaults are OVN_RUNDIR/ovn_ic_nb_db.sock
+       and OVN_RUNDIR/ovn_ic_sb_db.sock, respectively.
+
+       The --db-nb-create-insecure-remote=yes|no,  --db-sb-create-insecure-re�‐
+       mote=yes|no,  --db-ic-nb-create-insecure-remote=yes|no, --db-ic-sb-cre�‐
+       ate-insecure-remote=yes|no,     and      --db-ovnbr-create-insecure-re�‐
+       mote=yes|no  options  accept  yes or no. The default is no. When set to
+       yes, the database server creates an insecure ptcp remote; no  does  not
+       create that remote.
+
+       --db-ic-nb-file=FILE sets the IC-NB database file.
+
+       --db-ic-sb-file=FILE sets the IC-SB database file.
+
+       --db-ic-nb-schema=FILE sets the IC-NB database schema file.
+
+       --db-ic-sb-schema=FILE sets the IC-SB database schema file.
+
+       --db-nb-pidfile=FILE  and  --db-sb-pidfile=FILE set the NB and SB data‐
+       base  pidfiles.  Their   defaults   are   OVN_RUNDIR/ovnnb_db.pid   and
+       OVN_RUNDIR/ovnsb_db.pid, respectively.
+
+       --db-nb-ctrl-sock=SOCKET and --db-sb-ctrl-sock=SOCKET set the NB and SB
+       database  control  sockets.  Their defaults are OVN_RUNDIR/ovnnb_db.ctl
+       and OVN_RUNDIR/ovnsb_db.ctl, respectively.
+
+       --db-nb-config-file=FILE sets the Northbound database server configura‐
+       tion file.
+
+       --db-sb-config-file=FILE sets the Southbound database server configura‐
+       tion file.
+
+       --db-ic-nb-config-file=FILE sets the IC-NB database  server  configura‐
+       tion file.
+
+       --db-ic-sb-config-file=FILE  sets  the IC-SB database server configura‐
+       tion file.
+
+       --db-sb-relay-config-file=FILE sets the Southbound relay server config‐
+       uration file.
+
+       --db-nb-use-remote-in-db, --db-sb-use-remote-in-db,  --db-ic-nb-use-re�‐
+       mote-in-db,  and  --db-ic-sb-use-remote-in-db  accept yes or no and de‐
+       fault to yes. A bare option is equivalent to specifying yes. The  value
+       yes  makes  ovsdb-server  listen  on remotes configured in the database
+       connections column, while no does not. If a corresponding configuration
+       file is specified, it takes precedence and this setting is ignored.
+
+       --db-ovnbr-use-remote-in-db=yes|no controls whether  ovsdb-server  lis‐
+       tens  on the remotes configured in the database connections column. The
+       default is yes.
+
+       --ovn-controller-ssl-key=KEY sets the  ovn-controller  SSL/TLS  private
+       key file.
+
+       --ovn-controller-ssl-cert=CERT sets the ovn-controller SSL/TLS certifi‐
+       cate file.
+
+       --ovn-controller-ssl-ca-cert=CERT  sets  the  ovn-controller SSL/TLS CA
+       certificate file.
+
+       --ovn-controller-ssl-bootstrap-ca-cert=CERT  bootstraps  the   ovn-con‐
+       troller SSL/TLS CA certificate file.
+
+       --ovnbr-controller-ssl-key=KEY  sets the ovn-br-controller SSL/TLS pri‐
+       vate key file.
+
+       --ovnbr-controller-ssl-cert=CERT  sets  the  ovn-br-controller  SSL/TLS
+       certificate file.
+
+       --ovnbr-controller-ssl-ca-cert=CERT  sets the ovn-br-controller SSL/TLS
+       CA certificate file.
+
+       --ovnbr-controller-ssl-bootstrap-ca-cert=CERT  bootstraps  the  ovn-br-
+       controller SSL/TLS CA certificate file.
+
+       --ovn-ovnbr-db-ssl-key=KEY  sets the ovn-br-controller database SSL/TLS
+       private key file.
+
+       --ovn-ovnbr-db-ssl-cert=CERT  sets   the   ovn-br-controller   database
+       SSL/TLS certificate file.
+
+       --ovn-ovnbr-db-ssl-ca-cert=CERT  sets  the  ovn-br-controller  database
+       SSL/TLS CA certificate file.
+
+       --db-ovnbr-sock=SOCKET sets the OVN bridge controller database socket.
+
+       --db-ovnbr-file=FILE sets the OVN bridge controller database file.
+
+       --db-ic-nb-pidfile=FILE, --db-ic-sb-pidfile=FILE,  and  --db-ovnbr-pid�‐
+       file=FILE set the IC-NB, IC-SB, and OVN bridge controller database pid‐
+       files.      Their     defaults     are     OVN_RUNDIR/ovn_ic_nb_db.pid,
+       OVN_RUNDIR/ovn_ic_sb_db.pid, and OVN_RUNDIR/ovnbr_db.pid, respectively.
+
+       --db-ic-nb-ctrl-sock=SOCKET,      --db-ic-sb-ctrl-sock=SOCKET,      and
+       --db-ovnbr-ctrl-sock=SOCKET  set  database  control  sockets. Their de‐
+       faults  are  OVN_RUNDIR/ovn_ic_nb_db.ctl,  OVN_RUNDIR/ovn_ic_sb_db.ctl,
+       and OVN_RUNDIR/ovnbr_db.ctl, respectively.
+
+       --db-ovnbr-schema=FILE  sets  the OVN bridge controller database schema
+       file.
+
+LOGGING OPTIONS
+       --ovn-controller-log=STRING,        --ovn-northd-log=STRING,        and
+       --ovn-ic-log=STRING  set  daemon  logging  parameters.  The  default is
+       -vconsole:emer -vsyslog:err -vfile:info.
+
+       --ovnbr-controller-log=STRING sets  ovn-br-controller  logging  parame‐
+       ters. The default is -vconsole:emer -vsyslog:err -vfile:info.
+
+       --ovn-nb-log=STRING,    --ovn-sb-log=STRING,    --ovn-ic-nb-log=STRING,
+       --ovn-ic-sb-log=STRING,         --ovn-sb-relay-log=STRING,          and
+       --ovn-ovnbr-log=STRING  set database-server logging parameters. The de‐
+       faults for the NB, SB, IC-NB, IC-SB, and OVN bridge controller database
+       servers are -vconsole:off -vfile:info. The default  for  the  SB  relay
+       database server is -vconsole:emer -vsyslog:err -vfile:info.
+
+       --ovn-northd-logfile=FILE,     --ovn-ic-logfile=FILE,     --ovn-nb-log�‐
+       file=FILE,       --ovn-sb-logfile=FILE,       --ovn-ic-nb-logfile=FILE,
+       --ovn-ic-sb-logfile=FILE,        --ovn-sb-relay-logfile=FILE,       and
+       --ovn-ovnbr-logfile=FILE select log files.  Database-server  log  files
+       default to files under OVN_LOGDIR; daemon log files default to empty.
+
+       --ovn-northd-n-threads=N_THREADS sets the number of ovn-northd threads.
+       The default is 1.
+
+PROTOCOL, CIPHER AND CIPHERSUITE OPTIONS
+       The  daemon  and  database prefixes also accept their SSL/TLS key, cer‐
+       tificate, and CA certificate options. The prefixes are  ovn-controller,
+       ovn-northd,  ovn-ic,  ovn-nb-db, ovn-sb-db, ovn-ic-nb-db, ovn-ic-sb-db,
+       ovn-sb-relay-db,  and  ovn-ovnbr-db;  append  -ssl-key,  -ssl-cert,  or
+       -ssl-ca-cert.  Controller  prefixes also accept -ssl-bootstrap-ca-cert.
+       Empty values leave the normal database or daemon TLS  settings  in  ef‐
+       fect.
+
+       --ovn-controller-ssl-protocols=PROTOCOLS.
+
+       --ovn-ic-ssl-protocols=PROTOCOLS.
+
+       --ovn-northd-ssl-protocols=PROTOCOLS.
+
+       --ovn-nb-db-ssl-protocols=PROTOCOLS.
+
+       --ovn-sb-db-ssl-protocols=PROTOCOLS.
+
+       --ovn-ic-nb-db-ssl-protocols=PROTOCOLS.
+
+       --ovn-ic-sb-db-ssl-protocols=PROTOCOLS.
+
+       --ovn-controller-ssl-ciphers=CIPHERS.
+
+       --ovn-ic-ssl-ciphers=CIPHERS.
+
+       --ovn-northd-ssl-ciphers=CIPHERS.
+
+       --ovn-nb-db-ssl-ciphers=CIPHERS.
+
+       --ovn-sb-db-ssl-ciphers=CIPHERS.
+
+       --ovn-ic-nb-db-ssl-ciphers=CIPHERS.
+
+       --ovn-ic-sb-db-ssl-ciphers=CIPHERS.
+
+       --ovn-controller-ssl-ciphersuites=CIPHERSUITES.
+
+       --ovn-ic-ssl-ciphersuites=CIPHERSUITES.
+
+       --ovn-northd-ssl-ciphersuites=CIPHERSUITES.
+
+       --ovn-nb-db-ssl-ciphersuites=CIPHERSUITES.
+
+       --ovn-sb-db-ssl-ciphersuites=CIPHERSUITES.
+
+       --ovn-ic-nb-db-ssl-ciphersuites=CIPHERSUITES.
+
+       --ovn-ic-sb-db-ssl-ciphersuites=CIPHERSUITES.
+
+       --ovn-controller-ssl-server-name=NAME.
+
+       --ovn-ic-ssl-server-name=NAME.
+
+       --ovn-northd-ssl-server-name=NAME.
+
+       --ovn-nb-db-ssl-server-name=NAME.
+
+       --ovn-sb-db-ssl-server-name=NAME.
+
+       --ovn-ic-nb-db-ssl-server-name=NAME.
+
+       --ovn-ic-sb-db-ssl-server-name=NAME.
+
+       --ovn-sb-relay-db-ssl-server-name=NAME.
+
+       --ovn-ovnbr-db-ssl-server-name=NAME.
+
+       --ovnbr-controller-ssl-protocols=PROTOCOLS  sets  the ovn-br-controller
+       SSL/TLS protocols.
+
+       --ovnbr-controller-ssl-ciphers=CIPHERS   sets   the   ovn-br-controller
+       SSL/TLS cipher list.
+
+       --ovnbr-controller-ssl-ciphersuites=CIPHERSUITES  sets  the ovn-br-con‐
+       troller TLS 1.3 and later ciphersuite list.
+
+       --ovn-ovnbr-db-ssl-protocols=PROTOCOLS sets the ovn-br-controller data‐
+       base SSL/TLS protocols.
+
+       --ovn-ovnbr-db-ssl-ciphers=CIPHERS sets the ovn-br-controller  database
+       SSL/TLS cipher list.
+
+       --ovn-ovnbr-db-ssl-ciphersuites=CIPHERSUITES sets the ovn-br-controller
+       database TLS 1.3 and later ciphersuite list.
+
+ADDRESS AND PORT OPTIONS
+       --db-nb-sync-from-addr=IP ADDRESS.
+
+       --db-nb-sync-from-port=PORT NUMBER.
+
+       --db-nb-sync-from-proto=PROTO.
+
+       --db-sb-sync-from-addr=IP ADDRESS.
+
+       --db-sb-sync-from-port=PORT NUMBER.
+
+       --db-sb-sync-from-proto=PROTO.
+
+       --db-ic-nb-sync-from-addr=IP ADDRESS.
+
+       --db-ic-nb-sync-from-port=PORT NUMBER.
+
+       --db-ic-nb-sync-from-proto=PROTO.
+
+       --db-ic-sb-sync-from-addr=IP ADDRESS.
+
+       --db-ic-sb-sync-from-port=PORT NUMBER.
+
+       --db-ic-sb-sync-from-proto=PROTO.
+
+       The  options  --db-nb-addr,  --db-nb-port,  --db-sb-addr, --db-sb-port,
+       --db-ic-nb-addr,  --db-ic-nb-port,  --db-ic-sb-addr,   --db-ic-sb-port,
+       --db-ovnbr-addr,  and  --db-ovnbr-port  select  the addresses and ports
+       used when the  corresponding  --db-*-create-insecure-remote  option  is
+       yes.  When  that  option  is no, these settings have no effect. The de‐
+       faults for --db-nb-addr and --db-nb-port are 0.0.0.0 and 6641,  respec‐
+       tively.  The defaults for --db-sb-addr and --db-sb-port are 0.0.0.0 and
+       6642,   respectively.   The   defaults    for    --db-ic-nb-addr    and
+       --db-ic-nb-port  are  0.0.0.0  and 6645, respectively. The defaults for
+       --db-ic-sb-addr and --db-ic-sb-port are 0.0.0.0 and 6646, respectively.
+       The defaults for --db-ovnbr-addr and --db-ovnbr-port  are  0.0.0.0  and
+       6651, respectively.
+
+       --ovn-northd-nb-db  and --ovn-northd-sb-db select the NB and SB remotes
+       used by ovn-northd. Similarly, --ovn-ic-nb-db and --ovn-ic-sb-db select
+       the IC database remotes. Their defaults  are  the  corresponding  local
+       unix database sockets.
+
+        --ovn-northd-nb-db=PROTO:IP ADDRESS: PORT..
+
+        --ovn-northd-sb-db=PROTO:IP ADDRESS: PORT..
+
+        --ovn-ic-nb-db=PROTO:IP ADDRESS: PORT..
+
+        --ovn-ic-sb-db=PROTO:IP ADDRESS: PORT..
+
+CLUSTERING OPTIONS
+       --db-nb-cluster-local-addr=IP ADDRESS.
+
+       --db-nb-cluster-local-port=PORT NUMBER.
+
+       --db-nb-cluster-local-proto=PROTO (tcp/ssl).
+
+       --db-nb-cluster-remote-addr=IP ADDRESS.
+
+       --db-nb-cluster-remote-port=PORT NUMBER.
+
+       --db-nb-cluster-remote-proto=PROTO (tcp/ssl).
+
+       --db-nb-election-timer=Timeout in milliseconds.
+
+       --db-sb-cluster-local-addr=IP ADDRESS.
+
+       --db-sb-cluster-local-port=PORT NUMBER.
+
+       --db-sb-cluster-local-proto=PROTO (tcp/ssl).
+
+       --db-sb-cluster-remote-addr=IP ADDRESS.
+
+       --db-sb-cluster-remote-port=PORT NUMBER.
+
+       --db-sb-cluster-remote-proto=PROTO (tcp/ssl).
+
+       --db-sb-election-timer=Timeout in milliseconds.
+
+       --db-ic-nb-cluster-local-addr=IP ADDRESS.
+
+       --db-ic-nb-cluster-local-port=PORT NUMBER.
+
+       --db-ic-nb-cluster-local-proto=PROTO (tcp/ssl).
+
+       --db-ic-nb-cluster-remote-addr=IP ADDRESS.
+
+       --db-ic-nb-cluster-remote-port=PORT NUMBER.
+
+       --db-ic-nb-cluster-remote-proto=PROTO (tcp/ssl).
+
+       --db-ic-sb-cluster-local-addr=IP ADDRESS.
+
+       --db-ic-sb-cluster-local-port=PORT NUMBER.
+
+       --db-ic-sb-cluster-local-proto=PROTO (tcp/ssl).
+
+       --db-ic-sb-cluster-remote-addr=IP ADDRESS.
+
+       --db-ic-sb-cluster-remote-port=PORT NUMBER.
+
+       --db-ic-sb-cluster-remote-proto=PROTO (tcp/ssl).
+
+       --db-cluster-schema-upgrade=yes|no  controls whether clustered database
+       servers automatically upgrade their schemas when they  start.  The  de‐
+       fault is yes; specify no to disable the automatic upgrade.
+
+       --no-db-cluster-schema-upgrade is equivalent to --db-cluster-schema-up�‐
+       grade=no. The default is yes.
+
+PROBE INTERVAL OPTIONS
+        --db-nb-probe-interval-to-active=Time in milliseconds .
+
+        --db-sb-probe-interval-to-active=Time in milliseconds .
+
+RELAY OPTIONS
+       --db-sb-relay-sock=SOCKET,  --db-sb-relay-pidfile=FILE, and --db-sb-re�‐
+       lay-ctrl-sock=SOCKET set the relay socket, pidfile, and control socket.
+       The defaults are ovnsb_relay_db.sock, ovnsb_relay_db.pid, and ovnsb_re�‐
+       lay_db.ctl in OVN_RUNDIR.
+
+       --db-sb-relay-remote=REMOTE selects the upstream relay remote. The  de‐
+       fault is empty.
+
+       --db-sb-relay-use-remote-in-db=yes|no   controls  whether  ovsdb-server
+       listens on the Southbound remotes configured in  the  database  connec�‐
+       tions column. The default is yes. A bare option is equivalent to speci‐
+       fying yes.
+
+EXTRA OPTIONS
+       Any  options  after  ’-’ will be passed on to the binary run by command
+       with the exception of start_northd, which can have options specified in
+       ovn-northd-db-params.conf. Any extra_args passed to  start_northd  will
+       be passed to the ovsdb-servers if --ovn-manage-ovsdb=yes
+
+CONFIGURATION FILES
+       Following  are  the optional configuration files. If present, it should
+       be located in the etc dir
+
+   ovnnb-active.conf
+       If present, this file should hold the url  to  connect  to  the  active
+       Northbound DB server
+
+       tcp:x.x.x.x:6641
+
+   ovnsb-active.conf
+       If  present,  this  file  should  hold the url to connect to the active
+       Southbound DB server
+
+       tcp:x.x.x.x:6642
+
+   ovn-northd-db-params.conf
+       If  present,  start_northd  will  not  start  the  DB  server  even  if
+       --ovn-manage-ovsdb=yes.  This file should hold the database url parame‐
+       ters to be passed to ovn-northd.
+
+       --ovnnb-db=tcp:x.x.x.x:6641 --ovnsb-db=tcp:x.x.x.x:6642
+
+   ic-nb-active.conf
+       If present, this file should hold the url to connect to the active  In‐
+       terconnection Northbound DB server
+
+       tcp:x.x.x.x:6645
+
+   ic-sb-active.conf
+       If  present, this file should hold the url to connect to the active In‐
+       terconnection Southbound DB server
+
+       tcp:x.x.x.x:6646
+
+   ovn-ic-db-params.conf
+       If present, this file should hold the database  url  parameters  to  be
+       passed to ovn-ic.
+
+       --ic-nb-db=tcp:x.x.x.x:6645 --ic-sb-db=tcp:x.x.x.x:6646
+
+RUNNING OVN DB SERVERS WITHOUT DETACHING
+       # ovn-ctl run_nb_ovsdb
+
+       This  command  runs  the OVN nb ovsdb-server without passing the detach
+       option, making it to block until ovsdb-server exits. This command  will
+       be useful for starting the OVN nb ovsdb-server in a container.
+
+       # ovn-ctl run_sb_ovsdb
+
+       This  command  runs  the OVN sb ovsdb-server without passing the detach
+       option, making it to block until ovsdb-server exits. This command  will
+       be useful for starting the OVN sb ovsdb-server in a container.
+
+       # ovn-ctl run_ic_nb_ovsdb
+
+       This command runs the OVN IC-NB ovsdb-server without passing the detach
+       option,  making it to block until ovsdb-server exits. This command will
+       be useful for starting the OVN IC-NB ovsdb-server in a container.
+
+       # ovn-ctl run_ic_sb_ovsdb
+
+       This command runs the OVN IC-SB ovsdb-server without passing the detach
+       option, making it to block until ovsdb-server exits. This command  will
+       be useful for starting the OVN IC-SB ovsdb-server in a container.
+
+       # ovn-ctl run_ovnbr_ovsdb
+
+       This  command  runs  the OVN bridge db ovsdb-server without passing the
+       detach option, making it to block until ovsdb-server exits.  This  com‐
+       mand  will  be useful for starting the OVN br db ovsdb-server in a con‐
+       tainer.
+
+EXAMPLE USAGE
+   Run ovn-controller on a host already running OVS
+       # ovn-ctl start_controller
+
+   Run ovn-northd on a host already running OVS
+       # ovn-ctl start_northd
+
+   All-in-one OVS+OVN for testing
+       # ovs-ctl start --system-id="random"
+
+       # ovn-ctl start_northd
+
+       # ovn-ctl start_controller
+
+   Promote and demote ovsdb servers
+       # ovn-ctl promote_ovnnb
+
+       # ovn-ctl promote_ovnsb
+
+       #  ovn-ctl  --db-nb-sync-from-addr=x.x.x.x  --db-nb-sync-from-port=6641
+       --db-nb-probe-interval-to-active=60000 demote_ovnnb
+
+       #  ovn-ctl  --db-sb-sync-from-addr=x.x.x.x  --db-sb-sync-from-port=6642
+       --db-sb-probe-interval-to-active=60000 demote_ovnsb
+
+   Creating a clustered db on 3 nodes with IPs x.x.x.x, y.y.y.y and z.z.z.z
+     Starting OVN ovsdb servers and ovn-northd on the node with IP x.x.x.x
+
+         #  ovn-ctl  --db-nb-addr=x.x.x.x   --db-nb-create-insecure-remote=yes
+       --db-sb-addr=x.x.x.x  --db-sb-create-insecure-remote=yes  --db-nb-clus�‐
+       ter-local-addr=x.x.x.x               --db-sb-cluster-local-addr=x.x.x.x
+       --ovn-northd-nb-db=tcp:x.x.x.x:6641,tcp:y.y.y.y:6641,tcp:z.z.z.z:6641
+       --ovn-northd-sb-db=tcp:x.x.x.x:6642,tcp:y.y.y.y:6642,tcp:z.z.z.z:6642
+       start_northd
+
+     Starting OVN ovsdb-servers and ovn-northd on the node with IP y.y.y.y and
+     joining the cluster started at x.x.x.x
+
+          #  ovn-ctl  --db-nb-addr=y.y.y.y  --db-nb-create-insecure-remote=yes
+       --db-sb-addr=y.y.y.y  --db-sb-create-insecure-remote=yes  --db-nb-clus�‐
+       ter-local-addr=y.y.y.y --db-sb-cluster-local-addr=y.y.y.y --db-nb-clus�‐
+       ter-remote-addr=x.x.x.x             --db-sb-cluster-remote-addr=x.x.x.x
+       --ovn-northd-nb-db=tcp:x.x.x.x:6641,tcp:y.y.y.y:6641,tcp:z.z.z.z:6641
+       --ovn-northd-sb-db=tcp:x.x.x.x:6642,tcp:y.y.y.y:6642,tcp:z.z.z.z:6642
+       start_northd
+
+     Starting OVN ovsdb-servers and ovn-northd on the node with IP z.z.z.z and
+     joining the cluster started at x.x.x.x
+
+         #  ovn-ctl  --db-nb-addr=z.z.z.z   --db-nb-create-insecure-remote=yes
+       --db-nb-cluster-local-addr=z.z.z.z   --db-sb-addr=z.z.z.z  --db-sb-cre�‐
+       ate-insecure-remote=yes              --db-sb-cluster-local-addr=z.z.z.z
+       --db-nb-cluster-remote-addr=x.x.x.x --db-sb-cluster-remote-addr=x.x.x.x
+       --ovn-northd-nb-db=tcp:x.x.x.x:6641,tcp:y.y.y.y:6641,tcp:z.z.z.z:6641
+       --ovn-northd-sb-db=tcp:x.x.x.x:6642,tcp:y.y.y.y:6642,tcp:z.z.z.z:6642
+       start_northd
+
+   Passing  ssl keys when starting OVN dbs will supersede the default ssl val�‐
+       ues in db
+     Starting standalone ovn db server passing SSL/TLS certificates
+
+            #      ovn-ctl      --ovn-nb-db-ssl-key=/etc/ovn/ovnnb-privkey.pem
+       --ovn-nb-db-ssl-cert=/etc/ovn/ovnnb-cert.pem
+       --ovn-nb-db-ssl-ca-cert=/etc/ovn/cacert.pem
+       --ovn-sb-db-ssl-key=/etc/ovn/ovnsb-privkey.pem
+       --ovn-sb-db-ssl-cert=/etc/ovn/ovnsb-cert.pem
+       --ovn-sb-db-ssl-ca-cert=/etc/ovn/cacert.pem start_northd
+
+   Avoiding automatic clustered OVN database schema upgrade
+       If  you  desire  more control over clustered DB schema upgrade, you can
+       opt-out of  automatic  on-start  upgrade  attempts  with  --no-db-clus�‐
+       ter-schema-upgrade.
+
+     Start  OVN  NB and SB clustered databases on host with IP x.x.x.x without
+     schema upgrade
+
+          #    ovn-ctl    start_nb_ovsdb    --db-nb-cluster-local-addr=x.x.x.x
+       --no-db-cluster-schema-upgrade  #  ovn-ctl start_sb_ovsdb --db-sb-clus�‐
+       ter-local-addr=x.x.x.x --no-db-cluster-schema-upgrade
+
+     Trigger clustered DB schema upgrade manually
+
+         #  ovsdb-client  convert   unix:/var/run/ovn/ovnnb_db.sock   /usr/lo�‐
+       cal/share/ovn/ovn-nb.ovsschema       #       ovsdb-client       convert
+       unix:/var/run/ovn/ovnsb_db.sock /usr/local/share/ovn/ovn-sb.ovsschema
+
+   Run OVN bridge controller services on a host already running OVS
+       # ovn-ctl start_ovnbr_ovsdb
+
+       # ovn-ctl start_br_controller
+
+OVN 26.09.1                         ovn-ctl                         ovn-ctl(8)
