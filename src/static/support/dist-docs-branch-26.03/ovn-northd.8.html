@@ -538,15 +538,36 @@
 
        This  table looks up the MAC learning table of the logical switch data‐
        path to check if the <b>p</b><b>o</b><b>r</b><b>t</b><b>-</b><b>m</b><b>a</b><b>c</b> pair is present or not. MAC is learnt for
-       logical switch VIF ports whose port security is disabled and  ’unknown’
-       address  setn  as  well  as  for  localnet  ports  with  option  local‐
-       net_learn_fdb. A localnet port entry does not overwrite a VIF port  en‐
-       try.  Logical switch ports with type <b>s</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> have implicit ’unknown’ ad‐
-       dresses and so they are also eligible for MAC learning.
+       logical switch with ’unknown’ address set as well as for localnet ports
+       with option localnet_learn_fdb. A localnet port entry  does  not  over‐
+       write  a VIF port entry. Logical switch ports with type <b>s</b><b>w</b><b>i</b><b>t</b><b>c</b><b>h</b> have im‐
+       plicit ’unknown’ addresses and so they are also eligible for MAC learn‐
+       ing.
 
-              •      For each such VIF logical port <u>p</u> whose port  security  is
-                     disabled  and  ’unknown’  address  set  following flow is
-                     added.
+              •      For each such VIF logical port <u>p</u> with  ’unknown’  address
+                     set following flow is added.
+
+                     •      Priority 120 flows for ARP packets with <b>a</b><b>r</b><b>p</b><b>.</b><b>s</b><b>h</b><b>a</b> <b>=</b><b>=</b>
+                            <b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b>,   ND  packets  with  <b>n</b><b>d</b><b>.</b><b>t</b><b>l</b><b>l</b>  <b>=</b><b>=</b>
+                            <b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b>, or ND packets  with  <b>n</b><b>d</b><b>.</b><b>s</b><b>l</b><b>l</b>  <b>=</b><b>=</b>
+                            <b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b><b>:</b><b>0</b><b>0</b>.  These  match ARP or ND packets
+                            whose inner MAC field is zero (i.e., the  optional
+                            link-layer  address  option is absent). The action
+                            looks up only <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b>: <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>1</b><b>1</b><b>]</b>  <b>=</b>  <b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>_</b><b>f</b><b>d</b><b>b</b><b>(</b><b>i</b><b>n</b>‐‐
+                            <b>p</b><b>o</b><b>r</b><b>t</b><b>,</b>  <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b><b>)</b><b>;</b> and sets <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>2</b><b>2</b><b>]</b> <b>=</b> <b>1</b> to mark the
+                            inner MAC lookup as satisfied (there is  no  inner
+                            MAC to learn).
+
+                     •      Priority 110 flows for ARP packets (matching <b>a</b><b>r</b><b>p</b>),
+                            ND  Neighbor  Advertisements (matching <b>n</b><b>d</b><b>_</b><b>n</b><b>a</b>), and
+                            ND Neighbor Solicitations (matching <b>n</b><b>d</b><b>_</b><b>n</b><b>s</b>).  These
+                            match  packets  whose  inner MAC field is non-zero
+                            (the priority-120 zero-MAC guard flows take prece‐
+                            dence when it is zero). The action looks  up  both
+                            <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b>  and  the  inner  MAC  field:  <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>1</b><b>1</b><b>]</b>  <b>=</b>
+                            <b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>_</b><b>f</b><b>d</b><b>b</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b>    <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b><b>)</b><b>;</b>     <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>2</b><b>2</b><b>]</b>     <b>=</b>
+                            <b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>_</b><b>f</b><b>d</b><b>b</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b>  <b>i</b><b>n</b><b>n</b><b>e</b><b>r</b><b>)</b><b>;</b>  <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>  where <b>i</b><b>n</b><b>n</b><b>e</b><b>r</b> is
+                            <b>a</b><b>r</b><b>p</b><b>.</b><b>s</b><b>h</b><b>a</b> for ARP, <b>n</b><b>d</b><b>.</b><b>t</b><b>l</b><b>l</b> for NA, or <b>n</b><b>d</b><b>.</b><b>s</b><b>l</b><b>l</b> for NS.
 
                      •      Priority 100 flow with the match <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b>  <u>p</u>  and
                             action  <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>1</b><b>1</b><b>]</b>  <b>=</b>  <b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>_</b><b>f</b><b>d</b><b>b</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b>  <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b><b>)</b><b>;</b>
@@ -575,16 +596,29 @@
      <u>I</u><u>n</u><u>g</u><u>r</u><u>e</u><u>s</u><u>s</u> <u>T</u><u>a</u><u>b</u><u>l</u><u>e</u> <u>4</u><u>:</u> <u>L</u><u>e</u><u>a</u><u>r</u><u>n</u> <u>M</u><u>A</u><u>C</u> <u>o</u><u>f</u> <u>�</u>��<u>u</u><u>n</u><u>k</u><u>n</u><u>o</u><u>w</u><u>n</u><u>�</u>�� <u>p</u><u>o</u><u>r</u><u>t</u><u>s</u><u>.</u>
 
        This table learns the MAC addresses seen on the VIF or ’switch’ logical
-       ports whose port security is disabled and ’unknown’ address set  (note:
-       ’switch’  ports have implicit ’unknown’ addresses) as well as on local‐
-       net ports with localnet_learn_fdb option set if the  <b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>_</b><b>f</b><b>d</b><b>b</b>  action
-       returned  false  in  the  previous  table.  For  localnet  ports  (with
-       flags.localnet = 1), lookup_fdb returns true if (port, mac) is found or
-       if a mac is found for a port of type vif.
+       ports with’unknown’ address set (note:  ’switch’  ports  have  implicit
+       ’unknown’   addresses)  as  well  as  on  localnet  ports  with  local‐
+       net_learn_fdb option set if the <b>l</b><b>o</b><b>o</b><b>k</b><b>u</b><b>p</b><b>_</b><b>f</b><b>d</b><b>b</b> action returned false in the
+       previous  table.  For  localnet  ports  (with  flags.localnet   =   1),
+       lookup_fdb  returns  true  if (port, mac) is found or if a mac is found
+       for a port of type vif.
 
-              •      For each such VIF logical port <u>p</u> whose port  security  is
-                     disabled and ’unknown’ address set and localnet port fol‐
-                     lowing flow is added.
+              •      For each such VIF logical port <u>p</u> with  ’unknown’  address
+                     set and localnet port following flow is added.
+
+                     •      Priority 120 flows matching the same zero-MAC con‐
+                            ditions as the corresponding lookup flows (<b>a</b><b>r</b><b>p</b><b>.</b><b>s</b><b>h</b><b>a</b>
+                            <b>=</b><b>=</b>  <b>0</b>,  <b>n</b><b>d</b><b>.</b><b>t</b><b>l</b><b>l</b>  <b>=</b><b>=</b>  <b>0</b>, or <b>n</b><b>d</b><b>.</b><b>s</b><b>l</b><b>l</b> <b>=</b><b>=</b> <b>0</b>). Guarded by
+                            <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>1</b><b>1</b><b>]</b>  <b>=</b><b>=</b>  <b>0</b>,  these  learn  only  <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b>  via
+                            <b>p</b><b>u</b><b>t</b><b>_</b><b>f</b><b>d</b><b>b</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b> <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b><b>)</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b>.
+
+                     •      Priority  110  flows matching ARP, ND NA, or ND NS
+                            packets. Guarded by <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>1</b><b>1</b><b>]</b> <b>=</b><b>=</b> <b>0</b> <b>|</b><b>|</b> <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>2</b><b>2</b><b>]</b> <b>=</b><b>=</b> <b>0</b>
+                            (i.e., either the outer or the inner  MAC  is  un‐
+                            known), these learn both <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b> and the inner MAC
+                            via  <b>p</b><b>u</b><b>t</b><b>_</b><b>f</b><b>d</b><b>b</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b> <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b><b>)</b><b>;</b> <b>p</b><b>u</b><b>t</b><b>_</b><b>f</b><b>d</b><b>b</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b> <b>i</b><b>n</b>‐‐
+                            <b>n</b><b>e</b><b>r</b><b>)</b><b>;</b> <b>n</b><b>e</b><b>x</b><b>t</b><b>;</b> where <b>i</b><b>n</b><b>n</b><b>e</b><b>r</b>  is  <b>a</b><b>r</b><b>p</b><b>.</b><b>s</b><b>h</b><b>a</b>,  <b>n</b><b>d</b><b>.</b><b>t</b><b>l</b><b>l</b>,  or
+                            <b>n</b><b>d</b><b>.</b><b>s</b><b>l</b><b>l</b> respectively.
 
                      •      Priority  100  flow  with the match <b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b> <b>=</b><b>=</b> <u>p</u> &amp;&amp;&amp;&amp;
                             <b>r</b><b>e</b><b>g</b><b>0</b><b>[</b><b>1</b><b>1</b><b>]</b> <b>=</b><b>=</b> <b>0</b> and action <b>p</b><b>u</b><b>t</b><b>_</b><b>f</b><b>d</b><b>b</b><b>(</b><b>i</b><b>n</b><b>p</b><b>o</b><b>r</b><b>t</b><b>,</b> <b>e</b><b>t</b><b>h</b><b>.</b><b>s</b><b>r</b><b>c</b><b>)</b><b>;</b>

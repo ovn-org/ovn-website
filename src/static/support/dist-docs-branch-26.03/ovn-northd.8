@@ -358,11 +358,16 @@ A logical flow added for each Mirror Rule in Mirror table attached to logical sw
 .ST "Ingress Table 3: Lookup MAC address learning table"
 .PP
 .PP
-This table looks up the MAC learning table of the logical switch datapath to check if the \fBport\-mac\fR pair is present or not\[char46] MAC is learnt for logical switch VIF ports whose port security is disabled and \(cqunknown\(cq address setn as well as for localnet ports with option localnet_learn_fdb\[char46] A localnet port entry does not overwrite a VIF port entry\[char46] Logical switch ports with type \fBswitch\fR have implicit \(cqunknown\(cq addresses and so they are also eligible for MAC learning\[char46]
+This table looks up the MAC learning table of the logical switch datapath to check if the \fBport\-mac\fR pair is present or not\[char46] MAC is learnt for logical switch with \(cqunknown\(cq address set as well as for localnet ports with option localnet_learn_fdb\[char46] A localnet port entry does not overwrite a VIF port entry\[char46] Logical switch ports with type \fBswitch\fR have implicit \(cqunknown\(cq addresses and so they are also eligible for MAC learning\[char46]
 .RS
 .IP \(bu
-For each such VIF logical port \fIp\fR whose port security is disabled and \(cqunknown\(cq address set following flow is added\[char46]
+For each such VIF logical port \fIp\fR with \(cqunknown\(cq address set following flow is added\[char46]
 .RS
+.IP \(bu
+Priority 120 flows for ARP packets with \fBarp\[char46]sha == 00:00:00:00:00:00\fR, ND packets with \fBnd\[char46]tll == 00:00:00:00:00:00\fR, or ND packets with \fBnd\[char46]sll == 00:00:00:00:00:00\fR\[char46] These match ARP or ND packets whose inner MAC field is zero (i\[char46]e\[char46], the optional link-layer address option is absent)\[char46] The action looks up only \fBeth\[char46]src\fR: \fBreg0[11] = lookup_fdb(inport, eth\[char46]src);\fR and sets \fBreg0[22] = 1\fR to mark the inner MAC lookup as satisfied (there is no inner MAC to learn)\[char46]
+.IP \(bu
+Priority 110 flows for ARP packets (matching \fBarp\fR), ND Neighbor Advertisements (matching \fBnd_na\fR), and ND Neighbor Solicitations (matching \fBnd_ns\fR)\[char46] These match packets whose inner MAC field is non-zero (the priority\-120 zero-MAC guard flows take precedence when it is zero)\[char46] The action looks up both \fBeth\[char46]src\fR and the inner MAC field: \fBreg0[11] = lookup_fdb(inport, eth\[char46]src);
+reg0[22] = lookup_fdb(inport, inner); next;\fR where \fBinner\fR is \fBarp\[char46]sha\fR for ARP, \fBnd\[char46]tll\fR for NA, or \fBnd\[char46]sll\fR for NS\[char46]
 .IP \(bu
 Priority 100 flow with the match \fBinport == \fIp\fB\fR and action \fBreg0[11] = lookup_fdb(inport, eth\[char46]src); next;\fR
 .RE
@@ -380,11 +385,16 @@ One priority\-0 fallback flow that matches all packets and advances to the next 
 .ST "Ingress Table 4: Learn MAC of \(cqunknown\(cq ports\[char46]"
 .PP
 .PP
-This table learns the MAC addresses seen on the VIF or \(cqswitch\(cq logical ports whose port security is disabled and \(cqunknown\(cq address set (note: \(cqswitch\(cq ports have implicit \(cqunknown\(cq addresses) as well as on localnet ports with localnet_learn_fdb option set if the \fBlookup_fdb\fR action returned false in the previous table\[char46] For localnet ports (with flags\[char46]localnet = 1), lookup_fdb returns true if (port, mac) is found or if a mac is found for a port of type vif\[char46]
+This table learns the MAC addresses seen on the VIF or \(cqswitch\(cq logical ports with\(cqunknown\(cq address set (note: \(cqswitch\(cq ports have implicit \(cqunknown\(cq addresses) as well as on localnet ports with localnet_learn_fdb option set if the \fBlookup_fdb\fR action returned false in the previous table\[char46] For localnet ports (with flags\[char46]localnet = 1), lookup_fdb returns true if (port, mac) is found or if a mac is found for a port of type vif\[char46]
 .RS
 .IP \(bu
-For each such VIF logical port \fIp\fR whose port security is disabled and \(cqunknown\(cq address set and localnet port following flow is added\[char46]
+For each such VIF logical port \fIp\fR with \(cqunknown\(cq address set and localnet port following flow is added\[char46]
 .RS
+.IP \(bu
+Priority 120 flows matching the same zero-MAC conditions as the corresponding lookup flows (\fBarp\[char46]sha == 0\fR, \fBnd\[char46]tll == 0\fR, or \fBnd\[char46]sll == 0\fR)\[char46] Guarded by \fBreg0[11] == 0\fR, these learn only \fBeth\[char46]src\fR via \fBput_fdb(inport, eth\[char46]src); next;\fR\[char46]
+.IP \(bu
+Priority 110 flows matching ARP, ND NA, or ND NS packets\[char46] Guarded by \fBreg0[11] == 0 || reg0[22] == 0\fR (i\[char46]e\[char46], either the outer or the inner MAC is unknown), these learn both \fBeth\[char46]src\fR and the inner MAC via \fBput_fdb(inport, eth\[char46]src);
+put_fdb(inport, inner); next;\fR where \fBinner\fR is \fBarp\[char46]sha\fR, \fBnd\[char46]tll\fR, or \fBnd\[char46]sll\fR respectively\[char46]
 .IP \(bu
 Priority 100 flow with the match \fBinport == \fIp\fB && reg0[11] == 0\fR and action \fBput_fdb(inport, eth\[char46]src); next;\fR which stores the \fBport\-mac\fR in the mac learning table of the logical switch datapath and advances the packet to the next table\[char46]
 .RE
