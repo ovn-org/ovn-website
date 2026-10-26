@@ -54,3 +54,41 @@ Default value is true if this option is not defined\[char46]
 .IP
 CMS should set the value of this option to \fBfalse\fR if it doesn\(cqt want \fBovn\-br\-controller\fR to manage it\[char46]
 .RE
+.SH "RUNTIME MANAGEMENT COMMANDS"
+.PP
+.PP
+\fBovn\-appctl\fR can send commands to a running \fBovn\-br\-controller\fR process\[char46] The currently supported commands are described below\[char46]
+.RS
+.TP
+\fBinc\-engine/show\-stats\fR
+Display \fBovn\-br\-controller\fR engine counters\[char46] For each engine node the following counters have been added:
+.RS
+.IP \(bu
+\fBrecompute\fR
+.IP \(bu
+\fBcompute\fR
+.IP \(bu
+\fBcancel\fR
+.RE
+.TP
+\fBinc\-engine/show\-stats\fR \fIengine_node_name\fR [\fIcounter_name\fR]
+Display the \fBovn\-br\-controller\fR engine counter(s) for the specified \fIengine_node_name\fR\[char46] \fIcounter_name\fR is optional and can be one of \fBrecompute\fR, \fBcompute\fR or \fBcancel\fR\[char46]
+.TP
+\fBinc\-engine/clear\-stats\fR
+Reset \fBovn\-br\-controller\fR engine counters\[char46]
+.TP
+\fBinc\-engine/recompute\fR
+Triggers a full recompute of the incremental processing engine on the next iteration\[char46]
+.TP
+\fBinc\-engine/compute\-log\-timeout\fR \fImsecs\fR
+Sets the timeout in milliseconds for logging engine compute events\[char46]
+.TP
+\fBinc\-engine/list\-stopwatches\fR [\fInode\fR]
+Lists the engine nodes and their change handler names\[char46] If \fInode\fR is specified, only the handlers for that engine node are listed\[char46]
+.TP
+\fBinc\-engine/enable\-stopwatch\fR [\fInode\fR]
+Enables the per-node and per-handler stopwatches in the incremental processing engine\[char46] If \fInode\fR is specified, only that node\(cqs stopwatches are enabled; otherwise all nodes are affected\[char46] While enabled, every engine node recompute and change handler invocation is timed and the results can be viewed with the \fBstopwatch/show\fR command\[char46] Stopwatches are disabled by default because they add measurable CPU overhead\[char46]
+.TP
+\fBinc\-engine/disable\-stopwatch\fR [\fInode\fR]
+Disables the per-node and per-handler stopwatches in the incremental processing engine\[char46] If \fInode\fR is specified, only that node\(cqs stopwatches are disabled; otherwise all nodes are affected\[char46] This is the default state\[char46]
+.RE

@@ -42,6 +42,9 @@ The OVSDB database containing the OVN Interconnection Northbound Database\[char4
 .TP
 \fB\-\-ic\-sb\-db=\fIdatabase\fB\fR
 The OVSDB database containing the OVN Interconnection Southbound Database\[char46] If the \fBOVN_IC_SB_DB\fR environment variable is set, its value is used as the default\[char46] Otherwise, the default is \fBunix:/ovn_ic_sb_db\[char46]sock\fR\[char46]
+.TP
+\fB\-\-dump\-inc\-proc\-graph\fR [\fB=\fInode\fB\fR]
+Dump the incremental processing engine graph representation in DOT format to stdout at startup and then exit\[char46] If \fInode\fR is specified, only the subgraph rooted at that engine node is printed\[char46]
 .PP
 .PP
 \fIdatabase\fR in the above options must be an OVSDB active or passive connection method, as described in \fBovsdb\fR(7)\[char46]
@@ -201,6 +204,38 @@ Returns \(dqtrue\(dq if ovn-ic is currently paused, \(dqfalse\(dq otherwise\[cha
 .TP
 \fBstatus\fR
 Prints this server\(cqs status\[char46] Status will be \(dqactive\(dq if ovn-ic has acquired OVSDB lock on SB DB, \(dqstandby\(dq if it has not or \(dqpaused\(dq if this instance is paused\[char46]
+.TP
+\fBinc\-engine/show\-stats\fR
+Display \fBovn\-ic\fR engine counters\[char46] For each engine node the following counters have been added:
+.RS
+.IP \(bu
+\fBrecompute\fR
+.IP \(bu
+\fBcompute\fR
+.IP \(bu
+\fBcancel\fR
+.RE
+.TP
+\fBinc\-engine/show\-stats\fR \fIengine_node_name\fR [\fIcounter_name\fR]
+Display the \fBovn\-ic\fR engine counter(s) for the specified \fIengine_node_name\fR\[char46] \fIcounter_name\fR is optional and can be one of \fBrecompute\fR, \fBcompute\fR or \fBcancel\fR\[char46]
+.TP
+\fBinc\-engine/clear\-stats\fR
+Reset \fBovn\-ic\fR engine counters\[char46]
+.TP
+\fBinc\-engine/recompute\fR
+Triggers a full recompute of the incremental processing engine on the next iteration\[char46]
+.TP
+\fBinc\-engine/compute\-log\-timeout\fR \fImsecs\fR
+Sets the timeout in milliseconds for logging engine compute events\[char46]
+.TP
+\fBinc\-engine/list\-stopwatches\fR [\fInode\fR]
+Lists the engine nodes and their change handler names\[char46] If \fInode\fR is specified, only the handlers for that engine node are listed\[char46]
+.TP
+\fBinc\-engine/enable\-stopwatch\fR [\fInode\fR]
+Enables the per-node and per-handler stopwatches in the incremental processing engine\[char46] If \fInode\fR is specified, only that node\(cqs stopwatches are enabled; otherwise all nodes are affected\[char46] While enabled, every engine node recompute and change handler invocation is timed and the results can be viewed with the \fBstopwatch/show\fR command\[char46] Stopwatches are disabled by default because they add measurable CPU overhead\[char46]
+.TP
+\fBinc\-engine/disable\-stopwatch\fR [\fInode\fR]
+Disables the per-node and per-handler stopwatches in the incremental processing engine\[char46] If \fInode\fR is specified, only that node\(cqs stopwatches are disabled; otherwise all nodes are affected\[char46] This is the default state\[char46]
 .RE
 .SH "ACTIVE-STANDBY FOR HIGH AVAILABILITY"
 .PP

@@ -2767,6 +2767,8 @@ Users will need to use the following settings to opt into individual route types
 .IP \(bu
 \fBoptions:dynamic-routing-redistribute\fR on Logical_Router_Port
 .RE
+.IP
+The routes of a distributed gateway port are installed and advertised by every member of the port\(cqs HA chassis group, not only by the chassis that is currently active for it\[char46] The standby members do so in a strictly higher priority band, which the routing daemon translates into a higher metric and hence, for BGP, a higher MED\[char46] The fabric consequently prefers the active chassis while already holding a precomputed backup path towards each standby, which allows for a fast local repair (BGP PIC Edge) when the active chassis fails\[char46] Note that this increases the number of paths the fabric has to hold for each advertised prefix by the size of the HA chassis group\[char46]
 .IP "\fBoptions : dynamic-routing-redistribute\fR: optional string"
 Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
 .IP
@@ -3458,6 +3460,8 @@ If not set the value from \fBoptions:dynamic-routing-redistribute-local-only\fR 
 Only relevant if \fBoptions:dynamic-routing\fR on the respective Logical_Router is set to \fBtrue\fR\[char46]
 .IP
 If this LRP is bound to a specific chassis then the ovn-controller of this chassis will maintain a vrf\[char46] This vrf will contain all the routes that should be announced from this LRP\[char46] Unless \fBoptions:dynamic-routing-vrf-name\fR is set the vrf will be named \(dqovnvrf\(dq with the \fBoptions:dynamic-routing-vrf-id\fR or datapath id of the Logical Router appended to it\[char46]
+.IP
+If this LRP is a distributed gateway port, the VRF is created on every chassis of its HA chassis group, not only on the one that is currently active for the port\[char46] Every member of the group advertises the port\(cqs routes from that vrf, so the routing daemon has its session established and the fabric has a backup path in place before a failover happens; see \fBoptions:dynamic-routing\fR\[char46] A standby chassis removes the vrf again once this option is cleared; the chassis the port is resident on keeps it, as described below\[char46]
 .IP
 If the setting is not set or false the ovn-controller will expect this VRF to already exist\[char46] Some tooling outside of OVN needs to ensure this\[char46]
 .IP
