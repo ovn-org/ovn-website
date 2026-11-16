@@ -835,6 +835,8 @@ Logical_Switch TABLE
                                    optional string
        other_config : dynamic-routing-fdb-prefer-local
                                    optional string, either true or false
+       other_config : dynamic-routing-fdb-ecmp-selection-fields
+                                   optional string
        other_config : dynamic-routing-redistribute
                                    optional string
      IP Multicast Snooping Options:
@@ -1051,6 +1053,21 @@ Logical_Switch TABLE
 
             Only relevant if other_config:dynamic-routing-vni is  set  to  valid
             VNI.
+
+     other_config : dynamic-routing-fdb-ecmp-selection-fields: optional string
+            Only  relevant  if  other_config:dynamic-routing-vni is set to valid
+            VNI.
+
+            A comma separated list of the fields that select the remote VTEP for
+            an EVPN FDB entry with more than one path (multi-homing), for  exam‐
+            ple  ip_proto,ip_src,ip_dst,tp_src,tp_dst.  The supported fields are
+            the same as for the  selection_fields  column  of  a  static  route.
+            tp_src  and  tp_dst  select  the  TCP, UDP and SCTP ports. When set,
+            ovn-controller creates the OpenFlow select group of the  entry  with
+            the  hash  selection method on these fields instead of dp_hash. This
+            lets a NIC offload the group, because hash does not need a  recircu‐
+            lation. If the list contains a field that is not supported, OVN uses
+            dp_hash.
 
      other_config : dynamic-routing-redistribute: optional string
             Only  relevant  if  other_config:dynamic-routing-vni is set to valid
@@ -2870,6 +2887,8 @@ Logical_Router TABLE
                                    range 1 to 4,294,967,295
        options : dynamic-routing-no-learning
                                    optional string, either true or false
+       options : dynamic-routing-ecmp-selection-fields
+                                   optional string
        options : dynamic-routing-v4-prefix-nexthop
                                    optional string
        options : dynamic-routing-v6-prefix-nexthop
@@ -2992,6 +3011,16 @@ Logical_Router TABLE
             can be achieved by setting the above option with a gateway  specific
             set  of  IP  addresses. This option may have exactly one IPv4 and/or
             one IPv6 address on it, separated by a space character.
+
+            A set of IP addresses is also honored on  distributed  routers  with
+            one  or more distributed gateway ports. In that case the SNAT is ap‐
+            plied on the chassis where the gateway port is resident,  consistent
+            with  how regular SNAT entries are handled for such routers. This is
+            useful, for example, when a load balancer backend reachable  through
+            the  gateway  port  connects to its own VIP: without the forced SNAT
+            the un-SNATed reply would  arrive  at  the  backend  with  identical
+            source  and  destination  addresses  and  be  discarded as a martian
+            packet.
 
             If it is configured with the value router_ip, then the load balanced
             packet is SNATed with the IP of router port (attached to the gateway
@@ -3210,6 +3239,18 @@ Logical_Router TABLE
 
             This option disables route learning on a specific  router  and  will
             also remove learned routes.
+
+     options : dynamic-routing-ecmp-selection-fields: optional string
+            Only relevant if options:dynamic-routing is set to true.
+
+            A  comma  separated list of the fields that select the nexthop of an
+            ECMP     group     of     learned      routes,      for      example
+            ip_proto,ip_src,ip_dst,tp_src,tp_dst. The supported fields and their
+            meaning  are the same as for the selection_fields column of a static
+            route. When set, the ECMP groups of learned routes use the hash  se‐
+            lection  method  on these fields instead of dp_hash. This lets a NIC
+            offload the group, because hash does not need  a  recirculation.  If
+            the list contains a field that is not supported, OVN uses dp_hash.
 
      options : dynamic-routing-v4-prefix-nexthop: optional string
             Only relevant if options:dynamic-routing is set to true.
@@ -4415,7 +4456,7 @@ Logical_Router_Policy TABLE
 
             •      drop: Silently drop the packet.
 
-            •      reroute: Reroute packet to nexthop or nexthops.
+            •      reroute: Reroute packet to nexthops
 
             •      jump: Start examining rules that have the same chain value as
                    specified in jump_chain.

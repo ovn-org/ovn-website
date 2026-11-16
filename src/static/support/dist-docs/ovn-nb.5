@@ -1074,6 +1074,9 @@ optional string
 \fBother_config : dynamic-routing-fdb-prefer-local\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
 .TQ 2.75in
+\fBother_config : dynamic-routing-fdb-ecmp-selection-fields\fR
+optional string
+.TQ 2.75in
 \fBother_config : dynamic-routing-redistribute\fR
 optional string
 .RE
@@ -1242,6 +1245,10 @@ Set the interface name for the advertise device used for EVPN integration\[char4
 This option defines the preference of FDB lookup, if set to true OVN will try to find the FDB entry in SB \fBFDB\fR table first\[char46] Then it tries to resolve the FDB via \fBovn\-controller\fR local EVPN FDB cache\[char46] The option defaults to false\[char46]
 .IP
 Only relevant if \fBother_config:dynamic-routing-vni\fR is set to valid VNI\[char46]
+.IP "\fBother_config : dynamic-routing-fdb-ecmp-selection-fields\fR: optional string"
+Only relevant if \fBother_config:dynamic-routing-vni\fR is set to valid VNI\[char46]
+.IP
+A comma separated list of the fields that select the remote VTEP for an EVPN FDB entry with more than one path (multi-homing), for example \fBip_proto,ip_src,ip_dst,tp_src,tp_dst\fR\[char46] The supported fields are the same as for the \fBselection_fields\fR column of a static route\[char46] \fBtp_src\fR and \fBtp_dst\fR select the TCP, UDP and SCTP ports\[char46] When set, \fBovn\-controller\fR creates the OpenFlow select group of the entry with the \fBhash\fR selection method on these fields instead of \fBdp_hash\fR\[char46] This lets a NIC offload the group, because \fBhash\fR does not need a recirculation\[char46] If the list contains a field that is not supported, OVN uses \fBdp_hash\fR\[char46]
 .IP "\fBother_config : dynamic-routing-redistribute\fR: optional string"
 Only relevant if \fBother_config:dynamic-routing-vni\fR is set to valid VNI\[char46]
 .IP
@@ -2630,6 +2637,9 @@ optional string, containing an integer, in range 1 to 4,294,967,295
 \fBoptions : dynamic-routing-no-learning\fR
 optional string, either \fBtrue\fR or \fBfalse\fR
 .TQ 2.75in
+\fBoptions : dynamic-routing-ecmp-selection-fields\fR
+optional string
+.TQ 2.75in
 \fBoptions : dynamic-routing-v4-prefix-nexthop\fR
 optional string
 .TQ 2.75in
@@ -2712,6 +2722,8 @@ If set, indicates a set of IP addresses to use to force SNAT a packet that has a
 If set, this option can take two possible type of values\[char46] Either a set of IP addresses or the string value - \fBrouter_ip\fR\[char46]
 .IP
 If a set of IP addresses are configured, it indicates to use to force SNAT a packet that has already been load-balanced in the gateway router\[char46] When multiple gateway routers are configured, a packet can potentially enter any of the gateway routers, get DNATted as part of the load-balancing and eventually reach the logical switch port\[char46] For the return traffic to go back to the same gateway router (for unDNATing), the packet needs a SNAT in the first place\[char46] This can be achieved by setting the above option with a gateway specific set of IP addresses\[char46] This option may have exactly one IPv4 and/or one IPv6 address on it, separated by a space character\[char46]
+.IP
+A set of IP addresses is also honored on distributed routers with one or more distributed gateway ports\[char46] In that case the SNAT is applied on the chassis where the gateway port is resident, consistent with how regular SNAT entries are handled for such routers\[char46] This is useful, for example, when a load balancer backend reachable through the gateway port connects to its own VIP: without the forced SNAT the un-SNATed reply would arrive at the backend with identical source and destination addresses and be discarded as a martian packet\[char46]
 .IP
 If it is configured with the value \fBrouter_ip\fR, then the load balanced packet is SNATed with the IP of router port (attached to the gateway router) selected as the destination after taking the routing decision\[char46]
 .IP "\fBoptions : mcast_relay\fR: optional string, either \fBtrue\fR or \fBfalse\fR"
@@ -2815,6 +2827,10 @@ This can also affect the vrf name\[char46] For details see \fBoptions:dynamic-ro
 Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
 .IP
 This option disables route learning on a specific router and will also remove learned routes\[char46]
+.IP "\fBoptions : dynamic-routing-ecmp-selection-fields\fR: optional string"
+Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
+.IP
+A comma separated list of the fields that select the nexthop of an ECMP group of learned routes, for example \fBip_proto,ip_src,ip_dst,tp_src,tp_dst\fR\[char46] The supported fields and their meaning are the same as for the \fBselection_fields\fR column of a static route\[char46] When set, the ECMP groups of learned routes use the \fBhash\fR selection method on these fields instead of \fBdp_hash\fR\[char46] This lets a NIC offload the group, because \fBhash\fR does not need a recirculation\[char46] If the list contains a field that is not supported, OVN uses \fBdp_hash\fR\[char46]
 .IP "\fBoptions : dynamic-routing-v4-prefix-nexthop\fR: optional string"
 Only relevant if \fBoptions:dynamic-routing\fR is set to \fBtrue\fR\[char46]
 .IP
@@ -3700,7 +3716,7 @@ The action to take when the routing policy matches:
 .IP \(bu
 \fBdrop\fR: Silently drop the packet\[char46]
 .IP \(bu
-\fBreroute\fR: Reroute packet to \fBnexthop\fR or \fBnexthops\fR\[char46]
+\fBreroute\fR: Reroute packet to \fBnexthops\fR
 .IP \(bu
 \fBjump\fR: Start examining rules that have the same \fBchain\fR value as specified in \fBjump_chain\fR\[char46]
 .RE
