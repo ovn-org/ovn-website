@@ -1519,6 +1519,9 @@ A priority\-0 flow that outputs the packet to the \fBoutport\fR\[char46]
 .PP
 .PP
 Logical router datapaths will only exist for \fBLogical_Router\fR rows in the \fBOVN_Northbound\fR database that do not have \fBenabled\fR set to \fBfalse\fR
+.PP
+.PP
+Remote transit router ports do not receive ordinary ingress traffic or execute local egress delivery\[char46] Their per-port admission, neighbor request handling, router advertisements, and ingress error responses are therefore omitted\[char46] Tunneled neighbor replies use shared admission and learning flows instead\[char46] Routes selecting remote ports, neighbor resolution, and output MTU checks still run locally before tunneling and remain installed, as do router-wide flows matching the remote ports\(cq IP addresses\[char46]
 .ST "Ingress Table 0: L2 Admission Control"
 .PP
 .PP
@@ -1526,6 +1529,8 @@ This table drops packets that the router shouldn\(cqt see at all based on their 
 .RS
 .IP \(bu
 Priority\-100 flows to drop packets with VLAN tags or multicast Ethernet source addresses\[char46]
+.IP \(bu
+On transit routers, a priority\-40 flow admits ARP replies and IPv6 neighbor advertisements received from a tunnel, regardless of their destination MAC address\[char46] These packets reenter ingress to learn remote neighbor bindings; the IP input table then drops them\[char46] The higher-priority Ethernet security drops still apply\[char46] A priority\-60 flow drops packets from each disabled router port, overriding the shared admission rule\[char46]
 .IP \(bu
 For each enabled router port \fIP\fR with Ethernet address \fIE\fR, a priority\-50 flow that matches \fBinport ==
 \fIP\fB && (eth\[char46]mcast || eth\[char46]dst ==
