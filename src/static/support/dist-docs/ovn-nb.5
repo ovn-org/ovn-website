@@ -2133,6 +2133,10 @@ map of string-string pairs
 \fBprotocol\fR
 optional string, one of \fBsctp\fR, \fBtcp\fR, or \fBudp\fR
 .TQ .25in
+\fILoad Balancing on Logical Routers:\fR
+.RS .25in
+.RE
+.TQ .25in
 \fIHealth Checks:\fR
 .RS .25in
 .TQ 2.75in
@@ -2204,6 +2208,19 @@ A map of virtual IP addresses (and an optional port number with \fB:\fR as a sep
 When the \fBLoad_Balancer\fR is added to the \fBlogical_switch\fR, the VIP has to be in a different subnet than the one used for the \fBlogical_switch\fR\[char46] Since VIP is in a different subnet, you should connect your logical switch to either a OVN logical router or a real router (this is because the client can now send a packet with VIP as the destination IP address and router\(cqs mac address as the destination MAC address)\[char46]
 .IP "\fBprotocol\fR: optional string, one of \fBsctp\fR, \fBtcp\fR, or \fBudp\fR"
 Valid protocols are \fBtcp\fR, \fBudp\fR, or \fBsctp\fR\[char46] This column is useful when a port number is provided as part of the \fBvips\fR column\[char46] If this column is empty and a port number is provided as part of \fBvips\fR column, OVN assumes the protocol to be \fBtcp\fR\[char46]
+.ST "Load Balancing on Logical Routers:"
+.PP
+.PP
+.PP
+A load balancer associated with a logical router (see the \fBload_balancer\fR and \fBload_balancer_group\fR columns of the \fBLogical_Router\fR table) DNATs requests to its VIPs in the router\(cqs ingress pipeline and un-DNATs the replies from its backends in the router\(cqs egress pipeline\[char46] Both use connection tracking, so a request and its replies must pass the router on the same chassis\[char46] How that is ensured depends on the router:
+.RS
+.IP \(bu
+A gateway router is bound to one chassis, so all of its traffic passes that chassis\[char46]
+.IP \(bu
+On a distributed router with a distributed gateway port (DGP), traffic through the DGP is load balanced and un-DNATed on the gateway chassis of the DGP, unless the load balancer sets \fBoptions:distributed\fR\[char46] See the \fBload_balancer\fR column for routers with more than one DGP\[char46]
+.IP \(bu
+A distributed router without a DGP load balances requests on the chassis where they enter the router, and un-DNATs replies on the chassis where they re-enter it\[char46] OVN does not make sure that this is the same chassis: the CMS must, through its logical topology\[char46] For example, a downstream router can translate the source of the requests with a distributed NAT rule (see the \fBlogical_port\fR and \fBexternal_mac\fR columns of the \fBNAT\fR table), so that the replies are only routed to the chassis of that NAT rule\(cqs logical port\[char46] Replies that re-enter the router on another chassis are not un-DNATed, and leave it with the backend\(cqs address as their source\[char46]
+.RE
 .ST "Health Checks:"
 .PP
 .PP
@@ -2690,7 +2707,7 @@ This column is used to administratively set router state\[char46] If this column
 .IP "\fBnat\fR: set of \fBNAT\fRs"
 One or more NAT rules for the router\[char46] NAT rules only work on Gateway routers, and on distributed routers with one and only one distributed gateway port\[char46]
 .IP "\fBload_balancer\fR: set of weak reference to \fBLoad_Balancer\fRs"
-Set of load balancers associated to this logical router\[char46] Load balancer rules only work without limitations on the Gateway routers or routers with one and only one distributed gateway port (DGP)\[char46] Load balancers will only work in scenarios that use more than one DGP when the multiple DGPs are associated with the same gateway chassis, this way this chassis can apply/maintain the conntrack state without problems\[char46] To use a load balancer in scenarios with DGPs associated with different gateway chassis (e\[char46]g\[char46] ECMP routes), consider using the \fBuse_stateless_nat\fR option to \fBtrue\fR in the load balancer options column\[char46]
+Set of load balancers associated to this logical router\[char46] Load balancer rules only work without limitations on the Gateway routers or routers with one and only one distributed gateway port (DGP)\[char46] Load balancers will only work in scenarios that use more than one DGP when the multiple DGPs are associated with the same gateway chassis, this way this chassis can apply/maintain the conntrack state without problems\[char46] To use a load balancer in scenarios with DGPs associated with different gateway chassis (e\[char46]g\[char46] ECMP routes), consider using the \fBuse_stateless_nat\fR option to \fBtrue\fR in the load balancer options column\[char46] Load balancers also work on distributed routers without a DGP, if the CMS makes sure that the replies re-enter the router on the chassis that load balanced the request\[char46] See ``Load Balancing on Logical Routers\(cq\(cq in the \fBLoad_Balancer\fR table\[char46]
 .IP "\fBload_balancer_group\fR: set of \fBLoad_Balancer_Group\fRs"
 Set of load balancers groups associated to this logical router\[char46]
 .ST "Naming:"
